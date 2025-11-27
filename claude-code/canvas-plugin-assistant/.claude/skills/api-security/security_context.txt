@@ -1,0 +1,297 @@
+# Canvas Plugin API Security Guide
+
+This document provides security review guidelines for Canvas plugin API handlers.
+
+## Authentication Methods
+
+Canvas SimpleAPI supports three authentication types:
+
+### 1. APIKeyCredentials (External Clients)
+
+For webhooks and external system integrations.
+
+```python
+from canvas_sdk.handlers.simple_api import APIKeyCredentials, SimpleAPIRoute
+
+class WebhookAPI(SimpleAPIRoute):
+    PATH = "/webhook/receive"
+
+    def authenticate(self, credentials: APIKeyCredentials) -> bool:
+        from hmac import compare_digest
+        provided_key = credentials.key
+        expected_key = self.secrets.get("WEBHOOK_API_KEY")
+        if not expected_key:
+            return False
+        return compare_digest(provided_key.encode(), expected_key.encode())
+```
+
+**Security requirements:**
+- Always use `compare_digest()` for constant-time comparison (prevents timing attacks)
+- Store API keys in secrets, never hardcode
+- Return `False` if secret is not configured
+- Document the API key in CANVAS_MANIFEST.json secrets array
+
+---
+
+### 2. SessionCredentials (Internal Canvas Users)
+
+For endpoints accessed by logged-in Canvas users (staff or patients).
+
+```python
+from canvas_sdk.handlers.simple_api import SessionCredentials, SimpleAPIRoute
+
+class InternalAPI(SimpleAPIRoute):
+    PATH = "/internal/data"
+
+    def authenticate(self, credentials: SessionCredentials) -> bool:
+        logged_in_user = credentials.logged_in_user
+        # Structure: {"id": "abc123", "type": "Staff" or "Patient"}
+        return True  # DANGEROUS - allows any logged-in user
+```
+
+**CRITICAL: SessionCredentials requires user type validation!**
+
+---
+
+## SessionCredentials Security Patterns
+
+### Staff-Only Endpoints
+
+Endpoints that should only be accessible by staff members:
+
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    user = credentials.logged_in_user
+    if not user:
+        return False
+    return user.get("type") == "Staff"
+```
+
+**Use for:** Admin functions, configuration, staff dashboards, data exports
+
+---
+
+### Patient-Only Endpoints
+
+Endpoints that should only be accessible by patients:
+
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    user = credentials.logged_in_user
+    if not user:
+        return False
+    return user.get("type") == "Patient"
+```
+
+**Use for:** Patient portal features, self-service functions
+
+---
+
+### Patient-Specific Data Access
+
+When a patient accesses their own data, verify they're requesting THEIR data:
+
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    user = credentials.logged_in_user
+    if not user:
+        return False
+
+    # For patient accessing their own data
+    if user.get("type") == "Patient":
+        # Get patient_id from URL path
+        requested_patient_id = self.request.path_params.get("patient_id")
+        # Verify patient is accessing their own data
+        return user.get("id") == requested_patient_id
+
+    # Staff can access any patient's data
+    return user.get("type") == "Staff"
+```
+
+**CRITICAL:** Without this check, Patient A could access Patient B's data!
+
+---
+
+### Team-Based Authorization
+
+Restrict access to specific staff teams:
+
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    user = credentials.logged_in_user
+    if not user or user.get("type") != "Staff":
+        return False
+
+    # Check if staff member is on authorized team
+    from canvas_sdk.v1.data.staff import Staff
+    from canvas_sdk.v1.data.team import TeamMembership
+
+    staff = Staff.objects.filter(id=user.get("id")).first()
+    if not staff:
+        return False
+
+    allowed_teams = ["Admin", "Care Coordinators"]
+    memberships = TeamMembership.objects.filter(staff=staff)
+    user_teams = [m.team.name for m in memberships]
+
+    return any(team in allowed_teams for team in user_teams)
+```
+
+---
+
+## Common Vulnerabilities
+
+### 1. Missing Authentication
+
+**VULNERABLE:**
+```python
+class MyAPI(SimpleAPIRoute):
+    PATH = "/data"
+
+    # No authenticate() method = UNAUTHENTICATED!
+
+    def get(self):
+        return [JSONResponse({"data": "exposed"})]
+```
+
+**FIX:** Always implement `authenticate()` method.
+
+---
+
+### 2. Returning True Without Validation
+
+**VULNERABLE:**
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    return True  # Any logged-in user can access
+```
+
+**FIX:** Validate user type and permissions.
+
+---
+
+### 3. Patient Data Exposure
+
+**VULNERABLE:**
+```python
+def authenticate(self, credentials: SessionCredentials) -> bool:
+    return credentials.logged_in_user is not None
+
+def get(self):
+    patient_id = self.request.path_params["patient_id"]
+    # Returns any patient's data to any logged-in user!
+    patient = Patient.objects.get(id=patient_id)
+    return [JSONResponse(patient.to_dict())]
+```
+
+**FIX:** Verify requesting user has access to requested patient.
+
+---
+
+### 4. Missing Secret Validation
+
+**VULNERABLE:**
+```python
+def authenticate(self, credentials: APIKeyCredentials) -> bool:
+    return credentials.key == self.secrets.get("API_KEY")
+    # If API_KEY not configured, self.secrets.get() returns None
+    # And credentials.key could be None too, making None == None = True!
+```
+
+**FIX:** Explicitly check that secret exists and use compare_digest.
+
+---
+
+### 5. String Comparison Timing Attack
+
+**VULNERABLE:**
+```python
+def authenticate(self, credentials: APIKeyCredentials) -> bool:
+    return credentials.key == self.secrets.get("API_KEY")
+    # Standard string comparison leaks timing information
+```
+
+**FIX:** Use `hmac.compare_digest()` for constant-time comparison.
+
+---
+
+## Security Review Checklist
+
+When reviewing a plugin's API handlers, verify:
+
+### Authentication Present
+- [ ] Every SimpleAPI/SimpleAPIRoute has an `authenticate()` method
+- [ ] Every WebSocket handler has an `authenticate()` method
+- [ ] No endpoints are accidentally public
+
+### APIKey Authentication
+- [ ] Uses `compare_digest()` for key comparison
+- [ ] Checks that secret exists before comparing
+- [ ] Secret is declared in CANVAS_MANIFEST.json
+- [ ] No hardcoded keys
+
+### SessionCredentials Authentication
+- [ ] Validates `user.get("type")` for staff-only or patient-only endpoints
+- [ ] Patient endpoints verify patient is accessing their OWN data
+- [ ] Staff endpoints verify user is actually staff
+- [ ] Handles missing/None user gracefully
+
+### Data Access
+- [ ] Patient data queries are scoped to authorized patients
+- [ ] Sensitive operations require appropriate authorization level
+- [ ] Bulk data exports are staff-only
+
+### Error Handling
+- [ ] Authentication failures return appropriate status (401/403)
+- [ ] Error messages don't leak sensitive information
+- [ ] Failed auth attempts are logged for monitoring
+
+---
+
+## WebSocket Security
+
+WebSocket handlers have similar authentication patterns:
+
+### Session-Based
+```python
+def authenticate(self) -> bool:
+    user = self.websocket.logged_in_user
+    if not user:
+        return False
+    return user.get("type") == "Staff"
+```
+
+### API Key-Based
+```python
+def authenticate(self) -> bool:
+    from hmac import compare_digest
+    provided_key = self.websocket.api_key
+    expected_key = self.secrets.get("WS_API_KEY")
+    if not expected_key or not provided_key:
+        return False
+    return compare_digest(provided_key.encode(), expected_key.encode())
+```
+
+---
+
+## Reporting Security Issues
+
+When reviewing, report findings as:
+
+```markdown
+## Security Review: {plugin_name}
+
+### Findings
+
+| Severity | Issue | Location | Recommendation |
+|----------|-------|----------|----------------|
+| HIGH | Missing patient authorization | api/routes.py:45 | Add patient ID verification |
+| MEDIUM | Using == instead of compare_digest | api/webhook.py:12 | Use hmac.compare_digest() |
+| LOW | Auth returns True without logging | ... | Add logging for audit trail |
+
+### Summary
+
+- Total handlers reviewed: X
+- Issues found: Y
+- Recommendation: [PASS / FIX REQUIRED]
+```

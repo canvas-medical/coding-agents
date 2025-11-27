@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run canvas:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Skill(canvas-sdk)",
+      "Skill(plugin-patterns)",
+      "WebFetch(domain:*.canvasmedical.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

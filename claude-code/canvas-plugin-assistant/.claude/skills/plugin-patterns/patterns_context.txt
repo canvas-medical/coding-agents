@@ -1,0 +1,783 @@
+# Canvas Plugin Architecture Patterns
+
+This document provides practical patterns and best practices for building Canvas plugins.
+
+## Plugin Complexity Levels
+
+### Simple Plugins (1-2 files, ~45 real-world examples)
+Best for: Single event → single effect workflows
+
+**Characteristics:**
+- Single protocol handler
+- 20-100 lines of code
+- Direct event → effect mapping
+- No external API calls
+- No UI component
+
+**When to use:**
+- Creating alerts based on clinical data (e.g., high blood pressure alert)
+- Creating tasks when specific events occur (e.g., lab order fasting reminder)
+- Simple data validation or transformation
+- Automated workflow triggers
+
+**Structure:**
+```
+simple-plugin/
+├── CANVAS_MANIFEST.json
+├── protocols/
+│   └── handler.py
+└── README.md
+```
+
+**Example - Blood Pressure Alert:**
+```python
+from canvas_sdk.effects import Effect
+from canvas_sdk.effects.banner_alert import AddBannerAlert
+from canvas_sdk.events import EventType
+from canvas_sdk.protocols import BaseProtocol
+
+class BPAlertProtocol(BaseProtocol):
+    RESPONDS_TO = [
+        EventType.Name(EventType.VITALS_COMMAND__POST_COMMIT)
+    ]
+
+    def compute(self) -> list[Effect]:
+        vitals = self.event.target.instance
+        systolic = vitals.blood_pressure_systolic
+        diastolic = vitals.blood_pressure_diastolic
+
+        if not systolic or not diastolic:
+            return []
+
+        patient_id = self.event.context["patient"]["id"]
+
+        # Stage 2 Hypertension
+        if systolic >= 140 or diastolic >= 90:
+            return [
+                AddBannerAlert(
+                    patient_id=patient_id,
+                    key="bp-stage2",
+                    narrative=f"Stage 2 Hypertension: {systolic}/{diastolic}",
+                    placement=[AddBannerAlert.Placement.TIMELINE],
+                    intent=AddBannerAlert.Intent.WARNING
+                ).apply()
+            ]
+
+        return []
+```
+
+---
+
+### Medium Plugins (8-15 files, ~3 real-world examples)
+Best for: Multi-handler workflows or API-based plugins
+
+**Characteristics:**
+- Multiple protocol handlers with different responsibilities
+- API endpoints (SimpleAPI routes)
+- Utility modules for shared logic
+- 500-2000 lines total
+- May have simple UI served via API
+
+**When to use:**
+- Workflows requiring multiple event triggers
+- Plugins needing HTTP endpoints for webhooks or UI
+- Integration with external systems
+- Complex business logic with shared utilities
+
+**Structure:**
+```
+medium-plugin/
+├── CANVAS_MANIFEST.json
+├── protocols/
+│   ├── __init__.py
+│   ├── event_handler.py
+│   └── webhook_handler.py
+├── api/
+│   ├── __init__.py
+│   └── routes.py
+├── utils/
+│   ├── __init__.py
+│   └── helpers.py
+└── README.md
+```
+
+---
+
+### Complex Plugins (15+ files, rare)
+Best for: Full-featured applications with UI
+
+**Characteristics:**
+- Application handler for UI
+- Multiple protocols and API endpoints
+- Static assets (JS, CSS)
+- HTML templates
+- Possibly LLM integration
+- 2000+ lines of code
+
+**When to use:**
+- Interactive UI applications
+- AI/LLM-powered features
+- Complex multi-step workflows with user interaction
+- Real-time data processing and display
+
+**Structure:**
+```
+complex-plugin/
+├── CANVAS_MANIFEST.json
+├── applications/
+│   ├── __init__.py
+│   └── my_app.py
+├── protocols/
+│   ├── __init__.py
+│   └── listener.py
+├── api/
+│   ├── __init__.py
+│   ├── routes.py
+│   └── static.py
+├── llms/                    # Optional
+│   ├── __init__.py
+│   └── client.py
+├── static/
+│   ├── css/
+│   │   └── styles.css
+│   └── js/
+│       └── app.js
+├── templates/
+│   └── index.html
+├── utils/
+│   └── helpers.py
+└── README.md
+```
+
+---
+
+## Common Handler Patterns
+
+### Pattern 1: Event Listener → Effect
+The simplest and most common pattern.
+
+```python
+class MyProtocol(BaseProtocol):
+    RESPONDS_TO = [EventType.Name(EventType.SOME_EVENT__POST_COMMIT)]
+
+    def compute(self) -> list[Effect]:
+        # 1. Extract data from event
+        patient_id = self.event.context["patient"]["id"]
+        data = self.event.target.instance
+
+        # 2. Apply business logic
+        if some_condition(data):
+            # 3. Return effects
+            return [SomeEffect(...).apply()]
+
+        return []
+```
+
+### Pattern 2: Webhook Handler
+For receiving data from external systems.
+
+```python
+class WebhookHandler(SimpleAPI):
+    PREFIX = "/webhook"
+
+    def authenticate(self, credentials: Credentials) -> bool:
+        api_key = self.request.headers.get("X-API-Key")
+        return api_key == self.secrets.get("WEBHOOK_API_KEY")
+
+    @api.post("/receive")
+    def receive_data(self) -> list[JSONResponse | Effect]:
+        body = self.request.json()
+
+        # Process incoming data
+        # Create Canvas commands/effects
+
+        return [JSONResponse({"status": "ok"}, status_code=HTTPStatus.OK)]
+```
+
+### Pattern 3: Application with API Backend
+For interactive UI applications.
+
+```python
+# applications/my_app.py
+class MyApp(Application):
+    def on_open(self) -> Effect:
+        patient_id = self.context.get("patient", {}).get("id", "")
+        return LaunchModalEffect(
+            url=f"/plugin-io/api/my_plugin/ui/{patient_id}",
+            target=LaunchModalEffect.TargetType.RIGHT_CHART_PANE,
+            title="My App"
+        ).apply()
+
+# api/routes.py
+class MyAPI(SimpleAPI):
+    PREFIX = "/my_plugin"
+
+    @api.get("/ui/<patient_id>")
+    def get_ui(self) -> list[HTMLResponse | Effect]:
+        html = render_to_string("templates/index.html", {...})
+        return [HTMLResponse(html, status_code=HTTPStatus.OK)]
+```
+
+---
+
+## CANVAS_MANIFEST.json Patterns
+
+### Minimal Manifest (Simple Plugin)
+```json
+{
+    "sdk_version": "0.1.4",
+    "plugin_version": "0.0.1",
+    "name": "my_plugin",
+    "description": "Brief description of what the plugin does",
+    "components": {
+        "protocols": [
+            {
+                "class": "my_plugin.protocols.handler:MyProtocol",
+                "description": "Handles X events and creates Y effects"
+            }
+        ]
+    },
+    "secrets": [],
+    "readme": "./README.md"
+}
+```
+
+### Full Manifest (Complex Plugin)
+```json
+{
+    "sdk_version": "0.74.1",
+    "plugin_version": "0.0.1",
+    "name": "my_plugin",
+    "description": "Full description",
+    "components": {
+        "protocols": [
+            {
+                "class": "my_plugin.protocols.listener:EventListener",
+                "description": "Listens for events"
+            },
+            {
+                "class": "my_plugin.api.routes:MyAPI",
+                "description": "API endpoints"
+            }
+        ],
+        "applications": [
+            {
+                "class": "my_plugin.applications.my_app:MyApp",
+                "name": "My Application",
+                "description": "Interactive UI",
+                "icon": "assets/icon.png",
+                "scope": "patient_specific",
+                "show_in_panel": true,
+                "panel_priority": 100
+            }
+        ]
+    },
+    "secrets": [
+        "API_KEY",
+        "WEBHOOK_SECRET"
+    ],
+    "readme": "./README.md"
+}
+```
+
+---
+
+## Event Types Reference
+
+### Most Common Events
+
+**Vitals:**
+- `VITALS_COMMAND__POST_COMMIT` - Vitals saved
+- `VITALS_COMMAND__POST_UPDATE` - Vitals modified
+
+**Lab Orders:**
+- `LAB_ORDER_COMMAND__POST_COMMIT` - Lab ordered
+- `LAB_ORDER_COMMAND__POST_UPDATE` - Lab order modified
+
+**Prescriptions:**
+- `PRESCRIBE_COMMAND__POST_COMMIT` - Prescription created
+- `PRESCRIBE_COMMAND__POST_UPDATE` - Prescription modified
+
+**Diagnoses:**
+- `DIAGNOSE_COMMAND__POST_COMMIT` - Diagnosis added
+- `DIAGNOSE_COMMAND__POST_UPDATE` - Diagnosis modified
+
+**Patient:**
+- `PATIENT__POST_CREATE` - New patient created
+- `PATIENT__POST_UPDATE` - Patient record modified
+
+**Notes:**
+- `NOTE__POST_SAVE` - Note saved
+- `NOTE__POST_SIGN` - Note signed
+
+---
+
+## Effect Types Reference
+
+### AddBannerAlert
+Display alerts in patient timeline or chart header.
+
+```python
+AddBannerAlert(
+    patient_id=patient_id,
+    key="unique-key",           # Unique identifier
+    narrative="Alert message",   # Display text
+    placement=[
+        AddBannerAlert.Placement.TIMELINE,    # In timeline
+        AddBannerAlert.Placement.CHART_HEADER # At top of chart
+    ],
+    intent=AddBannerAlert.Intent.ALERT,  # ALERT, WARNING, INFO
+    href="/some/url"            # Optional link
+).apply()
+```
+
+### AddTask
+Create tasks for staff members or teams.
+
+```python
+AddTask(
+    patient_id=patient_id,
+    title="Task title",
+    team_id=team_id,           # Assign to team
+    # OR
+    assignee_id=staff_id,      # Assign to individual
+    due=datetime_obj,          # Due date
+    labels=["label1"]          # Optional labels
+).apply()
+```
+
+### LaunchModalEffect
+Open UI modals or panels.
+
+```python
+LaunchModalEffect(
+    url="/plugin-io/api/my_plugin/ui",  # URL to load
+    # OR
+    content="<html>...</html>",          # Inline HTML
+    target=LaunchModalEffect.TargetType.RIGHT_CHART_PANE,
+    title="Modal Title"
+).apply()
+
+# Target types:
+# - DEFAULT_MODAL: Centered modal
+# - NEW_WINDOW: New browser window (requires URL)
+# - RIGHT_CHART_PANE: Sidebar panel
+# - RIGHT_CHART_PANE_LARGE: Wider sidebar
+# - PAGE: Full page
+```
+
+---
+
+## Best Practices
+
+### 1. Error Handling
+Always handle potential errors gracefully.
+
+```python
+def compute(self) -> list[Effect]:
+    try:
+        patient_id = self.event.context.get("patient", {}).get("id")
+        if not patient_id:
+            log.warning("No patient ID in event context")
+            return []
+
+        # Your logic here
+
+    except Exception as e:
+        log.error(f"Error in MyProtocol: {e}")
+        return []
+```
+
+### 2. Logging
+Use the logger for debugging and monitoring.
+
+```python
+from logger import log
+
+log.info(f"Processing event for patient {patient_id}")
+log.warning("Unexpected condition encountered")
+log.error(f"Failed to process: {error}")
+```
+
+### 3. Secrets Management
+Never hardcode credentials. Use secrets.
+
+```python
+api_key = self.secrets.get("API_KEY")
+if not api_key:
+    log.error("API_KEY secret not configured")
+    return []
+```
+
+### 4. Data Validation
+Validate data before processing.
+
+```python
+def compute(self) -> list[Effect]:
+    vitals = self.event.target.instance
+
+    # Check required fields exist
+    if not vitals.blood_pressure_systolic:
+        return []
+
+    # Validate data ranges
+    if vitals.blood_pressure_systolic < 0 or vitals.blood_pressure_systolic > 300:
+        log.warning(f"Invalid BP reading: {vitals.blood_pressure_systolic}")
+        return []
+```
+
+### 5. Idempotency
+Design handlers to be safe if called multiple times.
+
+```python
+# Use unique keys for alerts to prevent duplicates
+AddBannerAlert(
+    patient_id=patient_id,
+    key=f"bp-alert-{patient_id}-{date.today()}",  # Unique per patient per day
+    ...
+)
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+### 1. Blocking Operations
+Don't perform long-running operations in event handlers.
+
+```python
+# BAD - blocks event processing
+def compute(self):
+    response = requests.get(slow_api, timeout=30)  # Too slow!
+
+# BETTER - use async patterns or task queues
+```
+
+### 2. Missing Error Handling
+Always handle potential failures.
+
+```python
+# BAD - crashes on missing data
+patient_id = self.event.context["patient"]["id"]
+
+# GOOD - graceful handling
+patient_id = self.event.context.get("patient", {}).get("id")
+if not patient_id:
+    return []
+```
+
+### 3. Hardcoded Values
+Don't hardcode configuration.
+
+```python
+# BAD
+api_url = "https://api.example.com"
+
+# GOOD
+api_url = self.secrets.get("API_URL")
+```
+
+### 4. Overly Complex Plugins
+Start simple, add complexity only when needed.
+
+```python
+# BAD - building complex plugin for simple task
+# 15 files for creating an alert
+
+# GOOD - match complexity to requirements
+# 2 files for alert, scale up if needed
+```
+
+---
+
+## Testing Patterns
+
+### Unit Testing Handlers
+
+```python
+import pytest
+from unittest.mock import MagicMock, patch
+
+def test_bp_alert_triggers_on_high_bp():
+    # Mock the event
+    mock_event = MagicMock()
+    mock_event.context = {"patient": {"id": "test-123"}}
+    mock_event.target.instance.blood_pressure_systolic = 150
+    mock_event.target.instance.blood_pressure_diastolic = 95
+
+    # Create handler with mocked event
+    handler = BPAlertProtocol()
+    handler.event = mock_event
+
+    # Execute
+    effects = handler.compute()
+
+    # Assert
+    assert len(effects) == 1
+    # Verify effect properties
+```
+
+### Integration Testing
+
+```bash
+# Deploy to test instance
+uv run canvas install my_plugin --host plugin-testing
+
+# Monitor logs
+uv run canvas logs --host plugin-testing
+
+# Perform manual tests and verify behavior
+```
+
+---
+
+## README Template
+
+```markdown
+# [Plugin Name]
+
+## Description
+[What problem does this plugin solve?]
+
+## Features
+- [Feature 1]
+- [Feature 2]
+
+## Triggers
+- [Event that triggers this plugin]
+
+## Effects
+- [What the plugin creates/modifies]
+
+## Configuration
+Secrets required:
+- `SECRET_NAME`: [Description]
+
+## Installation
+```bash
+uv run canvas install [plugin_name] --host [target]
+```
+
+## Testing
+[How to test the plugin]
+
+## Demo
+[Link to demo video if available]
+```
+
+---
+
+## Quick Decision Guide
+
+**Need to react to a clinical event?**
+→ Simple plugin with BaseProtocol
+
+**Need to receive data from external system?**
+→ Medium plugin with SimpleAPI webhook
+
+**Need interactive UI for users?**
+→ Complex plugin with Application + API
+
+**Need scheduled tasks?**
+→ Use CronTask handler
+
+**Need to customize search dropdowns?**
+→ Use search result filter protocols
+
+**Need to add buttons to notes?**
+→ Use ActionButton handler
+
+---
+
+## Architectural Patterns (High-Level)
+
+The number of handlers in a plugin is the best proxy for complexity.
+Always start with `echo "plugin_name" | uv run canvas init` and adapt from there.
+
+### Single Handler Plugins (1 protocol)
+
+**When:** One trigger, one response, no user interaction
+
+**Examples:**
+- Event → Alert (vitals trigger banner)
+- Event → Task (lab order creates follow-up task)
+- Questionnaire response processing
+- Webhook receiver (external system posts data)
+
+**Architecture decisions:**
+- One file in `protocols/`
+- No `api/` directory needed
+- No `applications/` directory needed
+- 0-2 secrets (maybe API key for webhook auth)
+
+---
+
+### Multi-Handler Plugins (2-5 protocols)
+
+**When:** Multiple triggers OR trigger + UI display OR inbound + outbound integration
+
+**Examples:**
+- Respond to multiple event types (vitals AND labs AND diagnoses)
+- Event handler + API endpoint for external queries
+- ActionButton + display handler pair
+- Scheduled task + event-driven updates
+
+**Architecture decisions:**
+- Multiple files in `protocols/` or separate into `handlers/`
+- May need `api/` for HTTP endpoints
+- Consider `utils/` for shared logic
+- 2-5 secrets typical
+
+**Handler combinations:**
+- BaseProtocol + BaseProtocol (multiple events)
+- BaseProtocol + SimpleAPI (event + webhook)
+- ActionButton + SimpleAPI (button + display)
+- CronTask + BaseProtocol (scheduled + reactive)
+
+---
+
+### Application Plugins (1+ Application handlers)
+
+**When:** Interactive UI that users launch from Canvas
+
+**Examples:**
+- Patient-specific tool launched from chart
+- Global utility launched from app drawer
+- Multi-step workflow with user interaction
+
+**Architecture decisions:**
+- `applications/` directory with Application handler
+- `api/` directory for backend endpoints serving UI
+- `templates/` for HTML
+- `static/` for CSS/JS if needed
+- Application opens modal/panel, API serves content
+- Consider scope: `patient_specific` vs `global`
+
+**Handler combinations:**
+- Application + SimpleAPI (minimum for UI app)
+- Application + SimpleAPI + BaseProtocol (UI + background processing)
+
+---
+
+### LLM-Integrated Plugins
+
+**When:** AI/ML processing of clinical data, voice, or text
+
+**Examples:**
+- Voice transcription and command generation
+- Clinical decision support with LLM reasoning
+- Automated documentation from conversations
+
+**Architecture decisions:**
+- `llms/` directory for LLM client abstractions
+- Support multiple providers (OpenAI, Anthropic, Google)
+- Separate prompt management from LLM calls
+- Heavy use of secrets for API keys and configuration
+- Consider `structures/` for complex data models
+- May need WebSocket for real-time streaming
+
+**Typical secrets:** 10+ (LLM keys, configuration flags, feature toggles)
+
+---
+
+### Extreme Complexity (10+ handlers)
+
+**Real-world example:** Hyperscribe (12 protocols, 1 application, 123 files, 26 secrets)
+
+**When:** Full-featured product, not a simple integration
+
+**Characteristics:**
+- Multiple ActionButtons for different entry points
+- Multiple display handlers for different views
+- Background processing handlers
+- WebSocket for real-time updates
+- Extensive command/data structure libraries
+- Custom tuning and configuration UIs
+
+**Architecture decisions:**
+- `handlers/` instead of `protocols/` (semantic clarity at scale)
+- `commands/` for domain-specific command builders
+- `structures/` for data models
+- `libraries/` for shared utilities
+- Version tagging in manifest
+- Extensive secrets for configuration flexibility
+
+---
+
+## Pattern Selection from Spec
+
+When reading a `plugin-spec.md`, map to patterns:
+
+| Spec says... | Pattern |
+|--------------|---------|
+| Single event trigger, alert/task effect | Single Handler |
+| Multiple event triggers | Multi-Handler |
+| External webhook | Single Handler (SimpleAPI) |
+| Questionnaire processing | Single Handler |
+| Scheduled/periodic | Single Handler (CronTask) |
+| "Interactive UI" or "panel" | Application Plugin |
+| "Custom UI" with backend | Application + API |
+| LLM/AI processing | LLM-Integrated |
+| Multiple entry points | Multi-Handler with ActionButtons |
+
+---
+
+## Directory Evolution
+
+As plugins grow, directory structure evolves:
+
+```
+Simple (1 handler):
+plugin/
+├── protocols/handler.py
+├── CANVAS_MANIFEST.json
+└── README.md
+
+Medium (3-5 handlers):
+plugin/
+├── protocols/
+│   ├── event_handler.py
+│   ├── webhook.py
+│   └── cron_task.py
+├── utils/helpers.py
+├── CANVAS_MANIFEST.json
+└── README.md
+
+Complex (Application + handlers):
+plugin/
+├── applications/app.py
+├── api/routes.py
+├── protocols/listener.py
+├── templates/index.html
+├── static/css/, js/
+├── utils/
+├── CANVAS_MANIFEST.json
+└── README.md
+
+Extreme (product-level):
+plugin/
+├── handlers/          # 10+ handler files
+├── commands/          # Domain command builders
+├── structures/        # Data models
+├── libraries/         # Shared utilities
+├── llms/              # LLM integrations
+├── api/
+├── applications/
+├── templates/
+├── static/
+├── CANVAS_MANIFEST.json
+└── README.md
+```
+
+---
+
+## Secrets Complexity Guide
+
+| Complexity | Typical Secrets |
+|------------|-----------------|
+| Simple | 0-2 (maybe webhook auth) |
+| Medium | 2-5 (API keys, config) |
+| Complex | 5-10 (LLM keys, feature flags) |
+| Extreme | 10-30 (full configuration system) |
+
+If a spec requires many configurable behaviors, plan for more secrets.
