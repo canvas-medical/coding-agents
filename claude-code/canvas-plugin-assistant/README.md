@@ -10,12 +10,12 @@ A Claude Code plugin that helps solutions consultants build Canvas Medical plugi
    /plugin install canvas-plugin-assistant@canvas-medical
    ```
 
-2. **Start building** by describing the problem you want to solve:
+2. **Start building** with the `/new-plugin` command:
    ```
-   "I need to build a plugin that alerts providers when a patient has high blood pressure"
+   /new-plugin
    ```
 
-   Or use the `/new-plugin` command to start a guided brainstorming session.
+   This launches a guided brainstorming session that will ask clarifying questions and produce a plugin specification for your approval.
 
 ## What This Assistant Does
 
