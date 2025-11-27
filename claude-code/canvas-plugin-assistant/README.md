@@ -4,21 +4,18 @@ A Claude Code plugin that helps solutions consultants build Canvas Medical plugi
 
 ## Quick Start
 
-1. **Copy this configuration** to your project directory:
-   ```bash
-   cp -r ~/canvas-plugin-assistant/.claude /path/to/your/project/
+1. **Install the plugin** via Claude Code marketplace:
+   ```
+   /plugin marketplace add canvas-medical/coding-agents/claude-code
+   /plugin install canvas-plugin-assistant@canvas-medical
    ```
 
-2. **Start Claude Code** in your project directory:
-   ```bash
-   cd /path/to/your/project
-   claude
-   ```
-
-3. **Start building** by describing the problem you want to solve:
+2. **Start building** by describing the problem you want to solve:
    ```
    "I need to build a plugin that alerts providers when a patient has high blood pressure"
    ```
+
+   Or use the `/new-plugin` command to start a guided brainstorming session.
 
 ## What This Assistant Does
 

@@ -1,0 +1,15 @@
+{
+  "name": "canvas-medical",
+  "owner": {
+    "name": "Canvas Medical",
+    "url": "https://github.com/canvas-medical"
+  },
+  "description": "Canvas Medical development tools for Claude Code",
+  "plugins": [
+    {
+      "name": "canvas-plugin-assistant",
+      "description": "Guided Canvas plugin development with SDK reference, patterns, security review, and deployment workflows",
+      "source": "./canvas-plugin-assistant"
+    }
+  ]
+}
