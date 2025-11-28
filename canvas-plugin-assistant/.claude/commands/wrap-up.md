@@ -61,7 +61,38 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 4. Final Verdict
+### 4. License Check
+
+Check for any license file or license mentions:
+
+```bash
+ls -la LICENSE* license* 2>/dev/null
+grep -i "license\|MIT\|BSD\|Apache\|GPL" README.md 2>/dev/null
+```
+
+**⚠️ IMPORTANT: Plugins built for specific customers should NOT have open source licenses.**
+
+If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL, etc.), ask the user:
+
+```json
+{
+  "questions": [
+    {
+      "question": "I found a license file or license mention. Is this plugin intended for open source distribution?",
+      "header": "License check",
+      "options": [
+        {"label": "Yes, open source", "description": "This is a public/community plugin"},
+        {"label": "No, remove it", "description": "This is a customer-specific plugin, remove the license"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+If user says to remove it, delete the LICENSE file and remove any license section from the README.
+
+### 5. Final Verdict
 
 After all checks, present a summary:
 
@@ -73,6 +104,7 @@ After all checks, present a summary:
 | Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
+| License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
 
 ### Verdict
 
