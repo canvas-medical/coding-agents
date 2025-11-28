@@ -41,7 +41,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 | `/new-plugin` | Start brainstorming a new plugin specification |
 | `/analyze-instance` | Analyze Canvas instance configuration |
 | `/deploy` | Deploy plugin and monitor logs |
-| `/spec` | View or edit current plugin specification |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
+| `/wrap-up` | Final checklist before calling a plugin "done" |
 
 See [canvas-plugin-assistant/README.md](canvas-plugin-assistant/README.md) for full documentation.

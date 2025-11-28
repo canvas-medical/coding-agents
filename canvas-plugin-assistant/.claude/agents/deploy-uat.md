@@ -66,17 +66,7 @@ uv run canvas validate-manifest .
 
 # Run tests
 uv run pytest
-
-# Test in restricted Python environment (catches disallowed modules)
-uv run canvas run-plugin .
 ```
-
-The `run-plugin` command is **critical** - it runs the plugin in a sandboxed environment that mimics the Canvas runtime. This catches:
-- Disallowed module imports (e.g., `os`, `subprocess`, `socket`)
-- Import errors from missing dependencies
-- Syntax errors in protocol handlers
-
-If `run-plugin` fails with module restriction errors, the plugin will fail on the Canvas instance too. Fix these before deploying.
 
 Report any issues and ask if user wants to proceed.
 
@@ -247,7 +237,7 @@ For production deployments, always confirm:
 3. Verify all referenced classes exist
 
 ### Restricted Module Errors
-If `run-plugin` fails with module restriction errors like:
+If deployment fails with module restriction errors like:
 ```
 RestrictedPython error: Module 'os' is not allowed
 ```
@@ -261,7 +251,7 @@ Common disallowed modules and alternatives:
 | `pickle` | Use `json` for serialization |
 | `importlib` | Static imports only |
 
-Fix by removing or replacing the restricted imports, then re-run `uv run canvas run-plugin .`
+Fix by removing or replacing the restricted imports and redeploy.
 
 ## Integration with Other Agents
 

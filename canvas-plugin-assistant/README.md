@@ -41,8 +41,8 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 | `/new-plugin` | Start brainstorming a new plugin specification |
 | `/analyze-instance` | Analyze Canvas instance configuration |
 | `/deploy` | Deploy plugin and monitor logs |
-| `/spec` | View or edit current plugin specification |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
+| `/wrap-up` | Final checklist before calling a plugin "done" |
 
 ## Credentials Setup
 
@@ -131,8 +131,8 @@ Claude: Perfect. Here's what I'm thinking:
 │   ├── new-plugin.md          # /new-plugin
 │   ├── analyze-instance.md    # /analyze-instance
 │   ├── deploy.md              # /deploy
-│   ├── spec.md                # /spec
-│   └── coverage.md            # /coverage
+│   ├── coverage.md            # /coverage
+│   └── wrap-up.md             # /wrap-up
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   │   ├── SKILL.md

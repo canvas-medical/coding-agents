@@ -221,10 +221,7 @@ Run pre-deploy checks:
 
 ```bash
 uv run canvas validate-manifest .
-uv run canvas run-plugin .
 ```
-
-If `run-plugin` fails with restricted module errors, fix imports and retry.
 
 ### Step 5: Security Check
 
