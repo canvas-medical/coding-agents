@@ -1,0 +1,21 @@
+{
+  "name": "canvas-medical",
+  "owner": {
+    "name": "Canvas Medical",
+    "email": "ai@canvasmedical.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for Canvas Medical development",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "canvas-plugin-assistant",
+      "source": "./canvas-plugin-assistant",
+      "description": "Helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows",
+      "version": "1.0.0",
+      "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
+      "category": "development"
+    }
+  ]
+}

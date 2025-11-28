@@ -4,18 +4,7 @@ A Claude Code plugin that helps solutions consultants build Canvas Medical plugi
 
 ## Quick Start
 
-1. **Install the plugin** via Claude Code marketplace:
-   ```
-   /plugin marketplace add canvas-medical/coding-agents/claude-code
-   /plugin install canvas-plugin-assistant@canvas-medical
-   ```
-
-2. **Start building** with the `/new-plugin` command:
-   ```
-   /new-plugin
-   ```
-
-   This launches a guided brainstorming session that will ask clarifying questions and produce a plugin specification for your approval.
+Run `/new-plugin` to start a guided brainstorming session that asks clarifying questions and produces a plugin specification for your approval.
 
 ## What This Assistant Does
 

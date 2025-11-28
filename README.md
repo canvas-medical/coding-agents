@@ -6,10 +6,8 @@ You can learn more about how they work here: https://code.claude.com/docs/en/plu
 
 ## Installation
 
-Add the Canvas Medical marketplace and install plugins:
-
 ```
-/plugin marketplace add canvas-medical/coding-agents/claude-code
+/plugin marketplace add canvas-medical/coding-agents
 /plugin install canvas-plugin-assistant@canvas-medical
 ```
 
