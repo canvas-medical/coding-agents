@@ -184,12 +184,23 @@ Write this to `plugin-spec.md` in the current working directory:
 
 When user says "approved", "looks good", "let's build it", or similar:
 
-### Step 1: Create Scaffold
+### Step 1: Create Scaffold (MANDATORY FIRST STEP)
+
+**⚠️ CRITICAL: You MUST run `canvas init` IMMEDIATELY after approval. Do NOT create any files or directories manually. The scaffold command creates the correct project structure.**
 
 ```bash
 echo "{plugin_name_from_spec}" | uv run canvas init
 cd {plugin_name}
 ```
+
+**Run this command BEFORE doing anything else.** Do not:
+- Create directories manually
+- Write boilerplate files
+- Set up project structure yourself
+
+The `canvas init` command creates the correct structure. Only AFTER it completes should you proceed to edit the generated files.
+
+You will likely need to remove some unused placeholder files (e.g., `protocols/my_protocol.py`, `test_models.py`) - that's fine.
 
 ### Step 2: Determine Pattern
 
@@ -207,7 +218,9 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 
 ### Step 3: Implement
 
-1. **Edit the protocol handler** created by `canvas init`
+**Edit the files created by `canvas init` - do NOT create new files unless and until necessary.**
+
+1. **Edit the protocol handler** created by `canvas init` (typically `protocols/my_protocol.py`)
 2. **Use the canvas-sdk skill** to look up:
    - Exact EventType enum values
    - Effect class parameters
