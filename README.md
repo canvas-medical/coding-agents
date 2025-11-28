@@ -6,9 +6,18 @@ You can learn more about how they work here: https://code.claude.com/docs/en/plu
 
 ## Installation
 
+Clone this repository, then copy the plugin's `.claude` directory to your plugin working directory (likely one or two levels up from the manifest file of your plugin):
+
+```bash
+cp -r canvas-plugin-assistant/.claude /path/to/your/plugin/working/directory
 ```
-/plugin marketplace add canvas-medical/coding-agents
-/plugin install canvas-plugin-assistant@canvas-medical
+
+### Dependencies
+
+For log monitoring during deployment and user acceptance testing, install `expect` (provides the `unbuffered` command):
+
+```bash
+brew install expect
 ```
 
 ## Available Plugins

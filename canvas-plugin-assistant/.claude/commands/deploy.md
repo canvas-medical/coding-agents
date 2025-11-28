@@ -13,7 +13,7 @@ Use the **deploy-uat** agent to handle deployment and testing.
    - `uv run canvas run-plugin .` (catches restricted module errors)
 3. Ask which environment to deploy to
 4. **Start log monitoring BEFORE install** (background task with `run_in_background: true`):
-   - `uv run canvas logs --host {hostname}`
+   - `unbuffered uv run canvas logs --host {hostname}`
    - This captures installation errors and runtime behavior
 5. Deploy using `uv run canvas install`
 6. For UAT:

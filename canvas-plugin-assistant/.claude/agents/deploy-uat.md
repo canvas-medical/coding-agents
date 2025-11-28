@@ -88,7 +88,7 @@ Start log streaming as a **background task**:
 
 ```bash
 # Start with run_in_background: true
-uv run canvas logs --host {hostname}
+unbuffered uv run canvas logs --host {hostname}
 ```
 
 Save the `bash_id` from the background task - you'll need it to retrieve logs.
