@@ -7,8 +7,7 @@
       "Bash(uv add:*)",
       "Bash(tree:*)",
       "Bash(cat:*)",
-      "Skill(canvas-sdk)",
-      "Skill(plugin-patterns)",
+      "Skill",
       "WebFetch(domain:*.canvasmedical.com)"
     ],
     "deny": [],
