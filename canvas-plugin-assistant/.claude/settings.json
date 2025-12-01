@@ -6,6 +6,7 @@
       "Bash(uv sync:*)",
       "Bash(uv add:*)",
       "Bash(unbuffer uv run:*)",
+      "Bash(curl https://images.prismic.io/canvas-website/:*)",
       "Bash(tree:*)",
       "Bash(cat:*)",
       "Skill",
