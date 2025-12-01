@@ -14,7 +14,7 @@ cp -r canvas-plugin-assistant/.claude /path/to/your/plugin/working/directory
 
 ### Dependencies
 
-For log monitoring during deployment and user acceptance testing, install `expect` (provides the `unbuffered` command):
+For log monitoring during deployment and user acceptance testing, install `expect` (provides the `unbuffer` command):
 
 ```bash
 brew install expect

@@ -524,7 +524,7 @@ def test_bp_alert_triggers_on_high_bp():
 uv run canvas install my_plugin --host plugin-testing
 
 # Monitor logs (use unbuffered for real-time output)
-unbuffered uv run canvas logs --host plugin-testing
+unbuffer uv run canvas logs --host plugin-testing
 
 # Perform manual tests and verify behavior
 ```
