@@ -91,37 +91,6 @@ root_password=...
 
 ~75% of real-world plugins are simple implementations.
 
-## Example Session
-
-```
-You: I need to build a plugin for a customer that wants to remind staff
-     to call patients before fasting lab appointments.
-
-Claude: I can help design that! Let me understand the requirements...
-
-        When is the reminder needed - when the lab is first ordered,
-        or closer to the appointment date?
-
-You: When the lab is ordered, so they can schedule the call.
-
-Claude: Got it. And which staff should receive the reminder -
-        a specific team like scheduling, or the ordering provider?
-
-You: The scheduling team.
-
-Claude: Perfect. Here's what I'm thinking:
-
-        **Trigger**: LAB_ORDER_COMMAND__POST_COMMIT
-        **Condition**: Lab has fasting requirement checked
-        **Effect**: Create task for scheduling team
-
-        This is a simple plugin - just one event handler.
-
-        Let me write up the full specification...
-
-[Claude produces plugin-spec.md with full details]
-```
-
 ## Files Included
 
 ```

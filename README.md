@@ -4,20 +4,26 @@ Plugins for Claude Code are combinations of skills, agents, slash commands, and 
 
 You can learn more about how they work here: https://code.claude.com/docs/en/plugins
 
-## Installation
+## Requirements
 
-Clone this repository, then copy the plugin's `.claude` directory to your plugin working directory (likely one or two levels up from the manifest file of your plugin):
+These plugins requires a recent version of Claude Code. Always update claude to ensure you have the latest features.
 
 ```bash
-cp -r canvas-plugin-assistant/.claude /path/to/your/plugin/working/directory
-```
-
-### Dependencies
+ claude update
+ ```
 
 For log monitoring during deployment and user acceptance testing, install `expect` (provides the `unbuffer` command):
 
 ```bash
 brew install expect
+```
+
+## Installation
+
+Clone this repository, then copy your target plugin's `.claude` directory to your plugin working directory (likely one or two levels up from the manifest file of your plugin). Here's how to do it with the Canvas plugin assistant, for example:
+
+```bash
+cp -r canvas-plugin-assistant/.claude /path/to/your/plugin/working/directory
 ```
 
 ## Available Plugins
