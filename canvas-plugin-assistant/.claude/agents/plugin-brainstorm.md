@@ -243,23 +243,39 @@ If the plugin has **any SimpleAPI handlers**, invoke the **api-security skill** 
 - SessionCredential checks patient vs staff appropriately
 - No unauthenticated endpoints exposed
 
-### Step 6: Offer Testing
+### Step 6: Write Tests
 
-Ask if user wants to:
-- Write unit tests (invoke **testing skill**)
-- Deploy for UAT (use `/deploy` command)
+**Always write unit tests.** Invoke the **testing skill** and write tests targeting 90% coverage.
+
+After tests pass, **immediately proceed to Step 7**.
+
+### Step 7: Deploy for UAT
+
+After tests are written and passing, tell the user:
+
+> "The plugin is implemented and tested. The next step is to deploy it to a Canvas instance for user acceptance testing.
+>
+> Ready to deploy? I'll guide you through deploying and monitoring logs."
+
+Then use the `/deploy` command to start the deployment and UAT process.
+
+**Do NOT stop and wait after completing tests.** Always move to deployment.
 
 ## Guidelines
 
-1. **Maximum 2 AskUserQuestion calls** - Don't over-question. Get essentials, write spec.
+1. **Always drive to the next step** - Never leave the user wondering what to do next. After each step, immediately tell them what's next and start doing it.
 
-2. **Use the canvas-sdk skill** - Look up actual event names and effect classes.
+2. **Maximum 2 AskUserQuestion calls** - Don't over-question. Get essentials, write spec.
 
-3. **Start simple** - Recommend simplest architecture. ~75% of plugins are 1-2 files.
+3. **Use the canvas-sdk skill** - Look up actual event names and effect classes.
 
-4. **Be specific** - Use real Canvas SDK names like `VITALS_COMMAND__POST_COMMIT` and `AddBannerAlert`.
+4. **Start simple** - Recommend simplest architecture. ~75% of plugins are 1-2 files.
 
-5. **Answers are final** - Once AskUserQuestion returns, those answers are recorded. Use them.
+5. **Be specific** - Use real Canvas SDK names like `VITALS_COMMAND__POST_COMMIT` and `AddBannerAlert`.
+
+6. **Answers are final** - Once AskUserQuestion returns, those answers are recorded. Use them.
+
+7. **Complete the full workflow** - The workflow is: Spec → Implement → Test → Deploy → UAT. Don't stop until the user is doing UAT.
 
 ## Example Flow
 

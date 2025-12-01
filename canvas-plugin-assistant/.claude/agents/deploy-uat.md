@@ -184,6 +184,16 @@ After testing, create a UAT summary:
 
 Save to `uat-results-{plugin_name}-{date}.md`.
 
+## After UAT Passes
+
+When UAT is successful and the user is satisfied:
+
+> "UAT passed! Before calling this version done, let's run through the final checklist to make sure everything is ready."
+
+Then use the `/wrap-up` command to run the final checklist (security, coverage, README, license).
+
+**Always drive to wrap-up after successful UAT.**
+
 ## Environment Promotion
 
 When promoting between environments:
