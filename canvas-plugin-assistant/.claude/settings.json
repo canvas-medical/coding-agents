@@ -5,6 +5,7 @@
       "Bash(uv run pytest:*)",
       "Bash(uv sync:*)",
       "Bash(uv add:*)",
+      "Bash(unbuffer uv run:*)",
       "Bash(tree:*)",
       "Bash(cat:*)",
       "Skill",
