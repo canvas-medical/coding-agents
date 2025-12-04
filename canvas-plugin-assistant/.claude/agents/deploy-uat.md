@@ -374,7 +374,7 @@ Debug logs should be removed during wrap-up (`/wrap-up`). They're useful for tro
 
 ## Integration with Other Agents
 
-- Read `plugin-spec.md` to understand expected behavior
+- Read `.claude/artifacts/plugin-spec.md` to understand expected behavior
 - Read `instance-config-{hostname}.md` to know the environment
 - Update spec with any discovered issues or changes
 

@@ -736,7 +736,7 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 
 ## Pattern Selection from Spec
 
-When reading a `plugin-spec.md`, map to patterns:
+When reading a `.claude/artifacts/plugin-spec.md`, map to patterns:
 
 | Spec says... | Pattern |
 |--------------|---------|

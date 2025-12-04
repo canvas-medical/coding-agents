@@ -171,7 +171,19 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 7. Final Git Commit and Push
+### 7. Export Session History
+
+**Save a record of this development session for future reference.**
+
+Run the history export script:
+
+```bash
+python .claude/scripts/export-session-history.py
+```
+
+This creates `.claude/artifacts/claude-history-{sessionId}.txt` containing all messages from this session. The file is overwritten on each run, so there's one complete file per session.
+
+### 8. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 

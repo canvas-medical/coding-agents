@@ -31,10 +31,10 @@ Tell the user the branch name you created.
    - What should trigger the plugin?
    - What should the plugin create or do?
 4. Map answers to Canvas SDK concepts (events, effects)
-5. Write a `plugin-spec.md` file with the specification
+5. Write a `.claude/artifacts/plugin-spec.md` file with the specification
 6. Wait for user approval before any implementation
 
-If a `plugin-spec.md` already exists in the current directory, ask if they want to:
+If a `.claude/artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
 - Continue refining the existing spec
 
