@@ -2,6 +2,47 @@
 
 This document provides testing patterns for Canvas plugins.
 
+## Test Data: Use Manual Mocking, NOT Factories
+
+**Do NOT use factory libraries** (factory_boy, etc.) or look for existing factories. They don't exist for Canvas plugins and you don't need them.
+
+**Always create test data manually using MagicMock:**
+
+```python
+# GOOD - manual mock, simple and direct
+mock_event = MagicMock()
+mock_event.context = {"patient": {"id": "test-123"}}
+mock_event.target.instance.blood_pressure_systolic = 150
+
+# BAD - don't do this
+from some_factory import EventFactory  # Doesn't exist
+event = EventFactory.create(patient_id="test-123")  # Won't work
+```
+
+**Why manual mocking:**
+- Canvas SDK objects are simple to mock
+- No factory setup/maintenance overhead
+- Tests are explicit about what data matters
+- MagicMock handles any attribute access automatically
+
+**Pattern: Create fixtures for common test data in conftest.py, then customize per-test:**
+
+```python
+# conftest.py
+@pytest.fixture
+def mock_event():
+    event = MagicMock()
+    event.context = {"patient": {"id": "test-patient"}}
+    return event
+
+# test_handler.py
+def test_high_bp(mock_event):
+    mock_event.target.instance.blood_pressure_systolic = 180  # Customize for this test
+    # ...
+```
+
+---
+
 ## Test Setup
 
 ### Directory Structure

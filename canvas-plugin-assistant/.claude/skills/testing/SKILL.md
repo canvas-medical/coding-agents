@@ -32,6 +32,10 @@ uv run pytest --cov=plugin_name --cov-report=html
 
 Aim for **90% coverage** on plugin code. If coverage is below 90%, offer to write additional tests.
 
+## Test Data Approach
+
+**Use manual mocking with MagicMock, NOT factory libraries.** Factories don't exist for Canvas plugins. Create test data directly in fixtures and customize per-test. See `testing_context.txt` for patterns.
+
 ## Documentation
 
 Reference the `testing_context.txt` file in this skill directory for:
