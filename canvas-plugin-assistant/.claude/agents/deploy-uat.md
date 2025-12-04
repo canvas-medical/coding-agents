@@ -263,6 +263,56 @@ Common disallowed modules and alternatives:
 
 Fix by removing or replacing the restricted imports and redeploy.
 
+### Unclear Logs / Can't Tell What's Happening
+
+When logs aren't informative enough to debug an issue, **add strategic log statements** to trace execution flow.
+
+**Step 1: Add debug logs at key points**
+
+```python
+from logger import log
+
+def compute(self) -> list[Effect]:
+    log.info(f"[DEBUG] Handler triggered, event type: {self.event.type}")
+
+    patient = self.event.context.get("patient")
+    log.info(f"[DEBUG] Patient context: {patient}")
+
+    if not patient:
+        log.info("[DEBUG] No patient context, returning empty")
+        return []
+
+    vitals = self.event.target.instance
+    log.info(f"[DEBUG] Vitals: systolic={vitals.blood_pressure_systolic}, diastolic={vitals.blood_pressure_diastolic}")
+
+    if vitals.blood_pressure_systolic >= 140:
+        log.info(f"[DEBUG] Threshold met, creating alert")
+        return [AddBannerAlert(...).apply()]
+
+    log.info(f"[DEBUG] Threshold not met, no alert")
+    return []
+```
+
+**Step 2: Redeploy and test again**
+
+```bash
+uv run canvas install {plugin_name} --host {hostname}
+```
+
+**Step 3: Check logs for the [DEBUG] entries**
+
+Use BashOutput to retrieve logs and look for your debug markers.
+
+**Step 4: Remove debug logs after issue is resolved**
+
+Debug logs should be removed during wrap-up (`/wrap-up`). They're useful for troubleshooting but shouldn't ship in the final version.
+
+**Common things to log:**
+- Event type and context at handler entry
+- Key data values being evaluated
+- Decision points (which branch was taken)
+- What effect is being returned (or why none)
+
 ## Integration with Other Agents
 
 - Read `plugin-spec.md` to understand expected behavior

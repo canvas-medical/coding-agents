@@ -37,7 +37,40 @@ uv run pytest --cov=. --cov-report=term-missing
 
 **If no tests exist:** Flag this as a blocker.
 
-### 3. README Review
+### 3. Debug Log Cleanup
+
+Check for debug logging statements that were added during UAT troubleshooting:
+
+```bash
+grep -rn "\[DEBUG\]\|# DEBUG\|# TODO\|print(" --include="*.py" .
+```
+
+Also look for excessive logging that should be removed:
+
+```bash
+grep -rn "log\.\(info\|debug\|warning\)" --include="*.py" . | head -30
+```
+
+**Review each log statement:**
+- Remove any `[DEBUG]` prefixed logs - these were for troubleshooting
+- Remove `print()` statements - use logger instead or remove entirely
+- Keep meaningful operational logs (errors, important business events)
+- Remove verbose logs that dump full objects or contexts
+
+**Good logs to keep:**
+```python
+log.info(f"Alert created for patient {patient_id}")
+log.warning(f"Missing required field: {field_name}")
+```
+
+**Logs to remove:**
+```python
+log.info(f"[DEBUG] Full event context: {self.event.context}")  # Too verbose
+log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
+print(f"vitals: {vitals}")  # Should use logger, and too verbose
+```
+
+### 4. README Review
 
 Read the plugin's README.md and verify:
 
@@ -61,7 +94,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 4. License Check
+### 5. License Check
 
 Check for any license file or license mentions:
 
@@ -92,7 +125,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 5. Final Verdict
+### 6. Final Verdict
 
 After all checks, present a summary:
 
@@ -103,6 +136,7 @@ After all checks, present a summary:
 |-------|--------|-------|
 | Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
+| Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
 | License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
 
