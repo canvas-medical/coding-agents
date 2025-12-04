@@ -24,17 +24,25 @@ Use the **deploy-uat** agent to handle deployment and testing.
 
 3. Ask which environment to deploy to (only if no valid `$1` was provided)
 
-4. Run pre-deployment checks:
+4. **Version bump (if changes detected):**
+   - Check `git status --porcelain` for uncommitted changes
+   - Ask user: Patch (bug fix), Minor (new feature), or Major (breaking change)?
+   - Read current `plugin_version` from `CANVAS_MANIFEST.json`
+   - Bump version: Patch increments Z, Minor increments Y and resets Z, Major increments X and resets Y,Z
+   - Update `CANVAS_MANIFEST.json` with new version
+   - Report: "Bumped version: X.Y.Z → X.Y.Z+1"
+
+5. Run pre-deployment validation:
    - `uv run canvas validate-manifest .`
    - `uv run pytest` (if tests exist)
 
-5. **Start log monitoring BEFORE install** (background task with `run_in_background: true`):
+6. **Start log monitoring BEFORE install** (background task with `run_in_background: true`):
    - `unbuffer uv run canvas logs --host {hostname}`
    - This captures installation errors and runtime behavior
 
-6. Deploy using `uv run canvas install`
+7. Deploy using `uv run canvas install`
 
-7. For UAT:
+8. For UAT:
    - Tell user logs are running, to test and say "check the logs" when ready
    - Use BashOutput to retrieve and analyze log entries on user request
    - Use KillShell when testing is complete

@@ -56,7 +56,51 @@ Use AskUserQuestion to confirm:
 }
 ```
 
-### Step 2: Pre-Deployment Checks
+### Step 2: Version Bump (Pre-Deployment)
+
+**Before deploying, bump the plugin version if there are changes.**
+
+1. Check for uncommitted changes or changes since last deploy:
+   ```bash
+   git status --porcelain
+   git diff --name-only HEAD~1
+   ```
+
+2. If there are changes, determine version bump type and ask user:
+
+```json
+{
+  "questions": [
+    {
+      "question": "What type of change is this deployment?",
+      "header": "Version bump",
+      "options": [
+        {"label": "Patch (0.0.X)", "description": "Bug fixes, minor tweaks, no new functionality"},
+        {"label": "Minor (0.X.0)", "description": "New features, backward-compatible changes"},
+        {"label": "Major (X.0.0)", "description": "Breaking changes, major refactors"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+3. Read the current version from `CANVAS_MANIFEST.json`:
+   ```python
+   # Find and parse: "plugin_version": "X.Y.Z"
+   ```
+
+4. Bump the version accordingly:
+   - **Patch**: `0.0.1` → `0.0.2`
+   - **Minor**: `0.0.2` → `0.1.0` (reset patch to 0)
+   - **Major**: `0.1.5` → `1.0.0` (reset minor and patch to 0)
+
+5. Update the `plugin_version` field in `CANVAS_MANIFEST.json`
+
+6. Report the version change:
+   > "Bumped version: 0.0.1 → 0.0.2"
+
+### Step 3: Pre-Deployment Validation
 
 Run these checks before deploying:
 
@@ -70,7 +114,7 @@ uv run pytest
 
 Report any issues and ask if user wants to proceed.
 
-### Step 3: Start Log Monitoring (BEFORE install)
+### Step 4: Start Log Monitoring (BEFORE install)
 
 **Always start logs before deploying** - this captures installation errors.
 
@@ -83,7 +127,7 @@ unbuffer uv run canvas logs --host {hostname}
 
 Save the `bash_id` from the background task - you'll need it to retrieve logs.
 
-### Step 4: Deploy Plugin
+### Step 5: Deploy Plugin
 
 Execute deployment:
 
@@ -115,7 +159,7 @@ After install completes, tell the user:
 - Use **KillShell** to stop the background log stream
 - Summarize what was observed during the session
 
-### Step 5: UAT Guidance
+### Step 6: UAT Guidance
 
 Guide the user through testing:
 
@@ -144,7 +188,7 @@ Based on your plugin specification, test these scenarios:
 - [ ] Is timing appropriate?
 ```
 
-### Step 6: Document Results
+### Step 7: Document Results
 
 After testing, create a UAT summary:
 
