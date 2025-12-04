@@ -13,7 +13,7 @@
       "name": "canvas-plugin-assistant",
       "source": "./canvas-plugin-assistant",
       "description": "Helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
       "category": "development"
     }

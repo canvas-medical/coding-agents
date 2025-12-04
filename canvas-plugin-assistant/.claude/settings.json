@@ -10,7 +10,8 @@
       "Bash(tree:*)",
       "Bash(cat:*)",
       "Skill",
-      "WebFetch(domain:*.canvasmedical.com)"
+      "WebFetch(domain:*.canvasmedical.com)",
+      "Read(~/.canvas/**)"
     ],
     "deny": [],
     "ask": []
