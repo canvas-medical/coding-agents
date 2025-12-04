@@ -21,7 +21,24 @@ grep -r "SimpleAPI\|WebSocket" --include="*.py" .
 
 **If no handlers:** Mark security as N/A.
 
-### 2. Test Coverage
+### 2. Database Performance Review
+
+Check if the plugin queries Canvas data models:
+
+```bash
+grep -rn "\.objects\." --include="*.py" .
+```
+
+**If data queries exist:**
+- Invoke the **database-performance** skill
+- Look for N+1 query patterns (queries inside loops)
+- Check for missing `select_related()` on foreign key access
+- Check for missing `prefetch_related()` on reverse relations
+- Report any performance issues found
+
+**If no data queries:** Mark database performance as N/A.
+
+### 3. Test Coverage
 
 Run coverage check:
 
@@ -37,7 +54,7 @@ uv run pytest --cov=. --cov-report=term-missing
 
 **If no tests exist:** Flag this as a blocker.
 
-### 3. Debug Log Cleanup
+### 4. Debug Log Cleanup
 
 Check for debug logging statements that were added during UAT troubleshooting:
 
@@ -70,7 +87,7 @@ log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
 print(f"vitals: {vitals}")  # Should use logger, and too verbose
 ```
 
-### 4. README Review
+### 5. README Review
 
 Read the plugin's README.md and verify:
 
@@ -94,7 +111,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 5. License Check
+### 6. License Check
 
 Check for any license file or license mentions:
 
@@ -125,7 +142,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 6. Final Verdict
+### 7. Final Verdict
 
 After all checks, present a summary:
 
@@ -135,6 +152,7 @@ After all checks, present a summary:
 | Check | Status | Notes |
 |-------|--------|-------|
 | Security | ✅ Pass / ⚠️ Issues / N/A | ... |
+| DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
@@ -171,7 +189,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 7. Export Session History
+### 8. Export Session History
 
 **Save a record of this development session for future reference.**
 
@@ -183,7 +201,7 @@ python .claude/scripts/export-session-history.py
 
 This creates `.claude/artifacts/claude-history-{sessionId}.txt` containing all messages from this session. The file is overwritten on each run, so there's one complete file per session.
 
-### 8. Final Git Commit and Push
+### 9. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 

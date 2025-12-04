@@ -1,0 +1,287 @@
+# Canvas Plugin Database Performance Guide
+
+This document provides database query optimization patterns for Canvas plugins using the Canvas SDK data models (Django ORM).
+
+## Understanding N+1 Queries
+
+An N+1 query problem occurs when code executes 1 query to fetch a list, then N additional queries to fetch related data for each item.
+
+### Example N+1 Problem
+
+```python
+# BAD - N+1 queries: 1 query for patients, then N queries for conditions
+patients = Patient.objects.filter(active=True)
+for patient in patients:
+    conditions = patient.conditions.all()  # Query executed for EACH patient!
+    for condition in conditions:
+        process(condition)
+```
+
+If there are 100 patients, this executes 101 queries (1 + 100).
+
+---
+
+## select_related() - For Foreign Keys
+
+Use `select_related()` when accessing a single related object (ForeignKey, OneToOne).
+
+### When to Use
+
+- Accessing `.patient` on a model
+- Accessing `.staff` on a model
+- Accessing `.note` on a model
+- Any attribute that is a ForeignKey
+
+### Example
+
+```python
+# BAD - N+1: fetches note, then separate query for patient
+notes = Note.objects.filter(datetime_of_service__gte=cutoff_date)
+for note in notes:
+    patient_name = note.patient.first_name  # Extra query each time!
+
+# GOOD - single query with JOIN
+notes = Note.objects.filter(datetime_of_service__gte=cutoff_date).select_related('patient')
+for note in notes:
+    patient_name = note.patient.first_name  # No extra query - already loaded
+```
+
+### Chaining select_related
+
+```python
+# Select multiple foreign keys
+notes = Note.objects.select_related('patient', 'originator', 'note_type_version')
+
+# Follow nested relations
+appointments = Appointment.objects.select_related('patient__primary_care_provider')
+```
+
+---
+
+## prefetch_related() - For Reverse Relations & Many-to-Many
+
+Use `prefetch_related()` when accessing collections of related objects.
+
+### When to Use
+
+- Accessing reverse ForeignKey relations (e.g., `patient.conditions.all()`)
+- Accessing ManyToMany fields
+- Any attribute that returns a queryset/collection
+
+### Example
+
+```python
+# BAD - N+1: fetches patients, then separate query for each patient's conditions
+patients = Patient.objects.filter(active=True)
+for patient in patients:
+    for condition in patient.conditions.all():  # Extra query each time!
+        process(condition)
+
+# GOOD - 2 queries total (1 for patients, 1 for all conditions)
+patients = Patient.objects.filter(active=True).prefetch_related('conditions')
+for patient in patients:
+    for condition in patient.conditions.all():  # No extra query - already loaded
+        process(condition)
+```
+
+### Prefetch with Filtering (Prefetch object)
+
+```python
+from django.db.models import Prefetch
+
+# Only prefetch active conditions
+patients = Patient.objects.prefetch_related(
+    Prefetch('conditions', queryset=Condition.objects.filter(status='active'))
+)
+```
+
+---
+
+## Common Canvas SDK Data Model Patterns
+
+### Patient with Related Data
+
+```python
+# BAD
+patients = Patient.objects.all()
+for patient in patients:
+    provider = patient.primary_care_provider  # N+1
+    conditions = patient.conditions.all()      # N+1
+    medications = patient.medications.all()    # N+1
+
+# GOOD
+patients = Patient.objects.select_related(
+    'primary_care_provider'
+).prefetch_related(
+    'conditions',
+    'medications'
+)
+```
+
+### Notes with Patient and Originator
+
+```python
+# BAD
+notes = Note.objects.filter(patient_id=patient_id)
+for note in notes:
+    print(f"{note.originator.first_name}: {note.patient.last_name}")  # 2 extra queries per note!
+
+# GOOD
+notes = Note.objects.filter(patient_id=patient_id).select_related('originator', 'patient')
+```
+
+### Lab Reports with Results
+
+```python
+# BAD
+reports = LabReport.objects.filter(patient_id=patient_id)
+for report in reports:
+    for result in report.results.all():  # N+1
+        process(result)
+
+# GOOD
+reports = LabReport.objects.filter(patient_id=patient_id).prefetch_related('results')
+```
+
+### Appointments with Patient and Provider
+
+```python
+# BAD
+appointments = Appointment.objects.filter(start_time__gte=today)
+for appt in appointments:
+    print(f"{appt.patient.first_name} with {appt.provider.first_name}")
+
+# GOOD
+appointments = Appointment.objects.filter(
+    start_time__gte=today
+).select_related('patient', 'provider')
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+### 1. Querying Inside Loops
+
+```python
+# BAD - query inside loop
+for patient_id in patient_ids:
+    patient = Patient.objects.get(id=patient_id)  # N queries!
+    process(patient)
+
+# GOOD - single query
+patients = Patient.objects.filter(id__in=patient_ids)
+for patient in patients:
+    process(patient)
+```
+
+### 2. Accessing Related Objects Without Prefetch
+
+```python
+# BAD - accessing reverse relation in loop
+patients = Patient.objects.all()
+results = []
+for patient in patients:
+    condition_count = patient.conditions.count()  # N+1!
+    results.append({'patient': patient, 'conditions': condition_count})
+
+# GOOD - use annotation
+from django.db.models import Count
+patients = Patient.objects.annotate(condition_count=Count('conditions'))
+for patient in patients:
+    results.append({'patient': patient, 'conditions': patient.condition_count})
+```
+
+### 3. Repeated Queries for Same Data
+
+```python
+# BAD - same query multiple times
+def get_patient_name(patient_id):
+    patient = Patient.objects.get(id=patient_id)  # Called repeatedly!
+    return patient.first_name
+
+# GOOD - query once, pass object
+def process_patients(patient_ids):
+    patients = {p.id: p for p in Patient.objects.filter(id__in=patient_ids)}
+    for pid in patient_ids:
+        patient = patients.get(pid)
+        if patient:
+            process(patient)
+```
+
+### 4. Not Using .only() or .defer() for Large Models
+
+```python
+# BAD - fetches all fields when you only need a few
+patients = Patient.objects.all()
+names = [f"{p.first_name} {p.last_name}" for p in patients]
+
+# GOOD - only fetch needed fields
+patients = Patient.objects.only('first_name', 'last_name')
+names = [f"{p.first_name} {p.last_name}" for p in patients]
+```
+
+---
+
+## Detection Checklist
+
+When reviewing plugin code, look for:
+
+### High Priority (Likely N+1)
+- [ ] `for` loops that call `.objects.get()` or `.objects.filter()` inside
+- [ ] Accessing `.related_name` or reverse relations inside loops without prefetch
+- [ ] Accessing ForeignKey attributes inside loops without select_related
+
+### Medium Priority (Potential Issues)
+- [ ] Multiple queries that could be combined with `Q` objects
+- [ ] `.count()` or `.exists()` called inside loops
+- [ ] Fetching full objects when only IDs or counts are needed
+
+### Low Priority (Optimization Opportunities)
+- [ ] Large querysets without `.only()` or `.defer()`
+- [ ] Missing `.iterator()` for very large result sets
+- [ ] Queries that could benefit from database indexes
+
+---
+
+## Reporting Performance Issues
+
+When reviewing, report findings as:
+
+```markdown
+## Database Performance Review: {plugin_name}
+
+### Findings
+
+| Severity | Issue | Location | Recommendation |
+|----------|-------|----------|----------------|
+| HIGH | N+1 query in patient loop | protocols/handler.py:45 | Add prefetch_related('conditions') |
+| HIGH | Query inside for loop | protocols/handler.py:67 | Move query outside loop, use filter(id__in=) |
+| MEDIUM | Missing select_related | api/routes.py:23 | Add select_related('patient') |
+| LOW | Fetching all fields | protocols/handler.py:12 | Consider .only() for needed fields |
+
+### Query Analysis
+
+- Estimated queries before optimization: ~N+1 pattern with potential 100+ queries
+- Estimated queries after optimization: 2-3 queries
+
+### Summary
+
+- Files reviewed: X
+- N+1 issues found: Y
+- Recommendation: [PASS / OPTIMIZE REQUIRED]
+```
+
+---
+
+## Canvas SDK Common Relations Reference
+
+| Model | Foreign Keys (select_related) | Reverse Relations (prefetch_related) |
+|-------|------------------------------|-------------------------------------|
+| Patient | primary_care_provider | conditions, medications, allergies, appointments, notes |
+| Note | patient, originator, note_type_version | commands |
+| Condition | patient | codings |
+| Medication | patient | - |
+| Appointment | patient, provider | - |
+| LabReport | patient | results |
+| Task | patient, assignee | - |
