@@ -171,6 +171,21 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
+### 7. Final Git Commit and Push
+
+**After all checks pass (or issues are resolved), commit and push the final state.**
+
+```bash
+git add .
+git commit -m "complete {plugin_name} v{version} wrap-up"
+git push
+```
+
+Use concise declarative voice for commit messages:
+- "complete vitals-alert v0.1.0 wrap-up"
+- "finalize plugin, remove debug logs"
+- "complete wrap-up, update README"
+
 ## CPA Workflow
 
 This command is the **final step** in the Canvas Plugin Assistant workflow:

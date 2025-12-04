@@ -6,6 +6,22 @@ Start the plugin brainstorming process to transform requirements into a concrete
 
 Use the **plugin-brainstorm** agent for the full workflow from spec to deployment.
 
+### Phase 0: Create Git Branch
+
+**Before anything else, create a new branch for this plugin work.**
+
+Generate a branch name using three random words in kebab-case. Examples:
+- `mercury-purring-lion`
+- `crystal-dancing-falcon`
+- `amber-swift-turtle`
+
+```bash
+git checkout -b {branch_name}
+git push -u origin {branch_name}
+```
+
+Tell the user the branch name you created.
+
 ### Phase 1: Gather Requirements
 
 1. Invoke the canvas-sdk skill to have SDK documentation available
@@ -33,10 +49,28 @@ cd {plugin_name}
 
 **Do NOT create files or directories manually.** The `canvas init` command creates the correct project structure. Only edit the files it generates.
 
+After `canvas init` completes, commit the scaffolded plugin:
+
+```bash
+git add .
+git commit -m "initialize {plugin_name} plugin scaffold"
+git push
+```
+
 Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler
 - Write tests
 - Deploy for UAT
+
+## Git Commit Style
+
+Use concise declarative voice for all commit messages:
+- "add handler for vitals monitoring"
+- "implement authentication for webhook endpoint"
+- "fix threshold comparison logic"
+- "update tests for edge cases"
+
+Do NOT use: "Added...", "Adding...", "I added...", or similar.
 
 ## CPA Workflow
 

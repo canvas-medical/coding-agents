@@ -112,9 +112,24 @@ uv run canvas validate-manifest .
 uv run pytest
 ```
 
-Report any issues and ask if user wants to proceed.
+Report any issues and fix if needed before proceeding.
 
-### Step 4: Start Log Monitoring (BEFORE install)
+### Step 4: Git Commit and Push
+
+**After validation passes, commit all changes before deploying.**
+
+```bash
+git add .
+git commit -m "prepare {plugin_name} v{version} for deployment"
+git push
+```
+
+Use concise declarative voice for commit messages:
+- "prepare vitals-alert v0.0.2 for deployment"
+- "fix threshold logic, prepare for deployment"
+- "add webhook handler, prepare v0.1.0 for deployment"
+
+### Step 5: Start Log Monitoring (BEFORE install)
 
 **Always start logs before deploying** - this captures installation errors.
 
@@ -127,7 +142,7 @@ unbuffer uv run canvas logs --host {hostname}
 
 Save the `bash_id` from the background task - you'll need it to retrieve logs.
 
-### Step 5: Deploy Plugin
+### Step 6: Deploy Plugin
 
 Execute deployment:
 
@@ -159,7 +174,7 @@ After install completes, tell the user:
 - Use **KillShell** to stop the background log stream
 - Summarize what was observed during the session
 
-### Step 6: UAT Guidance
+### Step 7: UAT Guidance
 
 Guide the user through testing:
 
@@ -188,7 +203,7 @@ Based on your plugin specification, test these scenarios:
 - [ ] Is timing appropriate?
 ```
 
-### Step 7: Document Results
+### Step 8: Document Results
 
 After testing, create a UAT summary:
 
