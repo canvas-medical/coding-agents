@@ -9,8 +9,14 @@ You can learn more about how they work here: https://code.claude.com/docs/en/plu
 These plugins requires a recent version of Claude Code. Always update claude to ensure you have the latest features.
 
 ```bash
- claude update
- ```
+claude update
+```
+
+Install `uv` for Python package management:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 For log monitoring during deployment and user acceptance testing, install `expect` (provides the `unbuffer` command):
 

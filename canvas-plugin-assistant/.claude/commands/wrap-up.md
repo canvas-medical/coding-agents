@@ -170,3 +170,17 @@ Use AskUserQuestion if any issues were found:
   ]
 }
 ```
+
+## CPA Workflow
+
+This command is the **final step** in the Canvas Plugin Assistant workflow:
+
+```
+/check-setup     →  Verify environment tools (uv, unbuffer)
+/new-plugin      →  Create plugin from requirements
+/deploy          →  Deploy to Canvas instance for UAT
+/coverage        →  Check test coverage (aim for 90%)
+/wrap-up         →  Final checklist before delivery  ← YOU ARE HERE
+```
+
+After wrap-up passes, the plugin is ready to ship!

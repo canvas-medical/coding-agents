@@ -37,3 +37,17 @@ Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler
 - Write tests
 - Deploy for UAT
+
+## CPA Workflow
+
+This command is **step 2** in the Canvas Plugin Assistant workflow:
+
+```
+/check-setup     →  Verify environment tools (uv, unbuffer)
+/new-plugin      →  Create plugin from requirements  ← YOU ARE HERE
+/deploy          →  Deploy to Canvas instance for UAT
+/coverage        →  Check test coverage (aim for 90%)
+/wrap-up         →  Final checklist before delivery
+```
+
+After implementation, guide the user to `/deploy` for UAT testing.

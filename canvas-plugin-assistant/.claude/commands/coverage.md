@@ -66,3 +66,17 @@ Files needing attention:
   - protocols/handler.py: 82% (lines 34-38, 67)
   - api/routes.py: 91% (line 23)
 ```
+
+## CPA Workflow
+
+This command is **step 4** in the Canvas Plugin Assistant workflow:
+
+```
+/check-setup     →  Verify environment tools (uv, unbuffer)
+/new-plugin      →  Create plugin from requirements
+/deploy          →  Deploy to Canvas instance for UAT
+/coverage        →  Check test coverage (aim for 90%)  ← YOU ARE HERE
+/wrap-up         →  Final checklist before delivery
+```
+
+After achieving 90% coverage, guide the user to `/wrap-up` for final checks before delivery.

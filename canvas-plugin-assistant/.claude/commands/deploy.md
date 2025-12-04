@@ -51,6 +51,20 @@ Use the **deploy-uat** agent to handle deployment and testing.
 
 Deployment uses credentials from `~/.canvas/credentials.ini`. Instance names are the section headers (e.g., `[plugin-testing]` means the instance name is `plugin-testing`).
 
+## CPA Workflow
+
+This command is **step 3** in the Canvas Plugin Assistant workflow:
+
+```
+/check-setup     →  Verify environment tools (uv, unbuffer)
+/new-plugin      →  Create plugin from requirements
+/deploy          →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
+/coverage        →  Check test coverage (aim for 90%)
+/wrap-up         →  Final checklist before delivery
+```
+
+After successful UAT, guide the user to `/coverage` to verify test coverage, then `/wrap-up` for final checks.
+
 ## Examples
 
 - `/deploy` - Interactive deployment (asks which instance)
