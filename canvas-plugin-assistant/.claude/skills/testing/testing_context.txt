@@ -45,22 +45,43 @@ def test_high_bp(mock_event):
 
 ## Test Setup
 
-### Directory Structure
+### Directory Structure - MUST Mirror Source Code
+
+**The test directory structure MUST exactly mirror the source code structure.**
 
 ```
 plugin_name/
 ├── plugin_name/
 │   ├── protocols/
-│   │   └── handler.py
+│   │   ├── vitals_handler.py
+│   │   └── lab_handler.py
+│   ├── api/
+│   │   └── routes.py
+│   ├── helpers/
+│   │   └── utils.py
 │   └── CANVAS_MANIFEST.json
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py          # Shared fixtures
-│   ├── test_handler.py
-│   └── test_api.py
+│   ├── conftest.py                   # Shared fixtures only
+│   ├── protocols/
+│   │   ├── __init__.py
+│   │   ├── test_vitals_handler.py    # tests vitals_handler.py
+│   │   └── test_lab_handler.py       # tests lab_handler.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── test_routes.py            # tests routes.py
+│   └── helpers/
+│       ├── __init__.py
+│       └── test_utils.py             # tests utils.py
 ├── pyproject.toml
 └── README.md
 ```
+
+**Rules:**
+- One test file per source file
+- Test file name = `test_` + source file name
+- Test file location mirrors source file location
+- `conftest.py` at tests root contains only shared fixtures
 
 ### pyproject.toml Test Configuration
 
@@ -73,14 +94,17 @@ addopts = "-v"
 
 [tool.coverage.run]
 source = ["plugin_name"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = ["tests/*", "*/tests/*", "*/__pycache__/*"]
 
 [tool.coverage.report]
+omit = ["tests/*", "*/tests/*"]
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
 ]
 ```
+
+**CRITICAL:** The `omit` patterns in both `[tool.coverage.run]` and `[tool.coverage.report]` ensure test files are excluded from coverage measurement. Without this, test code inflates coverage numbers.
 
 ---
 
@@ -135,8 +159,51 @@ def test_handler_with_patient(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
+        # REQUIRED: Always verify mock calls
         mock_objects.get.assert_called_once_with(id="patient-123")
 ```
+
+---
+
+### CRITICAL: Always Verify Mock Calls
+
+**Every mock MUST have its calls verified.** A mock without verification is incomplete and potentially useless.
+
+```python
+# BAD - mock is set up but never verified
+def test_bad_example(mock_event, mock_patient):
+    with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
+        mock_objects.get.return_value = mock_patient
+
+        handler = MyProtocol()
+        handler.event = mock_event
+        effects = handler.compute()
+
+        assert len(effects) == 1  # Only checks output, not that mock was used correctly
+
+
+# GOOD - mock calls are verified
+def test_good_example(mock_event, mock_patient):
+    with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
+        mock_objects.get.return_value = mock_patient
+
+        handler = MyProtocol()
+        handler.event = mock_event
+        effects = handler.compute()
+
+        # Verify mock was called with expected arguments
+        mock_objects.get.assert_called_once_with(id="patient-123")
+        assert len(effects) == 1
+```
+
+**Common mock assertion methods:**
+- `mock.assert_called()` - verify called at least once
+- `mock.assert_called_once()` - verify called exactly once
+- `mock.assert_called_with(...)` - verify most recent call args
+- `mock.assert_called_once_with(...)` - verify called once with specific args
+- `mock.assert_not_called()` - verify never called
+- `mock.call_count` - check number of calls
+- `mock.call_args_list` - inspect all calls made
 
 ---
 

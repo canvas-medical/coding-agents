@@ -15,6 +15,75 @@ Use this skill when:
 - Mocking Canvas SDK components
 - Setting up test fixtures
 
+## Opinionated Testing Rules
+
+**These rules are non-negotiable. Follow them exactly.**
+
+### 1. Directory Structure Mirrors Source Code
+
+The `tests/` directory structure MUST mirror the source code structure exactly:
+
+```
+plugin_name/
+├── plugin_name/
+│   ├── protocols/
+│   │   ├── vitals_handler.py
+│   │   └── lab_handler.py
+│   ├── api/
+│   │   └── routes.py
+│   └── helpers/
+│       └── utils.py
+├── tests/
+│   ├── protocols/
+│   │   ├── test_vitals_handler.py    # mirrors vitals_handler.py
+│   │   └── test_lab_handler.py       # mirrors lab_handler.py
+│   ├── api/
+│   │   └── test_routes.py            # mirrors routes.py
+│   ├── helpers/
+│   │   └── test_utils.py             # mirrors utils.py
+│   └── conftest.py
+└── pyproject.toml
+```
+
+### 2. One Test File Per Source File
+
+- Each source file gets exactly ONE test file
+- Test file name = `test_` + source file name
+- Example: `protocols/handler.py` → `tests/protocols/test_handler.py`
+
+### 3. Use Mocks for Isolation
+
+- Every external dependency MUST be mocked
+- Tests must never make real API calls or database queries
+- Use `unittest.mock.MagicMock` and `patch` for all mocking
+
+### 4. Always Verify Mock Calls
+
+**Every mock MUST have its calls verified.** Do not just mock and forget.
+
+```python
+# REQUIRED - verify mock was called correctly
+with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
+    mock_objects.get.return_value = mock_patient
+
+    handler.compute()
+
+    mock_objects.get.assert_called_once_with(id="patient-123")  # REQUIRED
+```
+
+### 5. Exclude Tests from Coverage
+
+The `pyproject.toml` MUST exclude test files from coverage measurement:
+
+```toml
+[tool.coverage.run]
+source = ["plugin_name"]
+omit = ["tests/*", "*/tests/*"]
+
+[tool.coverage.report]
+omit = ["tests/*", "*/tests/*"]
+```
+
 ## Quick Commands
 
 ```bash
