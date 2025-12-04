@@ -228,6 +228,38 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 3. **Update CANVAS_MANIFEST.json** with correct class paths
 4. **Add secrets** to manifest if needed
 
+#### Implementation Guidelines
+
+**CRITICAL: Do NOT use try-except blocks in handler code.**
+
+Exceptions must propagate so they appear in Canvas logs with full tracebacks. Swallowing exceptions makes debugging impossible.
+
+```python
+# BAD - never do this
+def compute(self) -> list[Effect]:
+    try:
+        # logic
+    except Exception as e:
+        log.error(f"Error: {e}")
+        return []
+
+# GOOD - let exceptions bubble up
+def compute(self) -> list[Effect]:
+    patient_id = self.event.context["patient"]["id"]
+    # If this fails, full traceback appears in logs
+    return [...]
+```
+
+For **expected** missing data, use explicit guards with early returns:
+
+```python
+# GOOD - explicit check for optional data
+patient = self.event.context.get("patient")
+if not patient:
+    return []  # Expected case, not an error
+patient_id = patient["id"]
+```
+
 ### Step 4: Validate
 
 Run pre-deploy checks:

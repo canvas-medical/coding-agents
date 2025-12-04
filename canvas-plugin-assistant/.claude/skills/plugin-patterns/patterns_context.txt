@@ -370,22 +370,32 @@ LaunchModalEffect(
 
 ## Best Practices
 
-### 1. Error Handling
-Always handle potential errors gracefully.
+### 1. Let Exceptions Propagate
+**Do NOT wrap handler code in try-except blocks.** Exceptions must bubble up so they appear in Canvas logs with full tracebacks for debugging.
 
 ```python
+# GOOD - exceptions propagate to logs with full traceback
 def compute(self) -> list[Effect]:
-    try:
-        patient_id = self.event.context.get("patient", {}).get("id")
-        if not patient_id:
-            log.warning("No patient ID in event context")
-            return []
+    patient_id = self.event.context["patient"]["id"]
+    vitals = self.event.target.instance
 
-        # Your logic here
+    # If something fails, the exception bubbles up and appears in logs
+    if vitals.blood_pressure_systolic >= 140:
+        return [AddBannerAlert(...).apply()]
+    return []
+```
 
-    except Exception as e:
-        log.error(f"Error in MyProtocol: {e}")
-        return []
+Use explicit checks for **expected** missing data, not try-except:
+
+```python
+# GOOD - explicit guards for optional data
+def compute(self) -> list[Effect]:
+    patient = self.event.context.get("patient")
+    if not patient:
+        return []  # Expected: some events lack patient context
+
+    patient_id = patient["id"]
+    # Continue with logic...
 ```
 
 ### 2. Logging
@@ -442,7 +452,26 @@ AddBannerAlert(
 
 ## Anti-Patterns to Avoid
 
-### 1. Blocking Operations
+### 1. Swallowing Exceptions with try-except
+**Never wrap handler code in try-except blocks.** This hides errors from logs and makes debugging impossible.
+
+```python
+# BAD - exceptions are swallowed, nothing useful in logs
+def compute(self) -> list[Effect]:
+    try:
+        patient_id = self.event.context["patient"]["id"]
+        # logic
+    except Exception as e:
+        log.error(f"Error: {e}")  # Only get message, no traceback!
+        return []
+
+# GOOD - let exceptions propagate with full traceback
+def compute(self) -> list[Effect]:
+    patient_id = self.event.context["patient"]["id"]
+    # logic - failures appear in logs with full traceback
+```
+
+### 2. Blocking Operations
 Don't perform long-running operations in event handlers.
 
 ```python
@@ -453,20 +482,21 @@ def compute(self):
 # BETTER - use async patterns or task queues
 ```
 
-### 2. Missing Error Handling
-Always handle potential failures.
+### 3. Not Guarding Optional Data
+Use explicit checks for data that may not exist.
 
 ```python
-# BAD - crashes on missing data
+# BAD - crashes on missing data without useful context
 patient_id = self.event.context["patient"]["id"]
 
-# GOOD - graceful handling
-patient_id = self.event.context.get("patient", {}).get("id")
-if not patient_id:
+# GOOD - explicit guard with early return
+patient = self.event.context.get("patient")
+if not patient:
     return []
+patient_id = patient["id"]
 ```
 
-### 3. Hardcoded Values
+### 4. Hardcoded Values
 Don't hardcode configuration.
 
 ```python
@@ -477,7 +507,7 @@ api_url = "https://api.example.com"
 api_url = self.secrets.get("API_URL")
 ```
 
-### 4. Overly Complex Plugins
+### 5. Overly Complex Plugins
 Start simple, add complexity only when needed.
 
 ```python
