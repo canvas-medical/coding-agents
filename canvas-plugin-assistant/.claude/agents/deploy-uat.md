@@ -138,10 +138,12 @@ Report any issues and fix if needed before proceeding.
 **After validation passes, commit all changes before deploying.**
 
 ```bash
-git add .
+git add -A .
 git commit -m "prepare {plugin_name} v{version} for deployment"
 git push
 ```
+
+**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path.
 
 Use concise declarative voice for commit messages:
 - "prepare vitals-alert v0.0.2 for deployment"

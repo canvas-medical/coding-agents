@@ -274,12 +274,12 @@ This creates `../.cpa-workflow-artifacts/claude-history-{sessionId}.txt` (one le
 **After all checks pass (or issues are resolved), commit and push the final state.**
 
 ```bash
-git add --all
+git add -A .
 git commit -m "complete {plugin_name} v{version} wrap-up"
 git push
 ```
 
-**Note:** Use `git add --all` (or `git add -A`) instead of `git add .` to properly stage deleted and renamed files.
+**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path - those commands stage changes across the entire repository, which can accidentally commit files outside the plugin directory.
 
 Use concise declarative voice for commit messages:
 - "complete vitals-alert v0.1.0 wrap-up"

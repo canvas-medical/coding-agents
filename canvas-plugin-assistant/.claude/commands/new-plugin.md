@@ -59,10 +59,12 @@ After `canvas init` completes:
 
 2. **Commit the scaffolded plugin:**
    ```bash
-   git add --all
+   git add -A .
    git commit -m "initialize {plugin_name} plugin scaffold"
    git push
    ```
+
+   **CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path.
 
 Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler

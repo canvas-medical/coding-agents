@@ -70,6 +70,26 @@ def fetch_external_data(self, patient_id: str) -> dict:
         raise RuntimeError(f"Failed to fetch data for patient {patient_id}") from e
 ```
 
+## Git Operations: Scope to Current Directory
+
+**CRITICAL: All git add commands MUST be scoped to the current directory.**
+
+```bash
+# CORRECT - scoped to current directory
+git add -A .
+
+# WRONG - stages changes across entire repository
+git add --all
+git add -A
+git add .   # This is also risky if not in the right directory
+```
+
+The `-A .` flag combination ensures:
+- `-A` stages all changes (new, modified, deleted files)
+- `.` limits the scope to the current directory and below
+
+**Never use `git add --all` or `git add -A` without a path.** These commands can accidentally stage and commit files outside the plugin directory, which is extremely difficult to unwind.
+
 ## Code Style
 
 - Keep handlers simple and focused
