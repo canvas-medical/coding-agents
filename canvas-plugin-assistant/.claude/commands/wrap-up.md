@@ -88,7 +88,52 @@ log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
 print(f"vitals: {vitals}")  # Should use logger, and too verbose
 ```
 
-### 5. README Review
+### 5. Dead Code Removal
+
+Identify and remove unused code:
+
+**Step 1: Trace from manifest declarations**
+
+Read `CANVAS_MANIFEST.json` and verify every declared component exists and is used:
+- Each `protocols` entry should have a corresponding file that's actually needed
+- Each `commands` entry should reference code that exists
+- Each `applications` entry should reference code that exists
+- Each `content` entry should be used
+
+Remove any declarations for code that no longer exists, and remove code that isn't declared in the manifest.
+
+**Step 2: Check for unused imports**
+
+```bash
+grep -rn "^from\|^import" --include="*.py" .
+```
+
+Review each file for imports that aren't used in the code.
+
+**Step 3: Check for unused functions and variables**
+
+Look for:
+- Functions defined but never called
+- Variables assigned but never read
+- Commented-out code blocks (delete them, git has history)
+- Placeholder/scaffolding code from `canvas init` that wasn't needed
+
+**Step 4: Remove dead tests**
+
+Check that all test files test code that still exists:
+- If a handler was removed, remove its tests
+- If a function was renamed, update or remove old tests
+- Remove `test_models.py` if it's just scaffolding
+
+**Common dead code from scaffolding:**
+- `protocols/my_protocol.py` - default placeholder if you renamed your protocol
+- `test_models.py` - often unused scaffolding
+- Unused effect imports (e.g., `AddTask` if you only use `AddBannerAlert`)
+- Empty or stub methods that were never implemented
+
+**Remove dead code rather than commenting it out.** Git history preserves old code if needed.
+
+### 6. README Review
 
 Read the plugin's README.md and verify:
 
@@ -112,7 +157,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 6. License Check
+### 7. License Check
 
 Check for any license file or license mentions:
 
@@ -143,7 +188,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 7. Final Verdict
+### 8. Final Verdict
 
 After all checks, present a summary:
 
@@ -157,6 +202,7 @@ After all checks, present a summary:
 | DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
+| Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
 | License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
 
@@ -191,7 +237,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 8. Export Session History
+### 9. Export Session History
 
 **Save a record of this development session for future reference.**
 
@@ -203,15 +249,17 @@ python .claude/scripts/export-session-history.py
 
 This creates `.claude/artifacts/claude-history-{sessionId}.txt` containing all messages from this session. The file is overwritten on each run, so there's one complete file per session.
 
-### 9. Final Git Commit and Push
+### 10. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 
 ```bash
-git add .
+git add --all
 git commit -m "complete {plugin_name} v{version} wrap-up"
 git push
 ```
+
+**Note:** Use `git add --all` (or `git add -A`) instead of `git add .` to properly stage deleted and renamed files.
 
 Use concise declarative voice for commit messages:
 - "complete vitals-alert v0.1.0 wrap-up"
