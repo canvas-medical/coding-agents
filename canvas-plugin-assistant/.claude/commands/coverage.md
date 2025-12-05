@@ -72,11 +72,12 @@ Files needing attention:
 This command is **step 4** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup     →  Verify environment tools (uv, unbuffer)
-/new-plugin      →  Create plugin from requirements
-/deploy          →  Deploy to Canvas instance for UAT
-/coverage        →  Check test coverage (aim for 90%)  ← YOU ARE HERE
-/wrap-up         →  Final checklist before delivery
+/check-setup      →  Verify environment tools (uv, unbuffer)
+/new-plugin       →  Create plugin from requirements
+/deploy           →  Deploy to Canvas instance for UAT
+/coverage         →  Check test coverage (aim for 90%)  ← YOU ARE HERE
+/security-review  →  Comprehensive security audit
+/wrap-up          →  Final checklist before delivery
 ```
 
 After achieving 90% coverage, guide the user to `/wrap-up` for final checks before delivery.

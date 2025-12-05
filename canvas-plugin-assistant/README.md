@@ -31,17 +31,21 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 ### Skills
 - **canvas-sdk**: Complete Canvas SDK documentation (~20k lines)
 - **plugin-patterns**: Architecture patterns and best practices
-- **api-security**: Security review for API handlers (authentication, authorization)
+- **plugin-api-server-security**: Security review for SimpleAPI/WebSocket handlers (when plugin is the server)
+- **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
+- **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
 
 ### Slash Commands
 
 | Command | Description |
 |---------|-------------|
+| `/check-setup` | Verify environment tools (uv, unbuffer) |
 | `/new-plugin` | Start brainstorming a new plugin specification |
 | `/analyze-instance` | Analyze Canvas instance configuration |
 | `/deploy` | Deploy plugin and monitor logs |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
+| `/security-review` | Comprehensive security audit with report |
 | `/wrap-up` | Final checklist before calling a plugin "done" |
 
 ## Credentials Setup
@@ -65,21 +69,35 @@ root_password=...
 
 ## Workflow
 
-1. **Describe the Problem**
+```
+/check-setup      →  Verify environment tools (uv, unbuffer)
+/new-plugin       →  Create plugin from requirements
+/deploy           →  Deploy to Canvas instance for UAT
+/coverage         →  Check test coverage (aim for 90%)
+/security-review  →  Comprehensive security audit
+/wrap-up          →  Final checklist before delivery
+```
+
+1. **Check Setup** (`/check-setup`)
+   - Verify uv and unbuffer are installed
+
+2. **Describe the Problem** (`/new-plugin`)
    - Tell Claude what the customer needs
    - Answer clarifying questions about users, triggers, and outcomes
+   - Review and approve the plugin specification
+   - Plugin is scaffolded, implemented, and tested
 
-2. **Review the Specification**
-   - Claude produces a plugin specification document
-   - Includes events, effects, data requirements, and architecture
-
-3. **Build the Plugin**
-   - Use the specification to implement the plugin
-   - Reference the skills for SDK details and patterns
-
-4. **Test and Deploy**
+3. **Deploy and Test** (`/deploy`)
    - Deploy to test instance
-   - Perform user acceptance testing
+   - Perform user acceptance testing with real-time log monitoring
+
+4. **Quality Checks** (`/coverage`, `/security-review`)
+   - Verify test coverage meets 90% threshold
+   - Run comprehensive security audit
+
+5. **Wrap Up** (`/wrap-up`)
+   - Final checklist: security, DB performance, coverage, README
+   - Git commit and push
 
 ## Plugin Complexity Guide
 
@@ -97,26 +115,25 @@ root_password=...
 .claude/
 ├── settings.json              # Permission configuration
 ├── commands/
+│   ├── check-setup.md         # /check-setup
 │   ├── new-plugin.md          # /new-plugin
 │   ├── analyze-instance.md    # /analyze-instance
 │   ├── deploy.md              # /deploy
 │   ├── coverage.md            # /coverage
+│   ├── security-review.md     # /security-review
 │   └── wrap-up.md             # /wrap-up
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
-│   │   ├── SKILL.md
-│   │   └── coding_agent_context.txt
 │   ├── plugin-patterns/       # Architecture patterns
-│   │   ├── SKILL.md
-│   │   └── patterns_context.txt
-│   ├── api-security/          # API security review
-│   │   ├── SKILL.md
-│   │   └── security_context.txt
+│   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
+│   ├── fhir-api-client-security/    # FHIR API token security
+│   ├── database-performance/  # N+1 query detection
 │   └── testing/               # Test authoring & coverage
-│       ├── SKILL.md
-│       └── testing_context.txt
-└── agents/
-    ├── plugin-brainstorm.md   # Requirements gathering
-    ├── instance-analyzer.md   # Instance configuration analysis
-    └── deploy-uat.md          # Deployment and testing
+├── agents/
+│   ├── plugin-brainstorm.md   # Requirements gathering
+│   ├── instance-analyzer.md   # Instance configuration analysis
+│   └── deploy-uat.md          # Deployment and testing
+├── scripts/
+│   └── export-session-history.py  # Session history export
+└── artifacts/                 # Generated reports and specs
 ```

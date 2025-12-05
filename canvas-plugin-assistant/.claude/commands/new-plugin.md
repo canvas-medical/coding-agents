@@ -77,11 +77,12 @@ Do NOT use: "Added...", "Adding...", "I added...", or similar.
 This command is **step 2** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup     →  Verify environment tools (uv, unbuffer)
-/new-plugin      →  Create plugin from requirements  ← YOU ARE HERE
-/deploy          →  Deploy to Canvas instance for UAT
-/coverage        →  Check test coverage (aim for 90%)
-/wrap-up         →  Final checklist before delivery
+/check-setup      →  Verify environment tools (uv, unbuffer)
+/new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
+/deploy           →  Deploy to Canvas instance for UAT
+/coverage         →  Check test coverage (aim for 90%)
+/security-review  →  Comprehensive security audit
+/wrap-up          →  Final checklist before delivery
 ```
 
 After implementation, guide the user to `/deploy` for UAT testing.

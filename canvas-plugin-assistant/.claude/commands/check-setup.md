@@ -65,11 +65,12 @@ If any checks fail, summarize what needs to be installed before proceeding.
 This command is the **first step** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup     →  Verify environment tools
-/new-plugin      →  Create plugin from requirements
-/deploy          →  Deploy to Canvas instance for UAT
-/coverage        →  Check test coverage (aim for 90%)
-/wrap-up         →  Final checklist before delivery
+/check-setup      →  Verify environment tools  ← YOU ARE HERE
+/new-plugin       →  Create plugin from requirements
+/deploy           →  Deploy to Canvas instance for UAT
+/coverage         →  Check test coverage (aim for 90%)
+/security-review  →  Comprehensive security audit
+/wrap-up          →  Final checklist before delivery
 ```
 
 Always guide users through this flow sequentially.
