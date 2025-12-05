@@ -157,7 +157,7 @@ Tell the user the file path and offer to explain any section in detail.
 
 ## Integration with Brainstorm Agent
 
-If a `.claude/artifacts/plugin-spec.md` file exists, read it and tailor the report to highlight:
+If a `../.cpa-workflow-artifacts/plugin-spec.md` file exists, read it and tailor the report to highlight:
 - Teams that match the spec's task assignment needs
 - Questionnaires relevant to the spec's data requirements
 - Existing plugins that might overlap

@@ -31,10 +31,10 @@ Tell the user the branch name you created.
    - What should trigger the plugin?
    - What should the plugin create or do?
 4. Map answers to Canvas SDK concepts (events, effects)
-5. Write a `.claude/artifacts/plugin-spec.md` file with the specification
+5. Write a `../.cpa-workflow-artifacts/plugin-spec.md` file with the specification
 6. Wait for user approval before any implementation
 
-If a `.claude/artifacts/plugin-spec.md` already exists, ask if they want to:
+If a `../.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
 - Continue refining the existing spec
 
@@ -49,13 +49,20 @@ cd {plugin_name}
 
 **Do NOT create files or directories manually.** The `canvas init` command creates the correct project structure. Only edit the files it generates.
 
-After `canvas init` completes, commit the scaffolded plugin:
+After `canvas init` completes:
 
-```bash
-git add .
-git commit -m "initialize {plugin_name} plugin scaffold"
-git push
-```
+1. **Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
+   - Check if `.gitignore` exists in the plugin directory
+   - If it exists, check if it already contains `.claude`
+   - If not, append `.claude` to the file
+   - If `.gitignore` doesn't exist, create it with `.claude` as the first entry
+
+2. **Commit the scaffolded plugin:**
+   ```bash
+   git add --all
+   git commit -m "initialize {plugin_name} plugin scaffold"
+   git push
+   ```
 
 Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler

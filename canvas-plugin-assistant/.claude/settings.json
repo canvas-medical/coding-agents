@@ -41,8 +41,8 @@
       "Skill",
       "WebFetch(domain:*.canvasmedical.com)",
       "Read(~/.canvas/**)",
-      "Write(~/.claude/artifacts/**)",
-      "Edit(~/.claude/artifacts/**)"
+      "Write(**/.cpa-workflow-artifacts/**)",
+      "Edit(**/.cpa-workflow-artifacts/**)"
     ],
     "deny": [],
     "ask": []

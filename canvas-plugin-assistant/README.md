@@ -120,7 +120,7 @@ root_password=...
 │   ├── analyze-instance.md    # /analyze-instance
 │   ├── deploy.md              # /deploy
 │   ├── coverage.md            # /coverage
-│   ├── security-review.md     # /security-review-cpa
+│   ├── security-review-cpa.md # /security-review-cpa
 │   └── wrap-up.md             # /wrap-up
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
@@ -133,7 +133,30 @@ root_password=...
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
-├── scripts/
-│   └── export-session-history.py  # Session history export
-└── artifacts/                 # Generated reports and specs
+└── scripts/
+    └── export-session-history.py  # Session history export
+
 ```
+
+## Workflow Artifacts
+
+CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above the plugin directory, outside the plugin repo). These artifacts are critical for:
+
+**Training & Feedback**
+- Session histories capture the full dialogue, decisions made, and problems solved
+- Reviewing past sessions helps users learn patterns and improve their plugin development skills
+- Artifacts provide concrete examples for onboarding new team members
+
+**Continuous Improvement**
+- Plugin specs document requirements gathering patterns that worked well
+- Security reviews highlight common vulnerabilities to watch for
+- Session histories help identify where CPA guidance could be improved
+
+**Artifacts saved:**
+| File | Purpose |
+|------|---------|
+| `plugin-spec.md` | Plugin requirements and architecture decisions |
+| `security-review-{timestamp}.md` | Security audit findings and recommendations |
+| `claude-history-{sessionId}.txt` | Complete session transcript |
+
+**Keep these artifacts.** They're valuable for retrospectives, training, and improving CPA itself.

@@ -2,7 +2,7 @@
 """
 Export the current Claude Code session's messages to a simplified text file.
 Reads ~/.claude/history.jsonl, extracts display text for the current session,
-and saves to .claude/artifacts/claude-history-{sessionId}.txt (overwrites if exists).
+and saves to ../.cpa-workflow-artifacts/claude-history-{sessionId}.txt (overwrites if exists).
 """
 
 import json
@@ -45,7 +45,7 @@ def main():
         return
 
     # Create output file named by sessionId (overwrites if exists)
-    output_dir = Path(".claude/artifacts")
+    output_dir = Path("../.cpa-workflow-artifacts")
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / f"claude-history-{session_id}.txt"
 

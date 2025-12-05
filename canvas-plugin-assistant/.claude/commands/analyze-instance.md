@@ -18,7 +18,7 @@ Use the **instance-analyzer** agent to document the Canvas instance configuratio
    - Appointment types
    - Installed plugins
 4. Generate `instance-config-{hostname}.md` report
-5. If `.claude/artifacts/plugin-spec.md` exists, highlight configuration relevant to the planned plugin
+5. If `../.cpa-workflow-artifacts/plugin-spec.md` exists, highlight configuration relevant to the planned plugin
 
 ## Credentials Setup
 

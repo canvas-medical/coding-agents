@@ -98,7 +98,7 @@ from datetime import datetime
 timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
 ```
 
-Save report to `.claude/artifacts/security-review-{timestamp}.md`:
+Save report to `../.cpa-workflow-artifacts/security-review-{timestamp}.md`:
 
 ```markdown
 # Security Review Report: {plugin_name}

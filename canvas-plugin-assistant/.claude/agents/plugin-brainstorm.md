@@ -21,7 +21,7 @@ Follow this exact workflow. Do NOT deviate.
          ↓
 4. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
          ↓
-5. WRITE SPEC FILE (.claude/artifacts/plugin-spec.md)
+5. WRITE SPEC FILE (../.cpa-workflow-artifacts/plugin-spec.md)
          ↓
 6. SHOW FILE PATH → WAIT FOR APPROVAL
          ↓
@@ -124,7 +124,7 @@ Once you have answers from AskUserQuestion:
 
 ## Specification Format
 
-Write this to `.claude/artifacts/plugin-spec.md` (create the directory if needed):
+Write this to `../.cpa-workflow-artifacts/plugin-spec.md` (create the directory if needed):
 
 ```markdown
 # Plugin Specification: [Name]
@@ -169,7 +169,7 @@ Write this to `.claude/artifacts/plugin-spec.md` (create the directory if needed
 
 **STOP and tell the user:**
 
-> "I've written the plugin specification to `.claude/artifacts/plugin-spec.md`.
+> "I've written the plugin specification to `../.cpa-workflow-artifacts/plugin-spec.md`.
 >
 > Please review it and let me know:
 > - Does the problem statement match your understanding?
@@ -331,9 +331,9 @@ Based on your answers, this is a **simple plugin**:
 
 Let me write the specification..."
 
-*[Writes .claude/artifacts/plugin-spec.md]*
+*[Writes ../.cpa-workflow-artifacts/plugin-spec.md]*
 
-**You**: "I've written the plugin specification to `.claude/artifacts/plugin-spec.md`.
+**You**: "I've written the plugin specification to `../.cpa-workflow-artifacts/plugin-spec.md`.
 
 Please review and reply 'approved' to proceed, or tell me what needs changing."
 
