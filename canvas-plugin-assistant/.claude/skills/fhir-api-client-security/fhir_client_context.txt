@@ -1,0 +1,372 @@
+# Canvas Plugin FHIR API Client Security Guide
+
+This document provides security review guidelines for Canvas plugins that act as FHIR API clients - when your plugin is making requests TO Canvas or external FHIR APIs.
+
+## Understanding Plugin as Client vs Server
+
+| Role | Description | Security Focus |
+|------|-------------|----------------|
+| Plugin as SERVER | Plugin exposes SimpleAPI/WebSocket endpoints | Validate incoming credentials |
+| Plugin as CLIENT | Plugin calls FHIR API or uses Http() | Manage outgoing tokens securely |
+
+This guide covers **Plugin as CLIENT**.
+
+---
+
+## Authentication Methods for FHIR API Access
+
+### 1. OAuth Client Credentials (Machine-to-Machine)
+
+**Use for:** Backend integrations, server-to-server, Canvas CLI
+
+**Setup:**
+- Register OAuth app at `<instance>/auth/applications/register/`
+- Client type: `confidential`
+- Grant type: `client-credentials`
+- No redirect URI needed
+
+**Flow:**
+```
+Plugin                          Canvas Auth Server
+  |                                    |
+  |-- POST /oauth/token -------------->|
+  |   (client_id, client_secret)       |
+  |                                    |
+  |<------------ access_token ---------|
+  |                                    |
+  |-- GET /api/Patient --------------->|
+  |   (Authorization: Bearer token)    |
+```
+
+**In plugin code:**
+```python
+# Token obtained out-of-band, stored in secrets
+http = Http()
+response = http.get(
+    f"https://{instance}/api/Patient/{patient_id}",
+    headers={"Authorization": f"Bearer {self.secrets['FHIR_TOKEN']}"}
+)
+```
+
+---
+
+### 2. OAuth Authorization Code (SMART on FHIR)
+
+**Use for:** User-facing apps, apps needing user consent, patient portal integrations
+
+**Setup:**
+- Register OAuth app at `<instance>/auth/applications/register/`
+- Client type: `public`
+- Grant type: `Authorization code`
+- Algorithm: `RSA`
+- Set redirect URI
+
+**Flow (SMART launch):**
+```
+User        Plugin/App       Canvas Auth      FHIR API
+ |              |                |               |
+ |-- launch --->|                |               |
+ |              |-- authorize -->|               |
+ |              |   (scopes)     |               |
+ |<-- consent --|----------------|               |
+ |-- approve -->|                |               |
+ |              |<-- code -------|               |
+ |              |-- exchange --->|               |
+ |              |<-- token ------|               |
+ |              |                |               |
+ |              |-- API call ----|-------------->|
+ |              |   (Bearer)     |               |
+```
+
+**Scopes are requested at authorization time:**
+```javascript
+FHIR.oauth2.authorize({
+    scope: "patient/Patient.read patient/Condition.read launch openid"
+});
+```
+
+---
+
+### 3. Legacy API Key (Simple Token)
+
+**Use for:** Simple integrations, legacy systems
+
+**Setup:** Generate static key, store in secrets
+
+**Usage:**
+```python
+http = Http()
+response = http.get(
+    f"https://{instance}/api/Patient/{patient_id}",
+    headers={"Authorization": self.secrets['API_KEY']}
+)
+```
+
+**Note:** No Bearer prefix for legacy keys.
+
+---
+
+## Token Scope Security
+
+### Principle of Least Privilege
+
+**CRITICAL:** Request only the minimum scopes needed for your plugin's functionality.
+
+### FHIR Scope Format
+
+```
+{context}/{resource}.{permission}
+```
+
+- **context**: `patient` (patient-specific) or `user` (user-level access)
+- **resource**: FHIR resource type (Patient, Condition, Observation, etc.)
+- **permission**: `read`, `write`, or `*` (both)
+
+### Common FHIR Scopes
+
+| Scope | Access Granted |
+|-------|----------------|
+| `patient/Patient.read` | Read patient demographics |
+| `patient/Condition.read` | Read patient conditions |
+| `patient/Observation.read` | Read observations (vitals, labs) |
+| `patient/MedicationStatement.read` | Read medications |
+| `patient/DocumentReference.read` | Read documents |
+| `user/Patient.read` | Read any patient (staff access) |
+| `launch` | SMART launch context |
+| `openid` | OpenID Connect identity |
+| `fhirUser` | Current user identity |
+| `offline_access` | Refresh token |
+
+### Scope Audit Questions
+
+1. Does the plugin need to read ALL resource types, or just specific ones?
+2. Does it need write access, or just read?
+3. Is `user/*` scope needed, or can it use `patient/*` scopes?
+4. Is `offline_access` actually needed?
+
+---
+
+## Patient-Scoped Token Requirements
+
+### CRITICAL: Patient-Facing Applications
+
+**If your plugin serves patient-facing features, the token MUST be scoped to that specific patient.**
+
+### Why This Matters
+
+A global admin token in a patient-facing app could allow:
+- Patient A to access Patient B's data
+- Malicious actors to extract all patient data
+- HIPAA violations and data breaches
+
+### Anti-Pattern: Global Token in Patient App
+
+```python
+# BAD - Using admin token for patient-facing feature
+class PatientPortalAPI(SimpleAPIRoute):
+    def get(self, patient_id: str):
+        # This token can access ANY patient!
+        token = self.secrets['ADMIN_FHIR_TOKEN']
+        http = Http()
+        # Patient could manipulate patient_id to access others
+        response = http.get(
+            f"https://instance/api/Patient/{patient_id}",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+```
+
+### Correct Pattern: Patient-Scoped Token
+
+```python
+# GOOD - Token is scoped to the authenticated patient
+class PatientPortalAPI(SimpleAPIRoute):
+    def authenticate(self, credentials: SessionCredentials) -> bool:
+        user = credentials.logged_in_user
+        if user.get("type") != "Patient":
+            return False
+        # Store patient ID for use in handlers
+        self.authenticated_patient_id = user.get("id")
+        return True
+
+    def get(self):
+        # Use SMART launch token scoped to this patient
+        # OR verify requested data matches authenticated patient
+        patient_id = self.authenticated_patient_id
+        # Token obtained via SMART launch is already patient-scoped
+        # OR use SDK which respects context
+        patient = Patient.objects.get(id=patient_id)
+```
+
+### Application Scope Alignment
+
+| Manifest `scope` | Token Requirement |
+|------------------|-------------------|
+| `patient_specific` | Must use patient-scoped token or verify patient context |
+| `portal_menu_item` | MUST use patient-scoped token (patient is the user) |
+| `global` | Can use broader token, but validate access appropriately |
+| `provider_menu_item` | Staff token acceptable, validate staff authorization |
+
+---
+
+## Token Storage Security
+
+### Correct: Store in Secrets
+
+```python
+# GOOD - Token in secrets
+token = self.secrets['FHIR_ACCESS_TOKEN']
+```
+
+### Declare in Manifest
+
+```json
+{
+    "secrets": ["FHIR_ACCESS_TOKEN", "OAUTH_CLIENT_SECRET"]
+}
+```
+
+### WRONG: Hardcoded Token
+
+```python
+# BAD - Hardcoded token
+token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+# BAD - Token in code comment
+# Use token: abc123xyz for testing
+```
+
+### WRONG: Token in Environment Variable Access
+
+```python
+# BAD - Bypassing secrets system
+import os
+token = os.environ.get('FHIR_TOKEN')  # os module is restricted anyway
+```
+
+---
+
+## Common Vulnerabilities
+
+### 1. Over-Scoped Tokens (HIGH)
+
+**Problem:** Requesting more scopes than needed
+
+```javascript
+// BAD - Requesting everything
+scope: "user/*.* launch offline_access"
+
+// GOOD - Only what's needed
+scope: "patient/Patient.read patient/Condition.read launch"
+```
+
+### 2. Admin Token for Patient Features (HIGH)
+
+**Problem:** Using a powerful token in a patient-facing context
+
+**Detection:** Look for patient-facing apps (`scope: "patient_specific"` or `"portal_menu_item"`) using tokens from secrets that weren't obtained via SMART launch.
+
+### 3. Hardcoded Tokens (HIGH)
+
+**Problem:** Tokens in source code
+
+**Detection:**
+```bash
+grep -rn "eyJ\|Bearer.*[A-Za-z0-9_-]\{20,\}" --include="*.py" .
+```
+
+### 4. Token Leakage in Logs (MEDIUM)
+
+**Problem:** Logging tokens or auth headers
+
+```python
+# BAD - Token in log
+log.info(f"Making request with token: {token}")
+log.info(f"Headers: {headers}")  # If headers contains Authorization
+
+# GOOD - Log without sensitive data
+log.info(f"Making FHIR request to /Patient/{patient_id}")
+```
+
+### 5. Missing Token Validation (MEDIUM)
+
+**Problem:** Using token without checking if it exists
+
+```python
+# BAD - May be None
+token = self.secrets.get('TOKEN')
+headers = {"Authorization": f"Bearer {token}"}  # "Bearer None"
+
+# GOOD - Validate first
+token = self.secrets.get('TOKEN')
+if not token:
+    raise ValueError("FHIR_TOKEN secret not configured")
+```
+
+### 6. Token in URL (LOW)
+
+**Problem:** Passing token as URL parameter
+
+```python
+# BAD - Token in URL (may be logged)
+http.get(f"https://api/Patient?access_token={token}")
+
+# GOOD - Token in header
+http.get("https://api/Patient", headers={"Authorization": f"Bearer {token}"})
+```
+
+---
+
+## Detection Checklist
+
+When reviewing plugin code for FHIR client security:
+
+### Token Source
+- [ ] Tokens loaded from `self.secrets`, not hardcoded
+- [ ] Secret names declared in CANVAS_MANIFEST.json
+- [ ] No tokens in comments or docstrings
+
+### Scope Validation
+- [ ] SMART apps request minimum necessary scopes
+- [ ] Document what scopes are needed and why
+- [ ] No `*.*` wildcard scopes unless justified
+
+### Patient-Scoped Tokens
+- [ ] Patient-facing apps (`patient_specific`, `portal_menu_item`) use patient-scoped tokens
+- [ ] Patient ID from token matches requested patient ID
+- [ ] No admin tokens exposed to patient context
+
+### Token Handling
+- [ ] Tokens not logged
+- [ ] Tokens not in error messages
+- [ ] Tokens not passed in URLs
+- [ ] Token existence validated before use
+
+### Http() Usage
+- [ ] All Http() calls with Authorization reviewed
+- [ ] Token source traced to secrets
+- [ ] Appropriate token for the context
+
+---
+
+## Reporting Security Issues
+
+When reviewing, report findings as:
+
+```markdown
+## FHIR Client Security Review: {plugin_name}
+
+### Findings
+
+| Severity | Issue | Location | Recommendation |
+|----------|-------|----------|----------------|
+| HIGH | Admin token in patient portal | api/portal.py:45 | Use SMART launch patient-scoped token |
+| HIGH | Over-scoped: user/*.* | manifest.json | Reduce to specific resources needed |
+| MEDIUM | Token logged | protocols/sync.py:23 | Remove token from log statement |
+| LOW | Token existence not checked | api/fhir.py:12 | Add validation before use |
+
+### Summary
+
+- Total FHIR client patterns reviewed: X
+- Issues found: Y
+- Recommendation: [PASS / FIX REQUIRED]
+```

@@ -270,10 +270,15 @@ uv run canvas validate-manifest .
 
 ### Step 5: Security Check
 
-If the plugin has **any SimpleAPI handlers**, invoke the **api-security skill** to verify:
+If the plugin has **any SimpleAPI handlers**, invoke the **plugin-api-server-security** skill to verify:
 - `authenticate()` method is properly implemented
 - SessionCredential checks patient vs staff appropriately
 - No unauthenticated endpoints exposed
+
+If the plugin **calls FHIR APIs or uses Http()**, also invoke the **fhir-api-client-security** skill to verify:
+- Tokens stored in secrets (not hardcoded)
+- Patient-facing apps use patient-scoped tokens
+- Minimum necessary scopes requested
 
 ### Step 6: Write Tests
 

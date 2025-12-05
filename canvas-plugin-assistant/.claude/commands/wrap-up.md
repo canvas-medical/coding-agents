@@ -8,18 +8,19 @@ Run through each checklist item, report findings, and give a clear verdict.
 
 ### 1. Security Review
 
-Check if the plugin has any SimpleAPI or WebSocket handlers:
+Run the comprehensive security review command:
 
-```bash
-grep -r "SimpleAPI\|WebSocket" --include="*.py" .
+```
+/security-review
 ```
 
-**If handlers exist:**
-- Invoke the **api-security** skill
-- Review all API handlers for authentication and authorization
-- Report any security issues found
+This covers:
+- **Plugin API Server Security** - SimpleAPI/WebSocket authentication and authorization
+- **FHIR API Client Security** - Token scopes, patient-scoped tokens, token storage
+- **Application Scope** - Manifest scope alignment with token usage
+- **Secrets Declaration** - All tokens properly declared
 
-**If no handlers:** Mark security as N/A.
+The command saves a timestamped report to `.claude/artifacts/` and offers to fix any issues found.
 
 ### 2. Database Performance Review
 
@@ -151,7 +152,8 @@ After all checks, present a summary:
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Security | ✅ Pass / ⚠️ Issues / N/A | ... |
+| Plugin API Security | ✅ Pass / ⚠️ Issues / N/A | ... |
+| FHIR Client Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
@@ -221,11 +223,12 @@ Use concise declarative voice for commit messages:
 This command is the **final step** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup     →  Verify environment tools (uv, unbuffer)
-/new-plugin      →  Create plugin from requirements
-/deploy          →  Deploy to Canvas instance for UAT
-/coverage        →  Check test coverage (aim for 90%)
-/wrap-up         →  Final checklist before delivery  ← YOU ARE HERE
+/check-setup      →  Verify environment tools (uv, unbuffer)
+/new-plugin       →  Create plugin from requirements
+/deploy           →  Deploy to Canvas instance for UAT
+/coverage         →  Check test coverage (aim for 90%)
+/security-review  →  Comprehensive security audit
+/wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
 ```
 
 After wrap-up passes, the plugin is ready to ship!
