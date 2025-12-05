@@ -112,6 +112,25 @@ uv run canvas validate-manifest .
 uv run pytest
 ```
 
+**Also verify manifest version fields:**
+
+1. **Check sdk_version matches installed Canvas CLI:**
+   ```bash
+   uv run canvas --version
+   ```
+   Compare with `sdk_version` in `CANVAS_MANIFEST.json`. They must match (e.g., both `0.9.2`).
+
+2. **Verify plugin_version was bumped appropriately:**
+   - If this is first deployment: version should be `0.0.1`
+   - If code changed since last deploy: version should have been bumped in Step 2
+   - Version should follow semantic versioning (MAJOR.MINOR.PATCH)
+
+3. **If sdk_version doesn't match:**
+   Update `CANVAS_MANIFEST.json` to match the installed CLI version:
+   ```json
+   "sdk_version": "0.9.2"
+   ```
+
 Report any issues and fix if needed before proceeding.
 
 ### Step 4: Git Commit and Push
