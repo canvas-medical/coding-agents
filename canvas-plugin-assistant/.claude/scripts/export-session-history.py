@@ -50,7 +50,7 @@ def main():
     output_file = output_dir / f"claude-history-{session_id}.txt"
 
     # Write display texts
-    output_file.write_text("\n\n---\n\n".join(display_texts))
+    output_file.write_text("\n".join(display_texts))
 
     print(f"Exported {len(display_texts)} messages to {output_file}")
 
