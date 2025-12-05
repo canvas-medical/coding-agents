@@ -76,7 +76,7 @@ This command is **step 4** in the Canvas Plugin Assistant workflow:
 /new-plugin       →  Create plugin from requirements
 /deploy           →  Deploy to Canvas instance for UAT
 /coverage         →  Check test coverage (aim for 90%)  ← YOU ARE HERE
-/security-review  →  Comprehensive security audit
+/security-review-cpa  →  Comprehensive security audit
 /wrap-up          →  Final checklist before delivery
 ```
 

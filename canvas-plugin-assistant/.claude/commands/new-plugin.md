@@ -81,7 +81,7 @@ This command is **step 2** in the Canvas Plugin Assistant workflow:
 /new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
 /deploy           →  Deploy to Canvas instance for UAT
 /coverage         →  Check test coverage (aim for 90%)
-/security-review  →  Comprehensive security audit
+/security-review-cpa  →  Comprehensive security audit
 /wrap-up          →  Final checklist before delivery
 ```
 

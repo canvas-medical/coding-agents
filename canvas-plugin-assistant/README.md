@@ -45,7 +45,7 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 | `/analyze-instance` | Analyze Canvas instance configuration |
 | `/deploy` | Deploy plugin and monitor logs |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
-| `/security-review` | Comprehensive security audit with report |
+| `/security-review-cpa` | Comprehensive security audit with report |
 | `/wrap-up` | Final checklist before calling a plugin "done" |
 
 ## Credentials Setup
@@ -74,7 +74,7 @@ root_password=...
 /new-plugin       →  Create plugin from requirements
 /deploy           →  Deploy to Canvas instance for UAT
 /coverage         →  Check test coverage (aim for 90%)
-/security-review  →  Comprehensive security audit
+/security-review-cpa  →  Comprehensive security audit
 /wrap-up          →  Final checklist before delivery
 ```
 
@@ -91,7 +91,7 @@ root_password=...
    - Deploy to test instance
    - Perform user acceptance testing with real-time log monitoring
 
-4. **Quality Checks** (`/coverage`, `/security-review`)
+4. **Quality Checks** (`/coverage`, `/security-review-cpa`)
    - Verify test coverage meets 90% threshold
    - Run comprehensive security audit
 
@@ -120,7 +120,7 @@ root_password=...
 │   ├── analyze-instance.md    # /analyze-instance
 │   ├── deploy.md              # /deploy
 │   ├── coverage.md            # /coverage
-│   ├── security-review.md     # /security-review
+│   ├── security-review.md     # /security-review-cpa
 │   └── wrap-up.md             # /wrap-up
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation

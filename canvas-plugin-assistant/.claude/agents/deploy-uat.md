@@ -264,13 +264,15 @@ Save to `uat-results-{plugin_name}-{date}.md`.
 
 ## After UAT Passes
 
-When UAT is successful and the user is satisfied:
+When UAT is successful and the user is satisfied, guide them through the remaining workflow steps **in order**:
 
-> "UAT passed! Before calling this version done, let's run through the final checklist to make sure everything is ready."
+1. **Run `/coverage`** - Verify test coverage meets 90% threshold
+2. **Run `/security-review-cpa`** - Comprehensive security audit
+3. **Run `/wrap-up`** - Final checklist before delivery (includes git commit/push)
 
-Then use the `/wrap-up` command to run the final checklist (security, coverage, README, license).
+> "UAT passed! Let's verify test coverage next. Running `/coverage`..."
 
-**Always drive to wrap-up after successful UAT.**
+**Do NOT skip to wrap-up or commit/push before completing coverage and security review.**
 
 ## Environment Promotion
 

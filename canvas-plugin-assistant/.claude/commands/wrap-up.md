@@ -11,7 +11,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 Run the comprehensive security review command:
 
 ```
-/security-review
+/security-review-cpa
 ```
 
 This covers:
@@ -241,13 +241,33 @@ Use AskUserQuestion if any issues were found:
 
 **Save a record of this development session for future reference.**
 
-Run the history export script:
+Export the session history using Python:
 
-```bash
-python .claude/scripts/export-session-history.py
+```python
+import json
+from pathlib import Path
+
+history_file = Path.home() / ".claude" / "history.jsonl"
+lines = history_file.read_text().strip().split("\n")
+last_entry = json.loads(lines[-1])
+session_id = last_entry.get("sessionId")
+
+display_texts = []
+for line in lines:
+    entry = json.loads(line)
+    if entry.get("sessionId") == session_id:
+        display = entry.get("display")
+        if display:
+            display_texts.append(display)
+
+output_dir = Path(".claude/artifacts")
+output_dir.mkdir(parents=True, exist_ok=True)
+output_file = output_dir / f"claude-history-{session_id}.txt"
+output_file.write_text("\n".join(display_texts))
+print(f"Exported {len(display_texts)} messages to {output_file}")
 ```
 
-This creates `.claude/artifacts/claude-history-{sessionId}.txt` containing all messages from this session. The file is overwritten on each run, so there's one complete file per session.
+This creates `.claude/artifacts/claude-history-{sessionId}.txt` in the current plugin directory containing all messages from this session.
 
 ### 10. Final Git Commit and Push
 
@@ -275,7 +295,7 @@ This command is the **final step** in the Canvas Plugin Assistant workflow:
 /new-plugin       →  Create plugin from requirements
 /deploy           →  Deploy to Canvas instance for UAT
 /coverage         →  Check test coverage (aim for 90%)
-/security-review  →  Comprehensive security audit
+/security-review-cpa  →  Comprehensive security audit
 /wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
 ```
 
