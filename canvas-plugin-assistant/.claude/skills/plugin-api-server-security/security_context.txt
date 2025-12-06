@@ -2,9 +2,68 @@
 
 This document provides security review guidelines for Canvas plugin API handlers.
 
-## Authentication Methods
+## Best Practice: Authentication Mixins
 
-Canvas SimpleAPI supports three authentication types:
+**RECOMMENDED:** Use the built-in authentication mixins instead of writing manual `authenticate()` methods.
+
+The Canvas SDK provides mixins documented at `handlers-simple-api-http/#staff-session`:
+
+### StaffSessionMixin (Staff-Only Endpoints)
+
+```python
+from canvas_sdk.handlers.simple_api import SimpleAPIRoute, StaffSessionMixin
+
+class AdminAPI(StaffSessionMixin, SimpleAPIRoute):
+    PATH = "/admin/settings"
+
+    def get(self):
+        # Only staff can reach this - authentication handled by mixin
+        return [JSONResponse({"settings": "..."})]
+```
+
+### PatientSessionMixin (Patient-Only Endpoints)
+
+```python
+from canvas_sdk.handlers.simple_api import SimpleAPIRoute, PatientSessionMixin
+
+class PatientPortalAPI(PatientSessionMixin, SimpleAPIRoute):
+    PATH = "/portal/my-data"
+
+    def get(self):
+        # Only patients can reach this - authentication handled by mixin
+        # Access the authenticated patient via self.authenticated_patient
+        return [JSONResponse({"patient": "..."})]
+```
+
+### APIKeyAuthMixin (External API Key Authentication)
+
+```python
+from canvas_sdk.handlers.simple_api import SimpleAPIRoute, APIKeyAuthMixin
+
+class WebhookAPI(APIKeyAuthMixin, SimpleAPIRoute):
+    PATH = "/webhook/receive"
+    API_KEY_SECRET_NAME = "WEBHOOK_API_KEY"  # References secret in manifest
+
+    def post(self):
+        # Only requests with valid API key can reach this
+        return [JSONResponse({"status": "received"})]
+```
+
+**Why use mixins:**
+- Correct implementation guaranteed by the SDK
+- Less code to write and review
+- Consistent patterns across plugins
+- Handles edge cases (None checks, timing attacks) automatically
+
+**During security review:** Flag any manual `authenticate()` implementations and recommend the appropriate mixin.
+
+---
+
+## Manual Authentication (When Mixins Don't Fit)
+
+For complex authorization logic that mixins don't cover, you may need manual `authenticate()` methods.
+
+Canvas SimpleAPI supports three credential types:
 
 ### 1. APIKeyCredentials (External Clients)
 
@@ -219,22 +278,30 @@ def authenticate(self, credentials: APIKeyCredentials) -> bool:
 
 When reviewing a plugin's API handlers, verify:
 
+### Mixin Usage (Best Practice)
+- [ ] Staff-only endpoints use `StaffSessionMixin`
+- [ ] Patient-only endpoints use `PatientSessionMixin`
+- [ ] API key endpoints use `APIKeyAuthMixin`
+- [ ] Flag any manual `authenticate()` methods - recommend mixin if applicable
+
 ### Authentication Present
-- [ ] Every SimpleAPI/SimpleAPIRoute has an `authenticate()` method
+- [ ] Every SimpleAPI/SimpleAPIRoute has authentication (via mixin or `authenticate()` method)
 - [ ] Every WebSocket handler has an `authenticate()` method
 - [ ] No endpoints are accidentally public
 
-### APIKey Authentication
+### APIKey Authentication (if manual)
 - [ ] Uses `compare_digest()` for key comparison
 - [ ] Checks that secret exists before comparing
 - [ ] Secret is declared in CANVAS_MANIFEST.json
 - [ ] No hardcoded keys
+- [ ] **Recommend:** Use `APIKeyAuthMixin` instead
 
-### SessionCredentials Authentication
+### SessionCredentials Authentication (if manual)
 - [ ] Validates `user.get("type")` for staff-only or patient-only endpoints
 - [ ] Patient endpoints verify patient is accessing their OWN data
 - [ ] Staff endpoints verify user is actually staff
 - [ ] Handles missing/None user gracefully
+- [ ] **Recommend:** Use `StaffSessionMixin` or `PatientSessionMixin` instead
 
 ### Data Access
 - [ ] Patient data queries are scoped to authorized patients

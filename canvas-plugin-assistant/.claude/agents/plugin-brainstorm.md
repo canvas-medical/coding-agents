@@ -271,7 +271,8 @@ uv run canvas validate-manifest .
 ### Step 5: Security Check
 
 If the plugin has **any SimpleAPI handlers**, invoke the **plugin-api-server-security** skill to verify:
-- `authenticate()` method is properly implemented
+- Uses authentication mixins where appropriate (`StaffSessionMixin`, `PatientSessionMixin`, `APIKeyAuthMixin`)
+- Don't manually implement staff or patient authentication - use the mixins instead
 - SessionCredential checks patient vs staff appropriately
 - No unauthenticated endpoints exposed
 
