@@ -138,11 +138,10 @@ This key is used by the comparison script to evaluate whether review commands co
 │   ├── wrap-up.md             # /wrap-up
 │   └── run-evals.md           # /run-evals
 ├── evals/
-│   ├── security/              # Security review eval cases
-│   │   ├── hardcoded-secret/
-│   │   └── patient-scope-mismatch/
-│   └── database/              # Database review eval cases
-│       └── n-plus-one-query/
+│   ├── case_001/              # Eval cases (non-descriptive names for blind testing)
+│   ├── case_002/
+│   ├── case_003/
+│   └── case_index.md          # Case descriptions (CPA denied access)
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── plugin-patterns/       # Architecture patterns
@@ -183,6 +182,8 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 | `db-performance-review-{timestamp}.md` | Database query optimization findings |
 | `claude-history-{sessionId}.txt` | Complete session transcript |
 | `eval-results-{timestamp}.md` | Eval suite results |
+| `{case_name}-security-review.md` | Per-case security review (evals) |
+| `{case_name}-database-review.md` | Per-case database review (evals) |
 
 **Keep these artifacts.** They're valuable for retrospectives, training, and improving CPA itself.
 
@@ -190,13 +191,7 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 
 CPA includes an eval framework to verify that `/security-review-cpa` and `/database-performance-review` commands correctly detect known issues.
 
-**Available eval cases:**
-
-| Eval | Category | Tests |
-|------|----------|-------|
-| `hardcoded-secret` | security | Detects hardcoded JWT tokens in source code |
-| `patient-scope-mismatch` | security | Detects admin tokens used in patient-facing apps |
-| `n-plus-one-query` | database | Detects N+1 queries and missing select_related |
+**Blind evaluation:** Eval case names are intentionally non-descriptive (`case_001`, `case_002`, etc.) to avoid biasing reviews. CPA is denied read access to `expected.json` and `case_index.md`.
 
 **Running evals:**
 ```bash
@@ -207,4 +202,4 @@ export EVALS_ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 **Adding new evals:**
-See `.claude/evals/README.md` for instructions on creating new eval cases.
+See `.claude/evals/README.md` for instructions. Use `case_index.md` (human-readable only) to track what each case tests.
