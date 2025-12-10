@@ -19,30 +19,52 @@ Use this skill when:
 
 **These rules are non-negotiable. Follow them exactly.**
 
-### 1. Directory Structure Mirrors Source Code
+### 1. Tests at Container Level, Mirroring Source Structure
 
-The `tests/` directory structure MUST mirror the source code structure exactly:
+**CRITICAL:** The `tests/` directory MUST be at the container level (parallel to the inner plugin folder), NOT inside the inner folder.
 
 ```
-plugin_name/
-├── plugin_name/
+my-plugin-name/                       # Container folder (kebab-case)
+├── pyproject.toml                    # Container level
+├── tests/                            # Container level - NOT inside inner folder!
+│   ├── conftest.py
 │   ├── protocols/
-│   │   ├── vitals_handler.py
-│   │   └── lab_handler.py
+│   │   ├── test_vitals_handler.py    # mirrors inner/protocols/vitals_handler.py
+│   │   └── test_lab_handler.py       # mirrors inner/protocols/lab_handler.py
 │   ├── api/
-│   │   └── routes.py
+│   │   └── test_routes.py            # mirrors inner/api/routes.py
 │   └── helpers/
-│       └── utils.py
-├── tests/
-│   ├── protocols/
-│   │   ├── test_vitals_handler.py    # mirrors vitals_handler.py
-│   │   └── test_lab_handler.py       # mirrors lab_handler.py
-│   ├── api/
-│   │   └── test_routes.py            # mirrors routes.py
-│   ├── helpers/
-│   │   └── test_utils.py             # mirrors utils.py
-│   └── conftest.py
-└── pyproject.toml
+│       └── test_utils.py             # mirrors inner/helpers/utils.py
+└── my_plugin_name/                   # Inner folder (snake_case)
+    ├── CANVAS_MANIFEST.json
+    ├── README.md
+    ├── protocols/
+    │   ├── vitals_handler.py
+    │   └── lab_handler.py
+    ├── api/
+    │   └── routes.py
+    └── helpers/
+        └── utils.py
+```
+
+**Key points:**
+- `tests/` is a **sibling** to the inner plugin folder, not a child
+- Test file structure mirrors the inner folder's source structure
+- Test file name = `test_` + source file name
+
+**WRONG structure (DO NOT DO THIS):**
+```
+my-plugin-name/
+└── my_plugin_name/
+    ├── protocols/
+    │   └── handler.py
+    └── tests/                        # WRONG - tests inside inner folder!
+        └── test_handler.py
+```
+
+**If you find tests inside the inner folder, move them:**
+```bash
+mv my_plugin_name/tests ./tests
 ```
 
 ### 2. One Test File Per Source File

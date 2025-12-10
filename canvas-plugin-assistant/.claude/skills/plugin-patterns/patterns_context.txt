@@ -2,6 +2,79 @@
 
 This document provides practical patterns and best practices for building Canvas plugins.
 
+## Canonical Project Structure
+
+**CRITICAL:** The `canvas init` command creates a specific nested folder structure. Understanding this structure is essential for correct plugin development.
+
+### Container vs Inner Folder Pattern
+
+When you run `canvas init` with a plugin name, it creates two levels:
+
+```
+example-plugin-name/              # Container folder (kebab-case)
+├── pyproject.toml                # Container level - dev/test tooling only
+├── tests/                        # Container level - mirrors inner structure
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── protocols/
+│       └── test_handler.py       # Mirrors inner/protocols/handler.py
+└── example_plugin_name/          # Inner folder (snake_case, same name converted)
+    ├── CANVAS_MANIFEST.json      # MUST be inside inner folder
+    ├── README.md                 # Plugin documentation
+    └── protocols/
+        ├── __init__.py
+        └── my_protocol.py
+```
+
+### Key Rules
+
+1. **Container folder** is kebab-case: `my-cool-plugin`
+2. **Inner folder** is snake_case: `my_cool_plugin` (same name, different format)
+3. **CANVAS_MANIFEST.json** MUST be inside the inner folder, never at container level
+4. **tests/** MUST be at container level, parallel to inner folder
+5. **pyproject.toml** is at container level (for local dev/test only)
+6. **README.md** is inside the inner folder
+
+### Name Conversion
+
+The inner folder name is derived from the container name by replacing hyphens with underscores:
+
+| Plugin Name (container) | Inner Folder |
+|------------------------|--------------|
+| `my-plugin` | `my_plugin` |
+| `vitals-alert` | `vitals_alert` |
+| `patient-chart-customizations` | `patient_chart_customizations` |
+
+### Common Structure Mistakes
+
+| Mistake | Problem | Fix |
+|---------|---------|-----|
+| `CANVAS_MANIFEST.json` at container level | Canvas CLI won't find it | Move inside inner folder |
+| `tests/` inside inner folder | Import paths break | Move to container level |
+| No inner folder (flat structure) | Plugin won't install | Re-run `canvas init` |
+| Inner folder has kebab-case | Python imports fail | Rename to snake_case |
+| Two levels of nesting inside inner | Over-complicated structure | Flatten to single inner folder |
+
+### Verification Commands
+
+After `canvas init`, verify the structure:
+
+```bash
+# Get inner folder name (convert kebab to snake)
+INNER=$(basename "$PWD" | tr '-' '_')
+
+# CANVAS_MANIFEST.json should be inside inner folder
+test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Manifest in correct location" || echo "ERROR: Manifest missing from $INNER/"
+
+# tests/ should be at container level
+test -d tests && echo "OK: tests/ at container level" || echo "ERROR: tests/ missing"
+
+# pyproject.toml should be at container level
+test -f pyproject.toml && echo "OK: pyproject.toml present" || echo "ERROR: pyproject.toml missing"
+```
+
+---
+
 ## Plugin Complexity Levels
 
 ### Simple Plugins (1-2 files, ~45 real-world examples)
@@ -811,3 +884,92 @@ plugin/
 | Extreme | 10-30 (full configuration system) |
 
 If a spec requires many configurable behaviors, plan for more secrets.
+
+---
+
+## pyproject.toml
+
+**CRITICAL: Keep pyproject.toml minimal.** This file is only used for local development and testing—Canvas has its own plugin packaging process that ignores it.
+
+### Correct pyproject.toml Structure
+
+```toml
+# This pyproject.toml is only used for local development and testing.
+# The Canvas plugin has its own packaging process that doesn't use this file.
+
+[project]
+name = "my-plugin-name"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "arrow>=1.3.0",
+    "django>=4.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-django>=4.7.0",
+    "pytest-mock>=3.12.0",
+]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+```
+
+### What to Include
+
+- **`[project]`**: Plugin name, version `0.0.0`, Python version
+- **`dependencies`**: Only packages your plugin imports at runtime (arrow, django, httpx, etc.)
+- **`[dependency-groups].dev`**: Test tooling only (pytest and plugins)
+- **`[tool.coverage.run]`**: Exclude tests from coverage reports
+
+### What NOT to Include
+
+- Build system configuration (`[build-system]`, setuptools, hatch, etc.)
+- Complex tool configurations (black, ruff, mypy settings)
+- Scripts or entry points
+- Optional dependencies groups beyond `dev`
+- Package metadata (authors, license, classifiers, URLs)
+- Any configuration Canvas won't use
+
+### Anti-Pattern: Over-Configured pyproject.toml
+
+```toml
+# BAD - way too much unnecessary configuration
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my-plugin"
+version = "0.1.0"
+description = "A Canvas plugin"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "...", email = "..." }]
+classifiers = [...]
+urls = { Homepage = "...", Repository = "..." }
+dependencies = [...]
+
+[project.optional-dependencies]
+dev = [...]
+test = [...]
+lint = [...]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/my_plugin"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+
+[tool.mypy]
+strict = true
+```
+
+None of this is needed. Canvas doesn't use your build system, and you don't need linting configuration in the project file.

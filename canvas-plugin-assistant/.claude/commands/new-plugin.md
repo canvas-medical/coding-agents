@@ -51,13 +51,81 @@ cd {plugin_name}
 
 After `canvas init` completes:
 
-1. **Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
+1. **Verify project structure:**
+
+   The expected structure is:
+   ```
+   {plugin_name}/                    # Container: kebab-case (you are here)
+   ├── pyproject.toml
+   ├── tests/
+   │   └── ...
+   └── {plugin_name_snake}/          # Inner: snake_case version
+       ├── CANVAS_MANIFEST.json
+       ├── README.md
+       └── protocols/
+   ```
+
+   Run these verification checks:
+
+   ```bash
+   # Convert plugin name to inner folder name (kebab to snake)
+   INNER=$(echo "{plugin_name}" | tr '-' '_')
+
+   # Verify structure
+   echo "Verifying project structure..."
+
+   # Inner folder should exist
+   test -d "$INNER" && echo "OK: Inner folder '$INNER' exists" || echo "ERROR: Inner folder '$INNER' not found"
+
+   # CANVAS_MANIFEST.json should be INSIDE inner folder
+   test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: CANVAS_MANIFEST.json in correct location" || echo "ERROR: CANVAS_MANIFEST.json not in $INNER/"
+
+   # tests/ should be at container level
+   test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
+
+   # pyproject.toml should be at container level
+   test -f "pyproject.toml" && echo "OK: pyproject.toml present" || echo "ERROR: pyproject.toml missing"
+   ```
+
+   **If any checks fail:** Report errors to the user and investigate before proceeding. Do NOT continue with implementation until structure is correct.
+
+2. **Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
    - Check if `.gitignore` exists in the plugin directory
    - If it exists, check if it already contains `.claude`
    - If not, append `.claude` to the file
    - If `.gitignore` doesn't exist, create it with `.claude` as the first entry
 
-2. **Commit the scaffolded plugin:**
+3. **Replace `pyproject.toml` with the minimal version:**
+
+   The `canvas init` scaffold may include unnecessary configuration. Replace it with this minimal file:
+
+   ```toml
+   # This pyproject.toml is only used for local development and testing.
+   # The Canvas plugin has its own packaging process that doesn't use this file.
+
+   [project]
+   name = "{plugin_name}"
+   version = "0.0.0"
+   requires-python = ">=3.12"
+   dependencies = [
+       "django>=4.2.0",
+   ]
+
+   [dependency-groups]
+   dev = [
+       "pytest>=8.0.0",
+       "pytest-cov>=4.1.0",
+       "pytest-django>=4.7.0",
+       "pytest-mock>=3.12.0",
+   ]
+
+   [tool.coverage.run]
+   omit = ["tests/*"]
+   ```
+
+   Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
+
+4. **Commit the scaffolded plugin:**
    ```bash
    git add -A .
    git commit -m "initialize {plugin_name} plugin scaffold"

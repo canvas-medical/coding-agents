@@ -202,6 +202,34 @@ The `canvas init` command creates the correct structure. Only AFTER it completes
 
 You will likely need to remove some unused placeholder files (e.g., `protocols/my_protocol.py`, `test_models.py`) - that's fine.
 
+### Step 1.5: Verify Structure
+
+**Before editing any files, verify `canvas init` created the correct structure:**
+
+```bash
+# Convert plugin name to expected inner folder name (kebab to snake)
+INNER=$(echo "{plugin_name}" | tr '-' '_')
+
+# Quick structure check
+echo "Verifying structure..."
+test -d "$INNER" && echo "OK: Inner folder '$INNER' exists" || echo "ERROR: Inner folder not found"
+test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Manifest in correct place" || echo "ERROR: Manifest missing"
+test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
+```
+
+Expected structure:
+```
+{plugin_name}/                    # Container (kebab-case) - you are here
+├── pyproject.toml
+├── tests/                        # Container level
+└── {plugin_name_snake}/          # Inner (snake_case)
+    ├── CANVAS_MANIFEST.json
+    ├── README.md
+    └── protocols/
+```
+
+**If any errors appear, investigate before proceeding.** Do NOT continue with implementation until the structure is correct.
+
 ### Step 2: Determine Pattern
 
 Read the **plugin-patterns skill** and match the spec to a pattern:
