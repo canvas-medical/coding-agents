@@ -443,7 +443,27 @@ LaunchModalEffect(
 
 ## Best Practices
 
-### 1. Let Exceptions Propagate
+### 1. Use Absolute Imports
+
+**CRITICAL:** Canvas plugins MUST use absolute imports with the full package path. Relative imports will fail in the Canvas runtime.
+
+```python
+# GOOD - absolute import with full package path
+from my_plugin_name.clients.aws_s3 import AwsS3
+from my_plugin_name.protocols.handler import MyHandler
+from my_plugin_name.utils.helpers import format_date
+
+# BAD - relative imports (will fail in Canvas)
+from ..clients.aws_s3 import AwsS3
+from .handler import MyHandler
+from ...utils.helpers import format_date
+```
+
+The package name in the import must match the inner folder name (snake_case):
+- Inner folder: `vitals_alert/`
+- Import: `from vitals_alert.protocols.handler import ...`
+
+### 2. Let Exceptions Propagate
 **Do NOT wrap handler code in try-except blocks.** Exceptions must bubble up so they appear in Canvas logs with full tracebacks for debugging.
 
 ```python

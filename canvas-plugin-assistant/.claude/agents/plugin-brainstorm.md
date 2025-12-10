@@ -265,6 +265,20 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 
 #### Implementation Guidelines
 
+**CRITICAL: Use absolute imports only.**
+
+Canvas plugins MUST use absolute imports with the full package path. Relative imports will fail in the Canvas runtime.
+
+```python
+# GOOD - absolute import with full package path
+from my_plugin_name.clients.aws_s3 import AwsS3
+from my_plugin_name.utils.helpers import format_date
+
+# BAD - relative imports (will fail in Canvas)
+from ..clients.aws_s3 import AwsS3
+from .helpers import format_date
+```
+
 **CRITICAL: Do NOT use try-except blocks in handler code.**
 
 Exceptions must propagate so they appear in Canvas logs with full tracebacks. Swallowing exceptions makes debugging impossible.
