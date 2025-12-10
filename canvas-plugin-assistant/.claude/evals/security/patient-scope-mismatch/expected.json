@@ -1,0 +1,21 @@
+{
+  "eval_name": "patient-scope-mismatch",
+  "review_command": "security-review-cpa",
+  "description": "Patient-facing app (portal_menu_item) using admin-scoped FHIR token instead of patient-scoped token",
+  "expected_findings": [
+    {
+      "category": "Application Scope",
+      "severity": "HIGH",
+      "description": "portal_menu_item scope requires patient-scoped token, not admin token",
+      "must_detect": true
+    },
+    {
+      "category": "FHIR API Client Security",
+      "severity": "HIGH",
+      "description": "Patient-facing app should not use admin/global token that can access any patient's data",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND",
+  "notes": "The manifest declares portal_menu_item scope but uses ADMIN_FHIR_TOKEN - this is a critical security issue where patients could access other patients' data"
+}

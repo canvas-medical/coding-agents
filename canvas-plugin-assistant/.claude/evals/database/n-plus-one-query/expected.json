@@ -1,0 +1,21 @@
+{
+  "eval_name": "n-plus-one-query",
+  "review_command": "database-performance-review",
+  "description": "Plugin with N+1 query patterns: query inside loop and missing select_related",
+  "expected_findings": [
+    {
+      "category": "N+1 Query Patterns",
+      "severity": "HIGH",
+      "description": "Condition.objects.filter() called inside for loop - query per patient",
+      "must_detect": true
+    },
+    {
+      "category": "select_related",
+      "severity": "MEDIUM",
+      "description": "Accessing patient.primary_care_provider without select_related",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND",
+  "notes": "Classic N+1 pattern: fetching all patients then querying conditions for each. Also accessing FK attribute without select_related."
+}

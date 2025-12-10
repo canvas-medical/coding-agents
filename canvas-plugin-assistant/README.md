@@ -48,6 +48,7 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 | `/security-review-cpa` | Comprehensive security audit with report |
 | `/database-performance-review` | Database query optimization review with report |
 | `/wrap-up` | Final checklist before calling a plugin "done" |
+| `/run-evals` | Run eval suite to test review command accuracy |
 
 ## Credentials Setup
 
@@ -67,6 +68,16 @@ root_password=...
 
 - `client_id` / `client_secret`: For Canvas CLI (API access)
 - `root_password`: For admin portal access (instance analyzer)
+
+### Evals Setup
+
+To run `/run-evals`, set the `EVALS_ANTHROPIC_API_KEY` environment variable:
+
+```bash
+export EVALS_ANTHROPIC_API_KEY=sk-ant-...
+```
+
+This key is used by the comparison script to evaluate whether review commands correctly detected expected issues.
 
 ## Workflow
 
@@ -124,7 +135,14 @@ root_password=...
 │   ├── coverage.md            # /coverage
 │   ├── security-review-cpa.md # /security-review-cpa
 │   ├── database-performance-review.md # /database-performance-review
-│   └── wrap-up.md             # /wrap-up
+│   ├── wrap-up.md             # /wrap-up
+│   └── run-evals.md           # /run-evals
+├── evals/
+│   ├── security/              # Security review eval cases
+│   │   ├── hardcoded-secret/
+│   │   └── patient-scope-mismatch/
+│   └── database/              # Database review eval cases
+│       └── n-plus-one-query/
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── plugin-patterns/       # Architecture patterns
@@ -137,7 +155,8 @@ root_password=...
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
 └── scripts/
-    └── export-session-history.py  # Session history export
+    ├── export-session-history.py  # Session history export
+    └── compare_review_results.py  # Eval comparison using Anthropic API
 
 ```
 
@@ -163,5 +182,29 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 | `security-review-{timestamp}.md` | Security audit findings and recommendations |
 | `db-performance-review-{timestamp}.md` | Database query optimization findings |
 | `claude-history-{sessionId}.txt` | Complete session transcript |
+| `eval-results-{timestamp}.md` | Eval suite results |
 
 **Keep these artifacts.** They're valuable for retrospectives, training, and improving CPA itself.
+
+## Evals
+
+CPA includes an eval framework to verify that `/security-review-cpa` and `/database-performance-review` commands correctly detect known issues.
+
+**Available eval cases:**
+
+| Eval | Category | Tests |
+|------|----------|-------|
+| `hardcoded-secret` | security | Detects hardcoded JWT tokens in source code |
+| `patient-scope-mismatch` | security | Detects admin tokens used in patient-facing apps |
+| `n-plus-one-query` | database | Detects N+1 queries and missing select_related |
+
+**Running evals:**
+```bash
+# Set API key first
+export EVALS_ANTHROPIC_API_KEY=sk-ant-...
+
+# Run /run-evals command in Claude Code
+```
+
+**Adding new evals:**
+See `.claude/evals/README.md` for instructions on creating new eval cases.

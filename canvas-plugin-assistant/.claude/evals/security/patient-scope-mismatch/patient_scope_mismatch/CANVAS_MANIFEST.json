@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "patient-scope-mismatch-eval",
+  "description": "Eval case: Patient-facing app using admin-scoped token",
+  "components": {
+    "protocols": [
+      {
+        "class": "patient_scope_mismatch.api.portal:PatientPortalAPI",
+        "description": "Patient portal API endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "patient_scope_mismatch.api.portal:PatientPortalApp",
+        "name": "My Health Portal",
+        "description": "Patient-facing health portal",
+        "scope": "portal_menu_item"
+      }
+    ]
+  },
+  "secrets": ["ADMIN_FHIR_TOKEN"],
+  "readme": "./README.md"
+}

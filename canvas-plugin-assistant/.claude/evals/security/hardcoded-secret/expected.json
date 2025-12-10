@@ -1,0 +1,15 @@
+{
+  "eval_name": "hardcoded-secret",
+  "review_command": "security-review-cpa",
+  "description": "Plugin with hardcoded JWT token in source code instead of using secrets",
+  "expected_findings": [
+    {
+      "category": "Secrets Declaration",
+      "severity": "HIGH",
+      "description": "Hardcoded JWT token (eyJ...) should be detected and flagged",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND",
+  "notes": "The grep for base64-like strings (eyJ pattern) should catch this token"
+}

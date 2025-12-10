@@ -1,0 +1,16 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "n-plus-one-query-eval",
+  "description": "Eval case: Plugin with N+1 query performance issue",
+  "components": {
+    "protocols": [
+      {
+        "class": "n_plus_one_query.protocols.handler:DailyDigestHandler",
+        "description": "Handler that generates daily patient digest with N+1 queries"
+      }
+    ]
+  },
+  "secrets": [],
+  "readme": "./README.md"
+}
