@@ -973,3 +973,188 @@ strict = true
 ```
 
 None of this is needed. Canvas doesn't use your build system, and you don't need linting configuration in the project file.
+
+---
+
+## Client Libraries
+
+Pre-built client libraries are available in `skills/plugin-patterns/client-library/` for common integrations. **Copy these files into your plugin** when needed rather than writing from scratch.
+
+### AWS S3 Client (`aws_s3.py`)
+
+**When to use:** Plugin needs to store or retrieve files, data persistence beyond Canvas, file uploads/downloads.
+
+**Features:**
+- AWS Signature Version 4 authentication (no boto3 dependency)
+- Automatic instance-prefixed keys (`{instance}-plugins/{key}`) for isolation
+- Simple `get_object()` and `put_object()` methods
+
+**Usage:**
+```python
+from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+
+credentials = AwsS3Credentials(
+    aws_key=self.secrets["AWS_ACCESS_KEY"],
+    aws_secret=self.secrets["AWS_SECRET_KEY"],
+    instance="customer-instance"
+)
+s3 = AwsS3(credentials)
+
+# Upload JSON data
+s3.put_object("my-data.json", json.dumps(data))
+
+# Retrieve data
+response = s3.get_object("my-data.json")
+if response.status_code == 200:
+    data = response.json()
+```
+
+**Required secrets:** `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`
+
+**Required dependency:** `requests>=2.28.0`
+
+---
+
+### Anthropic LLM Client (`llm_anthropic.py`)
+
+**When to use:** Plugin needs AI/LLM capabilities, text generation, clinical recommendations, structured data extraction.
+
+**Features:**
+- Lightweight Anthropic Claude API wrapper (no anthropic SDK dependency)
+- Conversation message management
+- `chat()` for free-form responses
+- `chat_with_json()` for structured JSON responses with automatic retry
+
+**Usage:**
+```python
+from {plugin_name}.clients.llm_anthropic import LlmAnthropic
+
+llm = LlmAnthropic(api_key=self.secrets["ANTHROPIC_API_KEY"])
+
+# Simple chat
+response = llm.chat(
+    system_prompt="You are a clinical assistant.",
+    user_prompt="Summarize these vitals..."
+)
+if response["success"]:
+    summary = response["content"]
+
+# JSON response with automatic retry
+result = llm.chat_with_json(
+    system_prompt="Return JSON with keys: recommendation, urgency",
+    user_prompt="Analyze this lab result..."
+)
+if result["success"]:
+    data = result["data"]  # Parsed dict
+```
+
+**Required secrets:** `ANTHROPIC_API_KEY`
+
+**Required dependency:** `requests>=2.28.0`
+
+---
+
+### Twilio SMS Client (`twilio_client.py`)
+
+**When to use:** Plugin needs to send SMS messages, patient notifications, appointment reminders.
+
+**Features:**
+- Simple Twilio API wrapper (no twilio SDK dependency)
+- E.164 phone number format support
+- Typed response with success status, message SID, or error details
+
+**Usage:**
+```python
+from {plugin_name}.clients.twilio_client import TwilioClient
+
+twilio = TwilioClient(
+    account_sid=self.secrets["TWILIO_ACCOUNT_SID"],
+    auth_token=self.secrets["TWILIO_AUTH_TOKEN"],
+    from_number=self.secrets["TWILIO_FROM_NUMBER"]  # E.164 format: +15551234567
+)
+
+# Send SMS
+response = twilio.send_sms(
+    to="+15559876543",
+    body="Your appointment is confirmed for tomorrow at 2pm."
+)
+if response.success:
+    log.info(f"SMS sent: {response.message_sid}")
+else:
+    log.error(f"SMS failed: {response.error_message}")
+```
+
+**Required secrets:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
+
+**Required dependency:** `requests>=2.28.0`
+
+---
+
+### SendGrid Email Client (`sendgrid_client.py`)
+
+**When to use:** Plugin needs to send emails, patient communications, reports, notifications.
+
+**Features:**
+- Simple SendGrid API wrapper (no sendgrid SDK dependency)
+- HTML and plain text email support
+- Typed response with success status, message ID, or error details
+
+**Usage:**
+```python
+from {plugin_name}.clients.sendgrid_client import SendGridClient
+
+sendgrid = SendGridClient(
+    api_key=self.secrets["SENDGRID_API_KEY"],
+    from_email="notifications@clinic.com"
+)
+
+# Send email
+response = sendgrid.send_email(
+    to="patient@example.com",
+    subject="Your Lab Results Are Ready",
+    html_body="<h1>Lab Results</h1><p>Your results are now available...</p>",
+    plain_text_body="Your lab results are now available..."  # Optional fallback
+)
+if response.success:
+    log.info(f"Email sent: {response.message_id}")
+else:
+    log.error(f"Email failed: {response.error_message}")
+```
+
+**Required secrets:** `SENDGRID_API_KEY`
+
+**Required dependency:** `requests>=2.28.0`
+
+---
+
+### How to Add a Client Library to Your Plugin
+
+1. **Copy the file** into your plugin's inner folder:
+   ```bash
+   # From inside the plugin container folder
+   mkdir -p {inner_folder}/clients
+   cp /path/to/skills/plugin-patterns/client-library/aws_s3.py {inner_folder}/clients/
+   ```
+
+2. **Add `__init__.py`** to make it a package:
+   ```bash
+   touch {inner_folder}/clients/__init__.py
+   ```
+
+3. **Add secrets** to `CANVAS_MANIFEST.json`:
+   ```json
+   "secrets": ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
+   ```
+
+4. **Add dependency** to `pyproject.toml`:
+   ```toml
+   dependencies = [
+       "django>=4.2.0",
+       "requests>=2.28.0",
+   ]
+   ```
+
+5. **Import and use** in your handler:
+   ```python
+   from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+   ```
