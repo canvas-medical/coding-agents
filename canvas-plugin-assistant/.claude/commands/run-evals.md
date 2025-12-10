@@ -8,63 +8,61 @@ Execute eval cases to verify that security and database performance review comma
 
 ```bash
 echo "=== Discovering eval cases ==="
-find .claude/evals -name "expected.json" | while read f; do
+find .claude/evals -name "expected.json" -type f | while read f; do
   eval_dir=$(dirname "$f")
   eval_name=$(basename "$eval_dir")
-  category=$(basename $(dirname "$eval_dir"))
-  echo "Found: $category / $eval_name"
+  echo "Found: $eval_name"
 done
 ```
 
 ### 2. Run Each Eval
 
-For each eval case discovered:
+For each eval case discovered (e.g., case_001, case_002, case_003):
 
-#### Step 2a: Read Expected Outcomes
+**CRITICAL: DO NOT read expected.json or case_index.md - that would invalidate the eval by biasing your review.**
 
-Read the `expected.json` file to understand:
-- `review_command`: Which review to run (`security-review-cpa` or `database-performance-review`)
-- `expected_findings`: What issues must be detected
-- `expected_verdict`: Overall expected result
-
-#### Step 2b: Navigate to Eval Case
+#### Step 2a: Navigate to Eval Case
 
 ```bash
-cd .claude/evals/{category}/{eval_name}
+cd .claude/evals/{eval_name}
 ```
 
-#### Step 2c: Run the Appropriate Review
+#### Step 2b: Run BOTH Review Commands
 
-**For security evals (`review_command: "security-review-cpa"`):**
-- Check for SimpleAPI/WebSocket endpoints and authentication
-- Check for FHIR API client usage and token security
-- Check manifest scope alignment
-- Check secrets declaration and hardcoded tokens
+**IMPORTANT: You MUST use the SlashCommand tool to invoke the review commands.**
 
-**For database evals (`review_command: "database-performance-review"`):**
-- Check for `.objects.` queries
-- Look for N+1 patterns (queries in loops)
-- Check for missing select_related/prefetch_related
+Run both reviews on each eval case - the comparison script will determine which findings are relevant:
 
-Generate a review report and save it to the eval case directory as `review-output.md`.
+```
+Use the SlashCommand tool with command: "/security-review-cpa"
+```
 
-#### Step 2d: Compare Results
+Save the security review output to `../.cpa-workflow-artifacts/{eval_name}-security-review.md`.
 
-Use the comparison script to evaluate whether the review detected the expected findings:
+```
+Use the SlashCommand tool with command: "/database-performance-review"
+```
+
+Save the database review output to `../.cpa-workflow-artifacts/{eval_name}-database-review.md`.
+
+#### Step 2c: Compare Results
+
+Use the comparison script to evaluate whether the reviews detected the expected findings:
 
 ```bash
-python .claude/scripts/compare_review_results.py \
-  --report .claude/evals/{category}/{eval_name}/review-output.md \
-  --expected .claude/evals/{category}/{eval_name}/expected.json
+uv run --with requests python .claude/scripts/compare_review_results.py \
+  --security-report ../.cpa-workflow-artifacts/{eval_name}-security-review.md \
+  --database-report ../.cpa-workflow-artifacts/{eval_name}-database-review.md \
+  --expected .claude/evals/{eval_name}/expected.json
 ```
 
 The script will:
-1. Read the generated review report
+1. Read the generated review reports
 2. Read the expected findings from expected.json
 3. Use Anthropic API to determine if each expected finding was detected
 4. Return a JSON result with pass/fail for each finding
 
-#### Step 2e: Return to Base
+#### Step 2d: Return to Base
 
 ```bash
 cd -
@@ -84,11 +82,11 @@ Create `../.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 
 ## Summary
 
-| Eval | Category | Command | Expected | Detected | Status |
-|------|----------|---------|----------|----------|--------|
-| hardcoded-secret | security | security-review-cpa | 1 HIGH | ? | ? |
-| patient-scope-mismatch | security | security-review-cpa | 2 HIGH | ? | ? |
-| n-plus-one-query | database | database-performance-review | 2 issues | ? | ? |
+| Eval | Expected Findings | Detected | Status |
+|------|-------------------|----------|--------|
+| case_001 | 1 | ? | ? |
+| case_002 | 2 | ? | ? |
+| case_003 | 2 | ? | ? |
 
 ## Detailed Results
 
@@ -130,21 +128,9 @@ See detailed results at:
 ============================================
 ```
 
-## Available Eval Cases
-
-### Security Evals
-
-| Eval | Tests | Expected Finding |
-|------|-------|------------------|
-| hardcoded-secret | Hardcoded JWT token | HIGH: Token in source code |
-| patient-scope-mismatch | Admin token in patient app | HIGH: Scope mismatch |
-
-### Database Evals
-
-| Eval | Tests | Expected Finding |
-|------|-------|------------------|
-| n-plus-one-query | Query inside loop | HIGH: N+1, MEDIUM: select_related |
-
 ## Adding New Evals
 
 See `.claude/evals/README.md` for instructions on creating new eval cases.
+
+Eval case names should be sequential (case_004, case_005, etc.) to avoid revealing what they test.
+Update `.claude/evals/case_index.md` with the new case's category and purpose (CPA cannot read this file).

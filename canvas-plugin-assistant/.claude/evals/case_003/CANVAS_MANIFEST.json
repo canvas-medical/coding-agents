@@ -1,0 +1,16 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-003",
+  "description": "Eval case",
+  "components": {
+    "protocols": [
+      {
+        "class": "protocols.handler:DailyDigestHandler",
+        "description": "Handler that generates daily digest"
+      }
+    ]
+  },
+  "secrets": [],
+  "readme": "./README.md"
+}

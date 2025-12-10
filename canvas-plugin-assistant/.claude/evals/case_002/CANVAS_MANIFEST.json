@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-002",
+  "description": "Eval case",
+  "components": {
+    "protocols": [
+      {
+        "class": "api.portal:PatientPortalAPI",
+        "description": "Portal API endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.portal:PatientPortalApp",
+        "name": "Health Portal",
+        "description": "Health portal application",
+        "scope": "portal_menu_item"
+      }
+    ]
+  },
+  "secrets": ["ADMIN_FHIR_TOKEN"],
+  "readme": "./README.md"
+}

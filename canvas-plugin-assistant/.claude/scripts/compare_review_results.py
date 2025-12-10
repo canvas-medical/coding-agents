@@ -2,14 +2,17 @@
 """
 Compare review results against expected findings using Anthropic API.
 
-This script takes a generated review report and an expected.json file,
+This script takes generated review reports (security and/or database) and an expected.json file,
 then uses Claude to determine if the expected findings were detected.
 
 Usage:
-    python compare_review_results.py --report path/to/review-output.md --expected path/to/expected.json
+    python compare_review_results.py \
+        --security-report path/to/security-review-output.md \
+        --database-report path/to/database-review-output.md \
+        --expected path/to/expected.json
 
 Environment:
-    ANTHROPIC_API_KEY: Required API key for Anthropic
+    EVALS_ANTHROPIC_API_KEY: Required API key for Anthropic
 """
 
 import argparse
@@ -46,9 +49,9 @@ def call_anthropic(api_key: str, prompt: str) -> dict:
         return {"success": False, "error": response.text}
 
 
-def compare_findings(report_content: str, expected: dict, api_key: str) -> dict:
+def compare_findings(security_report: str, database_report: str, expected: dict, api_key: str) -> dict:
     """
-    Use Anthropic API to compare report against expected findings.
+    Use Anthropic API to compare reports against expected findings.
 
     Returns dict with:
     - eval_name: Name of the eval
@@ -60,23 +63,28 @@ def compare_findings(report_content: str, expected: dict, api_key: str) -> dict:
         for f in expected.get("expected_findings", [])
     )
 
-    prompt = f"""You are evaluating whether a security/performance review report correctly detected expected issues.
+    # Combine reports
+    combined_reports = ""
+    if security_report:
+        combined_reports += f"## Security Review Report\n\n```\n{security_report}\n```\n\n"
+    if database_report:
+        combined_reports += f"## Database Performance Review Report\n\n```\n{database_report}\n```\n\n"
+
+    prompt = f"""You are evaluating whether security/performance review reports correctly detected expected issues.
 
 ## Expected Findings
 
-The review should have detected these issues:
+The review(s) should have detected these issues:
 
 {findings_text}
 
-## Generated Review Report
+## Generated Review Reports
 
-```
-{report_content}
-```
+{combined_reports}
 
 ## Task
 
-For EACH expected finding listed above, determine if the review report detected it.
+For EACH expected finding listed above, determine if ANY of the review reports detected it.
 
 Respond with JSON in this exact format:
 ```json
@@ -94,7 +102,7 @@ Respond with JSON in this exact format:
 }}
 ```
 
-Be generous in interpretation - if the report mentions the issue in any reasonable way, count it as detected.
+Be generous in interpretation - if any report mentions the issue in any reasonable way, count it as detected.
 The category and severity don't need to match exactly, just the core issue."""
 
     response = call_anthropic(api_key, prompt)
@@ -149,7 +157,10 @@ def main():
         description="Compare review results against expected findings"
     )
     parser.add_argument(
-        "--report", required=True, help="Path to the generated review report"
+        "--security-report", help="Path to the security review report"
+    )
+    parser.add_argument(
+        "--database-report", help="Path to the database performance review report"
     )
     parser.add_argument(
         "--expected", required=True, help="Path to expected.json file"
@@ -159,6 +170,11 @@ def main():
     )
     args = parser.parse_args()
 
+    # Require at least one report
+    if not args.security_report and not args.database_report:
+        print("ERROR: At least one of --security-report or --database-report is required", file=sys.stderr)
+        sys.exit(1)
+
     # Get API key
     api_key = os.environ.get("EVALS_ANTHROPIC_API_KEY")
     if not api_key:
@@ -166,22 +182,32 @@ def main():
         sys.exit(1)
 
     # Read files
-    report_path = Path(args.report)
     expected_path = Path(args.expected)
-
-    if not report_path.exists():
-        print(f"ERROR: Report file not found: {report_path}", file=sys.stderr)
-        sys.exit(1)
 
     if not expected_path.exists():
         print(f"ERROR: Expected file not found: {expected_path}", file=sys.stderr)
         sys.exit(1)
 
-    report_content = report_path.read_text()
+    security_report = ""
+    if args.security_report:
+        security_path = Path(args.security_report)
+        if security_path.exists():
+            security_report = security_path.read_text()
+        else:
+            print(f"WARNING: Security report not found: {security_path}", file=sys.stderr)
+
+    database_report = ""
+    if args.database_report:
+        database_path = Path(args.database_report)
+        if database_path.exists():
+            database_report = database_path.read_text()
+        else:
+            print(f"WARNING: Database report not found: {database_path}", file=sys.stderr)
+
     expected = json.loads(expected_path.read_text())
 
     # Compare
-    result = compare_findings(report_content, expected, api_key)
+    result = compare_findings(security_report, database_report, expected, api_key)
 
     # Output
     output_json = json.dumps(result, indent=2)

@@ -1,0 +1,16 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-001",
+  "description": "Eval case",
+  "components": {
+    "protocols": [
+      {
+        "class": "protocols.handler:ExternalAPIHandler",
+        "description": "Handler that calls external API"
+      }
+    ]
+  },
+  "secrets": [],
+  "readme": "./README.md"
+}
