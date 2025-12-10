@@ -46,6 +46,7 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 | `/deploy` | Deploy plugin and monitor logs |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
 | `/security-review-cpa` | Comprehensive security audit with report |
+| `/database-performance-review` | Database query optimization review with report |
 | `/wrap-up` | Final checklist before calling a plugin "done" |
 
 ## Credentials Setup
@@ -73,9 +74,10 @@ root_password=...
 /check-setup      →  Verify environment tools (uv, unbuffer)
 /new-plugin       →  Create plugin from requirements
 /deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%)
-/security-review-cpa  →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/coverage                    →  Check test coverage (aim for 90%)
+/security-review-cpa         →  Comprehensive security audit
+/database-performance-review →  Database query optimization
+/wrap-up                     →  Final checklist before delivery
 ```
 
 1. **Check Setup** (`/check-setup`)
@@ -121,6 +123,7 @@ root_password=...
 │   ├── deploy.md              # /deploy
 │   ├── coverage.md            # /coverage
 │   ├── security-review-cpa.md # /security-review-cpa
+│   ├── database-performance-review.md # /database-performance-review
 │   └── wrap-up.md             # /wrap-up
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
@@ -156,7 +159,9 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 | File | Purpose |
 |------|---------|
 | `plugin-spec.md` | Plugin requirements and architecture decisions |
+| `coverage-report-{timestamp}.md` | Test coverage report |
 | `security-review-{timestamp}.md` | Security audit findings and recommendations |
+| `db-performance-review-{timestamp}.md` | Database query optimization findings |
 | `claude-history-{sessionId}.txt` | Complete session transcript |
 
 **Keep these artifacts.** They're valuable for retrospectives, training, and improving CPA itself.
