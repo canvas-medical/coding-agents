@@ -50,10 +50,17 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 **Slash Commands:**
 | Command | Description |
 |---------|-------------|
+| `/check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
 | `/new-plugin` | Start brainstorming a new plugin specification |
 | `/analyze-instance` | Analyze Canvas instance configuration |
 | `/deploy` | Deploy plugin and monitor logs |
 | `/coverage` | Run tests with coverage, offer to improve if below 90% |
+| `/security-review-cpa` | Comprehensive security audit (API auth, FHIR tokens, secrets) |
+| `/database-performance-review` | Review for N+1 queries and ORM optimization |
 | `/wrap-up` | Final checklist before calling a plugin "done" |
+| `/run-evals` | Execute eval cases to verify review commands |
+
+**Workflow Artifacts:**
+Review commands save timestamped reports to `../.cpa-workflow-artifacts/` (one level above the plugin directory). These reports are useful for code review and audit trails.
 
 See [canvas-plugin-assistant/README.md](canvas-plugin-assistant/README.md) for full documentation.
