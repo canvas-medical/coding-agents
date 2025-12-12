@@ -21,7 +21,8 @@ Use this agent when:
 Before deployment, verify:
 1. Plugin has a valid `CANVAS_MANIFEST.json`
 2. Plugin passes local tests (`uv run pytest`)
-3. User has Canvas CLI configured with target instance credentials
+3. Plugin passes type checking (`uv run mypy --config-file=mypy.ini .`)
+4. User has Canvas CLI configured with target instance credentials
 
 ## Workflow
 
@@ -110,6 +111,9 @@ uv run canvas validate-manifest .
 
 # Run tests
 uv run pytest
+
+# Run type checking
+uv run mypy --config-file=mypy.ini .
 ```
 
 **Also verify manifest version fields:**

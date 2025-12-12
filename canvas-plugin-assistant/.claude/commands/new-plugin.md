@@ -113,6 +113,7 @@ After `canvas init` completes:
 
    [dependency-groups]
    dev = [
+       "mypy>=1.19.0",
        "pytest>=8.0.0",
        "pytest-cov>=4.1.0",
        "pytest-django>=4.7.0",
@@ -125,6 +126,39 @@ After `canvas init` completes:
 
    Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
 
+   Add to the root project, the `mypy.ini` file:
+   ```ini
+   [mypy]
+   explicit_package_bases = True
+   
+   check_untyped_defs = True
+   disallow_incomplete_defs = True
+   disallow_untyped_calls = True
+   disallow_untyped_decorators = False
+   disallow_untyped_defs = True
+   error_summary = True
+   
+   show_error_context = True
+   strict_equality = True
+   strict_optional = True
+   
+   warn_no_return = True
+   warn_redundant_casts = True
+   warn_return_any = True
+   warn_unreachable = True
+   warn_unused_configs = True
+   warn_unused_ignores = True
+   
+   follow_imports = silent
+   ignore_missing_imports = True
+   no_implicit_optional = True
+   pretty = False
+   
+   python_version = 3.12
+   exclude = debug
+   ```
+
+
 4. **Commit the scaffolded plugin:**
    ```bash
    git add -A .
@@ -136,7 +170,11 @@ After `canvas init` completes:
 
 Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler
-- Write tests
+- **CRITICAL: Invoke the testing skill before writing tests**
+  - Use: `Skill(skill="testing")` to load testing guidelines
+  - Follow patterns from testing_context.txt for mock verification
+  - Always verify mock calls using `mock.mock_calls`, not assertion methods
+- Write tests following the testing skill guidelines
 - Deploy for UAT
 
 ## Git Commit Style

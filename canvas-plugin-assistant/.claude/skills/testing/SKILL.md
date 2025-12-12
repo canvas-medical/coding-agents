@@ -84,13 +84,14 @@ mv my_plugin_name/tests ./tests
 **Every mock MUST have its calls verified.** Do not just mock and forget.
 
 ```python
-# REQUIRED - verify mock was called correctly
+# REQUIRED - verify mock was called correctly, with the right arguments, for all calls
 with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
     mock_objects.get.return_value = mock_patient
 
     handler.compute()
 
-    mock_objects.get.assert_called_once_with(id="patient-123")  # REQUIRED
+    calls = [call.get(id="patient-123"), call.get(id="patient-456")]
+    assert mock_objects.mock_calls == calls  # REQUIRED
 ```
 
 ### 5. Exclude Tests from Coverage
@@ -113,7 +114,7 @@ omit = ["tests/*", "*/tests/*"]
 uv run pytest
 
 # Run tests with coverage
-uv run pytest --cov=plugin_name --cov-report=term-missing
+uv run pytest --cov=plugin_name --cov-report=term-missing --cov-branch
 
 # Run tests with HTML coverage report
 uv run pytest --cov=plugin_name --cov-report=html

@@ -120,12 +120,20 @@ grep -rn "\.objects\." --include="*.py" .
 
 **If no data queries:** Mark database performance as N/A.
 
-### 3. Test Coverage
+### 3. Type checking
+
+```bash
+uv run mypy --config-file=mypy.ini .
+```
+
+**If errors exist:** Flag this as a blocker.
+
+### 4. Test Coverage
 
 Run coverage check:
 
 ```bash
-uv run pytest --cov=. --cov-report=term-missing
+uv run pytest --cov=. --cov-report=term-missing --cov-branch
 ```
 
 **If coverage < 90%:**
@@ -136,7 +144,7 @@ uv run pytest --cov=. --cov-report=term-missing
 
 **If no tests exist:** Flag this as a blocker.
 
-### 4. Debug Log Cleanup
+### 5. Debug Log Cleanup
 
 Check for debug logging statements that were added during UAT troubleshooting:
 
@@ -169,7 +177,7 @@ log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
 print(f"vitals: {vitals}")  # Should use logger, and too verbose
 ```
 
-### 5. Dead Code Removal
+### 6. Dead Code Removal
 
 Identify and remove unused code:
 
@@ -214,7 +222,7 @@ Check that all test files test code that still exists:
 
 **Remove dead code rather than commenting it out.** Git history preserves old code if needed.
 
-### 6. README Review
+### 7. README Review
 
 Read the plugin's README.md and verify:
 
@@ -238,7 +246,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 7. License Check
+### 8. License Check
 
 Check for any license file or license mentions:
 
@@ -269,7 +277,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 8. Final Verdict
+### 9. Final Verdict
 
 After all checks, present a summary:
 
@@ -282,6 +290,7 @@ After all checks, present a summary:
 | Plugin API Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | FHIR Client Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
+| Type checking | ✅ Pass / ❌ Errors | ... |
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
@@ -319,7 +328,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 9. Export Session History
+### 10. Export Session History
 
 **Save a record of this development session for future reference.**
 
@@ -351,7 +360,7 @@ print(f"Exported {len(display_texts)} messages to {output_file}")
 
 This creates `../.cpa-workflow-artifacts/claude-history-{sessionId}.txt` (one level above the plugin directory) containing all messages from this session.
 
-### 10. Final Git Commit and Push
+### 11. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 

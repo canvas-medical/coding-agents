@@ -39,6 +39,8 @@ def mock_event():
 def test_high_bp(mock_event):
     mock_event.target.instance.blood_pressure_systolic = 180  # Customize for this test
     # ...
+    calls = [...]
+    assert mock_event.mock_calls = calls
 ```
 
 ---
@@ -159,8 +161,9 @@ def test_handler_with_patient(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
-        # REQUIRED: Always verify mock calls
-        mock_objects.get.assert_called_once_with(id="patient-123")
+        # REQUIRED: Always verify mock calls themselves
+        calls = [call.get(id="patient-123"), call.get(id="patient-456")]
+        mock_objects.mock_calls == calls
 ```
 
 ---
@@ -191,19 +194,23 @@ def test_good_example(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
-        # Verify mock was called with expected arguments
-        mock_objects.get.assert_called_once_with(id="patient-123")
+        # Verify mock was called exactly with the expected methods and arguments
+        calls = [call.get(id="patient-123"), call.get(id="patient-456")]
+        mock_objects.mock_calls == calls
+        # then check output
         assert len(effects) == 1
 ```
 
-**Common mock assertion methods:**
-- `mock.assert_called()` - verify called at least once
-- `mock.assert_called_once()` - verify called exactly once
-- `mock.assert_called_with(...)` - verify most recent call args
-- `mock.assert_called_once_with(...)` - verify called once with specific args
-- `mock.assert_not_called()` - verify never called
-- `mock.call_count` - check number of calls
-- `mock.call_args_list` - inspect all calls made
+**ALWAYS** check the `mock_calls` property of the mock objects.
+
+**DO NOT USE** the common assertion methods:
+- `mock.assert_called()`
+- `mock.assert_called_once()`
+- `mock.assert_called_with(...)`
+- `mock.assert_called_once_with(...)`
+- `mock.assert_not_called()`
+- `mock.call_count`
+- `mock.call_args_list`
 
 ---
 
@@ -227,6 +234,10 @@ def test_webhook_auth(mock_secrets):
     credentials.key = "test-api-key-12345"
 
     assert handler.authenticate(credentials) is True
+    calls = [...]
+    assert mock_secrets == calls
+    calls = [...]
+    assert credentials == calls
 ```
 
 ---
@@ -250,6 +261,8 @@ class TestAlertProtocol:
         # Verify effect properties
         effect = effects[0]
         assert "AddBannerAlert" in str(type(effect))
+        calls = [...]
+        assert mock_vitals_event.mock_calls == calls
 
     def test_normal_bp_no_alert(self, mock_event):
         """Test that normal blood pressure creates no alert."""
@@ -262,6 +275,8 @@ class TestAlertProtocol:
         effects = handler.compute()
 
         assert len(effects) == 0
+        calls = [...]
+        assert mock_event.mock_calls == calls
 
     def test_missing_bp_no_alert(self, mock_event):
         """Test graceful handling of missing vitals data."""
@@ -274,6 +289,8 @@ class TestAlertProtocol:
         effects = handler.compute()
 
         assert len(effects) == 0
+        calls = [...]
+        assert mock_event.mock_calls == calls
 
     def test_missing_patient_id(self, mock_vitals_event):
         """Test graceful handling of missing patient context."""
@@ -285,6 +302,8 @@ class TestAlertProtocol:
         effects = handler.compute()
 
         assert len(effects) == 0
+        calls = [...]
+        assert mock_vitals_event.mock_calls == calls
 ```
 
 ---
@@ -306,6 +325,10 @@ class TestMyAPIAuthentication:
         credentials.key = "test-api-key-12345"
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_invalid_api_key_rejected(self, mock_secrets):
         """Test that invalid API key fails authentication."""
@@ -316,6 +339,10 @@ class TestMyAPIAuthentication:
         credentials.key = "wrong-key"
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_missing_api_key_rejected(self, mock_secrets):
         """Test that missing API key fails authentication."""
@@ -326,6 +353,10 @@ class TestMyAPIAuthentication:
         credentials.key = None
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_missing_secret_rejected(self):
         """Test that unconfigured secret fails authentication."""
@@ -336,6 +367,10 @@ class TestMyAPIAuthentication:
         credentials.key = "any-key"
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 ```
 
 ### Session Credential Tests
@@ -350,6 +385,8 @@ class TestSessionAuthentication:
         credentials.logged_in_user = {"id": "staff-123", "type": "Staff"}
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_patient_user_rejected_for_staff_endpoint(self):
         """Test that patient users are rejected from staff-only endpoints."""
@@ -359,28 +396,36 @@ class TestSessionAuthentication:
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_patient_accessing_own_data(self):
         """Test that patients can access their own data."""
+        request = MagicMock(path_params={"patient_id": "patient-123"})
         handler = PatientDataAPI()
-        handler.request = MagicMock()
-        handler.request.path_params = {"patient_id": "patient-123"}
+        handler.request = request
 
         credentials = MagicMock()
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert credentials.mock_calls == calls
+        calls = [...]
+        assert request.mock_calls == calls
 
     def test_patient_accessing_other_patient_data_rejected(self):
         """Test that patients cannot access other patients' data."""
+        request = MagicMock(path_params={"patient_id": "patient-456"})
         handler = PatientDataAPI()
-        handler.request = MagicMock()
-        handler.request.path_params = {"patient_id": "patient-456"}
+        handler.request = request
 
         credentials = MagicMock()
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert credentials.mock_calls == calls
 ```
 
 ---
@@ -391,13 +436,13 @@ class TestSessionAuthentication:
 
 ```bash
 # Basic coverage report
-uv run pytest --cov=plugin_name --cov-report=term-missing
+uv run pytest --cov=plugin_name --cov-report=term-missing --cov-branch
 
 # With HTML report
 uv run pytest --cov=plugin_name --cov-report=html
 
 # With specific coverage threshold
-uv run pytest --cov=plugin_name --cov-fail-under=90
+uv run pytest --cov=plugin_name --cov-fail-under=90  --cov-branch
 ```
 
 ### Interpreting Coverage Report
@@ -423,7 +468,7 @@ TOTAL                                77      7    91%
 
 ### Identify Uncovered Code
 
-1. Run coverage with `--cov-report=term-missing`
+1. Run coverage with `--cov-report=term-missing --cov-branch`
 2. Look at "Missing" column for uncovered lines
 3. Prioritize error handling paths and edge cases
 
@@ -456,6 +501,8 @@ def test_missing_patient_context(self, mock_event):
     effects = handler.compute()
 
     assert len(effects) == 0
+    calls = [...]
+    assert mock_event.mock_calls == calls
 ```
 
 ---
