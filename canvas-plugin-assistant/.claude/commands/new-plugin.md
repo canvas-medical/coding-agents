@@ -109,6 +109,7 @@ After `canvas init` completes:
    requires-python = ">=3.12"
    dependencies = [
        "django>=4.2.0",
+       "canvas[test-utils]",
    ]
 
    [dependency-groups]
