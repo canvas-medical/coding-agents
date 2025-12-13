@@ -2,6 +2,54 @@
 
 This document provides testing patterns for Canvas plugins.
 
+## ⚠️ CRITICAL TESTING RULES ⚠️
+
+### Rule #1: Verify EVERY Mock Object
+
+**EVERY SINGLE MOCK in EVERY SINGLE TEST must be verified using `mock.mock_calls`.**
+
+This is mandatory. No exceptions. No shortcuts.
+
+- If you create a mock, verify it
+- If you receive a mock fixture, verify it
+- If you patch something, verify it
+- If a mock is never used, verify `mock_calls == []`
+
+### Rule #2: Use `mock.mock_calls` ONLY
+
+**ONLY use `mock.mock_calls` for verification:**
+```python
+# ✅ CORRECT
+assert mock_object.mock_calls == [call.method(), call.other()]
+
+# ❌ FORBIDDEN - Never use these
+mock.assert_called()
+mock.assert_called_once_with()
+mock.call_count
+```
+
+### Rule #3: Every Test Must Follow This Pattern
+
+```python
+def test_something(mock_fixture):
+    # 1. Setup
+    mock_local = MagicMock()
+
+    # 2. Execute
+    with patch("module.Thing") as mock_patched:
+        result = function_under_test(mock_fixture, mock_local)
+
+        # 3. Verify ALL mocks (in order: patched, fixtures, local)
+        assert mock_patched.mock_calls == [...]
+        assert mock_fixture.mock_calls == [...]
+        assert mock_local.mock_calls == [...]
+
+        # 4. Then verify output
+        assert result == expected
+```
+
+**If you skip verifying any mock, the test is incomplete.**
+
 ## Test Data: Use Manual Mocking, NOT Factories
 
 **Do NOT use factory libraries** (factory_boy, etc.) or look for existing factories. They don't exist for Canvas plugins and you don't need them.
@@ -39,6 +87,8 @@ def mock_event():
 def test_high_bp(mock_event):
     mock_event.target.instance.blood_pressure_systolic = 180  # Customize for this test
     # ...
+    calls = [...]
+    assert mock_event.mock_calls = calls
 ```
 
 ---
@@ -159,18 +209,34 @@ def test_handler_with_patient(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
-        # REQUIRED: Always verify mock calls
-        mock_objects.get.assert_called_once_with(id="patient-123")
+        # REQUIRED: Always verify mock calls themselves
+        calls = [call.get(id="patient-123"), call.get(id="patient-456")]
+        mock_objects.mock_calls == calls
 ```
 
 ---
 
 ### CRITICAL: Always Verify Mock Calls
 
-**Every mock MUST have its calls verified.** A mock without verification is incomplete and potentially useless.
+**EVERY SINGLE MOCK OBJECT IN EVERY TEST MUST HAVE ITS CALLS VERIFIED.**
+
+This is a hard requirement with no exceptions. A mock without verification is incomplete testing.
+
+#### Verification Checklist
+
+For EVERY test, after executing the code under test, verify ALL mocks in this order:
+
+1. **Patched dependencies** (e.g., `@patch` decorators) - verify these first
+2. **Mock objects passed to the code** (e.g., `mock_event`, `mock_patient`)
+3. **Mock objects created in the test** (e.g., `mock_credentials = MagicMock()`)
+4. **Fixtures** (e.g., `mock_secrets`)
+
+**If you create or use a mock, you MUST verify it. No exceptions.**
+
+#### Complete Example Showing ALL Mock Verifications
 
 ```python
-# BAD - mock is set up but never verified
+# BAD - Only checks output, doesn't verify ANY of the 3 mocks!
 def test_bad_example(mock_event, mock_patient):
     with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
         mock_objects.get.return_value = mock_patient
@@ -179,10 +245,10 @@ def test_bad_example(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
-        assert len(effects) == 1  # Only checks output, not that mock was used correctly
+        assert len(effects) == 1  # ❌ Only checks output
 
 
-# GOOD - mock calls are verified
+# GOOD - Verifies ALL THREE mocks
 def test_good_example(mock_event, mock_patient):
     with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
         mock_objects.get.return_value = mock_patient
@@ -191,19 +257,172 @@ def test_good_example(mock_event, mock_patient):
         handler.event = mock_event
         effects = handler.compute()
 
-        # Verify mock was called with expected arguments
-        mock_objects.get.assert_called_once_with(id="patient-123")
+        # ✅ 1. Verify patched mock_objects
+        calls = [call.get(id="patient-123")]
+        assert mock_objects.mock_calls == calls
+
+        # ✅ 2. Verify mock_event
+        calls = [call.target.id]
+        assert mock_event.mock_calls == calls
+
+        # ✅ 3. Verify mock_patient
+        calls = [call.__bool__()]  # if patient: check
+        assert mock_patient.mock_calls == calls
+
+        # Then check output
         assert len(effects) == 1
 ```
 
-**Common mock assertion methods:**
-- `mock.assert_called()` - verify called at least once
-- `mock.assert_called_once()` - verify called exactly once
-- `mock.assert_called_with(...)` - verify most recent call args
-- `mock.assert_called_once_with(...)` - verify called once with specific args
-- `mock.assert_not_called()` - verify never called
-- `mock.call_count` - check number of calls
-- `mock.call_args_list` - inspect all calls made
+#### Verification Requirements
+
+**ALWAYS** check the `mock_calls` property:
+```python
+assert mock_object.mock_calls == [call.method1(), call.method2()]
+```
+
+**NEVER USE** these assertion helper methods (they are FORBIDDEN):
+- ❌ `mock.assert_called()`
+- ❌ `mock.assert_called_once()`
+- ❌ `mock.assert_called_with(...)`
+- ❌ `mock.assert_called_once_with(...)`
+- ❌ `mock.assert_not_called()`
+- ❌ `mock.assert_any_call(...)`
+- ❌ `mock.assert_has_calls(...)`
+- ❌ `mock.call_count`
+- ❌ `mock.call_args`
+- ❌ `mock.call_args_list`
+
+**Using `mock.called` is USELESS** - it only tells you if the mock was called at all, not HOW it was called.
+
+#### Understanding Mock Calls
+
+**Key patterns to understand:**
+
+1. **Conditional checks generate `__bool__()` calls:**
+```python
+if patient:  # This generates call.__bool__()
+    name = patient.first_name
+```
+
+2. **`None` doesn't generate calls:**
+```python
+patient = None
+if patient:  # No mock calls, patient is None
+    pass
+```
+
+3. **Nested attribute access:**
+```python
+note = Note.objects.get(id=123)  # Generates call.objects.get(id=123)
+if note.patient:  # Generates call.objects.get().patient.__bool__()
+    pass
+```
+
+4. **Setup calls can appear in mock_calls:**
+```python
+# Setting return_value can create calls
+mock_datetime.now().date.return_value = date(2025, 1, 1)
+# This creates call.now() in mock_datetime.mock_calls
+```
+
+5. **Method chaining:**
+```python
+result = mock.method1().method2()
+# Generates: [call.method1(), call.method1().method2()]
+```
+
+#### Empty Mock Calls Are Valid
+
+If a mock is created but never used, verify it has NO calls:
+
+```python
+mock_event = MagicMock()
+tested = MyClass(event=mock_event)
+result = tested.helper_method()
+
+# Verify event was only used for initialization, not accessed during helper_method
+assert mock_event.mock_calls == []
+```
+
+#### Examples of Complete Test Functions
+
+```python
+def test_example_with_all_verifications():
+    """Every mock is verified."""
+    # Create mocks
+    mock_event = MagicMock()
+    mock_event.target.id = "encounter-123"
+
+    mock_credentials = MagicMock()
+    mock_credentials.key = "test-key"
+
+    # Patch and execute
+    with patch("module.SomeClass") as mock_class:
+        mock_instance = MagicMock()
+        mock_class.return_value = mock_instance
+
+        result = function_under_test(mock_event, mock_credentials)
+
+        # ✅ Verify ALL mocks
+
+        # 1. Patched mock_class
+        calls = [call(param="value"), call().method()]
+        assert mock_class.mock_calls == calls
+
+        # 2. mock_event
+        calls = [call.target.id]
+        assert mock_event.mock_calls == calls
+
+        # 3. mock_credentials
+        calls = [call.key.__eq__("test-key")]  # if credentials.key == "test-key"
+        assert mock_credentials.mock_calls == calls
+
+        # Then verify output
+        assert result == expected_value
+```
+
+#### When Tests Have Multiple Mocks
+
+**List ALL mocks at the start of verification:**
+
+```python
+def test_complex_scenario(mock_event, mock_patient, mock_secrets):
+    with patch("module.Database") as mock_db:
+        with patch("module.Logger") as mock_logger:
+            # Execute test
+            result = handler.process(mock_event, mock_patient)
+
+            # VERIFY ALL 5 MOCKS:
+            # 1. mock_db
+            assert mock_db.mock_calls == [...]
+
+            # 2. mock_logger
+            assert mock_logger.mock_calls == [...]
+
+            # 3. mock_event
+            assert mock_event.mock_calls == [...]
+
+            # 4. mock_patient
+            assert mock_patient.mock_calls == [...]
+
+            # 5. mock_secrets
+            assert mock_secrets.mock_calls == [...]
+
+            # Then check result
+            assert result == expected
+```
+
+#### Debugging Mock Calls
+
+If you're unsure what calls a mock receives, print them:
+
+```python
+result = function_under_test(mock_event)
+print(f"mock_event.mock_calls: {mock_event.mock_calls}")
+# Then copy the output into your test
+```
+
+**Remember: Humans can follow strict comparisons with `mock.mock_calls`. There is no reason to skip this.**
 
 ---
 
@@ -227,6 +446,10 @@ def test_webhook_auth(mock_secrets):
     credentials.key = "test-api-key-12345"
 
     assert handler.authenticate(credentials) is True
+    calls = [...]
+    assert mock_secrets == calls
+    calls = [...]
+    assert credentials == calls
 ```
 
 ---
@@ -246,8 +469,17 @@ class TestAlertProtocol:
 
         effects = handler.compute()
 
+        # ✅ Verify mock_vitals_event
+        calls = [
+            call.target.instance.blood_pressure_systolic,
+            call.target.instance.blood_pressure_diastolic,
+            call.context.__getitem__('patient'),
+            call.context.__getitem__().__getitem__('id'),
+        ]
+        assert mock_vitals_event.mock_calls == calls
+
+        # Then verify output
         assert len(effects) == 1
-        # Verify effect properties
         effect = effects[0]
         assert "AddBannerAlert" in str(type(effect))
 
@@ -261,6 +493,14 @@ class TestAlertProtocol:
 
         effects = handler.compute()
 
+        # ✅ Verify mock_event
+        calls = [
+            call.target.instance.blood_pressure_systolic,
+            call.target.instance.blood_pressure_diastolic,
+        ]
+        assert mock_event.mock_calls == calls
+
+        # Then verify output
         assert len(effects) == 0
 
     def test_missing_bp_no_alert(self, mock_event):
@@ -273,6 +513,14 @@ class TestAlertProtocol:
 
         effects = handler.compute()
 
+        # ✅ Verify mock_event
+        calls = [
+            call.target.instance.blood_pressure_systolic,
+            # No access to diastolic if systolic is None
+        ]
+        assert mock_event.mock_calls == calls
+
+        # Then verify output
         assert len(effects) == 0
 
     def test_missing_patient_id(self, mock_vitals_event):
@@ -284,6 +532,15 @@ class TestAlertProtocol:
 
         effects = handler.compute()
 
+        # ✅ Verify mock_vitals_event
+        calls = [
+            call.target.instance.blood_pressure_systolic,
+            call.target.instance.blood_pressure_diastolic,
+            call.context.__getitem__('patient'),  # Raises KeyError
+        ]
+        assert mock_vitals_event.mock_calls == calls
+
+        # Then verify output
         assert len(effects) == 0
 ```
 
@@ -306,6 +563,10 @@ class TestMyAPIAuthentication:
         credentials.key = "test-api-key-12345"
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_invalid_api_key_rejected(self, mock_secrets):
         """Test that invalid API key fails authentication."""
@@ -316,6 +577,10 @@ class TestMyAPIAuthentication:
         credentials.key = "wrong-key"
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_missing_api_key_rejected(self, mock_secrets):
         """Test that missing API key fails authentication."""
@@ -326,6 +591,10 @@ class TestMyAPIAuthentication:
         credentials.key = None
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_missing_secret_rejected(self):
         """Test that unconfigured secret fails authentication."""
@@ -336,6 +605,10 @@ class TestMyAPIAuthentication:
         credentials.key = "any-key"
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert mock_secrets.mock_calls == calls
+        calls = [...]
+        assert credentials.mock_calls == calls
 ```
 
 ### Session Credential Tests
@@ -350,6 +623,8 @@ class TestSessionAuthentication:
         credentials.logged_in_user = {"id": "staff-123", "type": "Staff"}
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_patient_user_rejected_for_staff_endpoint(self):
         """Test that patient users are rejected from staff-only endpoints."""
@@ -359,28 +634,36 @@ class TestSessionAuthentication:
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert credentials.mock_calls == calls
 
     def test_patient_accessing_own_data(self):
         """Test that patients can access their own data."""
+        request = MagicMock(path_params={"patient_id": "patient-123"})
         handler = PatientDataAPI()
-        handler.request = MagicMock()
-        handler.request.path_params = {"patient_id": "patient-123"}
+        handler.request = request
 
         credentials = MagicMock()
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is True
+        calls = [...]
+        assert credentials.mock_calls == calls
+        calls = [...]
+        assert request.mock_calls == calls
 
     def test_patient_accessing_other_patient_data_rejected(self):
         """Test that patients cannot access other patients' data."""
+        request = MagicMock(path_params={"patient_id": "patient-456"})
         handler = PatientDataAPI()
-        handler.request = MagicMock()
-        handler.request.path_params = {"patient_id": "patient-456"}
+        handler.request = request
 
         credentials = MagicMock()
         credentials.logged_in_user = {"id": "patient-123", "type": "Patient"}
 
         assert handler.authenticate(credentials) is False
+        calls = [...]
+        assert credentials.mock_calls == calls
 ```
 
 ---
@@ -391,13 +674,13 @@ class TestSessionAuthentication:
 
 ```bash
 # Basic coverage report
-uv run pytest --cov=plugin_name --cov-report=term-missing
+uv run pytest --cov=plugin_name --cov-report=term-missing --cov-branch
 
 # With HTML report
 uv run pytest --cov=plugin_name --cov-report=html
 
 # With specific coverage threshold
-uv run pytest --cov=plugin_name --cov-fail-under=90
+uv run pytest --cov=plugin_name --cov-fail-under=90  --cov-branch
 ```
 
 ### Interpreting Coverage Report
@@ -423,7 +706,7 @@ TOTAL                                77      7    91%
 
 ### Identify Uncovered Code
 
-1. Run coverage with `--cov-report=term-missing`
+1. Run coverage with `--cov-report=term-missing --cov-branch`
 2. Look at "Missing" column for uncovered lines
 3. Prioritize error handling paths and edge cases
 
@@ -456,6 +739,8 @@ def test_missing_patient_context(self, mock_event):
     effects = handler.compute()
 
     assert len(effects) == 0
+    calls = [...]
+    assert mock_event.mock_calls == calls
 ```
 
 ---

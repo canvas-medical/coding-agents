@@ -35,6 +35,7 @@ Use the **deploy-uat** agent to handle deployment and testing.
 5. Run pre-deployment validation:
    - `uv run canvas validate-manifest .`
    - `uv run pytest` (if tests exist)
+   - `uv run mypy --config-file=mypy.ini .`
 
 6. **Start log monitoring BEFORE install** (background task with `run_in_background: true`):
    - `unbuffer uv run canvas logs --host {hostname}`
