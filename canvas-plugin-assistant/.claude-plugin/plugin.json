@@ -1,6 +1,6 @@
 {
-  "name": "canvas-plugin-assistant",
-  "version": "1.16.0",
+  "name": "cpa",
+  "version": "1.17.0",
   "description": "Helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows",
   "author": {
     "name": "Canvas Medical",

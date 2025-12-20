@@ -26,10 +26,28 @@ brew install expect
 
 ## Installation
 
-Clone this repository, then copy your target plugin's `.claude` directory to your plugin working directory (likely one or two levels up from the manifest file of your plugin). Here's how to do it with the Canvas plugin assistant, for example:
+Add the marketplace and install plugins using Claude Code's plugin system:
 
-```bash
-cp -r canvas-plugin-assistant/.claude /path/to/your/plugin/working/directory
+```shell
+# Add the Canvas Medical marketplace
+/plugin marketplace add canvas-medical/coding-agents
+
+# Install a plugin (e.g., cpa)
+/plugin install cpa@canvas-medical
+```
+
+After installation, enable the plugin:
+
+```shell
+/plugin
+```
+
+Navigate to the **Installed** tab and enable the plugin. Once enabled, plugin commands are available with a namespace prefix (e.g., `/cpa:new-plugin`).
+
+To view all available commands:
+
+```shell
+/help
 ```
 
 ## Available Plugins
@@ -47,18 +65,18 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 - Instance configuration analysis
 - Deployment with log monitoring
 
-**Slash Commands:**
+**Slash Commands** (prefixed with `cpa:` when installed via marketplace):
 | Command | Description |
 |---------|-------------|
-| `/check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
-| `/new-plugin` | Start brainstorming a new plugin specification |
-| `/analyze-instance` | Analyze Canvas instance configuration |
-| `/deploy` | Deploy plugin and monitor logs |
-| `/coverage` | Run tests with coverage, offer to improve if below 90% |
-| `/security-review-cpa` | Comprehensive security audit (API auth, FHIR tokens, secrets) |
-| `/database-performance-review` | Review for N+1 queries and ORM optimization |
-| `/wrap-up` | Final checklist before calling a plugin "done" |
-| `/run-evals` | Execute eval cases to verify review commands |
+| `:check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
+| `:new-plugin` | Start brainstorming a new plugin specification |
+| `:analyze-instance` | Analyze Canvas instance configuration |
+| `:deploy` | Deploy plugin and monitor logs |
+| `:coverage` | Run tests with coverage, offer to improve if below 90% |
+| `:security-review-cpa` | Comprehensive security audit (API auth, FHIR tokens, secrets) |
+| `:database-performance-review` | Review for N+1 queries and ORM optimization |
+| `:wrap-up` | Final checklist before calling a plugin "done" |
+| `:run-evals` | Execute eval cases to verify review commands |
 
 **Workflow Artifacts:**
 Review commands save timestamped reports to `../.cpa-workflow-artifacts/` (one level above the plugin directory). These reports are useful for code review and audit trails.

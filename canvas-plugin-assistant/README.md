@@ -2,9 +2,29 @@
 
 A Claude Code plugin that helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows.
 
+## Installation
+
+```shell
+# Add the Canvas Medical marketplace
+/plugin marketplace add canvas-medical/coding-agents
+
+# Install this plugin
+/plugin install cpa@canvas-medical
+```
+
+After installation, enable the plugin:
+
+```shell
+/plugin
+```
+
+Navigate to the **Installed** tab and enable `cpa@canvas-medical`.
+
+Once enabled, commands are available with a namespace prefix (e.g., `/cpa:new-plugin`).
+
 ## Quick Start
 
-Run `/new-plugin` to start a guided brainstorming session that asks clarifying questions and produces a plugin specification for your approval.
+Run `/cpa:new-plugin` to start a guided brainstorming session that asks clarifying questions and produces a plugin specification for your approval.
 
 ## What This Assistant Does
 
@@ -38,17 +58,19 @@ Run `/new-plugin` to start a guided brainstorming session that asks clarifying q
 
 ### Slash Commands
 
+Commands are namespaced with `cpa:` prefix when installed via the marketplace.
+
 | Command | Description |
 |---------|-------------|
-| `/check-setup` | Verify environment tools (uv, unbuffer) |
-| `/new-plugin` | Start brainstorming a new plugin specification |
-| `/analyze-instance` | Analyze Canvas instance configuration |
-| `/deploy` | Deploy plugin and monitor logs |
-| `/coverage` | Run tests with coverage, offer to improve if below 90% |
-| `/security-review-cpa` | Comprehensive security audit with report |
-| `/database-performance-review` | Database query optimization review with report |
-| `/wrap-up` | Final checklist before calling a plugin "done" |
-| `/run-evals` | Run eval suite to test review command accuracy |
+| `:check-setup` | Verify environment tools (uv, unbuffer) |
+| `:new-plugin` | Start brainstorming a new plugin specification |
+| `:analyze-instance` | Analyze Canvas instance configuration |
+| `:deploy` | Deploy plugin and monitor logs |
+| `:coverage` | Run tests with coverage, offer to improve if below 90% |
+| `:security-review-cpa` | Comprehensive security audit with report |
+| `:database-performance-review` | Database query optimization review with report |
+| `:wrap-up` | Final checklist before calling a plugin "done" |
+| `:run-evals` | Run eval suite to test review command accuracy |
 
 ## Credentials Setup
 
@@ -71,7 +93,7 @@ root_password=...
 
 ### Evals Setup
 
-To run `/run-evals`, set the `EVALS_ANTHROPIC_API_KEY` environment variable:
+To run `:run-evals`, set the `EVALS_ANTHROPIC_API_KEY` environment variable:
 
 ```bash
 export EVALS_ANTHROPIC_API_KEY=sk-ant-...
@@ -82,33 +104,33 @@ This key is used by the comparison script to evaluate whether review commands co
 ## Workflow
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage                    →  Check test coverage (aim for 90%)
-/security-review-cpa         →  Comprehensive security audit
-/database-performance-review →  Database query optimization
-/wrap-up                     →  Final checklist before delivery
+:check-setup      →  Verify environment tools (uv, unbuffer)
+:new-plugin       →  Create plugin from requirements
+:deploy           →  Deploy to Canvas instance for UAT
+:coverage                    →  Check test coverage (aim for 90%)
+:security-review-cpa         →  Comprehensive security audit
+:database-performance-review →  Database query optimization
+:wrap-up                     →  Final checklist before delivery
 ```
 
-1. **Check Setup** (`/check-setup`)
+1. **Check Setup** (`:check-setup`)
    - Verify uv and unbuffer are installed
 
-2. **Describe the Problem** (`/new-plugin`)
+2. **Describe the Problem** (`:new-plugin`)
    - Tell Claude what the customer needs
    - Answer clarifying questions about users, triggers, and outcomes
    - Review and approve the plugin specification
    - Plugin is scaffolded, implemented, and tested
 
-3. **Deploy and Test** (`/deploy`)
+3. **Deploy and Test** (`:deploy`)
    - Deploy to test instance
    - Perform user acceptance testing with real-time log monitoring
 
-4. **Quality Checks** (`/coverage`, `/security-review-cpa`)
+4. **Quality Checks** (`:coverage`, `:security-review-cpa`)
    - Verify test coverage meets 90% threshold
    - Run comprehensive security audit
 
-5. **Wrap Up** (`/wrap-up`)
+5. **Wrap Up** (`:wrap-up`)
    - Final checklist: security, DB performance, coverage, README
    - Git commit and push
 
@@ -128,15 +150,15 @@ This key is used by the comparison script to evaluate whether review commands co
 .claude/
 ├── settings.json              # Permission configuration
 ├── commands/
-│   ├── check-setup.md         # /check-setup
-│   ├── new-plugin.md          # /new-plugin
-│   ├── analyze-instance.md    # /analyze-instance
-│   ├── deploy.md              # /deploy
-│   ├── coverage.md            # /coverage
-│   ├── security-review-cpa.md # /security-review-cpa
-│   ├── database-performance-review.md # /database-performance-review
-│   ├── wrap-up.md             # /wrap-up
-│   └── run-evals.md           # /run-evals
+│   ├── check-setup.md         # :check-setup
+│   ├── new-plugin.md          # :new-plugin
+│   ├── analyze-instance.md    # :analyze-instance
+│   ├── deploy.md              # :deploy
+│   ├── coverage.md            # :coverage
+│   ├── security-review-cpa.md # :security-review-cpa
+│   ├── database-performance-review.md # :database-performance-review
+│   ├── wrap-up.md             # :wrap-up
+│   └── run-evals.md           # :run-evals
 ├── evals/
 │   ├── case_001/              # Eval cases (non-descriptive names for blind testing)
 │   ├── case_002/
@@ -189,7 +211,7 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 
 ## Evals
 
-CPA includes an eval framework to verify that `/security-review-cpa` and `/database-performance-review` commands correctly detect known issues.
+CPA includes an eval framework to verify that `:security-review-cpa` and `:database-performance-review` commands correctly detect known issues.
 
 **Blind evaluation:** Eval case names are intentionally non-descriptive (`case_001`, `case_002`, etc.) to avoid biasing reviews. CPA is denied read access to `expected.json` and `case_index.md`.
 
@@ -198,7 +220,7 @@ CPA includes an eval framework to verify that `/security-review-cpa` and `/datab
 # Set API key first
 export EVALS_ANTHROPIC_API_KEY=sk-ant-...
 
-# Run /run-evals command in Claude Code
+# Run :run-evals command in Claude Code
 ```
 
 **Adding new evals:**

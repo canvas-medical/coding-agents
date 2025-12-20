@@ -10,10 +10,10 @@
   },
   "plugins": [
     {
-      "name": "canvas-plugin-assistant",
+      "name": "cpa",
       "source": "./canvas-plugin-assistant",
       "description": "Helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows",
-      "version": "1.16.0",
+      "version": "1.17.0",
       "author": {
         "name": "Canvas Medical",
         "email": "ai@canvasmedical.com"
