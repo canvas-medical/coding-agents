@@ -67,7 +67,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 | `:analyze-instance` | Analyze Canvas instance configuration |
 | `:deploy` | Deploy plugin and monitor logs |
 | `:coverage` | Run tests with coverage, offer to improve if below 90% |
-| `:security-review-cpa` | Comprehensive security audit with report |
+| `:security-review` | Comprehensive security audit with report |
 | `:database-performance-review` | Database query optimization review with report |
 | `:wrap-up` | Final checklist before calling a plugin "done" |
 | `:run-evals` | Run eval suite to test review command accuracy |
@@ -108,7 +108,7 @@ This key is used by the comparison script to evaluate whether review commands co
 :new-plugin       →  Create plugin from requirements
 :deploy           →  Deploy to Canvas instance for UAT
 :coverage                    →  Check test coverage (aim for 90%)
-:security-review-cpa         →  Comprehensive security audit
+:security-review             →  Comprehensive security audit
 :database-performance-review →  Database query optimization
 :wrap-up                     →  Final checklist before delivery
 ```
@@ -126,7 +126,7 @@ This key is used by the comparison script to evaluate whether review commands co
    - Deploy to test instance
    - Perform user acceptance testing with real-time log monitoring
 
-4. **Quality Checks** (`:coverage`, `:security-review-cpa`)
+4. **Quality Checks** (`:coverage`, `:security-review`)
    - Verify test coverage meets 90% threshold
    - Run comprehensive security audit
 
@@ -155,7 +155,7 @@ This key is used by the comparison script to evaluate whether review commands co
 │   ├── analyze-instance.md    # :analyze-instance
 │   ├── deploy.md              # :deploy
 │   ├── coverage.md            # :coverage
-│   ├── security-review-cpa.md # :security-review-cpa
+│   ├── security-review.md     # :security-review
 │   ├── database-performance-review.md # :database-performance-review
 │   ├── wrap-up.md             # :wrap-up
 │   └── run-evals.md           # :run-evals
@@ -211,7 +211,7 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 
 ## Evals
 
-CPA includes an eval framework to verify that `:security-review-cpa` and `:database-performance-review` commands correctly detect known issues.
+CPA includes an eval framework to verify that `:security-review` and `:database-performance-review` commands correctly detect known issues.
 
 **Blind evaluation:** Eval case names are intentionally non-descriptive (`case_001`, `case_002`, etc.) to avoid biasing reviews. CPA is denied read access to `expected.json` and `case_index.md`.
 

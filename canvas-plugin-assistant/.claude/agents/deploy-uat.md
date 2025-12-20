@@ -273,7 +273,7 @@ Save to `uat-results-{plugin_name}-{date}.md`.
 When UAT is successful and the user is satisfied, guide them through the remaining workflow steps **in order**:
 
 1. **Run `/coverage`** - Verify test coverage meets 90% threshold
-2. **Run `/security-review-cpa`** - Comprehensive security audit
+2. **Run `/security-review`** - Comprehensive security audit
 3. **Run `/wrap-up`** - Final checklist before delivery (includes git commit/push)
 
 > "UAT passed! Let's verify test coverage next. Running `/coverage`..."

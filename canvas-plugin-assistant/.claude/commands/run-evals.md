@@ -34,7 +34,7 @@ cd .claude/evals/{eval_name}
 Run both reviews on each eval case - the comparison script will determine which findings are relevant:
 
 ```
-Use the SlashCommand tool with command: "/security-review-cpa"
+Use the SlashCommand tool with command: "/security-review"
 ```
 
 Save the security review output to `../.cpa-workflow-artifacts/{eval_name}-security-review.md`.

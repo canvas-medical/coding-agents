@@ -1,6 +1,6 @@
 {
   "eval_name": "patient-scope-mismatch",
-  "review_command": "security-review-cpa",
+  "review_command": "security-review",
   "description": "Patient-facing app (portal_menu_item) using admin-scoped FHIR token instead of patient-scoped token",
   "expected_findings": [
     {

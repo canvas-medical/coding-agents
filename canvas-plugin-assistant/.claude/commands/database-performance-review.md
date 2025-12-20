@@ -203,7 +203,7 @@ This command can be run standalone or is called by `/wrap-up`:
 /new-plugin               →  Create plugin from requirements
 /deploy                   →  Deploy to Canvas instance for UAT
 /coverage                 →  Check test coverage (aim for 90%), save report
-/security-review-cpa      →  Comprehensive security audit
+/security-review          →  Comprehensive security audit
 /database-performance-review  →  Database query optimization  ← YOU ARE HERE
 /wrap-up                  →  Final checklist before delivery
 ```

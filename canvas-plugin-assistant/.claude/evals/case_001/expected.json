@@ -1,6 +1,6 @@
 {
   "eval_name": "hardcoded-secret",
-  "review_command": "security-review-cpa",
+  "review_command": "security-review",
   "description": "Plugin with hardcoded JWT token in source code instead of using secrets",
   "expected_findings": [
     {

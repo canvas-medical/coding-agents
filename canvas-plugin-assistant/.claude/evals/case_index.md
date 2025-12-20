@@ -7,7 +7,7 @@ This file documents what each eval case tests. CPA is denied read access to this
 ## case_001
 
 **Category:** Security
-**Command:** `/security-review-cpa`
+**Command:** `/security-review`
 **Tests:** Hardcoded secret detection
 **Vulnerability:** JWT token hardcoded directly in source code instead of using secrets
 **Expected Finding:** HIGH severity - Secrets Declaration category
@@ -15,7 +15,7 @@ This file documents what each eval case tests. CPA is denied read access to this
 ## case_002
 
 **Category:** Security
-**Command:** `/security-review-cpa`
+**Command:** `/security-review`
 **Tests:** Patient scope mismatch
 **Vulnerability:** Patient-facing application (portal_menu_item scope) using admin-scoped FHIR token instead of patient-scoped token
 **Expected Findings:**

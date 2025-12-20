@@ -92,7 +92,7 @@ fi
 Run the comprehensive security review command:
 
 ```
-/security-review-cpa
+/security-review
 ```
 
 This covers:
@@ -386,7 +386,7 @@ This command is the **final step** in the Canvas Plugin Assistant workflow:
 /new-plugin       →  Create plugin from requirements
 /deploy           →  Deploy to Canvas instance for UAT
 /coverage         →  Check test coverage (aim for 90%)
-/security-review-cpa  →  Comprehensive security audit
+/security-review  →  Comprehensive security audit
 /wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
 ```
 

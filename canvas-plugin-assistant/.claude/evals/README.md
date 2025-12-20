@@ -1,6 +1,6 @@
 # CPA Eval Cases
 
-This directory contains eval cases for testing the CPA review commands (`/security-review-cpa` and `/database-performance-review`).
+This directory contains eval cases for testing the CPA review commands (`/security-review` and `/database-performance-review`).
 
 ## Structure
 
@@ -53,7 +53,7 @@ evals/
 
 Use the `/run-evals` command to execute all eval cases and generate a results report.
 
-**IMPORTANT:** The eval runner does NOT read expected.json or case_index.md before running reviews - this ensures blind evaluation. Both `/security-review-cpa` and `/database-performance-review` are run on each case, and the comparison script determines which findings are relevant.
+**IMPORTANT:** The eval runner does NOT read expected.json or case_index.md before running reviews - this ensures blind evaluation. Both `/security-review` and `/database-performance-review` are run on each case, and the comparison script determines which findings are relevant.
 
 Only the comparison script (run after the reviews complete) reads expected.json to evaluate results.
 
