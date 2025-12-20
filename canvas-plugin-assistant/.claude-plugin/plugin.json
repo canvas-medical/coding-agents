@@ -1,0 +1,20 @@
+{
+  "name": "canvas-plugin-assistant",
+  "version": "1.16.0",
+  "description": "Helps solutions consultants build Canvas Medical plugins through guided dialogue and automated workflows",
+  "author": {
+    "name": "Canvas Medical",
+    "email": "ai@canvasmedical.com"
+  },
+  "homepage": "https://github.com/canvas-medical/coding-agents",
+  "repository": "https://github.com/canvas-medical/coding-agents",
+  "license": "MIT",
+  "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
+  "commands": ["./.claude/commands/"],
+  "agents": [
+    "./.claude/agents/deploy-uat.md",
+    "./.claude/agents/instance-analyzer.md",
+    "./.claude/agents/plugin-brainstorm.md"
+  ],
+  "skills": ["./.claude/skills/"]
+}
