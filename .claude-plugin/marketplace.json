@@ -20,7 +20,6 @@
       },
       "homepage": "https://github.com/canvas-medical/coding-agents",
       "repository": "https://github.com/canvas-medical/coding-agents",
-      "license": "MIT",
       "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
       "category": "development"
     }
