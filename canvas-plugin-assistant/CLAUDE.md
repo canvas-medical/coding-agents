@@ -124,3 +124,4 @@ The `-A .` flag combination ensures:
 - Use early returns for guard clauses
 - Validate data existence with explicit checks, not exception handling
 - Log important business events with `log.info()`, not errors that aren't errors
+- Avoid single letter variable names (prefer `[for questionnaire.name in questionnaires]` instead of `[for q.name in questionnaires]`, except for loop counters (e.g. `for i in range(...)`)
