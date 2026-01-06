@@ -50,6 +50,13 @@ To view all available commands:
 /help
 ```
 
+To turn on the auto-update (recommanded):
+```shell
+/plugin
+```
+Go to `Marketplaces` with Tab key, then select `canvas-medical` with the Arrows keys and press Enter, then select `Enable auto-update` and press Enter.
+
+
 ## Available Plugins
 
 ### canvas-plugin-assistant
