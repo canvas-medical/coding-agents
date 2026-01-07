@@ -8,12 +8,5 @@
   },
   "homepage": "https://github.com/canvas-medical/coding-agents",
   "repository": "https://github.com/canvas-medical/coding-agents",
-  "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
-  "commands": ["./.claude/commands/"],
-  "agents": [
-    "./.claude/agents/deploy-uat.md",
-    "./.claude/agents/instance-analyzer.md",
-    "./.claude/agents/plugin-brainstorm.md"
-  ],
-  "skills": ["./.claude/skills/"]
+  "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"]
 }
