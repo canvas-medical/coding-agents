@@ -54,12 +54,12 @@ When you read this skill, note the path to this SKILL.md file, then read `coding
 
 For example, if this SKILL.md is at:
 ```
-/some/path/.claude/skills/canvas-sdk/SKILL.md
+/some/path/skills/canvas-sdk/SKILL.md
 ```
 
 Then read:
 ```
-/some/path/.claude/skills/canvas-sdk/coding_agent_context.txt
+/some/path/skills/canvas-sdk/coding_agent_context.txt
 ```
 
 To use this skill:
