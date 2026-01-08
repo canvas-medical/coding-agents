@@ -276,13 +276,22 @@ def aggregate_by_working_directory(parent_dir, current_working_dir):
 
         aggregated_file = parent_dir / f"{safe_dirname}.json"
 
+        # Check if aggregated file already exists to preserve created_date
+        existing_created_date = None
+        if aggregated_file.exists():
+            try:
+                with open(aggregated_file, 'r') as f:
+                    existing_data = json.load(f)
+                    existing_created_date = existing_data.get('created_date')
+            except (json.JSONDecodeError, IOError):
+                # If we can't read the existing file, we'll create a new one
+                pass
+
         # Find all session files for this working directory
         sessions = []
-        total_tokens_sum = 0
+        total_tokens_sum = {"input": 0, "output": 0, "total": 0}
         cache_usage_sum = {"cache_write": 0, "cache_read": 0}
         cost_usd_sum = 0.0
-        earliest_date = None
-        latest_date = None
 
         # Loop through all .json files in parent directory
         for json_file in parent_dir.glob("*.json"):
@@ -307,25 +316,18 @@ def aggregate_by_working_directory(parent_dir, current_working_dir):
 
                         # Aggregate metrics
                         cost_data = data.get('cost_data', {})
-                        total_tokens = cost_data.get('total_tokens', 0)
-                        # total_tokens can be a dict with {input, output, total} or an int
+                        total_tokens = cost_data.get('total_tokens', {})
+                        # total_tokens is a dict with {input, output, total}
                         if isinstance(total_tokens, dict):
-                            total_tokens_sum += total_tokens.get('total', 0)
-                        else:
-                            total_tokens_sum += total_tokens
+                            total_tokens_sum['input'] += total_tokens.get('input', 0)
+                            total_tokens_sum['output'] += total_tokens.get('output', 0)
+                            total_tokens_sum['total'] += total_tokens.get('total', 0)
 
                         cache = cost_data.get('cache_usage', {})
                         cache_usage_sum['cache_write'] += cache.get('cache_write', 0)
                         cache_usage_sum['cache_read'] += cache.get('cache_read', 0)
 
                         cost_usd_sum += cost_data.get('cost_usd', 0)
-
-                        # Track dates
-                        if session_date:
-                            if earliest_date is None or session_date < earliest_date:
-                                earliest_date = session_date
-                            if latest_date is None or session_date > latest_date:
-                                latest_date = session_date
 
                 except (json.JSONDecodeError, KeyError, IOError):
                     # Skip invalid or unreadable files
@@ -338,11 +340,16 @@ def aggregate_by_working_directory(parent_dir, current_working_dir):
         # Sort sessions by date
         sessions.sort(key=lambda x: x['date'] if x['date'] else '')
 
+        # Determine created_date and last_update
+        now = datetime.now(timezone.utc).isoformat()
+        created_date = existing_created_date if existing_created_date else now
+        last_update = now
+
         # Create aggregated data
         aggregated_data = {
             "working_directory": current_working_dir,
-            "created_date": earliest_date,
-            "last_update": latest_date,
+            "created_date": created_date,
+            "last_update": last_update,
             "session_count": len(sessions),
             "total_tokens": total_tokens_sum,
             "cache_usage": cache_usage_sum,
