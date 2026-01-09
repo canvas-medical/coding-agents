@@ -65,8 +65,9 @@ Convert the description to kebab-case:
 
 Use the Write tool to save the SVG content:
 - Save to current working directory with generated filename
-- For Canvas plugins, save to the inner plugin directory (snake_case folder)
-- Example: `{plugin_name_snake}/medical-chart-icon.svg`
+- For Canvas plugins, save to the inner plugin directory's `assets/` folder (snake_case folder)
+- Create the `assets/` directory if it doesn't exist: `mkdir -p {plugin_name_snake}/assets`
+- Example: `{plugin_name_snake}/assets/medical-chart-icon.svg`
 
 ### 5. Check UV Installation
 
@@ -105,12 +106,18 @@ If generating an icon for a Canvas plugin, update the manifest:
 {
   "name": "Plugin Name",
   "version": "1.0.0",
-  "icon": "icon-filename.png",
-  ...
+  "applications": [
+    {
+      "class": "plugin_name.applications.my_app:MyApp",
+      "name": "My Application",
+      "icon": "assets/icon-filename.png",
+      ...
+    }
+  ]
 }
 ```
 
-The `icon` field should reference just the filename (not a full path), as it must be in the same directory as the manifest.
+The `icon` field should reference the path relative to the manifest location (e.g., `assets/icon-filename.png`).
 
 ### 8. Handle Results
 
@@ -129,13 +136,13 @@ The `icon` field should reference just the filename (not a full path), as it mus
 After successful generation, display:
 ```
 Icon created successfully:
-  SVG: /path/to/icon-name.svg
-  PNG: /path/to/icon-name.png (48x48)
+  SVG: /path/to/assets/icon-name.svg
+  PNG: /path/to/assets/icon-name.png (48x48)
 ```
 
 For Canvas plugins, also mention:
 ```
-CANVAS_MANIFEST.json updated with icon reference
+CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
 ```
 
 ## Important Notes
@@ -144,7 +151,8 @@ CANVAS_MANIFEST.json updated with icon reference
 - Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
 - The conversion script uses cairosvg via uv for dependency isolation
 - Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory (snake_case folder)
+- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
+- Create the `assets/` directory if it doesn't exist before saving icons
 - Do not show SVG code to user unless there's an error or they specifically request it
 - Canvas Medical plugins should have professional, healthcare-appropriate icon designs
 
@@ -174,9 +182,10 @@ User is creating a "vitals-alert" plugin that monitors patient vital signs.
 
 1. Generate description: "medical vitals monitor with alert icon"
 2. Create SVG with heart rate line and alert symbol
-3. Save as: vitals_alert/vitals-alert-icon.svg
-4. Convert to: vitals_alert/vitals-alert-icon.png
-5. Update CANVAS_MANIFEST.json: "icon": "vitals-alert-icon.png"
+3. Create assets directory: mkdir -p vitals_alert/assets
+4. Save as: vitals_alert/assets/vitals-alert-icon.svg
+5. Convert to: vitals_alert/assets/vitals-alert-icon.png
+6. Update CANVAS_MANIFEST.json applications entry: "icon": "assets/vitals-alert-icon.png"
 ```
 
 ### Example 2: User Request
@@ -197,8 +206,9 @@ After scaffold is created, CANVAS_MANIFEST.json needs an icon.
 
 1. Generate description from plugin purpose: "calendar scheduling icon for patient appointments"
 2. Create professional SVG with calendar and medical cross
-3. Save as: patient_scheduler/patient-scheduler-icon.svg
-4. Convert to: patient_scheduler/patient-scheduler-icon.png
-5. Update manifest: "icon": "patient-scheduler-icon.png"
-6. Commit with other scaffold files
+3. Create assets directory: mkdir -p patient_scheduler/assets
+4. Save as: patient_scheduler/assets/patient-scheduler-icon.svg
+5. Convert to: patient_scheduler/assets/patient-scheduler-icon.png
+6. Update manifest applications entry: "icon": "assets/patient-scheduler-icon.png"
+7. Commit with other scaffold files
 ```

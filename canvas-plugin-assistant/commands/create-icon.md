@@ -36,16 +36,22 @@ Follow these steps in order:
 
 5. **Determine Save Location**:
    - Check if currently in a Canvas plugin directory (look for CANVAS_MANIFEST.json)
-   - If in plugin directory: save to the inner plugin folder (snake_case folder name)
+   - If in plugin directory: save to the inner plugin folder's `assets/` directory (snake_case folder name)
    - If not in plugin directory: save to current working directory
    - Report the save location to the user
 
-6. **Save SVG File**:
+6. **Create Assets Directory (if needed)**:
+   - If saving to a Canvas plugin directory, ensure the `assets/` directory exists
+   - Use: `mkdir -p {plugin_name_snake}/assets`
+   - Skip this step if not in a plugin directory
+
+7. **Save SVG File**:
    - Use Write tool to save the SVG content
    - Save with the generated filename
-   - Example: `icon-name.svg`
+   - For plugins: `{plugin_name_snake}/assets/icon-name.svg`
+   - For non-plugins: `icon-name.svg`
 
-7. **Check UV Installation**:
+8. **Check UV Installation**:
    - Use Bash to check if `uv` is installed: `which uv`
    - If not installed, install it automatically:
      ```bash
@@ -53,7 +59,7 @@ Follow these steps in order:
      ```
    - After installation, may need to use full path: `~/.cargo/bin/uv`
 
-8. **Convert to PNG**:
+9. **Convert to PNG**:
    - Use Bash to execute the conversion command:
      ```bash
      uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert-svg-to-png.py <svg-file> <png-file>
@@ -62,19 +68,19 @@ Follow these steps in order:
    - Replace `<png-file>` with the same base name but `.png` extension
    - The script will create a 48x48 pixel PNG
 
-9. **Update CANVAS_MANIFEST.json (if applicable)**:
-   - If in a Canvas plugin directory, ask the user if they want to update the manifest
-   - If yes, update the `icon` field with just the filename (not full path)
-   - Example: `"icon": "icon-name.png"`
+10. **Update CANVAS_MANIFEST.json (if applicable)**:
+    - If in a Canvas plugin directory, ask the user if they want to update the manifest
+    - If yes, update the applications entry's `icon` field with the relative path
+    - Example: `"icon": "assets/icon-name.png"`
 
-10. **Handle Conversion Results**:
+11. **Handle Conversion Results**:
     - **On Success**: Report both file paths to the user
     - **On Failure**:
       - Inform user that PNG conversion failed
       - Confirm SVG file was still saved successfully
       - Provide the SVG file path for manual conversion if needed
 
-11. **Report Completion**:
+12. **Report Completion**:
     - Show paths to both generated files
     - Confirm where they were saved
     - If manifest was updated, mention that as well
@@ -99,10 +105,10 @@ Icon created successfully:
 If in a plugin directory and manifest was updated:
 ```
 Icon created successfully:
-  SVG: /path/to/plugin_name/icon-name.svg
-  PNG: /path/to/plugin_name/icon-name.png (48x48)
+  SVG: /path/to/plugin_name/assets/icon-name.svg
+  PNG: /path/to/plugin_name/assets/icon-name.png (48x48)
 
-CANVAS_MANIFEST.json updated with icon reference
+CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
 ```
 
 ## Important Notes
@@ -111,7 +117,8 @@ CANVAS_MANIFEST.json updated with icon reference
 - Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
 - The conversion script uses cairosvg via uv for dependency isolation
 - Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory (snake_case folder)
+- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
+- Create the `assets/` directory if it doesn't exist before saving icons
 - Both files save to the appropriate directory based on context
 - Do not show SVG code to user unless there's an error or they request it
 - Canvas Medical plugin icons should be professional and healthcare-appropriate

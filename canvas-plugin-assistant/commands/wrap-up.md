@@ -246,7 +246,39 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 8. License Check
+### 8. Application Icon Check
+
+**If the plugin has an Application component, verify it has an icon.**
+
+Check CANVAS_MANIFEST.json for applications:
+
+```bash
+INNER=$(basename "$PWD" | tr '-' '_')
+grep -A 10 '"applications"' "$INNER/CANVAS_MANIFEST.json" 2>/dev/null
+```
+
+**If applications exist:**
+
+For each application entry, verify:
+- [ ] The `icon` field is present
+- [ ] The icon file exists in the inner plugin directory
+- [ ] The icon is a PNG file (48x48 recommended)
+- [ ] The filename matches what's in the manifest
+
+Check icon files:
+```bash
+INNER=$(basename "$PWD" | tr '-' '_')
+ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
+```
+
+**If Application exists but no icon:**
+- Offer to create an icon using the icon-generation skill
+- Invoke `Skill(skill="icon-generation")` to generate an appropriate icon
+- Update the manifest with the icon filename
+
+**If no applications:** Mark as N/A.
+
+### 9. License Check
 
 Check for any license file or license mentions:
 
@@ -277,7 +309,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 9. Final Verdict
+### 10. Final Verdict
 
 After all checks, present a summary:
 
@@ -295,6 +327,7 @@ After all checks, present a summary:
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
+| Application Icon | ✅ Present / ⚠️ Created / N/A | ... |
 | License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
 
 ### Verdict
@@ -328,7 +361,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 10. Export Session History
+### 11. Export Session History
 
 **Save a record of this development session for future reference.**
 
@@ -360,7 +393,7 @@ print(f"Exported {len(display_texts)} messages to {output_file}")
 
 This creates `../.cpa-workflow-artifacts/claude-history-{sessionId}.txt` (one level above the plugin directory) containing all messages from this session.
 
-### 11. Final Git Commit and Push
+### 12. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 
