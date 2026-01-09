@@ -67,6 +67,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 - Brainstorm plugin requirements through guided dialogue
 - Canvas SDK documentation (~20k lines) always available
 - Architecture patterns based on handler count complexity
+- Icon generation for Application plugins (SVG to 48x48 PNG)
 - API security review for authentication/authorization
 - Unit test authoring with 90% coverage target
 - Instance configuration analysis
@@ -77,6 +78,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 |---------|-------------|
 | `:check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
 | `:new-plugin` | Start brainstorming a new plugin specification |
+| `:create-icon` | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance` | Analyze Canvas instance configuration |
 | `:deploy` | Deploy plugin and monitor logs |
 | `:coverage` | Run tests with coverage, offer to improve if below 90% |
