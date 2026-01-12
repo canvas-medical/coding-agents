@@ -189,7 +189,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 ## Workflow Artifacts
 
-CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above the plugin directory, outside the plugin repo). These artifacts are critical for:
+CPA saves workflow artifacts to `.cpa-workflow-artifacts/` at the git repository root. These artifacts are critical for:
 
 **Training & Feedback**
 - Session histories capture the full dialogue, decisions made, and problems solved
@@ -218,25 +218,25 @@ CPA saves workflow artifacts to `../.cpa-workflow-artifacts/` (one level above t
 | `{case_name}-security-review.md` | Per-case security review (evals) |
 | `{case_name}-database-review.md` | Per-case database review (evals) |
 | `costs/{session-id}.json` | Individual session cost data (tokens, duration, cost) |
-| `costs/{working-directory}.json` | Aggregated cost summary for all sessions in a directory |
+| `costs/{workspace-directory}.json` | Aggregated cost summary for all sessions in the workspace |
 
 **Cost Tracking Details:**
 
-CPA automatically tracks session costs via a SessionEnd hook. When a session ends, cost data is saved to `../.cpa-workflow-artifacts/costs/`:
+CPA automatically tracks session costs via a SessionEnd hook. When a session ends, cost data is saved to `.cpa-workflow-artifacts/costs/` at the git repository root:
 
 - **Individual session files** (`{session-id}.json`): Token usage (input, output, cache read/write), model used, session duration, and calculated cost in USD
-- **Aggregated files** (`{working-directory}.json`): Summary of all sessions for a working directory with total cost, token usage, and session list
+- **Aggregated files** (`{workspace-directory}.json`): Summary of all sessions in the workspace (git repository) with total cost, token usage, and session list
 
 Use `scripts/aggregate-costs.py` to analyze costs:
 ```bash
 # View cost summary
-./scripts/aggregate-costs.py ../.cpa-workflow-artifacts/costs/
+./scripts/aggregate-costs.py .cpa-workflow-artifacts/costs/
 
 # Export to CSV
-./scripts/aggregate-costs.py --format csv ../.cpa-workflow-artifacts/costs/ > costs.csv
+./scripts/aggregate-costs.py --format csv .cpa-workflow-artifacts/costs/ > costs.csv
 
 # Filter by date or model
-./scripts/aggregate-costs.py --since 2026-01-01 --model sonnet-4-5 ../.cpa-workflow-artifacts/costs/
+./scripts/aggregate-costs.py --since 2026-01-01 --model sonnet-4-5 .cpa-workflow-artifacts/costs/
 ```
 
 Update pricing data with `scripts/update-pricing.py`:

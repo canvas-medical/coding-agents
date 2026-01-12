@@ -223,9 +223,24 @@ def main():
     cwd = hook_input.get("cwd", "")
     reason = hook_input.get("reason", "unknown")
 
-    # Get parent directory and create .cpa-workflow-artifacts/costs/ directory
-    parent_dir = Path(cwd).parent if cwd else Path.home()
-    costs_dir = parent_dir / ".cpa-workflow-artifacts" / "costs"
+    # Find git repository root to create .cpa-workflow-artifacts at workspace level
+    # Use the helper script from the same directory
+    script_dir = Path(__file__).parent
+    try:
+        result = subprocess.run(
+            ["python3", str(script_dir / "get-workspace-dir.py")],
+            cwd=cwd if cwd else None,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        workspace_dir = Path(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback to cwd if helper script not found
+        workspace_dir = Path(cwd) if cwd else Path.cwd()
+
+    # Create .cpa-workflow-artifacts/costs/ directory at workspace root
+    costs_dir = workspace_dir / ".cpa-workflow-artifacts" / "costs"
     costs_dir.mkdir(parents=True, exist_ok=True)
 
     # Prepare output data
@@ -252,25 +267,26 @@ def main():
         print(f"Cost data saved to: {output_file}", file=sys.stderr)
 
         # Aggregate costs by working directory
-        aggregate_by_working_directory(costs_dir, cwd)
+        aggregate_by_working_directory(costs_dir, workspace_dir)
 
         sys.exit(0)
     except Exception as e:
         print(f"Error writing cost data: {e}", file=sys.stderr)
         sys.exit(1)
 
-def aggregate_by_working_directory(parent_dir, current_working_dir):
+def aggregate_by_working_directory(parent_dir: Path, workspace_dir: Path):
     """
-    Aggregate all session costs for the current working directory.
+    Aggregate all session costs for the workspace (git repository root).
 
     Args:
         parent_dir: Directory containing session JSON files (.cpa-workflow-artifacts/costs/)
-        current_working_dir: The working directory to aggregate
+        workspace_dir: The workspace directory (git root) to aggregate sessions for
     """
     try:
-        # Sanitize working directory for use as filename
+        # Sanitize workspace directory for use as filename
         # Replace slashes and special chars with underscores
-        safe_dirname = current_working_dir.replace('/', '_').replace('\\', '_')
+        workspace_str = str(workspace_dir)
+        safe_dirname = workspace_str.replace('/', '_').replace('\\', '_')
         if safe_dirname.startswith('_'):
             safe_dirname = safe_dirname[1:]  # Remove leading underscore
 
@@ -301,8 +317,9 @@ def aggregate_by_working_directory(parent_dir, current_working_dir):
                     with open(json_file, 'r') as f:
                         data = json.load(f)
 
-                    # Only include sessions from the same working directory
-                    if data.get('working_directory') == current_working_dir:
+                    # Only include sessions from the same workspace
+                    working_dir = data.get('working_directory')
+                    if working_dir and working_dir.startswith(workspace_str):
                         session_id = data.get('session_id')
                         session_date = data.get('timestamp')
 
@@ -347,7 +364,7 @@ def aggregate_by_working_directory(parent_dir, current_working_dir):
 
         # Create aggregated data
         aggregated_data = {
-            "working_directory": current_working_dir,
+            "workspace_directory": workspace_str,
             "created_date": created_date,
             "last_update": last_update,
             "session_count": len(sessions),

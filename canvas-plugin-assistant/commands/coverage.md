@@ -32,10 +32,19 @@ uv run pytest --cov=. --cov-report=term-missing
 4. **Save report to workflow artifacts:**
 
 ```python
+import subprocess
 from pathlib import Path
 from datetime import datetime
 
-output_dir = Path("../.cpa-workflow-artifacts")
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
+
+output_dir = workspace_dir / ".cpa-workflow-artifacts"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

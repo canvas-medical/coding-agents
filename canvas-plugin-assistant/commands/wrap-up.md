@@ -101,7 +101,7 @@ This covers:
 - **Application Scope** - Manifest scope alignment with token usage
 - **Secrets Declaration** - All tokens properly declared
 
-The command saves a timestamped report to `../.cpa-workflow-artifacts/` and offers to fix any issues found.
+The command saves a timestamped report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
 
 ### 2. Database Performance Review
 
@@ -336,7 +336,16 @@ Export the session history using Python:
 
 ```python
 import json
+import subprocess
 from pathlib import Path
+
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
 
 history_file = Path.home() / ".claude" / "history.jsonl"
 lines = history_file.read_text().strip().split("\n")
@@ -351,14 +360,14 @@ for line in lines:
         if display:
             display_texts.append(display)
 
-output_dir = Path("../.cpa-workflow-artifacts")
+output_dir = workspace_dir / ".cpa-workflow-artifacts"
 output_dir.mkdir(parents=True, exist_ok=True)
 output_file = output_dir / f"claude-history-{session_id}.txt"
 output_file.write_text("\n".join(display_texts))
 print(f"Exported {len(display_texts)} messages to {output_file}")
 ```
 
-This creates `../.cpa-workflow-artifacts/claude-history-{sessionId}.txt` (one level above the plugin directory) containing all messages from this session.
+This creates `{workspace_dir}/.cpa-workflow-artifacts/claude-history-{sessionId}.txt` at the workspace root containing all messages from this session.
 
 ### 11. Final Git Commit and Push
 

@@ -94,11 +94,22 @@ grep -rn "eyJ\|['\"][A-Za-z0-9_-]\{30,\}['\"]" --include="*.py" .
 
 Create timestamp for report:
 ```python
+import subprocess
+from pathlib import Path
 from datetime import datetime
+
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
+
 timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
 ```
 
-Save report to `../.cpa-workflow-artifacts/security-review-{timestamp}.md`:
+Save report to `{workspace_dir}/.cpa-workflow-artifacts/security-review-{timestamp}.md`:
 
 ```markdown
 # Security Review Report: {plugin_name}

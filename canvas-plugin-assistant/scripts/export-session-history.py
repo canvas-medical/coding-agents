@@ -2,11 +2,29 @@
 """
 Export the current Claude Code session's messages to a simplified text file.
 Reads ~/.claude/history.jsonl, extracts display text for the current session,
-and saves to ../.cpa-workflow-artifacts/claude-history-{sessionId}.txt (overwrites if exists).
+and saves to .cpa-workflow-artifacts/claude-history-{sessionId}.txt (overwrites if exists).
 """
 
 import json
+import subprocess
 from pathlib import Path
+
+
+def get_workspace_dir() -> Path:
+    """
+    Get workspace root directory by calling the helper script.
+    """
+    try:
+        result = subprocess.run(
+            ["python3", "scripts/get-workspace-dir.py"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return Path(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback to current directory if script not found
+        return Path.cwd()
 
 
 def main():
@@ -45,7 +63,8 @@ def main():
         return
 
     # Create output file named by sessionId (overwrites if exists)
-    output_dir = Path("../.cpa-workflow-artifacts")
+    workspace_dir = get_workspace_dir()
+    output_dir = workspace_dir / ".cpa-workflow-artifacts"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / f"claude-history-{session_id}.txt"
 
