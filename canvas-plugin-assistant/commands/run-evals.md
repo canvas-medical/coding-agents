@@ -8,7 +8,7 @@ Execute eval cases to verify that security and database performance review comma
 
 ```bash
 echo "=== Discovering eval cases ==="
-find .claude/evals -name "expected.json" -type f | while read f; do
+find evals -name "expected.json" -type f | while read f; do
   eval_dir=$(dirname "$f")
   eval_name=$(basename "$eval_dir")
   echo "Found: $eval_name"
@@ -24,7 +24,7 @@ For each eval case discovered (e.g., case_001, case_002, case_003):
 #### Step 2a: Navigate to Eval Case
 
 ```bash
-cd .claude/evals/{eval_name}
+cd evals/{eval_name}
 ```
 
 #### Step 2b: Run BOTH Review Commands
@@ -50,10 +50,10 @@ Save the database review output to `../.cpa-workflow-artifacts/{eval_name}-datab
 Use the comparison script to evaluate whether the reviews detected the expected findings:
 
 ```bash
-uv run --with requests python .claude/scripts/compare_review_results.py \
+uv run --with requests python scripts/compare_review_results.py \
   --security-report ../.cpa-workflow-artifacts/{eval_name}-security-review.md \
   --database-report ../.cpa-workflow-artifacts/{eval_name}-database-review.md \
-  --expected .claude/evals/{eval_name}/expected.json
+  --expected evals/{eval_name}/expected.json
 ```
 
 The script will:
@@ -130,7 +130,7 @@ See detailed results at:
 
 ## Adding New Evals
 
-See `.claude/evals/README.md` for instructions on creating new eval cases.
+See `evals/README.md` for instructions on creating new eval cases.
 
 Eval case names should be sequential (case_004, case_005, etc.) to avoid revealing what they test.
-Update `.claude/evals/case_index.md` with the new case's category and purpose (CPA cannot read this file).
+Update `evals/case_index.md` with the new case's category and purpose (CPA cannot read this file).

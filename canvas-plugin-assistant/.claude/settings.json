@@ -45,8 +45,8 @@
       "Edit(**/.cpa-workflow-artifacts/**)"
     ],
     "deny": [
-      "Read(**/.claude/evals/**/expected.json)",
-      "Read(**/.claude/evals/case_index.md)"
+      "Read(**/evals/**/expected.json)",
+      "Read(**/evals/case_index.md)"
     ],
     "ask": []
   }

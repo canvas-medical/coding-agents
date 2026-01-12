@@ -262,4 +262,4 @@ export EVALS_ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 **Adding new evals:**
-See `.claude/evals/README.md` for instructions. Use `case_index.md` (human-readable only) to track what each case tests.
+See `evals/README.md` for instructions. Use `case_index.md` (human-readable only) to track what each case tests.

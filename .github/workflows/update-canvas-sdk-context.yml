@@ -20,11 +20,11 @@ jobs:
       - name: Download Canvas SDK context
         run: |
           # Create directory if it doesn't exist
-          mkdir -p canvas-plugin-assistant/.claude/skills/canvas-sdk
+          mkdir -p canvas-plugin-assistant/skills/canvas-sdk
 
           # Download the context file
           curl -sSL https://raw.githubusercontent.com/Medical-Software-Foundation/canvas/refs/heads/main/coding_agent_context.txt \
-            -o canvas-plugin-assistant/.claude/skills/canvas-sdk/coding_agent_context.txt
+            -o canvas-plugin-assistant/skills/canvas-sdk/coding_agent_context.txt
 
       - name: Configure Git
         run: |
@@ -33,7 +33,7 @@ jobs:
 
       - name: Commit and push if changes
         run: |
-          git add canvas-plugin-assistant/.claude/skills/canvas-sdk/coding_agent_context.txt
+          git add canvas-plugin-assistant/skills/canvas-sdk/coding_agent_context.txt
 
           # Check if there are changes to commit
           if git diff --staged --quiet; then

@@ -60,7 +60,7 @@ Only the comparison script (run after the reviews complete) reads expected.json 
 ## Adding New Eval Cases
 
 1. Determine the next case number (e.g., case_004)
-2. Create directory: `.claude/evals/case_004/`
+2. Create directory: `evals/case_004/`
 3. Add minimal plugin files demonstrating the issue:
    - `CANVAS_MANIFEST.json` with neutral name/description
    - Handler/API files as needed
