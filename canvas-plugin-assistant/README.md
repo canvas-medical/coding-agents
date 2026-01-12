@@ -55,6 +55,7 @@ Run `/cpa:new-plugin` to start a guided brainstorming session that asks clarifyi
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
 - **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
+- **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 
 ### Slash Commands
 
@@ -64,6 +65,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 |---------|-------------|
 | `:check-setup` | Verify environment tools (uv, unbuffer) |
 | `:new-plugin` | Start brainstorming a new plugin specification |
+| `:create-icon` | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance` | Analyze Canvas instance configuration |
 | `:deploy` | Deploy plugin and monitor logs |
 | `:coverage` | Run tests with coverage, offer to improve if below 90% |
@@ -134,6 +136,32 @@ This key is used by the comparison script to evaluate whether review commands co
    - Final checklist: security, DB performance, coverage, README
    - Git commit and push
 
+## Icon Generation
+
+Canvas Medical plugin Applications require a 48x48 PNG icon. The `:create-icon` command generates SVG icons and automatically converts them to the required format.
+
+**When icons are needed:**
+- Any plugin with an `Application` component (interactive UI panels)
+- Icons are automatically generated during `:new-plugin` workflow for Application plugins
+- Icons are verified during `:wrap-up` checklist
+
+**Manual icon generation:**
+```bash
+# In a plugin directory
+/cpa:create-icon "medical chart with checkmark"
+
+# Or just ask Claude to create an icon
+"I need an icon for a patient scheduling application"
+```
+
+**Icon requirements:**
+- 48x48 PNG format (automatically generated)
+- Saved to `{plugin_name}/assets/` directory
+- Referenced in CANVAS_MANIFEST.json as `"icon": "assets/icon-name.png"`
+- Professional, healthcare-appropriate design
+
+The command generates both SVG (vector) and PNG (48x48) versions, storing them in the plugin's `assets/` directory and updating the manifest automatically.
+
 ## Plugin Complexity Guide
 
 | Complexity | Files | When to Use |
@@ -152,6 +180,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ├── commands/
 │   ├── check-setup.md         # :check-setup
 │   ├── new-plugin.md          # :new-plugin
+│   ├── create-icon.md         # :create-icon
 │   ├── analyze-instance.md    # :analyze-instance
 │   ├── deploy.md              # :deploy
 │   ├── coverage.md            # :coverage
@@ -167,6 +196,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── plugin-patterns/       # Architecture patterns
+│   ├── icon-generation/       # SVG icon generation and PNG conversion
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
 │   ├── fhir-api-client-security/    # FHIR API token security
 │   ├── database-performance/  # N+1 query detection
@@ -178,12 +208,13 @@ This key is used by the comparison script to evaluate whether review commands co
 ├── hooks/
 │   └── hooks.json             # SessionEnd hook for cost tracking
 ├── scripts/
+    ├── convert-svg-to-png.py      # SVG to 48x48 PNG conversion
 │   ├── export-session-history.py  # Session history export
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
-│   ├── cost-logger.py         # SessionEnd hook script for cost tracking
-│   ├── aggregate-costs.py     # Cost analysis and reporting
-│   └── update-pricing.py      # Model pricing updater
-└── model_costs.json           # Claude model pricing data
+│   ├── cost-logger.py             # SessionEnd hook script for cost tracking
+│   ├── aggregate-costs.py         # Cost analysis and reporting
+│   └── update-pricing.py          # Model pricing updater
+└── model_costs.json               # Claude model pricing data
 
 ```
 

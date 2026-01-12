@@ -171,6 +171,14 @@ After `canvas init` completes:
 
 Then continue with the plugin-brainstorm agent workflow:
 - Edit the generated protocol handler
+- If creating an Application:
+  - Create the Application class and implement `on_open()`
+  - **MANDATORY: Generate icon immediately after creating Application**
+    - Invoke `Skill(skill="icon-generation")`
+    - Create `{plugin_name_snake}/assets/` directory
+    - Generate and save icon files
+    - Update CANVAS_MANIFEST.json with `"icon": "assets/{filename}.png"`
+    - Verify icon files exist before proceeding
 - **CRITICAL: Invoke the testing skill before writing tests**
   - Use: `Skill(skill="testing")` to load testing guidelines
   - Follow patterns from testing_context.txt for mock verification

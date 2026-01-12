@@ -267,9 +267,24 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
    - Exact EventType enum values
    - Effect class parameters
    - Data model queries
-3. **Update CANVAS_MANIFEST.json** with correct class paths
-4. **Add secrets** to manifest if needed
-5. **Check if client libraries are needed** based on the spec:
+3. **Create Application class if needed** (for Application patterns):
+   - If the spec requires an Application (Interactive UI, Custom panel, etc.):
+     - Create the `applications/` directory: `mkdir -p {plugin_name_snake}/applications`
+     - Create the Application class file
+     - Implement the `on_open()` method with appropriate effects
+4. **CRITICAL: Generate icon for Applications**:
+   - **MANDATORY STEP**: If you created an Application class in step 3, you MUST generate an icon NOW
+   - Do NOT skip this step - Applications will not work without icons
+   - Invoke the **icon-generation skill**: `Skill(skill="icon-generation")`
+   - Generate an appropriate icon based on the plugin name and purpose
+   - Create the assets directory: `mkdir -p {plugin_name_snake}/assets`
+   - Save SVG and PNG (48x48) to `{plugin_name_snake}/assets/`
+   - Update `CANVAS_MANIFEST.json` applications entry with `"icon": "assets/{icon-filename}.png"`
+   - Example: For a "patient-scheduler" Application, create "assets/patient-scheduler-icon.png"
+   - **Verify the icon files exist before proceeding**: `ls -lh {plugin_name_snake}/assets/*.png`
+5. **Update CANVAS_MANIFEST.json** with correct class paths
+6. **Add secrets** to manifest if needed
+7. **Check if client libraries are needed** based on the spec:
    - **S3/file storage/uploads** → Copy `aws_s3.py` from `skills/plugin-patterns/client-library/`
    - **LLM/AI/Claude** → Copy `llm_anthropic.py` from `skills/plugin-patterns/client-library/`
    - **SMS/text messages/Twilio** → Copy `twilio_client.py` from `skills/plugin-patterns/client-library/`
