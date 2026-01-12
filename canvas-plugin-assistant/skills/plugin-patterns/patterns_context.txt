@@ -188,7 +188,7 @@ Best for: Full-featured applications with UI
 - 2000+ lines of code
 
 **When to use:**
-- Interactive UI applications
+- Interactive UI applications (requires icon - use icon-generation skill)
 - AI/LLM-powered features
 - Complex multi-step workflows with user interaction
 - Real-time data processing and display
@@ -200,6 +200,8 @@ complex-plugin/
 ├── applications/
 │   ├── __init__.py
 │   └── my_app.py
+├── assets/                  # Required for Application icons
+│   └── icon.png            # 48x48 PNG icon
 ├── protocols/
 │   ├── __init__.py
 │   └── listener.py
@@ -270,6 +272,14 @@ class WebhookHandler(SimpleAPI):
 ### Pattern 3: Application with API Backend
 For interactive UI applications.
 
+**CRITICAL: Applications REQUIRE an icon (48x48 PNG).**
+- Generate the icon IMMEDIATELY after creating the Application class
+- Invoke the icon-generation skill: `Skill(skill="icon-generation")`
+- Create assets directory: `mkdir -p {plugin_name_snake}/assets`
+- Save icon files to `{plugin_name_snake}/assets/`
+- Update CANVAS_MANIFEST.json applications entry: `"icon": "assets/{filename}.png"`
+- Verify icon exists: `ls -lh {plugin_name_snake}/assets/*.png`
+
 ```python
 # applications/my_app.py
 class MyApp(Application):
@@ -338,7 +348,7 @@ class MyAPI(SimpleAPI):
                 "class": "my_plugin.applications.my_app:MyApp",
                 "name": "My Application",
                 "description": "Interactive UI",
-                "icon": "assets/icon.png",
+                "icon": "assets/icon-name.png",  # Required: 48x48 PNG
                 "scope": "patient_specific",
                 "show_in_panel": true,
                 "panel_priority": 100
