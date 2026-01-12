@@ -94,7 +94,7 @@ Check if a key exists in cache:
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/canvas_cli/
 # Canvas CLI
-Last updated: 29 Aug 2025
+Last updated: 25 Nov 2025
 ##  Getting Started #
 ###  Installation using `pip` #
 To install the Canvas CLI using `pip`, execute `pip install canvas`. Python
@@ -214,11 +214,24 @@ Validate the Canvas Manifest json file.
 **Options** :
   * `--help`: Show this message and exit.
 ###  `canvas logs` #
-Subscribes to a log stream and prints to your console.
+Subscribes to a log stream and prints to your console. Optionally fetches
+historical logs first.
 **Usage** :
     $ canvas logs [OPTIONS]
 **Options** :
   * `--host TEXT`: Canvas instance to connect to
+  * `--help`: Show this message and exit.
+  * `--since TEXT`: Lookback window (e.g. â24hâ, â2h30mâ). Mutually exclusive with âstart/âend.
+  * `--start TEXT`: Start time (ISO/RFC3339) or ânowâ.
+  * `--end TEXT`: End time (ISO/RFC3339) or ânowâ. Defaults to now if start is provided.
+  * `--no-follow`: Historical only; do not stream live logs.
+  * `--level TEXT`: Repeatable. âlevel ERROR âlevel WARN
+  * `--source TEXT`: Filter by source/service.
+  * `--page-size INTEGER`: Fetch size per page (historical). [default: 200]
+  * `--limit INTEGER`: Max historical logs to print.
+  * `--all`: Fetch all pages until exhausted (historical).
+  * `--interactive`: After each page, prompt to load more.
+  * `--cursor TEXT`: Resume token from a previous run.
   * `--help`: Show this message and exit.
 ###  `canvas config list` #
 List all secrets from a plugin.
@@ -244,7 +257,7 @@ Configure plugin secrets.
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/commands/
 # Commands
-Last updated: 11 Nov 2025
+Last updated: 15 Dec 2025
 The commands module lets you create and update commands within a specific note
 in Canvas. Commands are the building blocks of many end-user workflows in
 Canvas, including nearly all clinical workflows for documentation, like HPIs
@@ -867,6 +880,44 @@ Priority| Description
      ),
     )
 * * *
+##  ImagingReview #
+**Command-specific parameters** :
+Name| Type| Required| Description  
+---|---|---|---  
+`report_ids`|  _list[string]_| `true`| List of imaging report IDs to review.  
+`message_to_patient`|  _string_| `false`| Message to communicate findings to
+the patient.  
+`communication_method`|  _ReportReviewCommunicationMethod enum_| `false`|
+Method for patient communication. Must be one of
+`ReportReviewCommunicationMethod`.  
+`linked_items_urns`|  _list[string]_| `false`| List of URNs for items linked
+to the review.  
+`comment`|  _string_| `false`| Internal comment about the review.  
+**Enums and Types** :
+**`ReportReviewCommunicationMethod`**
+Communication Method| Value| Description  
+---|---|---  
+`DELEGATED_CALL_CAN_LEAVE_MESSAGE`| `"DM"`| Delegated call - can leave message  
+`DELEGATED_CALL_NEED_ANSWER`| `"DA"`| Delegated call - need answer  
+`DELEGATED_LETTER`| `"DL"`| Delegated letter to be sent to patient  
+`ALREADY_LEFT_MESSAGE`| `"AM"`| Already left message for patient  
+`ALREADY_REVIEWED_WITH_PATIENT`| `"AR"`| Already reviewed with patient  
+**Example** :
+    from canvas_sdk.commands import ImagingReviewCommand
+    from canvas_sdk.commands.commands.review import ReportReviewCommunicationMethod
+    from canvas_sdk.v1.data import ImagingReport, Patient
+    patient = Patient.objects.get(id="patient-id")
+    # Get imaging reports to review
+    imaging_reports = ImagingReport.objects.filter(patient=patient, review__isnull=True)
+    report_ids = [str(report.id) for report in imaging_reports]
+    imaging_review = ImagingReviewCommand(
+        note_uuid="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+        report_ids=report_ids,
+        message_to_patient="Your imaging results show no abnormalities.",
+        communication_method=ReportReviewCommunicationMethod.DELEGATED_CALL_CAN_LEAVE_MESSAGE,
+        comment="All clear, no follow-up needed."
+    )
+* * *
 ##  ImmunizationStatement #
 **Command-specific parameters** :
 Name| Type| Required| Description  
@@ -1016,6 +1067,44 @@ requirements before sending.
       diagnosis_codes=["E119"],
       fasting_required=True,
       comment="Patient should fast for 8 hours before the test."
+    )
+* * *
+##  LabReview #
+**Command-specific parameters** :
+Name| Type| Required| Description  
+---|---|---|---  
+`report_ids`|  _list[string]_| `true`| List of lab report IDs to review.  
+`message_to_patient`|  _string_| `false`| Message to communicate findings to
+the patient.  
+`communication_method`|  _ReportReviewCommunicationMethod enum_| `false`|
+Method for patient communication. Must be one of
+`ReportReviewCommunicationMethod`.  
+`linked_items_urns`|  _list[string]_| `false`| List of URNs for items linked
+to the review.  
+`comment`|  _string_| `false`| Internal comment about the review.  
+**Enums and Types** :
+**`ReportReviewCommunicationMethod`**
+Communication Method| Value| Description  
+---|---|---  
+`DELEGATED_CALL_CAN_LEAVE_MESSAGE`| `"DM"`| Delegated call - can leave message  
+`DELEGATED_CALL_NEED_ANSWER`| `"DA"`| Delegated call - need answer  
+`DELEGATED_LETTER`| `"DL"`| Delegated letter to be sent to patient  
+`ALREADY_LEFT_MESSAGE`| `"AM"`| Already left message for patient  
+`ALREADY_REVIEWED_WITH_PATIENT`| `"AR"`| Already reviewed with patient  
+**Example** :
+    from canvas_sdk.commands import LabReviewCommand
+    from canvas_sdk.commands.commands.review import ReportReviewCommunicationMethod
+    from canvas_sdk.v1.data import LabReport, Patient
+    patient = Patient.objects.get(id="patient-id")
+    # Get lab reports to review
+    lab_reports = LabReport.objects.filter(patient=patient, review__isnull=True)
+    report_ids = [str(report.id) for report in lab_reports]
+    lab_review = LabReviewCommand(
+        note_uuid="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+        report_ids=report_ids,
+        message_to_patient="Your lab results are within normal range.",
+        communication_method=ReportReviewCommunicationMethod.DELEGATED_CALL_CAN_LEAVE_MESSAGE,
+        comment="All values normal, no follow-up needed."
     )
 * * *
 ##  MedicalHistory #
@@ -1630,6 +1719,44 @@ DIAGNOSTIC_UNCERTAINTY| Diagnostic Uncertainty
      ),
     )
 * * *
+##  ReferralReview #
+**Command-specific parameters** :
+Name| Type| Required| Description  
+---|---|---|---  
+`report_ids`|  _list[string]_| `true`| List of referral report IDs to review.  
+`message_to_patient`|  _string_| `false`| Message to communicate findings to
+the patient.  
+`communication_method`|  _ReportReviewCommunicationMethod enum_| `false`|
+Method for patient communication. Must be one of
+`ReferralReviewCommand.ReportReviewCommunicationMethod`.  
+`linked_items_urns`|  _list[string]_| `false`| List of URNs for items linked
+to the review.  
+`comment`|  _string_| `false`| Internal comment about the review.  
+**Enums and Types** :
+**`ReportReviewCommunicationMethod`**
+Communication Method| Value| Description  
+---|---|---  
+`DELEGATED_CALL_CAN_LEAVE_MESSAGE`| `"DM"`| Delegated call - can leave message  
+`DELEGATED_CALL_NEED_ANSWER`| `"DA"`| Delegated call - need answer  
+`DELEGATED_LETTER`| `"DL"`| Delegated letter to be sent to patient  
+`ALREADY_LEFT_MESSAGE`| `"AM"`| Already left message for patient  
+`ALREADY_REVIEWED_WITH_PATIENT`| `"AR"`| Already reviewed with patient  
+**Example** :
+    from canvas_sdk.commands import ReferralReviewCommand
+    from canvas_sdk.commands.commands.review import ReportReviewCommunicationMethod
+    from canvas_sdk.v1.data import Patient, ReferralReport
+    patient = Patient.objects.get(id="patient-id")
+    # Get referral reports to review
+    referral_reports = ReferralReport.objects.filter(patient=patient, review__isnull=True)
+    report_ids = [str(report.id) for report in referral_reports]
+    referral_review = ReferralReviewCommand(
+        note_uuid="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+        report_ids=report_ids,
+        message_to_patient="Your referral has been reviewed and approved.",
+        communication_method=ReportReviewCommunicationMethod.DELEGATED_CALL_CAN_LEAVE_MESSAGE,
+        comment="Referral approved, patient notified."
+    )
+* * *
 ##  Refill #
 **Command-specific parameters** :
 Check the Prescribe command for the parameters used in the Refill command.
@@ -1820,6 +1947,45 @@ AssigneeType| Value| Description
         linked_items_urns=["urn:task:123", "urn:note:456"]
     )
 * * *
+##  UncategorizedDocumentReview #
+**Command-specific parameters** :
+Name| Type| Required| Description  
+---|---|---|---  
+`report_ids`|  _list[string]_| `true`| List of uncategorized document IDs to
+review.  
+`message_to_patient`|  _string_| `false`| Message to communicate findings to
+the patient.  
+`communication_method`|  _ReportReviewCommunicationMethod enum_| `false`|
+Method for patient communication. Must be one of
+`ReportReviewCommunicationMethod`.  
+`linked_items_urns`|  _list[string]_| `false`| List of URNs for items linked
+to the review.  
+`comment`|  _string_| `false`| Internal comment about the review.  
+**Enums and Types** :
+**`ReportReviewCommunicationMethod`**
+Communication Method| Value| Description  
+---|---|---  
+`DELEGATED_CALL_CAN_LEAVE_MESSAGE`| `"DM"`| Delegated call - can leave message  
+`DELEGATED_CALL_NEED_ANSWER`| `"DA"`| Delegated call - need answer  
+`DELEGATED_LETTER`| `"DL"`| Delegated letter to be sent to patient  
+`ALREADY_LEFT_MESSAGE`| `"AM"`| Already left message for patient  
+`ALREADY_REVIEWED_WITH_PATIENT`| `"AR"`| Already reviewed with patient  
+**Example** :
+    from canvas_sdk.commands import UncategorizedDocumentReviewCommand
+    from canvas_sdk.v1.data import UncategorizedClinicalDocument, Patient
+    from canvas_sdk.commands.commands.review import ReportReviewCommunicationMethod
+    patient = Patient.objects.last()
+    # Get uncategorized documents to review
+    uncategorized_documents = UncategorizedClinicalDocument.objects.filter(patient=patient, review__isnull=True)
+    report_ids = [str(doc.id) for doc in uncategorized_documents]
+    uncategorized_review = UncategorizedDocumentReviewCommand(
+        note_uuid="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+        report_ids=report_ids,
+        message_to_patient="Your document has been reviewed.",
+        communication_method=ReportReviewCommunicationMethod.DELEGATED_CALL_CAN_LEAVE_MESSAGE,
+        comment="Document reviewed, no further action needed."
+    )
+* * *
 ##  UpdateDiagnosis #
 **Command-specific parameters** :
 Name| Type| Required| Description  
@@ -1961,6 +2127,7 @@ assessment/)[ BannerAlertAn alert notification linked to a patient.
 ](/sdk/data-banner-alert/)[ BillingLineItemA billable code linked to a patient
 note. ](/sdk/data-billing-line-item/)[ BusinessLineA group of patients that
 share a common brand under an organization. ](/sdk/data-business-line/)[
+CalendarCalendars associated with providers. ](/sdk/data-calendar/)[
 CanvasUserUser accounts associated with other records. ](/sdk/data-
 canvasuser/)[ CareTeamTeams assigned for patient care. ](/sdk/data-care-
 team/)[ ChargeDescriptionMasterBilling charges in Canvas that can be added to
@@ -2016,6 +2183,8 @@ or specialist. ](/sdk/data-referral/)[ ServiceProviderData associated with
 Service Providers. ](/sdk/data-serviceprovider/)[ StaffData associated with
 Staff members. ](/sdk/data-staff)[ TaskData associated with Tasks.
 ](/sdk/data-task)[ TeamData associated with Teams. ](/sdk/data-team)[
+Uncategorized Clinical DocumentsData associated with uncategorized clinical
+documents and their reviews. ](/sdk/data-uncategorized-clinical-document)[
 ValueSetsLists of codes and terms from various clinical coding systems grouped
 by a defining concept. ](/sdk/data-value-sets/)
 ----- END PAGE https://docs.canvasmedical.com/sdk/data/
@@ -2354,7 +2523,7 @@ REMOVED| Removed
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-canvasuser/
 # CanvasUser
-Last updated: 13 Nov 2025
+Last updated: 15 Dec 2025
 ##  Introduction #
 The `CanvasUser` model represents a Canvas User. This could be linked to a
 staff member or a patient. This model isnât meant to be referenced directly,
@@ -2379,6 +2548,8 @@ Field Name| Type
 dbid| Integer  
 email| String  
 phone_number| String  
+is_staff| Boolean  
+is_portal_registered| Boolean  
 last_invite_date_time| DateTime  
 ----- END PAGE https://docs.canvasmedical.com/sdk/data-canvasuser/
 
@@ -2598,7 +2769,7 @@ origination_source| String
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-enumeration-types/
 # Common Enumeration Type
-Last updated: 24 Jan 2025
+Last updated: 9 Dec 2025
 ##  Introduction #
 This page shows common enumeration types that are used in multiple models.
 ##  Enumeration types #
@@ -2620,6 +2791,14 @@ home| Home
 work| Work  
 temp| Temp  
 old| Old  
+###  AddressUseWithBilling #
+Value| Label  
+---|---  
+home| Home  
+work| Work  
+temp| Temp  
+old| Old  
+billing| Billing  
 ###  ColorEnum #
 Value| Label  
 ---|---  
@@ -2641,6 +2820,14 @@ Value| Label
 ---|---  
 active| Active  
 deleted| Deleted  
+###  ContactPointSystem #
+Value| Label  
+---|---  
+phone| phone  
+fax| fax  
+email| email  
+pager| pager  
+other| other  
 ###  ContactPointUse #
 Value| Label  
 ---|---  
@@ -4259,7 +4446,7 @@ Value| Description
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-observation/
 # Observation
-Last updated: 8 Apr 2025
+Last updated: 7 Nov 2025
 ##  Introduction #
 The `Observation` model represents measurements or assertions made about a
 patient, such as vital signs, lab results, or other clinical findings.
@@ -4327,7 +4514,7 @@ entered_in_error| [CanvasUser](/sdk/data-canvasuser)
 deleted| Boolean  
 patient| [Patient](/sdk/data-patient/#patient)  
 is_member_of| Observation  
-category| String  
+category| String (comma-separated list of categories  
 units| String  
 value| String  
 note_id| Integer  
@@ -4383,7 +4570,7 @@ observation| Observation
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-organization/
 # Organization
-Last updated: 24 Sep 2025
+Last updated: 9 Dec 2025
 ##  Introduction #
 The `Organization` model represents the overall Organization in a Canvas EMR
 instance. An `Organization` can have multiple related [Practice
@@ -4416,6 +4603,49 @@ tax_id_type| [TaxIDType](/sdk/data-enumeration-types/#taxidtype)
 group_npi_number| String  
 group_taxonomy_number| String  
 include_zz_qualifier| Boolean  
+##  OrganizationAddress #
+The `OrganizationAddress` model represents a physical or mailing address
+associated with an Organization. Multiple addresses can be linked to a single
+Organization, each with its own type and details.
+###  Attributes #
+Field Name| Type  
+---|---  
+id| UUID  
+dbid| Integer  
+organization| Organization  
+use| [AddressUseWithBilling](/sdk/data-enumeration-
+types/#addressusewithbilling)  
+type| [AddressType](/sdk/data-enumeration-types/#addresstype)  
+longitude| Float  
+latitude| Float  
+start| Date  
+end| Date  
+country| String  
+state| [AddressState](/sdk/data-enumeration-types/#addressstate)  
+address_search_index| String  
+line1| String  
+line2| String  
+city| String  
+district| String  
+state_code| String  
+postal_code| String  
+##  OrganizationContactPoint #
+The `OrganizationContactPoint` model represents a contact method (such as
+phone, email, or fax) for an Organization. Multiple contact points can be
+associated with a single Organization, each with its own type, use, and
+status.
+###  Attributes #
+Field Name| Type  
+---|---  
+id| UUID  
+dbid| Integer  
+organization| Organization  
+system| [ContactPointSystem](/sdk/data-enumeration-types/#contactpointsystem)  
+value| String  
+use| [ContactPointUse](/sdk/data-enumeration-types/#contactpointuse)  
+use_notes| String  
+rank| Integer  
+state| [ContactPointState](/sdk/data-enumeration-types/#contactpointstate)  
 ----- END PAGE https://docs.canvasmedical.com/sdk/data-organization/
 
 
@@ -4630,7 +4860,7 @@ UNK| unknown
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-practicelocation/
 # Practice Location
-Last updated: 24 Sep 2025
+Last updated: 9 Dec 2025
 ##  Introduction #
 The `PracticeLocation` model lists all the clinical practice locations that
 fall under an [Organization](/sdk/data-organization).
@@ -4642,6 +4872,12 @@ so:
 To retrieve a list of all practice locations:
     from canvas_sdk.v1.data.practicelocation import PracticeLocation
     practice_locations = PracticeLocation.objects.all()
+To query addresses that are associated with a `PracticeLocation`, related
+`PracticeLocationAddress` model instances can be accessed by using the
+`addresses` attribute. For exmample:
+    from canvas_sdk.v1.data.practicelocation import PracticeLocation
+    practice_location = PracticeLocation.objects.first()
+    practice_location_addresses = practice_location.addresses.all()
 Each `PracticeLocation` has location-specific settings that control certain
 behavior within the EMR application. To retrieve the available settings for a
 `PracticeLocation` instance, the `settings` attribute can be used to retrieve
@@ -4680,13 +4916,50 @@ billing_location_name| String
 group_npi_number| String  
 taxonomy_number| String  
 include_zz_qualifier| Boolean  
+addresses| PracticeLocationAddress  
+###  PracticeLocationAddress #
+Field Name| Type  
+---|---  
+dbid| Integer  
+practice_location| PracticeLocation  
+line1| String  
+line2| String  
+city| String  
+district| String  
+state_code| String  
+postal_code| String  
+use| [AddressUse](/sdk/data-enumeration-types/#addressuse)  
+type| [AddressType](/sdk/data-enumeration-types/#addresstype)  
+longitude| Float  
+latitude| Float  
+start| Date  
+end| Date  
+country| String  
+state| [AddressState](/sdk/data-enumeration-types/#addressstate)  
 ###  PracticeLocationSetting #
 Field Name| Type  
 ---|---  
 dbid| Integer  
 practice_location| PracticeLocation  
 name| String  
-value| JSON
+value| JSON  
+##  PracticeLocationContactPoint #
+The `PracticeLocationContactPoint` model represents a contact method (such as
+phone, email, or fax) for a Practice Location. Multiple contact points can be
+associated with a single Practice Location, each with its own type, use, and
+status.
+###  Attributes #
+Field Name| Type  
+---|---  
+id| UUID  
+dbid| Integer  
+practice_location| PracticeLocation  
+system| [ContactPointSystem](/sdk/data-enumeration-types/#contactpointsystem)  
+value| String  
+use| [ContactPointUse](/sdk/data-enumeration-types/#contactpointuse)  
+use_notes| String  
+rank| Integer  
+state| [ContactPointState](/sdk/data-enumeration-types/#contactpointstate)
 ----- END PAGE https://docs.canvasmedical.com/sdk/data-practicelocation/
 
 
@@ -5441,7 +5714,7 @@ plugin:
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/effects/
 # Effects
-Last updated: 11 Nov 2025
+Last updated: 8 Jan 2026
 Effects are instructions that plugins can return in order to perform an action
 in the Canvas EMR. This makes it possible to define workflows that create
 commands, show notifications, modify search results, etc.
@@ -5516,28 +5789,33 @@ FormEffect for dynamically displaying forms when scheduling an appointment.
 ](/sdk/appointment-metadata-create-form-effect)[ Banner AlertsContextual
 information in a patient's chart. ](/sdk/effect-banner-alerts/)[ Billing Line
 ItemsAdd, modify, or remove billing codes on a note. ](/sdk/effect-billing-
-line-items/)[ Compound MedicationsCreate or update compound medications.
-](/sdk/effect-compound-medication/)[ Custom HTML and Django TemplatesRender
-custom HTML using Django templates. ](/sdk/layout-effect/#custom-html-and-
-django-templates)[ Form ResultEffect for dynamically displaying forms in the
-Patient Portal. ](/sdk/form-result-effect)[ Layout EffectsModify or interact
-with the layout in Canvas. ](/sdk/layout-effect/)[ MessagesInteract with
-messages in Canvas. ](/sdk/effect-messages/)[ NotesInteract with notes in
-Canvas. ](/sdk/effect-notes/)[ PatientInteract with patient data.
-](/sdk/effect-patient/)[ Patient Chart GroupEffect for grouping items on a
-patient chart section. ](/sdk/patient-chart-group-effect/)[ Patient External
-IDCreate a new external identifier for a patient. ](/sdk/effect-create-
-patient-external-identifier/)[ Patient MetadataInteract with patient metadata.
-](/sdk/effect-patient-metadata/)[ Patient Metadata Create FormEffect for
-dynamically displaying forms in the Patient profile. ](/sdk/patient-metadata-
-create-form-effect)[ Patient PortalCustomize your Patient Portal.
-](/sdk/patient-portal/)[ Protocol CardsCalls to action in a patient's chart,
-commonly used for decision support intervention. ](/sdk/effect-protocol-
-cards/)[ QuestionnairesInteract with questionnaires and interviews.
-](/sdk/effect-questionnaires/)[ TasksCreate or update tasks. ](/sdk/effect-
-tasks/)[ Task MetadataInteract with Task metadata. ](/sdk/effect-task-
-metadata/)[ CommandsThe building blocks of many end-user workflows in Canvas,
-including nearly all clinical workflows for documentation. ](/sdk/commands/)
+line-items/)[ ClaimsManage labels, update line items, move to a queue, or post
+a payment. ](/sdk/effect-claims/)[ Compound MedicationsCreate or update
+compound medications. ](/sdk/effect-compound-medication/)[ Custom HTML and
+Django TemplatesRender custom HTML using Django templates. ](/sdk/layout-
+effect/#custom-html-and-django-templates)[ Create CalendarCreate a calendar
+for a provider. ](/sdk/calendar-create-effect/)[ Manage Calendar EventsManage
+calendar events. ](/sdk/calendar-event-management-effects/)[ Form ResultEffect
+for dynamically displaying forms in the Patient Portal. ](/sdk/form-result-
+effect)[ Layout EffectsModify or interact with the layout in Canvas.
+](/sdk/layout-effect/)[ MessagesInteract with messages in Canvas.
+](/sdk/effect-messages/)[ NotesInteract with notes in Canvas. ](/sdk/effect-
+notes/)[ ObservationsCreate or update clinical observations. ](/sdk/effect-
+observation/)[ PatientInteract with patient data. ](/sdk/effect-patient/)[
+Patient Chart GroupEffect for grouping items on a patient chart section.
+](/sdk/patient-chart-group-effect/)[ Patient External IDCreate a new external
+identifier for a patient. ](/sdk/effect-create-patient-external-identifier/)[
+Patient MetadataInteract with patient metadata. ](/sdk/effect-patient-
+metadata/)[ Patient Metadata Create FormEffect for dynamically displaying
+forms in the Patient profile. ](/sdk/patient-metadata-create-form-effect)[
+Patient PortalCustomize your Patient Portal. ](/sdk/patient-portal/)[ Protocol
+CardsCalls to action in a patient's chart, commonly used for decision support
+intervention. ](/sdk/effect-protocol-cards/)[ QuestionnairesInteract with
+questionnaires and interviews. ](/sdk/effect-questionnaires/)[ TasksCreate or
+update tasks. ](/sdk/effect-tasks/)[ Task MetadataInteract with Task metadata.
+](/sdk/effect-task-metadata/)[ CommandsThe building blocks of many end-user
+workflows in Canvas, including nearly all clinical workflows for
+documentation. ](/sdk/commands/)
 ##  Effect Types #
 The following effects are available to be applied in Canvas.
 Effect| Description  
@@ -5792,6 +6070,11 @@ RESCHEDULE_APPOINTMENT| Can be used to reschedule an appointment. Check out
 [Appointment Effects](/sdk/effect-notes/#reschedule-appointment).  
 RESCHEDULE_SCHEDULE_EVENT| Can be used to reschedule a schedule event. Check
 out [Schedule Event Effects](/sdk/effect-notes/#reschedule-schedule-event).  
+APPOINTMENT_LABEL_ADDED| Add one or more labels to an appointment (max 3
+total). Check out [Appointment Label Effects](/sdk/effect-appointment-
+labels/).  
+APPOINTMENT_LABEL_REMOVED| Remove one or more labels from an appointment.
+Check out [Appointment Label Effects](/sdk/effect-appointment-labels/).  
 APPOINTMENT__SLOTS__POST_SEARCH_RESULTS| Can be used to modify slot
 availability when scheduling an appointment  
 ----- END PAGE https://docs.canvasmedical.com/sdk/effects/
@@ -6265,7 +6548,7 @@ Attribute| Type| Description
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/layout-effect/
 # Layout Effects
-Last updated: 11 Nov 2025
+Last updated: 9 Jan 2026
 ##  Patient Summary #
 There are many summary sections in a patientâs chart, organized by data
 type. While there is a default ordering, you can use an Effect to reorder them
@@ -6483,6 +6766,31 @@ the main application with messages.
 This twist on the _Holywood Principle_ ensures that your application remains
 secure while still providing the functionality needed to manage modals
 effectively.
+##  Resizing Modals #
+Modal overlays can now be dynamically resized by embedded applications using
+the MessageChannel API. Applications launching with a `DEFAULT_MODAL` target
+can send a `RESIZE` message to adjust the modalâs width and/or height:
+    <script>
+        let messagePort = null;
+        // Listen for the port transfer from the Canvas Application
+        window.addEventListener('message', (event) => {
+          // Check if this is the INIT_CHANNEL message with a port
+          if (event.data?.type === 'INIT_CHANNEL' && event.ports?.[0]) {
+            // Store the port for later use
+            messagePort = event.ports[0];
+            messagePort.start();
+            // Example: Resize modal to specific dimensions
+            messagePort.postMessage({
+              type: 'RESIZE',
+              width: 800,  // pixels
+              height: 600  // pixels
+            });
+          }
+        });
+    </script>
+This enables embedded applications to optimize their display area based on
+content requirements, improving the user experience for dynamic or responsive
+plugin interfaces.
 ##  Portal Landing Page Widgets #
 The `PortalWidget` class allows you to add widgets of various sizes to the
 patient portal landing page. You can fully customize your widgets or leverage
@@ -7158,7 +7466,7 @@ The effect performs validation before execution to ensure data integrity:
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/effect-notes/
 # Note Effects
-Last updated: 7 Nov 2025
+Last updated: 8 Jan 2026
 The Canvas SDK provides effects to facilitate creating, updating, and managing
 **visit notes** , **appointments** , and **schedule events**. Below youâll
 find detailed documentation for each effect type and their operations.
@@ -7291,6 +7599,99 @@ NoteTypeVersion must have `is_billable` = True.
         def compute(self):
             note_effect = Note(instance_id="existing-note-uuid")
             return [note_effect.push_charges()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
+###  Lock #
+Locks an existing note, preventing further modifications. Has the exact same
+effect as clicking on the `Lock` button in the Note footer.
+####  Attributes #
+Attribute| Type| Description| Required  
+---|---|---|---  
+`instance_id`| `UUID` or `str`| Identifier of the note to lock| Yes  
+**Note** : `instance_id` must be a valid, existing Note that is not already
+locked.
+####  Example Usage #
+    from canvas_sdk.effects.note.note import Note
+    from canvas_sdk.handlers.base import BaseHandler
+    class Protocol(BaseHandler):
+        def compute(self):
+            note_effect = Note(instance_id="existing-note-uuid")
+            return [note_effect.lock()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
+###  Sign #
+Signs an existing note, marking it as reviewed and approved by the provider.
+Has the exact same effect as clicking on the `Sign` button in the Note footer.
+####  Attributes #
+Attribute| Type| Description| Required  
+---|---|---|---  
+`instance_id`| `UUID` or `str`| Identifier of the note to sign| Yes  
+**Note** : `instance_id` must be a valid, existing Note that is not already
+signed.
+####  Example Usage #
+    from canvas_sdk.effects.note.note import Note
+    from canvas_sdk.handlers.base import BaseHandler
+    class Protocol(BaseHandler):
+        def compute(self):
+            note_effect = Note(instance_id="existing-note-uuid")
+            return [note_effect.sign()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
+###  Unlock #
+Unlocks a previously locked/signed note, allowing modifications again. Has the
+exact same effect as clicking on the `Unlock/Amend` button in the Note footer.
+####  Attributes #
+Attribute| Type| Description| Required  
+---|---|---|---  
+`instance_id`| `UUID` or `str`| Identifier of the note to unlock| Yes  
+**Note** : `instance_id` must be a valid, existing Note that is currently
+locked.
+####  Example Usage #
+    from canvas_sdk.effects.note.note import Note
+    from canvas_sdk.handlers.base import BaseHandler
+    class Protocol(BaseHandler):
+        def compute(self):
+            note_effect = Note(instance_id="existing-note-uuid")
+            return [note_effect.unlock()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
+###  Check In #
+Marks a patient as checked in for their appointment. Has the exact same effect
+as clicking on the `Check In` button in the Appointment note.
+####  Attributes #
+Attribute| Type| Description| Required  
+---|---|---|---  
+`instance_id`| `UUID` or `str`| Identifier of the note for check-in| Yes  
+**Note** : `instance_id` must be a valid, existing Note associated with an
+appointment.
+####  Example Usage #
+    from canvas_sdk.effects.note.note import Note
+    from canvas_sdk.handlers.base import BaseHandler
+    class Protocol(BaseHandler):
+        def compute(self):
+            note_effect = Note(instance_id="existing-note-uuid")
+            return [note_effect.check_in()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
+###  No Show #
+Marks an appointment as a no-show when the patient does not arrive. Has the
+exact same effect as marking an appointment as `No Show` in the Appointment
+note.
+####  Attributes #
+Attribute| Type| Description| Required  
+---|---|---|---  
+`instance_id`| `UUID` or `str`| Identifier of the note to mark no-show| Yes  
+**Note** : `instance_id` must be a valid, existing Note associated with an
+appointment.
+####  Example Usage #
+    from canvas_sdk.effects.note.note import Note
+    from canvas_sdk.handlers.base import BaseHandler
+    class Protocol(BaseHandler):
+        def compute(self):
+            note_effect = Note(instance_id="existing-note-uuid")
+            return [note_effect.no_show()]
+This effect will be originated by the current actor that triggered the event,
+with a fallback to Canvas Bot if no actor is found.
 ##  ScheduleEvent Effect #
 The `ScheduleEvent` effect enables creating, updating, and deleting schedule
 events for providers, with optional patient association.
@@ -7498,6 +7899,30 @@ Cancels an existing appointment and updates its status.
         def compute(self):
             appointment_effect = Appointment(instance_id="existing-appointment-uuid")
             return appointment_effect.cancel()
+##  Managing Appointment Labels #
+Canvas supports adding up to 3 labels per appointment for categorization and
+workflow automation. Labels can be managed programmatically using the
+appointment label effects.
+For detailed documentation on appointment label management, see [Appointment
+Label Effects](/sdk/effect-appointment-labels/).
+###  Quick Example #
+    from canvas_sdk.effects.note.appointment import AddAppointmentLabel, RemoveAppointmentLabel
+    from canvas_sdk.events import EventType
+    from canvas_sdk.handlers.base import BaseHandler
+    class MyHandler(BaseHandler):
+        RESPONDS_TO = [EventType.Name(EventType.APPOINTMENT_LABEL_ADDED), EventType.Name(EventType.APPOINTMENT_LABEL_REMOVED)]
+        def compute(self):
+            # Add labels to an appointment
+            add_effect = AddAppointmentLabel(
+                appointment_id="appointment-uuid",
+                labels={"URGENT", "FOLLOW_UP"}
+            )
+            # Remove labels from an appointment
+            remove_effect = RemoveAppointmentLabel(
+                appointment_id="appointment-uuid",
+                labels={"CANCELLED"}
+            )
+            return [add_effect.apply(), remove_effect.apply()]
 * * *
 ##  Validation #
 All effects perform comprehensive validation before execution:
@@ -7604,7 +8029,7 @@ transmission.
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/events/
 # Events
-Last updated: 17 Nov 2025
+Last updated: 8 Jan 2026
 **What is an Event?**
 An event is an occurrence of an action that happens within Canvas. For
 example, a patient being prescribed a medication, a user searching for a
@@ -7919,6 +8344,26 @@ Target object| Context object
 |
     "patient":
         "id": pt_id  
+APPOINTMENT_LABEL_ADDED  
+---  
+Occurs when one or more labels are added to an appointment.  
+Target object| Context object  
+    "id": appointment_id
+    "type": None
+|
+    "patient":
+        "id": pt_id
+    "label": label_name  
+APPOINTMENT_LABEL_REMOVED  
+---  
+Occurs when one or more labels are removed from an appointment.  
+Target object| Context object  
+    "id": appointment_id
+    "type": None
+|
+    "patient":
+        "id": pt_id
+    "label": label_name  
 APPOINTMENT__SLOTS__POST_SEARCH  
 ---  
 Occurs when requesting slot availability when scheduling an appointment.  
@@ -9593,7 +10038,7 @@ Target object| Context object
       "uuid": note_id
     "patient":
       "id": pt_id  
-ASSESS__CONDITION__POST_SEARCH  
+ASSESS__CONDITION__PRE_SEARCH  
 ---  
 Target object| Context object  
     "id": command_uuid
@@ -11795,6 +12240,231 @@ Target object| Context object
       "staff": staff_key
     }
     "results": list[dict]  
+####  Imaging Review Command #
+IMAGING_REVIEW_COMMAND__POST_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__POST_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__POST_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__POST_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__POST_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__POST_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW_COMMAND__PRE_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+IMAGING_REVIEW__REPORT__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+IMAGING_REVIEW__REPORT__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+IMAGING_REVIEW__COMMUNICATION_METHOD__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+IMAGING_REVIEW__COMMUNICATION_METHOD__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
 ####  Immunization Statement Command #
 IMMUNIZATION_STATEMENT_COMMAND__POST_COMMIT  
 ---  
@@ -12795,6 +13465,231 @@ Target object| Context object
     }
     "results": list[dict]  
 LAB_ORDER__TESTS__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+####  Lab Review Command #
+LAB_REVIEW_COMMAND__POST_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__POST_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__POST_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__POST_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__POST_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__POST_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW_COMMAND__PRE_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+LAB_REVIEW__REPORT__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+LAB_REVIEW__REPORT__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+LAB_REVIEW__COMMUNICATION_METHOD__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+LAB_REVIEW__COMMUNICATION_METHOD__POST_SEARCH  
 ---  
 Target object| Context object  
     "id": command_uuid
@@ -14947,6 +15842,231 @@ Target object| Context object
       "staff": staff_key
     }
     "results": list[dict]  
+####  Referral Review Command #
+REFERRAL_REVIEW_COMMAND__POST_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__POST_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__POST_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__POST_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__POST_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__POST_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW_COMMAND__PRE_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+REFERRAL_REVIEW__REPORT__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+REFERRAL_REVIEW__REPORT__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+REFERRAL_REVIEW__COMMUNICATION_METHOD__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+REFERRAL_REVIEW__COMMUNICATION_METHOD__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
 ####  Refill Prescription Command #
 REFILL_COMMAND__POST_COMMIT  
 ---  
@@ -16988,16 +18108,6 @@ Target object| Context object
       "uuid": note_id
     "patient":
       "id": pt_id  
----  
-Target object| Context object  
-    "id": command_uuid
-    "type": [Command](/sdk/data-command/)
-|
-    "search_term": str
-    "user": {
-      "staff": staff_key
-    }
-    "results": list[dict]  
 UPDATE_GOAL__GOAL_STATEMENT__POST_SEARCH  
 ---  
 Target object| Context object  
@@ -17010,6 +18120,231 @@ Target object| Context object
     }
     "results": list[dict]  
 UPDATE_GOAL__GOAL_STATEMENT__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+####  Uncategorized Document Review Command #
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__POST_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_COMMIT  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_DELETE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_ENTER_IN_ERROR  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_EXECUTE_ACTION  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_ORIGINATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__PRE_UPDATE  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "fields":
+      "report": str
+      "message_to_patient": str
+      "communication_method": str
+      "internal_comment": str
+    "note":
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__REPORT__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__REPORT__POST_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__COMMUNICATION_METHOD__PRE_SEARCH  
+---  
+Target object| Context object  
+    "id": command_uuid
+    "type": [Command](/sdk/data-command/)
+|
+    "search_term": str
+    "user": {
+      "staff": staff_key
+    }
+    "results": list[dict]  
+UNCATEGORIZED_DOCUMENT_REVIEW_COMMAND__COMMUNICATION_METHOD__POST_SEARCH  
 ---  
 Target object| Context object  
     "id": command_uuid
@@ -19590,7 +20925,7 @@ an argument and returns a dictionary containing the questionnaire definition.
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/secrets/
 # Managing Secrets
-Last updated: 27 Aug 2025
+Last updated: 24 Nov 2025
 Canvas provides a secure key-value secret store that allows your plugins to
 access sensitive information (such as API tokens) without hardcoding them into
 source files. This guide explains how to define, configure, and access secrets
@@ -19624,7 +20959,16 @@ Or, go directly to:
 On this page, you will find input fields for each secret defined in your
 manifest.
 ![Setting plugin
-secrets](/assets/images/sdk/secrets/plugins_secrets_setting.png)
+secrets](/assets/images/sdk/secrets/plugins_secrets_settings_with_permissions.png)
+Plugin secrets can be protected by managing user permissions. Only users
+explicitly assigned as âmanaging usersâ for a plugin can view or modify
+its secrets (as well as other sensitive settings like the plugin package file
+download link). Other users can see basic plugin details and enable or disable
+plugins, but they will not be able to access or change secret values. To add
+or remove managing users for a plugin, use the âManaging usersâ section on
+the plugin detail page in the Admin UI. This ensures that sensitive
+configuration, such as API tokens, remains visible only to authorized
+personnel.
 ###  Configuring Secrets in the CLI #
 You can set secrets either after a plugin is installed or as part of the
 install. Secrets must be listed under the secrets field in the pluginâs
