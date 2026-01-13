@@ -31,28 +31,43 @@ cd evals/{eval_name}
 
 **IMPORTANT: You MUST use the SlashCommand tool to invoke the review commands.**
 
+First, get the workspace directory:
+```python
+import subprocess
+from pathlib import Path
+
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
+```
+
 Run both reviews on each eval case - the comparison script will determine which findings are relevant:
 
 ```
 Use the SlashCommand tool with command: "/security-review"
 ```
 
-Save the security review output to `../.cpa-workflow-artifacts/{eval_name}-security-review.md`.
+Save the security review output to `{workspace_dir}/.cpa-workflow-artifacts/{eval_name}-security-review.md`.
 
 ```
 Use the SlashCommand tool with command: "/database-performance-review"
 ```
 
-Save the database review output to `../.cpa-workflow-artifacts/{eval_name}-database-review.md`.
+Save the database review output to `{workspace_dir}/.cpa-workflow-artifacts/{eval_name}-database-review.md`.
 
 #### Step 2c: Compare Results
 
 Use the comparison script to evaluate whether the reviews detected the expected findings:
 
 ```bash
+WORKSPACE_DIR=$(python3 scripts/get-workspace-dir.py)
 uv run --with requests python scripts/compare_review_results.py \
-  --security-report ../.cpa-workflow-artifacts/{eval_name}-security-review.md \
-  --database-report ../.cpa-workflow-artifacts/{eval_name}-database-review.md \
+  --security-report "$WORKSPACE_DIR/.cpa-workflow-artifacts/{eval_name}-security-review.md" \
+  --database-report "$WORKSPACE_DIR/.cpa-workflow-artifacts/{eval_name}-database-review.md" \
   --expected evals/{eval_name}/expected.json
 ```
 
@@ -70,7 +85,7 @@ cd -
 
 ### 3. Generate Eval Results Report
 
-Create `../.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
+Create `{workspace_dir}/.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 
 ```markdown
 # CPA Eval Results
@@ -124,7 +139,7 @@ Failed evals:
 - {eval_name}: {reason}
 
 See detailed results at:
-../.cpa-workflow-artifacts/eval-results-{timestamp}.md
+{workspace_dir}/.cpa-workflow-artifacts/eval-results-{timestamp}.md
 ============================================
 ```
 

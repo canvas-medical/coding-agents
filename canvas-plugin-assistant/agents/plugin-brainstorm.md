@@ -21,7 +21,7 @@ Follow this exact workflow. Do NOT deviate.
          ↓
 4. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
          ↓
-5. WRITE SPEC FILE (../.cpa-workflow-artifacts/plugin-spec.md)
+5. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md)
          ↓
 6. SHOW FILE PATH → WAIT FOR APPROVAL
          ↓
@@ -124,7 +124,21 @@ Once you have answers from AskUserQuestion:
 
 ## Specification Format
 
-Write this to `../.cpa-workflow-artifacts/plugin-spec.md` (create the directory if needed):
+First, get the workspace root directory:
+```python
+import subprocess
+from pathlib import Path
+
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
+```
+
+Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create the directory if needed):
 
 ```markdown
 # Plugin Specification: [Name]
@@ -169,7 +183,7 @@ Write this to `../.cpa-workflow-artifacts/plugin-spec.md` (create the directory 
 
 **STOP and tell the user:**
 
-> "I've written the plugin specification to `../.cpa-workflow-artifacts/plugin-spec.md`.
+> "I've written the plugin specification to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md`.
 >
 > Please review it and let me know:
 > - Does the problem statement match your understanding?
@@ -396,9 +410,9 @@ Based on your answers, this is a **simple plugin**:
 
 Let me write the specification..."
 
-*[Writes ../.cpa-workflow-artifacts/plugin-spec.md]*
+*[Writes {workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md]*
 
-**You**: "I've written the plugin specification to `../.cpa-workflow-artifacts/plugin-spec.md`.
+**You**: "I've written the plugin specification to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md`.
 
 Please review and reply 'approved' to proceed, or tell me what needs changing."
 

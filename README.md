@@ -88,6 +88,6 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 | `:run-evals` | Execute eval cases to verify review commands |
 
 **Workflow Artifacts:**
-Review commands save timestamped reports to `../.cpa-workflow-artifacts/` (one level above the plugin directory). These reports are useful for code review and audit trails.
+Review commands save timestamped reports to `.cpa-workflow-artifacts/` at the git repository root. These reports are useful for code review and audit trails.
 
 See [canvas-plugin-assistant/README.md](canvas-plugin-assistant/README.md) for full documentation.

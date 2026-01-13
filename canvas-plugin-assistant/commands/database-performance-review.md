@@ -60,11 +60,22 @@ grep -rn "_set\.\|\.all()\|related_name" --include="*.py" .
 
 Create timestamp for report:
 ```python
+import subprocess
+from pathlib import Path
 from datetime import datetime
+
+# Get workspace root directory using helper script
+workspace_dir = Path(subprocess.run(
+    ["python3", "scripts/get-workspace-dir.py"],
+    capture_output=True,
+    text=True,
+    check=True
+).stdout.strip())
+
 timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
 ```
 
-Save report to `../.cpa-workflow-artifacts/db-performance-review-{timestamp}.md`:
+Save report to `{workspace_dir}/.cpa-workflow-artifacts/db-performance-review-{timestamp}.md`:
 
 ```markdown
 # Database Performance Review: {plugin_name}
