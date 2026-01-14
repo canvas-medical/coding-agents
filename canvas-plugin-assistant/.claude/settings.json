@@ -5,6 +5,7 @@
       "Skill",
       "WebFetch(domain:*.canvasmedical.com)",
       "Read",
+      "Search",
       "Write(**/.cpa-workflow-artifacts/**)",
       "Edit(**/.cpa-workflow-artifacts/**)"
     ],
