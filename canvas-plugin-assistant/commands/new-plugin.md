@@ -4,11 +4,34 @@ Start the plugin brainstorming process to transform requirements into a concrete
 
 ## Instructions
 
+### Working Directory Setup
+
+**Before starting, navigate to the workspace and identify the plugin directory:**
+
+```bash
+workspace="$(python3 "/media/DATA/anthropic_plugins/coding-agents/canvas-plugin-assistant/scripts/get-workspace-dir.py")"
+(cd "$workspace" && find . -maxdepth 1 -type d ! -name '.' ! -name '.*' | wc -l)
+```
+
+**If 0 subdirectories:**
+- Stay in the workspace directory (this is expected for /cpa:new-plugin command)
+- Proceed with plugin creation
+
+**If 1 subdirectory:**
+- Automatically change to that directory
+- Tell the user: "Working in plugin directory: {subdirectory_name}"
+
+**If multiple subdirectories:**
+- Use AskUserQuestion to ask which plugin directory to work on
+- Change to that directory: `cd {selected_directory}`
+
+---
+
 Use the **plugin-brainstorm** agent for the full workflow from spec to deployment.
 
-### Phase 0: Create Git Branch
+### Phase 0: Create a Git Branch
 
-**Before anything else, create a new branch for this plugin work.**
+**Before anything else, create a new branch for this plugin to work.**
 
 Generate a branch name using three random words in kebab-case. Examples:
 - `mercury-purring-lion`
@@ -65,26 +88,10 @@ After `canvas init` completes:
        └── protocols/
    ```
 
-   Run these verification checks:
+   Run the verification script:
 
    ```bash
-   # Convert plugin name to inner folder name (kebab to snake)
-   INNER=$(echo "{plugin_name}" | tr '-' '_')
-
-   # Verify structure
-   echo "Verifying project structure..."
-
-   # Inner folder should exist
-   test -d "$INNER" && echo "OK: Inner folder '$INNER' exists" || echo "ERROR: Inner folder '$INNER' not found"
-
-   # CANVAS_MANIFEST.json should be INSIDE inner folder
-   test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: CANVAS_MANIFEST.json in correct location" || echo "ERROR: CANVAS_MANIFEST.json not in $INNER/"
-
-   # tests/ should be at container level
-   test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
-
-   # pyproject.toml should be at container level
-   test -f "pyproject.toml" && echo "OK: pyproject.toml present" || echo "ERROR: pyproject.toml missing"
+   python3 scripts/verify-plugin-structure.py {plugin_name}
    ```
 
    **If any checks fail:** Report errors to the user and investigate before proceeding. Do NOT continue with implementation until structure is correct.
@@ -201,12 +208,13 @@ Do NOT use: "Added...", "Adding...", "I added...", or similar.
 This command is **step 2** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%)
-/security-review      →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%)
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
-After implementation, guide the user to `/deploy` for UAT testing.
+After implementation, guide the user to the next step in the workflow.

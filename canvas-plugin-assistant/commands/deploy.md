@@ -6,9 +6,32 @@ Deploy the current plugin to a Canvas instance with log monitoring.
 
 - `$1` (optional): Target instance name from `~/.canvas/credentials.ini`
   - If provided: verify it exists in credentials, then proceed to pre-deployment checks
-  - If omitted: prompt user to select an environment
+  - If omitted: prompt the user to select an environment
 
 ## Instructions
+
+### Working Directory Setup
+
+**Before starting, navigate to the workspace and identify the plugin directory:**
+
+```bash
+workspace="$(python3 "/media/DATA/anthropic_plugins/coding-agents/canvas-plugin-assistant/scripts/get-workspace-dir.py")"
+(cd "$workspace" && find . -maxdepth 1 -type d ! -name '.' ! -name '.*' | wc -l)
+```
+
+**If 0 subdirectories:**
+- Report error: "This command can only work when a plugin has been created. Please run /cpa:new-plugin first."
+- STOP - do not proceed
+
+**If 1 subdirectory:**
+- Automatically change to that directory
+- Tell the user: "Working in plugin directory: {subdirectory_name}"
+
+**If multiple subdirectories:**
+- Use AskUserQuestion to ask which plugin directory to work on
+- Change to that directory: `cd {selected_directory}`
+
+---
 
 Use the **deploy-uat** agent to handle deployment and testing.
 
@@ -18,18 +41,18 @@ Use the **deploy-uat** agent to handle deployment and testing.
    - If `$1` is provided:
      - Check if `[$1]` section exists in `~/.canvas/credentials.ini`
      - If found: use `$1` as the target hostname and skip to step 4
-     - If NOT found: list available instances from credentials.ini and ask user to choose or correct the name
+     - If NOT found: list available instances from credentials.ini and ask the user to choose or correct the name
    - If `$1` is not provided:
      - Ask which environment to deploy to (current behavior)
 
 3. Ask which environment to deploy to (only if no valid `$1` was provided)
 
-4. **Version bump (if changes detected):**
+4. **Version bump (if changes are detected):**
    - Check `git status --porcelain` for uncommitted changes
-   - Ask user: Patch (bug fix), Minor (new feature), or Major (breaking change)?
+   - Ask the user: Patch (bug fix), Minor (new feature), or Major (breaking change)?
    - Read current `plugin_version` from `CANVAS_MANIFEST.json`
    - Bump version: Patch increments Z, Minor increments Y and resets Z, Major increments X and resets Y,Z
-   - Update `CANVAS_MANIFEST.json` with new version
+   - Update `CANVAS_MANIFEST.json` with a new version
    - Report: "Bumped version: X.Y.Z → X.Y.Z+1"
 
 5. Run pre-deployment validation:
@@ -44,8 +67,8 @@ Use the **deploy-uat** agent to handle deployment and testing.
 7. Deploy using `uv run canvas install`
 
 8. For UAT:
-   - Tell user logs are running, to test and say "check the logs" when ready
-   - Use BashOutput to retrieve and analyze log entries on user request
+   - Tell user logs are running to test and say "check the logs" when ready
+   - Use BashOutput to retrieve and analyze log entries on a user request
    - Use KillShell when testing is complete
 
 ## Credentials
@@ -57,18 +80,19 @@ Deployment uses credentials from `~/.canvas/credentials.ini`. Instance names are
 This command is **step 3** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements
-/deploy           →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
-/coverage         →  Check test coverage (aim for 90%)
-/security-review      →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements
+/cpa:deploy           →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
+/cpa:coverage         →  Check test coverage (aim for 90%)
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
-After successful UAT, guide the user to `/coverage` to verify test coverage, then `/wrap-up` for final checks.
+After successful UAT, guide the user to the next step in the workflow.
 
 ## Examples
 
-- `/deploy` - Interactive deployment (asks which instance)
-- `/deploy plugin-testing` - Deploy directly to plugin-testing
-- `/deploy xpc` - Deploy directly to xpc instance
+- `/cpa:deploy` - Interactive deployment (asks which instance)
+- `/cpa:deploy plugin-testing` - Deploy directly to plugin-testing instance
+- `/cpa:deploy xpc` - Deploy directly to xpc instance

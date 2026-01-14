@@ -4,6 +4,29 @@ Final checklist before calling a plugin "done" for this version.
 
 ## Instructions
 
+### Working Directory Setup
+
+**Before starting, navigate to the workspace and identify the plugin directory:**
+
+```bash
+workspace="$(python3 "/media/DATA/anthropic_plugins/coding-agents/canvas-plugin-assistant/scripts/get-workspace-dir.py")"
+(cd "$workspace" && find . -maxdepth 1 -type d ! -name '.' ! -name '.*' | wc -l)
+```
+
+**If 0 subdirectories:**
+- Report error: "This command can only work when a plugin has been created. Please run /cpa:new-plugin first."
+- STOP - do not proceed
+
+**If 1 subdirectory:**
+- Automatically change to that directory
+- Tell the user: "Working in plugin directory: {subdirectory_name}"
+
+**If multiple subdirectories:**
+- Use AskUserQuestion to ask which plugin directory to work on
+- Change to that directory: `cd {selected_directory}`
+
+---
+
 Run through each checklist item, report findings, and give a clear verdict.
 
 ### 0. Project Structure Validation
@@ -11,73 +34,21 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-# Get current directory name (should be container folder)
-CONTAINER=$(basename "$PWD")
-# Convert to snake_case for inner folder name
-INNER=$(echo "$CONTAINER" | tr '-' '_')
-
-echo "Checking project structure..."
-echo "Container: $CONTAINER"
-echo "Expected inner folder: $INNER"
-
-ERRORS=0
-
-# Check 1: Inner folder exists
-if [ -d "$INNER" ]; then
-    echo "OK: Inner folder '$INNER' exists"
-else
-    echo "ERROR: Inner folder '$INNER' not found"
-    ERRORS=$((ERRORS + 1))
-fi
-
-# Check 2: CANVAS_MANIFEST.json is inside inner folder
-if [ -f "$INNER/CANVAS_MANIFEST.json" ]; then
-    echo "OK: CANVAS_MANIFEST.json in correct location"
-elif [ -f "CANVAS_MANIFEST.json" ]; then
-    echo "ERROR: CANVAS_MANIFEST.json at container level - should be inside $INNER/"
-    ERRORS=$((ERRORS + 1))
-else
-    echo "ERROR: CANVAS_MANIFEST.json not found"
-    ERRORS=$((ERRORS + 1))
-fi
-
-# Check 3: tests/ at container level
-if [ -d "tests" ]; then
-    echo "OK: tests/ at container level"
-elif [ -d "$INNER/tests" ]; then
-    echo "ERROR: tests/ inside inner folder - should be at container level"
-    ERRORS=$((ERRORS + 1))
-else
-    echo "WARNING: No tests/ directory found"
-fi
-
-# Check 4: pyproject.toml at container level
-if [ -f "pyproject.toml" ]; then
-    echo "OK: pyproject.toml at container level"
-else
-    echo "WARNING: pyproject.toml not found"
-fi
-
-# Check 5: No duplicate CANVAS_MANIFEST.json
-if [ -f "CANVAS_MANIFEST.json" ] && [ -f "$INNER/CANVAS_MANIFEST.json" ]; then
-    echo "ERROR: CANVAS_MANIFEST.json in BOTH locations - remove container level copy"
-    ERRORS=$((ERRORS + 1))
-fi
-
-echo ""
-if [ $ERRORS -gt 0 ]; then
-    echo "STRUCTURE VALIDATION FAILED: $ERRORS error(s)"
-else
-    echo "Structure validation passed."
-fi
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/verify-plugin-structure.py {plugin_name}
 ```
 
 **If structure validation fails:**
 - Report all errors to the user
 - Offer to fix each issue (move files to correct locations)
-- Do NOT proceed with other checks until structure is correct
+- Do NOT proceed with other checks until the structure is correct
 
 **Common fixes:**
+
+Determine the inner folder name:
+```bash
+CONTAINER=$(basename "$PWD")
+INNER=$(echo "$CONTAINER" | tr '-' '_')
+```
 
 | Issue | Fix |
 |-------|-----|
@@ -92,7 +63,7 @@ fi
 Run the comprehensive security review command:
 
 ```
-/security-review
+/cpa:security-review
 ```
 
 This covers:
@@ -138,7 +109,7 @@ uv run pytest --cov=. --cov-report=term-missing --cov-branch
 
 **If coverage < 90%:**
 - Tell the user coverage needs improvement
-- Offer to run `/coverage` to address gaps
+- Offer to run `/cpa:coverage` to address gaps
 
 **If coverage ≥ 90%:** Mark tests as passing.
 
@@ -307,7 +278,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 }
 ```
 
-If user says to remove it, delete the LICENSE file and remove any license section from the README.
+If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
 ### 10. Final Verdict
 
@@ -337,8 +308,8 @@ After all checks, present a summary:
 OR
 
 **❌ Changes needed:**
-1. Fix security issue in `/api/webhook.py` - missing auth check
-2. Run `/coverage` to improve test coverage to 90%
+1. Fix the security issue in `/api/webhook.py` - missing auth check
+2. Run `/cpa:coverage` to improve test coverage to 90%
 3. Update README to remove reference to deleted handler
 ```
 
@@ -367,18 +338,17 @@ Use AskUserQuestion if any issues were found:
 
 Export the session history using Python:
 
+et a workspace directory:
+```bash
+WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-workspace-dir.py")
+```
+
 ```python
 import json
 import subprocess
 from pathlib import Path
 
-# Get workspace root directory using helper script
-workspace_dir = Path(subprocess.run(
-    ["python3", "scripts/get-workspace-dir.py"],
-    capture_output=True,
-    text=True,
-    check=True
-).stdout.strip())
+workspace_dir = "${WORKSPACE_DIR}"
 
 history_file = Path.home() / ".claude" / "history.jsonl"
 lines = history_file.read_text().strip().split("\n")
@@ -424,12 +394,13 @@ Use concise declarative voice for commit messages:
 This command is the **final step** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%)
-/security-review  →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%)
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
 ```
 
 After wrap-up passes, the plugin is ready to ship!

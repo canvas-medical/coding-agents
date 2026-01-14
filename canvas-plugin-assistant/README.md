@@ -128,9 +128,10 @@ This key is used by the comparison script to evaluate whether review commands co
    - Deploy to test instance
    - Perform user acceptance testing with real-time log monitoring
 
-4. **Quality Checks** (`:coverage`, `:security-review`)
+4. **Quality Checks** (`:coverage`, `:security-review`, `:database-performance-review`)
    - Verify test coverage meets 90% threshold
-   - Run comprehensive security audit
+   - Run a comprehensive security audit
+   - Run a database performance audit
 
 5. **Wrap Up** (`:wrap-up`)
    - Final checklist: security, DB performance, coverage, README
@@ -213,6 +214,7 @@ The command generates both SVG (vector) and PNG (48x48) versions, storing them i
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
 │   ├── cost-logger.py             # SessionEnd hook script for cost tracking
 │   ├── aggregate-costs.py         # Cost analysis and reporting
+│   ├── verify-plugin-structure.py # Check the plugin structure
 │   └── update-pricing.py          # Model pricing updater
 └── model_costs.json               # Claude model pricing data
 

@@ -373,7 +373,7 @@ After tests are written and passing, tell the user:
 >
 > Ready to deploy? I'll guide you through deploying and monitoring logs."
 
-Then use the `/deploy` command to start the deployment and UAT process.
+Then use the `/cpa:deploy` command to start the deployment and UAT process.
 
 **Do NOT stop and wait after completing tests.** Always move to deployment.
 
@@ -391,7 +391,7 @@ Then use the `/deploy` command to start the deployment and UAT process.
 
 6. **Answers are final** - Once AskUserQuestion returns, those answers are recorded. Use them.
 
-7. **Complete the full workflow** - The workflow is: Spec → Implement → Test → Deploy → UAT → Coverage → Security Review → Wrap-up. After UAT passes, guide user to `/coverage`, then `/security-review`, then `/wrap-up`.
+7. **Complete the full workflow** - The workflow is: Spec → Implement → Test → Deploy → UAT → Coverage → Security Review → Database Performance Review → Wrap-up. After UAT passes, guide user to `/cpa:coverage`, then `/cpa:security-review`, then `/cpa:database-performance-review`, then `/cpa:wrap-up`.
 
 ## Example Flow
 

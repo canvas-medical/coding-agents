@@ -1,46 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uv run canvas:*)",
-      "Bash(uv run pytest:*)",
-      "Bash(uv sync:*)",
-      "Bash(uv add:*)",
-      "Bash(unbuffer uv run:*)",
-      "Bash(curl https://images.prismic.io/canvas-website/:*)",
-      "Bash(ls:*)",
-      "Bash(cd:*)",
-      "Bash(mv:*)",
-      "Bash(cp:*)",
-      "Bash(rm:*)",
-      "Bash(mkdir:*)",
-      "Bash(cat:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(tree:*)",
-      "Bash(pwd:*)",
-      "Bash(echo:*)",
-      "Bash(touch:*)",
-      "Bash(grep:*)",
-      "Bash(find:*)",
-      "Bash(wc:*)",
-      "Bash(git status:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git pull:*)",
-      "Bash(git checkout:*)",
-      "Bash(git branch:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git stash:*)",
-      "Bash(git merge:*)",
-      "Bash(git fetch:*)",
-      "Bash(git remote:*)",
-      "Bash(git reset:*)",
-      "Bash(git show:*)",
+      "Bash",
       "Skill",
       "WebFetch(domain:*.canvasmedical.com)",
-      "Read(~/.canvas/**)",
+      "Read",
       "Write(**/.cpa-workflow-artifacts/**)",
       "Edit(**/.cpa-workflow-artifacts/**)"
     ],
@@ -48,6 +12,13 @@
       "Read(**/evals/**/expected.json)",
       "Read(**/evals/case_index.md)"
     ],
-    "ask": []
+    "ask": [
+        "Bash(rm:*)",
+        "Bash(mount:*)",
+        "Bash(sudo:*)",
+        "Bash(dd:*)",
+        "Bash(chmod:*)",
+        "Bash(chown:*)"
+    ]
   }
 }

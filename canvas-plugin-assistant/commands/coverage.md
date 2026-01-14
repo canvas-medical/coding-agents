@@ -4,6 +4,29 @@ Run tests with coverage and offer to improve if below 90%.
 
 ## Instructions
 
+### Working Directory Setup
+
+**Before starting, navigate to the workspace and identify the plugin directory:**
+
+```bash
+workspace="$(python3 "/media/DATA/anthropic_plugins/coding-agents/canvas-plugin-assistant/scripts/get-workspace-dir.py")"
+(cd "$workspace" && find . -maxdepth 1 -type d ! -name '.' ! -name '.*' | wc -l)
+```
+
+**If 0 subdirectories:**
+- Report error: "This command can only work when a plugin has been created. Please run /cpa:new-plugin first."
+- STOP - do not proceed
+
+**If 1 subdirectory:**
+- Automatically change to that directory
+- Tell the user: "Working in plugin directory: {subdirectory_name}"
+
+**If multiple subdirectories:**
+- Use AskUserQuestion to ask which plugin directory to work on
+- Change to that directory: `cd {selected_directory}`
+
+---
+
 1. **Run pytest with coverage:**
 
 ```bash
@@ -15,58 +38,44 @@ uv run pytest --cov=. --cov-report=term-missing
    - Per-file coverage
    - Missing line numbers
 
-3. **Report findings** in this format:
+3. **Generate Coverage Report**
+
+Create a timestamp and get a workspace directory:
+```bash
+WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-workspace-dir.py")
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+```
+
+Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/coverage-report-$TIMESTAMP.md`:
 
 ```markdown
 ## Coverage Report
 
-**Overall:** X%
-**Target:** 90%
-**Status:** PASS / NEEDS IMPROVEMENT
+**Generated:** {timestamp}
+**Reviewer:** Claude Code (CPA)
 
-| File | Coverage | Missing |
-|------|----------|---------|
-| ... | ...% | lines |
-```
-
-4. **Save report to workflow artifacts:**
-
-```python
-import subprocess
-from pathlib import Path
-from datetime import datetime
-
-# Get workspace root directory using helper script
-workspace_dir = Path(subprocess.run(
-    ["python3", "scripts/get-workspace-dir.py"],
-    capture_output=True,
-    text=True,
-    check=True
-).stdout.strip())
-
-output_dir = workspace_dir / ".cpa-workflow-artifacts"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-report_file = output_dir / f"coverage-report-{timestamp}.md"
-
-report_content = """## Coverage Report
+## Summary
 
 **Overall:** {overall}%
 **Target:** 90%
 **Status:** {status}
-**Generated:** {timestamp}
 
 | File | Coverage | Missing |
 |------|----------|---------|
-{file_rows}
-"""
+| ... | ...% | lines |
 
-report_file.write_text(report_content)
-print(f"Report saved to {report_file}")
+## Verdict
+
+**✅ PASS** - Coverage meets 90% target
+
+OR
+
+**⚠️ NEEDS IMPROVEMENT** - Coverage below 90% target
 ```
 
-5. **If coverage < 90%:**
+Tell the user the report path.
+
+4. **If coverage < 90%:**
 
 Use AskUserQuestion:
 
@@ -87,7 +96,7 @@ Use AskUserQuestion:
 }
 ```
 
-6. **If user says yes:**
+5. **If the user says yes:**
    - Invoke the **testing skill**
    - Read the files with missing coverage
    - Write tests for uncovered lines
@@ -95,7 +104,7 @@ Use AskUserQuestion:
 
 ## Quick Report
 
-If user just wants a quick summary, show:
+If the user just wants a quick summary, show:
 
 ```
 Coverage: 87% (target: 90%)
@@ -109,12 +118,13 @@ Files needing attention:
 This command is **step 4** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%), save report  ← YOU ARE HERE
-/security-review      →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%), save report  ← YOU ARE HERE
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
-After achieving 90% coverage, guide the user to `/wrap-up` for final checks before delivery.
+After achieving 90% coverage, guide the user to the next step of the workflow.

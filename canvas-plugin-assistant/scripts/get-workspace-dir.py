@@ -4,7 +4,7 @@ Get the workspace directory (git repository root) for storing workflow artifacts
 Falls back to current directory if not in a git repository.
 
 Usage:
-    workspace_dir = $(python scripts/get-workspace-dir.py)
+    workspace_dir = $(python3 scripts/get-workspace-dir.py)
 """
 import subprocess
 import sys
