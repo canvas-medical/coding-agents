@@ -62,7 +62,7 @@ Follow these steps in order:
 9. **Convert to PNG**:
    - Use Bash to execute the conversion command:
      ```bash
-     uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert-svg-to-png.py <svg-file> <png-file>
+     uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert_svg_to_png.py <svg-file> <png-file>
      ```
    - Replace `<svg-file>` with the generated SVG filename (include the path if not in current directory)
    - Replace `<png-file>` with the same base name but `.png` extension

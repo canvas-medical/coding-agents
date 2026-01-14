@@ -209,13 +209,13 @@ The command generates both SVG (vector) and PNG (48x48) versions, storing them i
 ├── hooks/
 │   └── hooks.json             # SessionEnd hook for cost tracking
 ├── scripts/
-    ├── convert-svg-to-png.py      # SVG to 48x48 PNG conversion
-│   ├── export-session-history.py  # Session history export
+    ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
+│   ├── export_session_history.py  # Session history export
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
-│   ├── cost-logger.py             # SessionEnd hook script for cost tracking
-│   ├── aggregate-costs.py         # Cost analysis and reporting
-│   ├── verify-plugin-structure.py # Check the plugin structure
-│   └── update-pricing.py          # Model pricing updater
+│   ├── cost_logger.py             # SessionEnd hook script for cost tracking
+│   ├── aggregate_costs.py         # Cost analysis and reporting
+│   ├── verify_plugin_structure.py # Check the plugin structure
+│   └── update_pricing.py          # Model pricing updater
 └── model_costs.json               # Claude model pricing data
 
 ```
@@ -260,22 +260,22 @@ CPA automatically tracks session costs via a SessionEnd hook. When a session end
 - **Individual session files** (`{session-id}.json`): Token usage (input, output, cache read/write), model used, session duration, and calculated cost in USD
 - **Aggregated files** (`{workspace-directory}.json`): Summary of all sessions in the workspace (git repository) with total cost, token usage, and session list
 
-Use `scripts/aggregate-costs.py` to analyze costs:
+Use `scripts/aggregate_costs.py` to analyze costs:
 ```bash
 # View cost summary
-./scripts/aggregate-costs.py .cpa-workflow-artifacts/costs/
+./scripts/aggregate_costs.py .cpa-workflow-artifacts/costs/
 
 # Export to CSV
-./scripts/aggregate-costs.py --format csv .cpa-workflow-artifacts/costs/ > costs.csv
+./scripts/aggregate_costs.py --format csv .cpa-workflow-artifacts/costs/ > costs.csv
 
 # Filter by date or model
-./scripts/aggregate-costs.py --since 2026-01-01 --model sonnet-4-5 .cpa-workflow-artifacts/costs/
+./scripts/aggregate_costs.py --since 2026-01-01 --model sonnet-4-5 .cpa-workflow-artifacts/costs/
 ```
 
-Update pricing data with `scripts/update-pricing.py`:
+Update pricing data with `scripts/update_pricing.py`:
 ```bash
   export ANTHROPIC_API_KEY=your_api_key_here
-./scripts/update-pricing.py
+./scripts/update_pricing.py
 ```
 
 **Keep these artifacts.** They're valuable for retrospectives, training, project budgeting, and improving CPA itself.

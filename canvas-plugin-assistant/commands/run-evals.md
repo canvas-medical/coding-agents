@@ -133,7 +133,7 @@ Failed evals:
 - {eval_name}: {reason}
 
 See detailed results at:
-{workspace_dir}/.cpa-workflow-artifacts/eval-results-{timestamp}.md
+$WORKSPACE_DIR/.cpa-workflow-artifacts/eval-results-{timestamp}.md
 ============================================
 ```
 

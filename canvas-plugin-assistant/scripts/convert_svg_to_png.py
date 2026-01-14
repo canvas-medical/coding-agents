@@ -4,7 +4,6 @@
 # ///
 
 import sys
-import os
 import cairosvg
 
 def convert_svg_to_png(svg_path, png_path, size):
@@ -28,7 +27,7 @@ def convert_svg_to_png(svg_path, png_path, size):
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: convert-svg-to-png.py <svg_path> <png_path>", file=sys.stderr)
+        print("Usage: convert_svg_to_png.py <svg_path> <png_path>", file=sys.stderr)
         sys.exit(1)
 
     svg_path = sys.argv[1]
