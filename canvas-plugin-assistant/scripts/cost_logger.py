@@ -15,10 +15,29 @@ from hook_information import HookInformation
 
 
 class CostsLogger(BaseLogger):
+    """
+    Logger that extracts token usage and cost data from Claude Code sessions.
+
+    This logger parses session transcripts to calculate:
+    - Token usage (input, output, cache read/write)
+    - Session duration
+    - Total cost in USD based on model pricing
+    - Per-session and aggregated cost summaries
+    """
 
     @classmethod
     def load_pricing(cls):
-        """Load pricing data from JSON file."""
+        """
+        Load pricing data from the model_costs.json file.
+
+        Reads the pricing JSON file and converts per-1M token rates
+        to per-token rates for easier calculation.
+
+        Returns:
+            Dictionary mapping model names to pricing dictionaries with
+            'input', 'output', 'cache_write', and 'cache_read' keys.
+            Returns empty dict if the file is not found or invalid.
+        """
         pricing_file = Path(__file__).parent.parent / "model_costs.json"
         try:
             with pricing_file.open('r') as f:
@@ -42,7 +61,19 @@ class CostsLogger(BaseLogger):
 
     @classmethod
     def detect_model_from_transcript(cls, messages: list[dict]) -> str | None:
-        """Detect the Claude model used in the session from transcript messages."""
+        """
+        Detect the Claude model used in the session from transcript messages.
+
+        Searches through transcript messages for model information in various
+        possible locations (direct model field, nested in the message, metadata fields).
+
+        Args:
+            messages: List of transcript message dictionaries
+
+        Returns:
+            Model identifier string (e.g., 'claude-sonnet-4-5-20250929'),
+            or None if not found
+        """
         for msg in messages:
             if isinstance(msg, dict):
                 # Check various possible locations for model info
@@ -58,10 +89,22 @@ class CostsLogger(BaseLogger):
         return None
 
     @classmethod
-    def calculate_cost(cls, token_counts: dict, model: str | None):
-        """Calculate cost in USD based on token usage and model."""
-        if not model:
-            return None
+    def calculate_cost(cls, token_counts: dict, model: str) -> float | None:
+        """
+        Calculate cost in USD based on token usage and model pricing.
+
+        Normalizes versioned model names to base models (e.g., removes date suffixes)
+        and applies per-token pricing rates.
+
+        Args:
+            token_counts: Dictionary with 'input', 'output', 'cache_write',
+                         and 'cache_read' token counts
+            model: Model identifier string (may include version suffix)
+
+        Returns:
+            Cost in USD rounded to 6 decimal places, or None if the model
+            is not found in pricing data
+        """
         pricing_list = cls.load_pricing()
         # Normalize the model name by removing date suffixes (e.g., -20250929)
         # This handles versioned model names like claude-sonnet-4-5-20250929
@@ -86,7 +129,17 @@ class CostsLogger(BaseLogger):
 
     @classmethod
     def parse_timestamp(cls, timestamp_str: str) -> datetime | None:
-        """Parse ISO timestamp string to a datetime object."""
+        """
+        Parse ISO timestamp string to a datetime object.
+
+        Tries multiple timestamp formats commonly found in transcripts.
+
+        Args:
+            timestamp_str: ISO format timestamp string
+
+        Returns:
+            Parsed datetime object, or None if parsing fails
+        """
         try:
             # Try parsing with various formats
             for fmt in ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f%z"]:
@@ -101,11 +154,34 @@ class CostsLogger(BaseLogger):
 
     @classmethod
     def session_directory(cls, hook_info: HookInformation) -> Path:
+        """
+        Return the directory for storing cost session files.
+
+        Args:
+            hook_info: Context information about the session
+
+        Returns:
+            Path to .cpa-workflow-artifacts/costs/ in the workspace root
+        """
         return hook_info.workspace_dir / ".cpa-workflow-artifacts" / "costs"
 
     @classmethod
     def extraction(cls, hook_info: HookInformation) -> dict:
-        """Extract cost information from the transcript file."""
+        """
+        Extract cost and token usage information from the session transcript.
+
+        Parses the transcript JSONL file to extract:
+        - Token usage statistics (input, output, cache)
+        - Session duration and timing
+        - Model information
+        - Calculated cost in USD
+
+        Args:
+            hook_info: Context information including the transcript path
+
+        Returns:
+            Dictionary with 'cost_data' key containing all extracted metrics
+        """
         cost_data = {}
 
         try:
@@ -214,6 +290,21 @@ class CostsLogger(BaseLogger):
 
     @classmethod
     def aggregation(cls, session_directory: Path) -> None:
+        """
+        Aggregate cost data from all session files into a summary.
+
+        Reads all session JSON files and creates an aggregated summary with:
+        - Total token usage across all sessions
+        - Total cost in USD
+        - Session count and per-session details
+        - Creation date (preserved) and last update timestamp
+
+        Args:
+            session_directory: Directory containing individual session JSON files
+
+        Creates:
+            costs_aggregation.json in the parent directory with aggregated metrics
+        """
         try:
             aggregated_file = session_directory.parent / "costs_aggregation.json"
 

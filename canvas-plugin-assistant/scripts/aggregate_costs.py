@@ -52,11 +52,23 @@ def parse_timestamp(ts_str):
         return None
 
 def load_session_files(directory, since_date=None, model_filter=None):
-    """Load all session JSON files from directory."""
+    """
+    Load all session JSON files from the directory with optional filtering.
+
+    Scans for JSON files matching the session ID pattern and applies date/model filters.
+
+    Args:
+        directory: Path to directory containing session JSON files
+        since_date: Optional date object to filter sessions after this date
+        model_filter: Optional string to filter by model name (case-insensitive substring match)
+
+    Returns:
+        List of parsed session dictionaries that match the filters
+    """
     sessions = []
     directory = Path(directory)
 
-    # Look for JSON files that match session ID pattern (UUID format)
+    # Look for JSON files that match the session ID pattern (UUID format)
     for json_file in directory.glob("*.json"):
         # Skip special files
         if json_file.name in ["plugin.json", "hooks.json", "settings.local.json"]:
@@ -85,7 +97,16 @@ def load_session_files(directory, since_date=None, model_filter=None):
     return sessions
 
 def sort_sessions(sessions, sort_by):
-    """Sort sessions by specified field."""
+    """
+    Sort sessions by specified field.
+
+    Args:
+        sessions: List of session dictionaries
+        sort_by: Field to sort by ('date', 'cost', 'duration', or 'tokens')
+
+    Returns:
+        Sorted list of sessions (cost, duration, tokens sorted descending; date ascending)
+    """
     if sort_by == "date":
         return sorted(sessions, key=lambda s: s.get("timestamp", ""))
     elif sort_by == "cost":
@@ -109,7 +130,17 @@ def sort_sessions(sessions, sort_by):
     return sessions
 
 def print_summary(sessions):
-    """Print summary statistics."""
+    """
+    Print summary statistics for all sessions.
+
+    Displays:
+    - Total sessions, cost, and token counts
+    - Breakdown by model
+    - Top 10 most expensive sessions
+
+    Args:
+        sessions: List of session dictionaries
+    """
     if not sessions:
         print("No session data found.")
         return
@@ -175,7 +206,15 @@ def print_summary(sessions):
     print("=" * 70)
 
 def print_detailed(sessions):
-    """Print detailed information for each session."""
+    """
+    Print detailed information for each session.
+
+    Shows comprehensive data for each session including session ID, timestamp,
+    model, token counts, cache usage, and duration.
+
+    Args:
+        sessions: List of session dictionaries
+    """
     print("=" * 70)
     print("DETAILED SESSION REPORT")
     print("=" * 70)
@@ -206,7 +245,15 @@ def print_detailed(sessions):
                 print(f"Cache Write:    {cache_usage.get('cache_write', 0):,}")
 
 def print_csv(sessions):
-    """Print data in CSV format."""
+    """
+    Print session data in CSV format.
+
+    Outputs CSV with headers and one row per session containing session ID,
+    timestamp, model, costs, token counts, cache usage, and duration.
+
+    Args:
+        sessions: List of session dictionaries
+    """
     print("session_id,timestamp,model,cost_usd,input_tokens,output_tokens,total_tokens,cache_read,cache_write,duration_seconds,exit_reason")
 
     for s in sessions:
@@ -231,10 +278,21 @@ def print_csv(sessions):
         print(f"{session_id},{timestamp},{model},{cost},{input_tokens},{output_tokens},{total},{cache_read},{cache_write},{duration},{exit_reason}")
 
 def print_json(sessions):
-    """Print data in JSON format."""
+    """
+    Print session data in JSON format.
+
+    Args:
+        sessions: List of session dictionaries
+    """
     print(json.dumps(sessions, indent=2))
 
 def main():
+    """
+    Main entry point for the cost aggregation script.
+
+    Loads session files with optional filtering, sorts them, and outputs
+    in the requested format (summary, detailed, CSV, or JSON).
+    """
     args = parse_args()
 
     # Parse since date if provided
@@ -256,7 +314,7 @@ def main():
     # Sort sessions
     sessions = sort_sessions(sessions, args.sort_by)
 
-    # Output in requested format
+    # Output in the requested format
     if args.format == "summary":
         print_summary(sessions)
     elif args.format == "detailed":

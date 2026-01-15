@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""
+SessionEnd hook that extracts and logs user inputs from Claude Code sessions.
+
+This script parses session transcripts to identify different types of user inputs:
+- Free text messages
+- Slash commands
+- Question/answer pairs from AskUserQuestion interactions
+
+The extracted inputs are saved per session and aggregated across all sessions
+in the workspace.
+"""
+
 import json
 import re
 from pathlib import Path
@@ -8,12 +20,44 @@ from hook_information import HookInformation
 
 
 class UserInputsLogger(BaseLogger):
+    """
+    Logger that extracts user inputs from Claude Code session transcripts.
+
+    This logger identifies and categorizes three types of user interactions:
+    1. free_text: Natural language messages from the user
+    2. slash_command: Commands invoked with /command-name syntax
+    3. question_answer: Responses to AskUserQuestion prompts
+    """
     @classmethod
     def session_directory(cls, hook_info: HookInformation) -> Path:
+        """
+        Return the directory for storing user input session files.
+
+        Args:
+            hook_info: Context information about the session
+
+        Returns:
+            Path to .cpa-workflow-artifacts/user_inputs/ in the workspace root
+        """
         return hook_info.workspace_dir / ".cpa-workflow-artifacts" / "user_inputs"
 
     @classmethod
     def extraction(cls, hook_info: HookInformation) -> dict:
+        """
+        Extract user inputs from the session transcript.
+
+        Parses the transcript JSONL file to identify:
+        - Free text user messages (not commands or XML)
+        - Slash commands (extracted from <command-name> tags)
+        - Question/answer pairs (from AskUserQuestion tool results)
+
+        Args:
+            hook_info: Context information including the transcript path
+
+        Returns:
+            Dictionary with 'user_inputs' key containing the list of input objects.
+            Each input object has 'input', 'type', and optionally 'question' fields.
+        """
         result = []
         with hook_info.transcript_path.open('r') as f:
             for line in f:
@@ -83,14 +127,25 @@ class UserInputsLogger(BaseLogger):
 
     @classmethod
     def aggregation(cls, session_directory: Path) -> None:
+        """
+        Aggregate user inputs from all session files into a single summary.
+
+        Reads all session JSON files in the directory and combines their
+        user_inputs into a single aggregation file.
+
+        Args:
+            session_directory: Directory containing individual session JSON files
+
+        Creates:
+            user_inputs_aggregation.json in the parent directory with all inputs
+        """
         aggregated_file = session_directory.parent / "user_inputs_aggregation.json"
 
         inputs = []
         for json_file in session_directory.glob("*.json"):
             with open(json_file, 'r') as file_f:
                 data = json.load(file_f)
-                if user_inputs := data.get('user_inputs', {}):
-                    inputs.append(user_inputs)
+                inputs.append(data.get('user_inputs', []))
 
         with aggregated_file.open('w') as aggregated_f:
             json.dump({'inputs': inputs}, aggregated_f, indent=2)

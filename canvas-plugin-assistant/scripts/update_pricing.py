@@ -230,7 +230,12 @@ def fetch_pricing_from_web():
         return None
 
 def load_current_pricing():
-    """Load current pricing from JSON file."""
+    """
+    Load current pricing data from the model_costs.json file.
+
+    Returns:
+        Dictionary with pricing data structure, or None if file not found or invalid
+    """
     try:
         with open(PRICING_FILE, 'r') as f:
             return json.load(f)
@@ -241,7 +246,15 @@ def load_current_pricing():
         return None
 
 def save_pricing(pricing_data):
-    """Save pricing data to JSON file."""
+    """
+    Save pricing data to the model_costs.json file.
+
+    Args:
+        pricing_data: Dictionary containing pricing information to save
+
+    Returns:
+        True if save succeeded, False otherwise
+    """
     try:
         with open(PRICING_FILE, 'w') as f:
             json.dump(pricing_data, f, indent=2)
@@ -252,7 +265,19 @@ def save_pricing(pricing_data):
         return False
 
 def automated_update_mode(api_models, web_pricing):
-    """Automated mode for updating pricing using API models and web pricing."""
+    """
+    Automated mode for updating pricing using API models and web pricing.
+
+    Compares the current pricing database with newly fetched API models and web pricing,
+    shows a summary of changes, and prompts for user confirmation before saving.
+
+    Args:
+        api_models: List of model IDs from the Anthropic API
+        web_pricing: Dictionary of pricing data scraped from the web
+
+    Returns:
+        True if user confirmed and save succeeded, False otherwise
+    """
     print("\n" + "="*70)
     print("AUTOMATED PRICING UPDATE")
     print("="*70)
@@ -431,7 +456,7 @@ How it works:
     for model in sorted(api_models):
         print(f"  - {model}")
 
-    # Fetch pricing from web page
+    # Fetch pricing from the web page
     print()
     web_pricing = fetch_pricing_from_web()
 
