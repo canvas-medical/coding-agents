@@ -390,47 +390,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 11. Export Session History
-
-**Save a record of this development session for future reference.**
-
-Export the session history using Python:
-
-et a workspace directory:
-```bash
-WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
-```
-
-```python
-import json
-import subprocess
-from pathlib import Path
-
-workspace_dir = "${WORKSPACE_DIR}"
-
-history_file = Path.home() / ".claude" / "history.jsonl"
-lines = history_file.read_text().strip().split("\n")
-last_entry = json.loads(lines[-1])
-session_id = last_entry.get("sessionId")
-
-display_texts = []
-for line in lines:
-    entry = json.loads(line)
-    if entry.get("sessionId") == session_id:
-        display = entry.get("display")
-        if display:
-            display_texts.append(display)
-
-output_dir = workspace_dir / ".cpa-workflow-artifacts"
-output_dir.mkdir(parents=True, exist_ok=True)
-output_file = output_dir / f"claude-history-{session_id}.txt"
-output_file.write_text("\n".join(display_texts))
-print(f"Exported {len(display_texts)} messages to {output_file}")
-```
-
-This creates `{workspace_dir}/.cpa-workflow-artifacts/claude-history-{sessionId}.txt` at the workspace root containing all messages from this session.
-
-### 12. Final Git Commit and Push
+### 11. Final Git Commit and Push
 
 **After all checks pass (or issues are resolved), commit and push the final state.**
 

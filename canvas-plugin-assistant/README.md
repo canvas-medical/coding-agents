@@ -207,10 +207,10 @@ The command generates both SVG (vector) and PNG (48x48) versions, storing them i
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
 ├── hooks/
-│   └── hooks.json             # SessionEnd hook for cost tracking
+│   └── hooks.json             # SessionEnd hooks for cost tracking and user inputs tracking
 ├── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
-│   ├── export_session_history.py  # Session history export
+│   ├── user_input_logger.py       # Full user inputs tracking
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
 │   ├── cost_logger.py             # SessionEnd hook script for cost tracking
 │   ├── aggregate_costs.py         # Cost analysis and reporting
@@ -246,7 +246,7 @@ CPA saves workflow artifacts to `.cpa-workflow-artifacts/` at the git repository
 | `coverage-report-{timestamp}.md` | Test coverage report |
 | `security-review-{timestamp}.md` | Security audit findings and recommendations |
 | `db-performance-review-{timestamp}.md` | Database query optimization findings |
-| `claude-history-{sessionId}.txt` | Complete session transcript |
+| `claude-history.txt` | Complete transcript of all project sessions |
 | `eval-results-{timestamp}.md` | Eval suite results |
 | `{case_name}-security-review.md` | Per-case security review (evals) |
 | `{case_name}-database-review.md` | Per-case database review (evals) |
