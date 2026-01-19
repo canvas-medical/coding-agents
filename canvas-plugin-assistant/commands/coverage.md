@@ -2,28 +2,86 @@
 
 Run tests with coverage and offer to improve if below 90%.
 
+## Prerequisites
+
+This command requires:
+- `CPA_RUNNING` must be set to 1
+- `CPA_WORKSPACE_DIR` must be set
+- `CPA_PLUGIN_DIR` must be set to an existing plugin directory
+
 ## Instructions
 
-### Working Directory Setup
-
-**Before starting, navigate to the workspace and identify the plugin directory:**
+### Step 1: Check CPA_RUNNING
 
 ```bash
-workspace="$(python3 "/media/DATA/anthropic_plugins/coding-agents/canvas-plugin-assistant/scripts/get-workspace-dir.py")"
-(cd "$workspace" && find . -maxdepth 1 -type d ! -name '.' ! -name '.*' | wc -l)
+echo $CPA_RUNNING
 ```
 
-**If 0 subdirectories:**
-- Report error: "This command can only work when a plugin has been created. Please run /cpa:new-plugin first."
-- STOP - do not proceed
+**If CPA_RUNNING is not set to "1":**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_RUNNING is not set to 1.
 
-**If 1 subdirectory:**
-- Automatically change to that directory
-- Tell the user: "Working in plugin directory: {subdirectory_name}"
+  Please /exit and run:
+  export CPA_RUNNING=1 && claude
 
-**If multiple subdirectories:**
-- Use AskUserQuestion to ask which plugin directory to work on
-- Change to that directory: `cd {selected_directory}`
+  Then run this command again.
+  ```
+
+### Step 2: Check CPA_WORKSPACE_DIR
+
+```bash
+echo $CPA_WORKSPACE_DIR
+```
+
+**If CPA_WORKSPACE_DIR is not set:**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_WORKSPACE_DIR is not set.
+
+  Please /exit, navigate to your workspace directory, and run:
+  export CPA_WORKSPACE_DIR=$(pwd) && claude
+
+  Then run this command again.
+  ```
+
+### Step 3: Check CPA_PLUGIN_DIR
+
+```bash
+echo $CPA_PLUGIN_DIR
+```
+
+**If CPA_PLUGIN_DIR is not set or empty:**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_PLUGIN_DIR is not set.
+
+  This command requires an existing plugin. To work on a plugin:
+
+  1. /exit
+  2. Run: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/[plugin-name]
+  3. Run: claude
+
+  To see available plugins, list subdirectories in your workspace.
+  ```
+
+**If CPA_PLUGIN_DIR is set:**
+- Verify it's a subdirectory of CPA_WORKSPACE_DIR and exists:
+
+```bash
+if [[ "$CPA_PLUGIN_DIR" != "$CPA_WORKSPACE_DIR"/* ]]; then
+  echo "ERROR: CPA_PLUGIN_DIR must be a subdirectory of CPA_WORKSPACE_DIR"
+  echo "  CPA_PLUGIN_DIR: $CPA_PLUGIN_DIR"
+  echo "  CPA_WORKSPACE_DIR: $CPA_WORKSPACE_DIR"
+  exit 1
+elif [ ! -d "$CPA_PLUGIN_DIR" ]; then
+  echo "ERROR: CPA_PLUGIN_DIR points to non-existent directory: $CPA_PLUGIN_DIR"
+  exit 1
+else
+  cd "$CPA_PLUGIN_DIR"
+  echo "Working in plugin: $(basename "$CPA_PLUGIN_DIR")"
+fi
+```
 
 ---
 
@@ -42,7 +100,7 @@ uv run pytest --cov=. --cov-report=term-missing
 
 Create a timestamp and get a workspace directory:
 ```bash
-WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-workspace-dir.py")
+WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 ```
 

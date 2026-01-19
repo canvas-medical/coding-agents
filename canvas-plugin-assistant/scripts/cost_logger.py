@@ -8,8 +8,10 @@ in JSON format in the parent directory with the session hash as filename.
 import json
 import sys
 import subprocess
+from os import environ
 from pathlib import Path
 from datetime import datetime, timezone
+from constants import Constants
 
 # Path to pricing data file
 PRICING_FILE = Path(__file__).parent.parent / "model_costs.json"
@@ -211,6 +213,8 @@ def extract_cost_from_transcript(transcript_path):
 
 def main():
     try:
+        if environ.get(Constants.CPA_RUNNING, "0") != "1":
+            sys.exit(0)
         # Read hook input from stdin
         hook_input = json.load(sys.stdin)
     except json.JSONDecodeError as e:
@@ -228,7 +232,7 @@ def main():
     script_dir = Path(__file__).parent
     try:
         result = subprocess.run(
-            ["python3", str(script_dir / "get-workspace-dir.py")],
+            ["python3", str(script_dir / "get_plugin_dir.py")],
             cwd=cwd if cwd else None,
             capture_output=True,
             text=True,
