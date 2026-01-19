@@ -98,7 +98,7 @@ def verify_structure(plugin_name: str) -> bool:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: verify-plugin-structure.py <plugin-name>", file=sys.stderr)
+        print("Usage: verify_plugin_structure.py <plugin-name>", file=sys.stderr)
         sys.exit(1)
 
     plugin_name = sys.argv[1]

@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from get_workspace_dir import get_workspace_dir
+from get_plugin_dir import PluginDir
 from hook_information import HookInformation
 
 
@@ -48,7 +48,7 @@ class BaseLogger:
                 exit_reason=hook_input["reason"],
                 transcript_path=Path(hook_input["transcript_path"]),
                 working_directory=Path(hook_input["cwd"]),
-                workspace_dir=get_workspace_dir(),
+                workspace_dir=PluginDir.run(),
             )
         except json.JSONDecodeError as e:
             print(f"Error parsing hook input: {e}", file=sys.stderr)
