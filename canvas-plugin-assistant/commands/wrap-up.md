@@ -371,6 +371,48 @@ OR
 3. Update README to remove reference to deleted handler
 ```
 
+**Save the wrap-up report:**
+
+Create a timestamp and save the report:
+
+```bash
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+REPORT_FILE="$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/wrap-up-report-$TIMESTAMP.md"
+
+# Create the report (replace {plugin_name} with actual plugin name)
+cat > "$REPORT_FILE" <<'REPORT_END'
+# Wrap-Up Report: {plugin_name}
+
+**Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+**Reviewer:** Claude Code (CPA)
+
+## Wrap-Up Summary
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Project Structure | {status} | {notes} |
+| Plugin API Security | {status} | {notes} |
+| FHIR Client Security | {status} | {notes} |
+| DB Performance | {status} | {notes} |
+| Type checking | {status} | {notes} |
+| Coverage | {status} | {notes} |
+| Debug Logs | {status} | {notes} |
+| Dead Code | {status} | {notes} |
+| README | {status} | {notes} |
+| Application Icon | {status} | {notes} |
+| License | {status} | {notes} |
+
+## Verdict
+
+{verdict_text}
+
+REPORT_END
+
+echo "Wrap-up report saved: $REPORT_FILE"
+```
+
+Replace the placeholders with actual results from each check.
+
 Use AskUserQuestion if any issues were found:
 
 ```json
@@ -390,22 +432,11 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 11. Final Git Commit and Push
+### 11. Wrap-Up Complete
 
-**After all checks pass (or issues are resolved), commit and push the final state.**
+**After all checks pass (or issues are resolved), the plugin is ready.**
 
-```bash
-git add -A .
-git commit -m "complete {plugin_name} v{version} wrap-up"
-git push
-```
-
-**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path - those commands stage changes across the entire repository, which can accidentally commit files outside the plugin directory.
-
-Use concise declarative voice for commit messages:
-- "complete vitals-alert v0.1.0 wrap-up"
-- "finalize plugin, remove debug logs"
-- "complete wrap-up, update README"
+The plugin changes will be automatically committed and pushed when you exit this Claude Code session (via a SessionEnd hook that detects the wrap-up report).
 
 ## CPA Workflow
 

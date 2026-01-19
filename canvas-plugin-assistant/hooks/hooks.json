@@ -6,11 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/cost_logger.py"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/user_input_logger.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session_end_orchestrator.py"
           }
         ]
       }

@@ -213,7 +213,6 @@ The command generates both SVG (vector) and PNG (48x48) versions, storing them i
 │   ├── user_input_logger.py       # Full user inputs tracking
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
 │   ├── cost_logger.py             # SessionEnd hook script for cost tracking
-│   ├── aggregate_costs.py         # Cost analysis and reporting
 │   ├── verify_plugin_structure.py # Check the plugin structure
 │   └── update_pricing.py          # Model pricing updater
 └── model_costs.json               # Claude model pricing data
@@ -260,17 +259,6 @@ CPA automatically tracks session costs via a SessionEnd hook. When a session end
 - **Individual session files** (`{session-id}.json`): Token usage (input, output, cache read/write), model used, session duration, and calculated cost in USD
 - **Aggregated files** (`{workspace-directory}.json`): Summary of all sessions in the workspace (git repository) with total cost, token usage, and session list
 
-Use `scripts/aggregate_costs.py` to analyze costs:
-```bash
-# View cost summary
-./scripts/aggregate_costs.py .cpa-workflow-artifacts/costs/
-
-# Export to CSV
-./scripts/aggregate_costs.py --format csv .cpa-workflow-artifacts/costs/ > costs.csv
-
-# Filter by date or model
-./scripts/aggregate_costs.py --since 2026-01-01 --model sonnet-4-5 .cpa-workflow-artifacts/costs/
-```
 
 Update pricing data with `scripts/update_pricing.py`:
 ```bash
