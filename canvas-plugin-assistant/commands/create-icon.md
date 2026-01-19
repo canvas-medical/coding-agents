@@ -16,7 +16,7 @@ Follow these steps in order:
 
 2. **Parse Description**:
    - Extract the icon description from the command argument
-   - If no description provided, ask the user what kind of icon they want
+   - If no description is provided, ask the user what kind of icon they want
    - Consider the context (e.g., if working in a plugin directory, tailor suggestions)
 
 3. **Generate SVG Icon**:
@@ -30,14 +30,14 @@ Follow these steps in order:
 4. **Generate Filename**:
    - Convert the description to kebab-case (lowercase with hyphens)
    - Remove special characters and extra spaces
-   - Limit to reasonable length (e.g., "patient-vitals-monitor")
-   - Add `.svg` extension for SVG file
-   - Add `.png` extension for PNG file
+   - Limit to a reasonable length (e.g., "patient-vitals-monitor")
+   - Add `.svg` extension for an SVG file
+   - Add `.png` extension for a PNG file
 
 5. **Determine Save Location**:
    - Check if currently in a Canvas plugin directory (look for CANVAS_MANIFEST.json)
    - If in plugin directory: save to the inner plugin folder's `assets/` directory (snake_case folder name)
-   - If not in plugin directory: save to current working directory
+   - If not in the plugin directory: save to the current working directory
    - Report the save location to the user
 
 6. **Create Assets Directory (if needed)**:
@@ -57,14 +57,14 @@ Follow these steps in order:
      ```bash
      curl -LsSf https://astral.sh/uv/install.sh | sh
      ```
-   - After installation, may need to use full path: `~/.cargo/bin/uv`
+   - After installation, may need to use the full path: `~/.cargo/bin/uv`
 
 9. **Convert to PNG**:
    - Use Bash to execute the conversion command:
      ```bash
      uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert-svg-to-png.py <svg-file> <png-file>
      ```
-   - Replace `<svg-file>` with the generated SVG filename (include path if not in current directory)
+   - Replace `<svg-file>` with the generated SVG filename (include the path if not in current directory)
    - Replace `<png-file>` with the same base name but `.png` extension
    - The script will create a 48x48 pixel PNG
 
@@ -87,15 +87,15 @@ Follow these steps in order:
 
 ## Error Handling
 
-- **UV Installation Fails**: Provide clear error message and manual installation instructions
-- **SVG Generation Issues**: Ensure valid SVG syntax before writing file
+- **UV Installation Fails**: Provide a clear error message and manual installation instructions
+- **SVG Generation Issues**: Ensure valid SVG syntax before writing a file
 - **File Write Errors**: Check permissions and report clear error messages
-- **Conversion Script Errors**: Keep SVG file and report the error from the conversion script
+- **Conversion Script Errors**: Keep the SVG file and report the error from the conversion script
 - **Manifest Update Errors**: Ensure the manifest exists and is valid JSON
 
 ## Output Format
 
-After successful generation, display:
+After a successful generation, display:
 ```
 Icon created successfully:
   SVG: /path/to/icon-name.svg
@@ -120,11 +120,11 @@ CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
 - For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
 - Create the `assets/` directory if it doesn't exist before saving icons
 - Both files save to the appropriate directory based on context
-- Do not show SVG code to user unless there's an error or they request it
+- Do not show SVG code to the user unless there's an error, or they request it
 - Canvas Medical plugin icons should be professional and healthcare-appropriate
 
 ## Examples
 
 Example 1 - Basic usage:
 ```
-User: /create-icon "medical chart with checkmark"
+User: /cpa:create-icon "medical chart with checkmark"

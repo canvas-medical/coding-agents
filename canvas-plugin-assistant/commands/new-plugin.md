@@ -2,13 +2,106 @@
 
 Start the plugin brainstorming process to transform requirements into a concrete specification, then implement it.
 
+## Prerequisites
+
+Before running this command:
+- `CPA_RUNNING` must be set to 1
+- `CPA_WORKSPACE_DIR` must be set and match current directory
+- `CPA_PLUGIN_DIR` can be set (continue implementation) or unset (create new plugin)
+
 ## Instructions
+
+### Step 1: Check CPA_RUNNING
+
+```bash
+echo $CPA_RUNNING
+```
+
+**If CPA_RUNNING is not set to "1":**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_RUNNING is not set to 1.
+
+  Please /exit and run:
+  export CPA_RUNNING=1 && claude
+
+  Then run /cpa:new-plugin again.
+  ```
+
+### Step 2: Check CPA_WORKSPACE_DIR
+
+```bash
+echo $CPA_WORKSPACE_DIR
+pwd
+```
+
+**If CPA_WORKSPACE_DIR is not set or doesn't match current directory:**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_WORKSPACE_DIR is not set correctly.
+
+  Please /exit, navigate to your workspace directory, and run:
+  export CPA_WORKSPACE_DIR=$(pwd) && claude
+
+  Then run /cpa:new-plugin again.
+  ```
+
+### Step 3: Determine Workflow Phase
+
+```bash
+echo $CPA_PLUGIN_DIR
+```
+
+**If CPA_PLUGIN_DIR is NOT set or empty:**
+- This is a **new plugin creation**
+- Continue to **Phase 0: Create a Git Branch** below
+
+**If CPA_PLUGIN_DIR IS set:**
+- This is **continuing implementation** after scaffolding
+- Verify the directory exists and contains a plugin:
+
+```bash
+if [ -d "$CPA_PLUGIN_DIR" ]; then
+  cd "$CPA_PLUGIN_DIR"
+  plugin_name_snake=$(basename "$CPA_PLUGIN_DIR" | tr '-' '_')
+  if [ -f "$plugin_name_snake/CANVAS_MANIFEST.json" ]; then
+    echo "Continuing implementation for: $(basename "$CPA_PLUGIN_DIR")"
+  else
+    echo "ERROR: $CPA_PLUGIN_DIR does not contain a valid plugin structure"
+    exit 1
+  fi
+else
+  echo "ERROR: CPA_PLUGIN_DIR points to non-existent directory: $CPA_PLUGIN_DIR"
+  exit 1
+fi
+```
+
+- Skip to **Phase 3: Implementation** below
+
+---
+
+## Workflow Phases
+
+This command handles two scenarios:
+
+1. **New Plugin Creation** (CPA_PLUGIN_DIR not set):
+   - Phase 0: Create Git Branch
+   - Phase 1: Gather Requirements
+   - Phase 2: Scaffold Plugin Structure
+   - Then STOP and instruct user to set CPA_PLUGIN_DIR
+
+2. **Continue Implementation** (CPA_PLUGIN_DIR is set):
+   - Skip directly to Phase 3: Implementation
+
+---
 
 Use the **plugin-brainstorm** agent for the full workflow from spec to deployment.
 
-### Phase 0: Create Git Branch
+### Phase 0: Create a Git Branch
 
-**Before anything else, create a new branch for this plugin work.**
+**Only run this phase if CPA_PLUGIN_DIR is NOT set (new plugin creation).**
+
+**Before anything else, create a new branch for this plugin to work.**
 
 Generate a branch name using three random words in kebab-case. Examples:
 - `mercury-purring-lion`
@@ -24,6 +117,8 @@ Tell the user the branch name you created.
 
 ### Phase 1: Gather Requirements
 
+**Only run this phase if CPA_PLUGIN_DIR is NOT set (new plugin creation).**
+
 1. Invoke the canvas-sdk skill to have SDK documentation available
 2. Ask the user to describe the problem they're trying to solve
 3. Use AskUserQuestion to gather structured requirements:
@@ -31,158 +126,224 @@ Tell the user the branch name you created.
    - What should trigger the plugin?
    - What should the plugin create or do?
 4. Map answers to Canvas SDK concepts (events, effects)
-5. Write a `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` file with the specification (where workspace_dir is the git repository root)
+5. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
 6. Wait for user approval before any implementation
 
-If a `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
+If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
 - Continue refining the existing spec
 
-### Phase 2: Implement (after user approves spec)
+### Phase 2: Scaffold Plugin (after user approves spec)
 
-**⚠️ CRITICAL: After the user approves the spec, you MUST run `canvas init` as the very first step:**
+**Only run this phase if CPA_PLUGIN_DIR is NOT set (new plugin creation).**
+
+**⚠️ CRITICAL: After the user approves the spec, you MUST run `canvas init` to create the plugin structure.**
+
+#### Step 1: Generate Plugin Name
+
+Based on the requirements and specification, invent a descriptive plugin name in kebab-case. Examples:
+- `vitals-alert`
+- `appointment-reminder`
+- `lab-result-notifier`
+
+The name should be:
+- Descriptive of what the plugin does
+- In kebab-case (lowercase with hyphens)
+- 2-4 words maximum
+
+#### Step 2: Run canvas init
 
 ```bash
-echo "{plugin_name}" | uv run canvas init
-cd {plugin_name}
+# Store the plugin name
+plugin_name="[generated-plugin-name]"
+
+# Run canvas init from workspace directory
+cd "$CPA_WORKSPACE_DIR"
+echo "$plugin_name" | uv run canvas init
 ```
 
-**Do NOT create files or directories manually.** The `canvas init` command creates the correct project structure. Only edit the files it generates.
+This creates:
+```
+$CPA_WORKSPACE_DIR/
+└── {plugin_name}/                    # Kebab-case container directory
+    ├── pyproject.toml
+    ├── tests/
+    └── {plugin_name_snake}/          # Snake_case inner directory
+        ├── CANVAS_MANIFEST.json
+        ├── README.md
+        └── protocols/
+```
 
-After `canvas init` completes:
+#### Step 3: Verify Project Structure
 
-1. **Verify project structure:**
+```bash
+cd "$CPA_WORKSPACE_DIR/$plugin_name"
+plugin_name_snake=$(echo "$plugin_name" | tr '-' '_')
 
-   The expected structure is:
-   ```
-   {plugin_name}/                    # Container: kebab-case (you are here)
-   ├── pyproject.toml
-   ├── tests/
-   │   └── ...
-   └── {plugin_name_snake}/          # Inner: snake_case version
-       ├── CANVAS_MANIFEST.json
-       ├── README.md
-       └── protocols/
-   ```
+# Quick structure check
+echo "Verifying structure..."
+test -d "$plugin_name_snake" && echo "OK: Inner folder '$plugin_name_snake' exists" || echo "ERROR: Inner folder not found"
+test -f "$plugin_name_snake/CANVAS_MANIFEST.json" && echo "OK: Manifest in correct place" || echo "ERROR: Manifest missing"
+test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
+```
 
-   Run these verification checks:
+Expected structure:
+```
+$CPA_WORKSPACE_DIR/
+├── .cpa-workflow-artifacts/          # Still in workspace (will be moved in Phase 3)
+└── {plugin_name}/                    # Container (kebab-case)
+    ├── pyproject.toml
+    ├── tests/
+    └── {plugin_name_snake}/          # Inner (snake_case)
+        ├── CANVAS_MANIFEST.json
+        ├── README.md
+        └── protocols/
+```
 
-   ```bash
-   # Convert plugin name to inner folder name (kebab to snake)
-   INNER=$(echo "{plugin_name}" | tr '-' '_')
+**If any checks fail:** Report errors to the user and investigate before proceeding.
 
-   # Verify structure
-   echo "Verifying project structure..."
+#### Step 4: Configure Plugin Directory
 
-   # Inner folder should exist
-   test -d "$INNER" && echo "OK: Inner folder '$INNER' exists" || echo "ERROR: Inner folder '$INNER' not found"
+**Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
 
-   # CANVAS_MANIFEST.json should be INSIDE inner folder
-   test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: CANVAS_MANIFEST.json in correct location" || echo "ERROR: CANVAS_MANIFEST.json not in $INNER/"
+```bash
+cd "$CPA_WORKSPACE_DIR/$plugin_name"
 
-   # tests/ should be at container level
-   test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
+if [ ! -f .gitignore ]; then
+  echo ".claude" > .gitignore
+elif ! grep -q "^\.claude$" .gitignore; then
+  echo ".claude" >> .gitignore
+fi
+```
 
-   # pyproject.toml should be at container level
-   test -f "pyproject.toml" && echo "OK: pyproject.toml present" || echo "ERROR: pyproject.toml missing"
-   ```
+**Replace `pyproject.toml` with the minimal version:**
 
-   **If any checks fail:** Report errors to the user and investigate before proceeding. Do NOT continue with implementation until structure is correct.
+```toml
+# This pyproject.toml is only used for local development and testing.
+# The Canvas plugin has its own packaging process that doesn't use this file.
 
-2. **Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
-   - Check if `.gitignore` exists in the plugin directory
-   - If it exists, check if it already contains `.claude`
-   - If not, append `.claude` to the file
-   - If `.gitignore` doesn't exist, create it with `.claude` as the first entry
+[project]
+name = "{plugin_name}"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=4.2.0",
+    "canvas[test-utils]",
+]
 
-3. **Replace `pyproject.toml` with the minimal version:**
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-django>=4.7.0",
+    "pytest-mock>=3.12.0",
+]
 
-   The `canvas init` scaffold may include unnecessary configuration. Replace it with this minimal file:
+[tool.coverage.run]
+omit = ["tests/*"]
+```
 
-   ```toml
-   # This pyproject.toml is only used for local development and testing.
-   # The Canvas plugin has its own packaging process that doesn't use this file.
+Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
 
-   [project]
-   name = "{plugin_name}"
-   version = "0.0.0"
-   requires-python = ">=3.12"
-   dependencies = [
-       "django>=4.2.0",
-       "canvas[test-utils]",
-   ]
+**Add `mypy.ini` file to the container directory:**
 
-   [dependency-groups]
-   dev = [
-       "mypy>=1.19.0",
-       "pytest>=8.0.0",
-       "pytest-cov>=4.1.0",
-       "pytest-django>=4.7.0",
-       "pytest-mock>=3.12.0",
-   ]
+```ini
+[mypy]
+explicit_package_bases = True
 
-   [tool.coverage.run]
-   omit = ["tests/*"]
-   ```
+check_untyped_defs = True
+disallow_incomplete_defs = True
+disallow_untyped_calls = True
+disallow_untyped_decorators = False
+disallow_untyped_defs = True
+error_summary = True
 
-   Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
+show_error_context = True
+strict_equality = True
+strict_optional = True
 
-   Add to the root project, the `mypy.ini` file:
-   ```ini
-   [mypy]
-   explicit_package_bases = True
-   
-   check_untyped_defs = True
-   disallow_incomplete_defs = True
-   disallow_untyped_calls = True
-   disallow_untyped_decorators = False
-   disallow_untyped_defs = True
-   error_summary = True
-   
-   show_error_context = True
-   strict_equality = True
-   strict_optional = True
-   
-   warn_no_return = True
-   warn_redundant_casts = True
-   warn_return_any = True
-   warn_unreachable = True
-   warn_unused_configs = True
-   warn_unused_ignores = True
-   
-   follow_imports = silent
-   ignore_missing_imports = True
-   no_implicit_optional = True
-   pretty = False
-   
-   python_version = 3.12
-   exclude = debug
-   ```
+warn_no_return = True
+warn_redundant_casts = True
+warn_return_any = True
+warn_unreachable = True
+warn_unused_configs = True
+warn_unused_ignores = True
 
+follow_imports = silent
+ignore_missing_imports = True
+no_implicit_optional = True
+pretty = False
 
-4. **Commit the scaffolded plugin:**
-   ```bash
-   git add -A .
-   git commit -m "initialize {plugin_name} plugin scaffold"
-   git push
-   ```
+python_version = 3.12
+exclude = debug
+```
 
-   **CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path.
+#### Step 5: Commit the Scaffolded Plugin
 
-Then continue with the plugin-brainstorm agent workflow:
+```bash
+cd "$CPA_WORKSPACE_DIR/$plugin_name"
+git add -A .
+git commit -m "initialize $plugin_name plugin scaffold
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+git push
+```
+
+**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only.
+
+#### Step 6: Instruct User to Set CPA_PLUGIN_DIR
+
+**STOP and tell the user:**
+
+```
+✓ Plugin scaffolded successfully!
+
+The plugin directory is: $CPA_WORKSPACE_DIR/{plugin_name}
+
+To continue with implementation, set CPA_PLUGIN_DIR and restart:
+
+1. /exit
+2. Run: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/{plugin_name}
+3. Run: claude
+4. Run: /cpa:new-plugin (this will continue to Phase 3: Implementation)
+
+DO NOT PROCEED until the user has set CPA_PLUGIN_DIR and restarted Claude.
+```
+
+---
+
+### Phase 3: Implementation (when CPA_PLUGIN_DIR is set)
+
+**This phase runs when the user has already scaffolded the plugin and set CPA_PLUGIN_DIR.**
+
+#### Step 1: Move .cpa-workflow-artifacts
+
+If `.cpa-workflow-artifacts` exists in `CPA_WORKSPACE_DIR`, move it into the plugin directory:
+
+```bash
+if [ -d "$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts" ]; then
+  mv "$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts" "$CPA_PLUGIN_DIR/"
+  echo "Moved .cpa-workflow-artifacts into plugin directory"
+fi
+```
+
+#### Step 2: Continue Implementation
+
+Verify we're in the plugin directory:
+
+```bash
+cd "$CPA_PLUGIN_DIR"
+plugin_name=$(basename "$CPA_PLUGIN_DIR")
+echo "Continuing implementation for: $plugin_name"
+```
+
+This phase is handled by the **plugin-brainstorm** agent.
+
+The agent will:
 - Edit the generated protocol handler
-- If creating an Application:
-  - Create the Application class and implement `on_open()`
-  - **MANDATORY: Generate icon immediately after creating Application**
-    - Invoke `Skill(skill="icon-generation")`
-    - Create `{plugin_name_snake}/assets/` directory
-    - Generate and save icon files
-    - Update CANVAS_MANIFEST.json with `"icon": "assets/{filename}.png"`
-    - Verify icon files exist before proceeding
-- **CRITICAL: Invoke the testing skill before writing tests**
-  - Use: `Skill(skill="testing")` to load testing guidelines
-  - Follow patterns from testing_context.txt for mock verification
-  - Always verify mock calls using `mock.mock_calls`, not assertion methods
+- Create Application class if needed
+- Generate icon for Applications (mandatory)
 - Write tests following the testing skill guidelines
 - Deploy for UAT
 
@@ -201,12 +362,13 @@ Do NOT use: "Added...", "Adding...", "I added...", or similar.
 This command is **step 2** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%)
-/security-review      →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%)
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
-After implementation, guide the user to `/deploy` for UAT testing.
+After the user sets CPA_PLUGIN_DIR and restarts, guide them through implementation.

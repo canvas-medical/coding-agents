@@ -2,7 +2,88 @@
 
 Run tests with coverage and offer to improve if below 90%.
 
+## Prerequisites
+
+This command requires:
+- `CPA_RUNNING` must be set to 1
+- `CPA_WORKSPACE_DIR` must be set
+- `CPA_PLUGIN_DIR` must be set to an existing plugin directory
+
 ## Instructions
+
+### Step 1: Check CPA_RUNNING
+
+```bash
+echo $CPA_RUNNING
+```
+
+**If CPA_RUNNING is not set to "1":**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_RUNNING is not set to 1.
+
+  Please /exit and run:
+  export CPA_RUNNING=1 && claude
+
+  Then run this command again.
+  ```
+
+### Step 2: Check CPA_WORKSPACE_DIR
+
+```bash
+echo $CPA_WORKSPACE_DIR
+```
+
+**If CPA_WORKSPACE_DIR is not set:**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_WORKSPACE_DIR is not set.
+
+  Please /exit, navigate to your workspace directory, and run:
+  export CPA_WORKSPACE_DIR=$(pwd) && claude
+
+  Then run this command again.
+  ```
+
+### Step 3: Check CPA_PLUGIN_DIR
+
+```bash
+echo $CPA_PLUGIN_DIR
+```
+
+**If CPA_PLUGIN_DIR is not set or empty:**
+- STOP and tell the user:
+  ```
+  ERROR: CPA_PLUGIN_DIR is not set.
+
+  This command requires an existing plugin. To work on a plugin:
+
+  1. /exit
+  2. Run: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/[plugin-name]
+  3. Run: claude
+
+  To see available plugins, list subdirectories in your workspace.
+  ```
+
+**If CPA_PLUGIN_DIR is set:**
+- Verify it's a subdirectory of CPA_WORKSPACE_DIR and exists:
+
+```bash
+if [[ "$CPA_PLUGIN_DIR" != "$CPA_WORKSPACE_DIR"/* ]]; then
+  echo "ERROR: CPA_PLUGIN_DIR must be a subdirectory of CPA_WORKSPACE_DIR"
+  echo "  CPA_PLUGIN_DIR: $CPA_PLUGIN_DIR"
+  echo "  CPA_WORKSPACE_DIR: $CPA_WORKSPACE_DIR"
+  exit 1
+elif [ ! -d "$CPA_PLUGIN_DIR" ]; then
+  echo "ERROR: CPA_PLUGIN_DIR points to non-existent directory: $CPA_PLUGIN_DIR"
+  exit 1
+else
+  cd "$CPA_PLUGIN_DIR"
+  echo "Working in plugin: $(basename "$CPA_PLUGIN_DIR")"
+fi
+```
+
+---
 
 1. **Run pytest with coverage:**
 
@@ -15,58 +96,44 @@ uv run pytest --cov=. --cov-report=term-missing
    - Per-file coverage
    - Missing line numbers
 
-3. **Report findings** in this format:
+3. **Generate Coverage Report**
+
+Create a timestamp and get a workspace directory:
+```bash
+WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+```
+
+Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/coverage-report-$TIMESTAMP.md`:
 
 ```markdown
 ## Coverage Report
 
-**Overall:** X%
-**Target:** 90%
-**Status:** PASS / NEEDS IMPROVEMENT
+**Generated:** {timestamp}
+**Reviewer:** Claude Code (CPA)
 
-| File | Coverage | Missing |
-|------|----------|---------|
-| ... | ...% | lines |
-```
-
-4. **Save report to workflow artifacts:**
-
-```python
-import subprocess
-from pathlib import Path
-from datetime import datetime
-
-# Get workspace root directory using helper script
-workspace_dir = Path(subprocess.run(
-    ["python3", "scripts/get-workspace-dir.py"],
-    capture_output=True,
-    text=True,
-    check=True
-).stdout.strip())
-
-output_dir = workspace_dir / ".cpa-workflow-artifacts"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-report_file = output_dir / f"coverage-report-{timestamp}.md"
-
-report_content = """## Coverage Report
+## Summary
 
 **Overall:** {overall}%
 **Target:** 90%
 **Status:** {status}
-**Generated:** {timestamp}
 
 | File | Coverage | Missing |
 |------|----------|---------|
-{file_rows}
-"""
+| ... | ...% | lines |
 
-report_file.write_text(report_content)
-print(f"Report saved to {report_file}")
+## Verdict
+
+**✅ PASS** - Coverage meets 90% target
+
+OR
+
+**⚠️ NEEDS IMPROVEMENT** - Coverage below 90% target
 ```
 
-5. **If coverage < 90%:**
+Tell the user the report path.
+
+4. **If coverage < 90%:**
 
 Use AskUserQuestion:
 
@@ -87,7 +154,7 @@ Use AskUserQuestion:
 }
 ```
 
-6. **If user says yes:**
+5. **If the user says yes:**
    - Invoke the **testing skill**
    - Read the files with missing coverage
    - Write tests for uncovered lines
@@ -95,7 +162,7 @@ Use AskUserQuestion:
 
 ## Quick Report
 
-If user just wants a quick summary, show:
+If the user just wants a quick summary, show:
 
 ```
 Coverage: 87% (target: 90%)
@@ -109,12 +176,13 @@ Files needing attention:
 This command is **step 4** in the Canvas Plugin Assistant workflow:
 
 ```
-/check-setup      →  Verify environment tools (uv, unbuffer)
-/new-plugin       →  Create plugin from requirements
-/deploy           →  Deploy to Canvas instance for UAT
-/coverage         →  Check test coverage (aim for 90%), save report  ← YOU ARE HERE
-/security-review      →  Comprehensive security audit
-/wrap-up          →  Final checklist before delivery
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%), save report  ← YOU ARE HERE
+/cpa:security-review  →  Comprehensive security audit
+/cpa:database-performance-review  →  Database query optimization
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
-After achieving 90% coverage, guide the user to `/wrap-up` for final checks before delivery.
+After achieving 90% coverage, guide the user to the next step of the workflow.

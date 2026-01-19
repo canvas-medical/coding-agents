@@ -145,6 +145,6 @@ Reference the `testing_context.txt` file in this skill directory for:
 
 > "Tests are passing with X% coverage. The next step is to deploy the plugin to a Canvas instance for user acceptance testing. Ready to deploy?"
 
-3. Use the `/deploy` command to guide deployment and log monitoring
+3. Use the `/cpa:deploy` command to guide deployment and log monitoring
 
 **Always drive toward the next step.** The workflow is: Implement → Test → Deploy → UAT

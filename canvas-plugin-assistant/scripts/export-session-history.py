@@ -16,7 +16,7 @@ def get_workspace_dir() -> Path:
     """
     try:
         result = subprocess.run(
-            ["python3", "scripts/get-workspace-dir.py"],
+            ["python3", "scripts/get_plugin_dir.py"],
             capture_output=True,
             text=True,
             check=True
