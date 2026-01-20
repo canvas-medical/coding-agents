@@ -26,7 +26,7 @@ class CostsLogger(BaseLogger):
     """
 
     @classmethod
-    def load_pricing(cls):
+    def load_pricing(cls) -> dict[str, dict[str, float]]:
         """
         Load pricing data from the model_costs.json file.
 

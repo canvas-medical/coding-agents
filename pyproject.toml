@@ -1,0 +1,48 @@
+[project]
+name = "coding-agents"
+version = "0.1.0"
+description = "Claude Code plugins for specialized development tasks"
+dependencies = [
+    "requests>=2.32.5",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+
+[tool.coverage.run]
+source = ["."]
+branch = true
+omit = [
+    "tests/*",
+    "**/__pycache__/*",
+    "**/.*",
+    "**/venv/*",
+    "**/env/*"
+]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = false
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
