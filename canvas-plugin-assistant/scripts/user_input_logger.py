@@ -130,8 +130,8 @@ class UserInputsLogger(BaseLogger):
         """
         Aggregate user inputs from all session files into a single summary.
 
-        Reads all session JSON files in the directory and combines their
-        user_inputs into a single aggregation file.
+        Reads all session JSON files in the directory, sorts them by timestamp,
+        and combines their user_inputs into a single flat list in chronological order.
 
         Args:
             session_directory: Directory containing individual session JSON files
@@ -141,11 +141,23 @@ class UserInputsLogger(BaseLogger):
         """
         aggregated_file = session_directory.parent / "user_inputs_aggregation.json"
 
-        inputs = []
+        sessions = []
         for json_file in session_directory.glob("*.json"):
-            with open(json_file, 'r') as file_f:
-                data = json.load(file_f)
-                inputs.append(data.get('user_inputs', []))
+            try:
+                with open(json_file, 'r') as file_f:
+                    data = json.load(file_f)
+                    sessions.append({
+                        'timestamp': data.get('timestamp', ''),
+                        'user_inputs': data.get('user_inputs', [])
+                    })
+            except json.JSONDecodeError:
+                continue
+
+        sessions.sort(key=lambda s: s['timestamp'])
+
+        inputs = []
+        for session in sessions:
+            inputs.extend(session['user_inputs'])
 
         with aggregated_file.open('w') as aggregated_f:
             json.dump({'inputs': inputs}, aggregated_f, indent=2)

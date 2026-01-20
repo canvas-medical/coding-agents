@@ -14,6 +14,8 @@ from base_logger import BaseLogger
 from cost_logger import CostsLogger
 from git_commit_plugin import GitCommitPlugin
 from user_input_logger import UserInputsLogger
+from hook_information import HookInformation
+
 
 
 class SessionEndOrchestrator:
@@ -25,7 +27,7 @@ class SessionEndOrchestrator:
     """
 
     @classmethod
-    def run(cls, hook_info) -> None:
+    def run(cls, hook_info: HookInformation) -> None:
         """
         Execute all SessionEnd hooks in the correct order.
 
