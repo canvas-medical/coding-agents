@@ -15,6 +15,8 @@ class PluginDir:
     def run(cls) -> Path:
         result = environ.get(Constants.CPA_PLUGIN_DIR, "")
         if not result:
+            result = environ.get(Constants.CPA_WORKSPACE_DIR, "")
+        if not result:
             return Path.cwd()
         return Path(result)
 

@@ -89,7 +89,7 @@ After installation, you may need to use the full path: `~/.cargo/bin/uv`
 Use the conversion script to create a 48x48 PNG:
 
 ```bash
-uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert-svg-to-png.py <svg-file> <png-file>
+uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert_svg_to_png.py <svg-file> <png-file>
 ```
 
 Replace:

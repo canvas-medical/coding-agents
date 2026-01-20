@@ -18,6 +18,7 @@ Environment:
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -25,7 +26,18 @@ import requests
 
 
 def call_anthropic(api_key: str, prompt: str) -> dict:
-    """Call Anthropic API and return response."""
+    """
+    Call Anthropic API with a prompt and return the response.
+
+    Args:
+        api_key: Anthropic API key for authentication
+        prompt: User prompt to send to the model
+
+    Returns:
+        Dictionary with either:
+        - {'success': True, 'content': <response text>} on success
+        - {'success': False, 'error': <error message>} on failure
+    """
     url = "https://api.anthropic.com/v1/messages"
     headers = {
         "Content-Type": "application/json",
@@ -51,12 +63,23 @@ def call_anthropic(api_key: str, prompt: str) -> dict:
 
 def compare_findings(security_report: str, database_report: str, expected: dict, api_key: str) -> dict:
     """
-    Use Anthropic API to compare reports against expected findings.
+    Use Anthropic API to compare review reports against expected findings.
 
-    Returns dict with:
-    - eval_name: Name of the eval
-    - findings: List of {finding, detected, explanation}
-    - overall_pass: True if all must_detect findings were detected
+    Constructs a prompt with expected findings and generated reports, then uses
+    Claude to determine if each expected issue was detected in the reports.
+
+    Args:
+        security_report: Content of the security review report (might be empty)
+        database_report: Content of the database review report (might be empty)
+        expected: Dictionary with 'eval_name' and 'expected_findings' list
+        api_key: Anthropic API key for authentication
+
+    Returns:
+        Dictionary with:
+        - eval_name: Name of the evaluation
+        - findings: List of dictionaries with 'category', 'severity', 'detected', 'explanation'
+        - overall_pass: True if all must_detect findings were detected
+        - error: Error message if API call or parsing failed (optional)
     """
     findings_text = "\n".join(
         f"- [{f['severity']}] {f['category']}: {f['description']} (must_detect: {f['must_detect']})"
@@ -118,8 +141,6 @@ The category and severity don't need to match exactly, just the core issue."""
     content = response["content"]
     try:
         # Find JSON block in response
-        import re
-
         json_match = re.search(r"```json\s*\n(.*?)\n\s*```", content, re.DOTALL)
         if json_match:
             result = json.loads(json_match.group(1))
@@ -151,8 +172,15 @@ The category and severity don't need to match exactly, just the core issue."""
             "overall_pass": False,
         }
 
+def main() -> None:
+    """
+    Main entry point for the review comparison script.
 
-def main():
+    Parses command-line arguments, loads expected findings, reads review reports,
+    and uses Claude to determine if expected issues were detected.
+
+    Exits with code 0 if all must_detect findings passed, 1 otherwise.
+    """
     parser = argparse.ArgumentParser(
         description="Compare review results against expected findings"
     )
