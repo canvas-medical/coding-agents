@@ -33,7 +33,7 @@ cd evals/{eval_name}
 
 First, get the workspace directory:
 ```bash
-WORKSPACE_DIR = $(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR = $(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 ```
 
 Run both reviews on each eval case - the comparison script will determine which findings are relevant:
@@ -55,7 +55,7 @@ Save the database review output to `$WORKSPACE_DIR/.cpa-workflow-artifacts/{eval
 Use the comparison script to evaluate whether the reviews detected the expected findings:
 
 ```bash
-WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 uv run --with requests python "${CLAUDE_PLUGIN_ROOT}/scripts/compare_review_results.py" \
   --security-report "$WORKSPACE_DIR/.cpa-workflow-artifacts/{eval_name}-security-review.md" \
   --database-report "$WORKSPACE_DIR/.cpa-workflow-artifacts/{eval_name}-database-review.md" \
@@ -77,7 +77,7 @@ cd -
 ### 3. Generate Eval Results Report
 
 ```bash
-WORKSPACE_DIR = $(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR = $(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 ```
 Create `$WORKSPACE_DIR/.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 

@@ -25,7 +25,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_name}
+uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_name}
 ```
 
 **If structure validation fails:**

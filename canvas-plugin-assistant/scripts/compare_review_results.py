@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Compare review results against expected findings using Anthropic API.
 
@@ -6,7 +5,7 @@ This script takes generated review reports (security and/or database) and an exp
 then uses Claude to determine if the expected findings were detected.
 
 Usage:
-    python compare_review_results.py \
+    uv run python compare_review_results.py \
         --security-report path/to/security-review-output.md \
         --database-report path/to/database-review-output.md \
         --expected path/to/expected.json

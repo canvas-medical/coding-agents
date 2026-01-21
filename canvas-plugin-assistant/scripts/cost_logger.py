@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SessionEnd hook that captures cost data from Claude Code session.
 This script runs when a Claude Code session ends and stores cost information

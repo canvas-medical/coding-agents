@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SessionEnd hook that extracts and logs user inputs from Claude Code sessions.
 

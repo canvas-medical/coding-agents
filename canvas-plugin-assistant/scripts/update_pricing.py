@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Update model pricing data using Anthropic API and pricing page.
 Fetches current model list from API and pricing from web page automatically.

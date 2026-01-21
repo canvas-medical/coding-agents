@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """
 Validates CPA environment variables before commands are executed.
 
 Usage:
-    python3 validate_cpa_environment.py --require-plugin-dir
-    python3 validate_cpa_environment.py --plugin-dir-optional
+    uv run python validate_cpa_environment.py --require-plugin-dir
+    uv run python validate_cpa_environment.py --plugin-dir-optional
 """
 
 import argparse

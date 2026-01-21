@@ -108,7 +108,7 @@ grep -rn "eyJ\|['\"][A-Za-z0-9_-]\{30,\}['\"]" --include="*.py" .
 
 Create a timestamp and get a workspace directory:
 ```bash
-WORKSPACE_DIR=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 ```
 

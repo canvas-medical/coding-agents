@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SessionEnd hook that automatically commits and pushes plugin changes after wrap-up.
 

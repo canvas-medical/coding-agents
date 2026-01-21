@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SessionEnd hook orchestrator that runs all session end actions in order.
 

@@ -24,9 +24,12 @@ ls -la .claude/settings.local.json
   To set up the Canvas Plugin Assistant configuration:
 
   1. /exit
-  2. Run: mkdir -p .claude && cp ${CLAUDE_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
-  3. Run: claude
-  4. Then run /cpa:check-setup again
+  2. Run: 
+  mkdir -p .claude
+  export CC_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT}
+  cp $${CC_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
+  claude
+  3. Then run /cpa:check-setup again
 
   Cannot proceed with setup checks until this file exists.
   ```
@@ -53,7 +56,8 @@ echo $CPA_RUNNING
 
   To start Claude with the correct environment:
 
-  export CPA_RUNNING=1 && claude
+  export CPA_RUNNING=1
+  claude
   ```
   Then ask user to restart Claude with the correct environment.
 
@@ -71,7 +75,9 @@ pwd
 
   To start Claude with the correct environment, navigate to your workspace directory and run:
 
-  export CPA_WORKSPACE_DIR=$(pwd) && export CPA_RUNNING=1 && claude
+  export CPA_WORKSPACE_DIR=$(pwd)
+  export CPA_RUNNING=1
+  claude
   ```
   Then ask user to restart Claude with the correct environment.
 
@@ -126,7 +132,9 @@ git rev-parse --is-inside-work-tree
   If you need to work in an existing repository, navigate to it first, then restart Claude:
 
   cd /path/to/your/repo
-  export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && claude
+  export CPA_RUNNING=1 
+  export CPA_WORKSPACE_DIR=$(pwd)
+  claude
   ```
   Then ask user to initialize git or navigate to the correct directory.
 
