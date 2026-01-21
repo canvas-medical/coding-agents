@@ -7,7 +7,7 @@ Final checklist before calling a plugin "done" for this version.
 ### Step 1: Validate Environment
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --require-plugin-dir
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --require-plugin-dir
 ```
 
 **If the script exits with an error:** STOP and show the user the error message. Do NOT proceed.

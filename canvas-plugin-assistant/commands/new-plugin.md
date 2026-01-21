@@ -7,7 +7,7 @@ Start the plugin brainstorming process to transform requirements into a concrete
 ### Step 1: Validate Environment
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --plugin-dir-optional
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --plugin-dir-optional
 ```
 
 **If the script exits with an error:** STOP and show the user the error message. Do NOT proceed.
