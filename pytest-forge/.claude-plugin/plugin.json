@@ -1,0 +1,10 @@
+{
+  "name": "pytest-forge",
+  "description": "Generate and validate pytest unit tests following custom guidelines with 100% coverage",
+  "version": "0.1.0",
+  "author": {
+    "name": "Canvas Medical",
+    "email": "ai@canvasmedical.com"
+  },
+  "keywords": ["pytest", "testing", "unit-tests", "coverage", "test-generation", "test-validation"]
+}

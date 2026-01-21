@@ -91,3 +91,31 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 Review commands save timestamped reports to `.cpa-workflow-artifacts/` at the git repository root. These reports are useful for code review and audit trails.
 
 See [canvas-plugin-assistant/README.md](canvas-plugin-assistant/README.md) for full documentation.
+
+### pytest-forge
+
+Generate and validate pytest unit tests following strict guidelines with 100% code coverage.
+
+**Features:**
+- Automated test generation from Python source files
+- Test validation against custom guidelines
+- Intelligent test improvement suggestions
+- Project setup with pytest and coverage tools
+- Auto-configuration check at session start for unconfigured projects
+
+**Slash Commands** (prefixed with `pytest:` when installed via marketplace):
+| Command | Description |
+|---------|-------------|
+| `:setup` | Configure pytest and coverage tools for your project |
+| `:generate-tests` | Generate comprehensive tests for a Python source file |
+| `:validate-tests` | Check tests for guideline compliance and coverage gaps |
+| `:improve-tests` | Analyze and enhance existing tests |
+
+**Testing Guidelines Enforced:**
+- Strict naming conventions (`test_method_name`, `test_method_name__case`)
+- Standard variable names (`tested`, `result`, `expected`, `exp_*`)
+- Mock verification using `mock_calls` instead of `assert_called_with()`
+- `side_effect` preferred over `return_value`
+- 100% code coverage requirement
+
+See [pytest-forge/README.md](pytest-forge/README.md) for full documentation.

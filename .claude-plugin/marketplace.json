@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins for Canvas Medical development",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
@@ -21,6 +21,20 @@
       "homepage": "https://github.com/canvas-medical/coding-agents",
       "repository": "https://github.com/canvas-medical/coding-agents",
       "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
+      "category": "development"
+    },
+    {
+      "name": "pytest-forge",
+      "source": "./pytest-forge",
+      "description": "Generate and validate pytest unit tests following custom guidelines with 100% coverage",
+      "version": "0.1.0",
+      "author": {
+        "name": "Canvas Medical",
+        "email": "ai@canvasmedical.com"
+      },
+      "homepage": "https://github.com/canvas-medical/coding-agents",
+      "repository": "https://github.com/canvas-medical/coding-agents",
+      "keywords": ["pytest", "testing", "unit-tests", "coverage", "test-generation", "test-validation"],
       "category": "development"
     }
   ]
