@@ -157,10 +157,10 @@ class TestSvgToPngConverter:
         assert mock_sys.mock_calls == exp_sys_calls
 
     @patch("convert_svg_to_png.sys")
-    @patch("convert_svg_to_png.print")
     @patch.object(SvgToPngConverter, "convert")
-    def test_run__success(self, mock_convert, mock_print, mock_sys) -> None:
+    def test_run__success(self, mock_convert, mock_sys, capsys) -> None:
         """Test run prints success message and exits with 0."""
+        tested = SvgToPngConverter
         mock_convert.side_effect = [True]
         mock_sys.exit.side_effect = [SystemExit(0)]
 
@@ -170,13 +170,14 @@ class TestSvgToPngConverter:
         )
 
         with pytest.raises(SystemExit):
-            SvgToPngConverter.run(conversion_input)
+            tested.run(conversion_input)
 
         exp_convert_calls = [call(conversion_input)]
         assert mock_convert.mock_calls == exp_convert_calls
 
-        exp_print_calls = [call("\u2713 Successfully created: /output.png")]
-        assert mock_print.mock_calls == exp_print_calls
+        captured = capsys.readouterr()
+        expected = "\u2713 Successfully created: /output.png"
+        assert expected in captured.out
 
         exp_sys_calls = [call.exit(0)]
         assert mock_sys.mock_calls == exp_sys_calls
@@ -185,6 +186,7 @@ class TestSvgToPngConverter:
     @patch.object(SvgToPngConverter, "convert")
     def test_run__failure(self, mock_convert, mock_sys) -> None:
         """Test run prints failure message and exits with 1."""
+        tested = SvgToPngConverter
         mock_convert.side_effect = [False]
         mock_sys.exit.side_effect = [SystemExit(1)]
 
@@ -194,7 +196,7 @@ class TestSvgToPngConverter:
         )
 
         with pytest.raises(SystemExit):
-            SvgToPngConverter.run(conversion_input)
+            tested.run(conversion_input)
 
         exp_convert_calls = [call(conversion_input)]
         assert mock_convert.mock_calls == exp_convert_calls

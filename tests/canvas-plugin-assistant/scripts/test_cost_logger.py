@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, call, mock_open, patch
 import pytest
 
 from base_logger import BaseLogger
+from conftest import MockContextManager
 from cost_logger import CostsLogger
 from hook_information import HookInformation
 
@@ -25,12 +26,10 @@ class TestLoadPricing:
     @patch("cost_logger.Path")
     def test_load_pricing__success(self, mock_path_cls, mock_json_load) -> None:
         """Test load_pricing returns converted pricing data."""
-        mock_file = MagicMock()
-        mock_pricing_file = MagicMock()
-        mock_pricing_file.open.return_value.__enter__ = MagicMock(return_value=mock_file)
-        mock_pricing_file.open.return_value.__exit__ = MagicMock(return_value=False)
-        # Path(__file__).parent.parent / "model_costs.json"
-        mock_path_cls.return_value.parent.parent.__truediv__.return_value = mock_pricing_file
+        tested = CostsLogger
+        mock_file = MockContextManager()
+        mock_pricing_file = MockContextManager(open=lambda mode="r": mock_file)
+        mock_path_cls.return_value.parent.parent.__truediv__.side_effect = [mock_pricing_file]
 
         mock_json_load.side_effect = [{
             "models": {
@@ -43,7 +42,6 @@ class TestLoadPricing:
             }
         }]
 
-        tested = CostsLogger
         result = tested.load_pricing()
 
         expected = {
@@ -63,11 +61,10 @@ class TestLoadPricing:
     @patch("cost_logger.Path")
     def test_load_pricing__file_not_found(self, mock_path_cls, mock_sys) -> None:
         """Test load_pricing returns empty dict when file not found."""
-        mock_pricing_file = MagicMock()
-        mock_pricing_file.open.side_effect = [FileNotFoundError()]
-        mock_path_cls.return_value.parent.parent.__truediv__.return_value = mock_pricing_file
-
         tested = CostsLogger
+        mock_pricing_file = MockContextManager(open=lambda mode="r": (_ for _ in ()).throw(FileNotFoundError()))
+        mock_path_cls.return_value.parent.parent.__truediv__.side_effect = [mock_pricing_file]
+
         result = tested.load_pricing()
 
         expected = {}

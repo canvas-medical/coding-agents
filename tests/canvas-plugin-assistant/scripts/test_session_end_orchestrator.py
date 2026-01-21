@@ -90,7 +90,6 @@ def test_run__hook_raises_system_exit(
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls
 
 
-@patch("builtins.print")
 @patch("session_end_orchestrator.sys.exit")
 @patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
@@ -100,17 +99,15 @@ def test_run__hook_raises_exception(
     mock_user_inputs_logger,
     mock_git_commit_plugin,
     mock_sys_exit,
-    mock_print,
     hook_info,
+    capsys,
 ):
     """Test run prints warning to stderr when hook raises exception and continues."""
+    tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [ValueError("Cost calculation failed")]
     mock_user_inputs_logger.run.side_effect = [None]
     mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
-    mock_print.side_effect = [None]
-
-    tested = SessionEndOrchestrator
 
     tested.run(hook_info)
 
@@ -123,16 +120,14 @@ def test_run__hook_raises_exception(
     exp_git_commit_plugin_calls = [call.run(hook_info)]
     assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
-    exp_print_calls = [
-        call("Warning: Cost Logger failed: Cost calculation failed", file=sys.stderr)
-    ]
-    assert mock_print.mock_calls == exp_print_calls
+    captured = capsys.readouterr()
+    expected = "Warning: Cost Logger failed: Cost calculation failed"
+    assert expected in captured.err
 
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls
 
 
-@patch("builtins.print")
 @patch("session_end_orchestrator.sys.exit")
 @patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
@@ -142,17 +137,15 @@ def test_run__multiple_hooks_raise_exceptions(
     mock_user_inputs_logger,
     mock_git_commit_plugin,
     mock_sys_exit,
-    mock_print,
     hook_info,
+    capsys,
 ):
     """Test run handles multiple hooks failing and continues to completion."""
+    tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [RuntimeError("Database connection failed")]
     mock_user_inputs_logger.run.side_effect = [IOError("File not found")]
     mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
-    mock_print.side_effect = [None, None]
-
-    tested = SessionEndOrchestrator
 
     tested.run(hook_info)
 
@@ -165,23 +158,16 @@ def test_run__multiple_hooks_raise_exceptions(
     exp_git_commit_plugin_calls = [call.run(hook_info)]
     assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
-    exp_print_calls = [
-        call(
-            "Warning: Cost Logger failed: Database connection failed",
-            file=sys.stderr,
-        ),
-        call(
-            "Warning: User Input Logger failed: File not found",
-            file=sys.stderr,
-        ),
-    ]
-    assert mock_print.mock_calls == exp_print_calls
+    captured = capsys.readouterr()
+    exp_error_1 = "Warning: Cost Logger failed: Database connection failed"
+    exp_error_2 = "Warning: User Input Logger failed: File not found"
+    assert exp_error_1 in captured.err
+    assert exp_error_2 in captured.err
 
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls
 
 
-@patch("builtins.print")
 @patch("session_end_orchestrator.sys.exit")
 @patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
@@ -191,17 +177,15 @@ def test_run__git_commit_plugin_raises_exception(
     mock_user_inputs_logger,
     mock_git_commit_plugin,
     mock_sys_exit,
-    mock_print,
     hook_info,
+    capsys,
 ):
     """Test run handles GitCommitPlugin failure (last hook)."""
+    tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [None]
     mock_user_inputs_logger.run.side_effect = [None]
     mock_git_commit_plugin.run.side_effect = [Exception("Git push failed")]
     mock_sys_exit.side_effect = [None]
-    mock_print.side_effect = [None]
-
-    tested = SessionEndOrchestrator
 
     tested.run(hook_info)
 
@@ -214,10 +198,9 @@ def test_run__git_commit_plugin_raises_exception(
     exp_git_commit_plugin_calls = [call.run(hook_info)]
     assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
-    exp_print_calls = [
-        call("Warning: Git Commit Plugin failed: Git push failed", file=sys.stderr)
-    ]
-    assert mock_print.mock_calls == exp_print_calls
+    captured = capsys.readouterr()
+    expected = "Warning: Git Commit Plugin failed: Git push failed"
+    assert expected in captured.err
 
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls

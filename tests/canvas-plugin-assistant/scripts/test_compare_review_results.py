@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
 
@@ -161,8 +161,8 @@ class TestCompareFindings:
         assert len(result["findings"]) == 1
         assert result["findings"][0]["detected"] is True
 
-        exp_call_anthropic_calls = [call("test-key", pytest.approx(str, abs=1000))]
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__success_raw_json(self, mock_call_anthropic) -> None:
@@ -191,7 +191,8 @@ class TestCompareFindings:
         assert result["overall_pass"] is False
         assert result["findings"][0]["detected"] is False
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__api_failure(self, mock_call_anthropic) -> None:
@@ -212,7 +213,8 @@ class TestCompareFindings:
         assert result["error"] == "Rate limited"
         assert result["overall_pass"] is False
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__json_decode_error(self, mock_call_anthropic) -> None:
@@ -234,7 +236,8 @@ class TestCompareFindings:
         assert result["raw_response"] == "This is not JSON at all"
         assert result["overall_pass"] is False
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__both_reports(self, mock_call_anthropic) -> None:
@@ -256,15 +259,15 @@ class TestCompareFindings:
 
         assert result["overall_pass"] is True
 
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
+
         # Verify both reports are in the prompt
-        call_args = mock_call_anthropic.call_args
-        prompt = call_args[0][1]
+        prompt = mock_call_anthropic.call_args.args[1]
         assert "Security Review Report" in prompt
         assert "Security content" in prompt
         assert "Database Performance Review Report" in prompt
         assert "Database content" in prompt
-
-        assert len(mock_call_anthropic.mock_calls) == 1
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__partial_detection(self, mock_call_anthropic) -> None:
@@ -293,7 +296,8 @@ class TestCompareFindings:
         # 1 detected but 2 must_detect, so overall_pass is False
         assert result["overall_pass"] is False
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__no_must_detect(self, mock_call_anthropic) -> None:
@@ -321,7 +325,8 @@ class TestCompareFindings:
         # No must_detect findings, so 0 detected >= 0 must_detect = True
         assert result["overall_pass"] is True
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__empty_expected_findings(self, mock_call_anthropic) -> None:
@@ -343,7 +348,8 @@ class TestCompareFindings:
 
         assert result["overall_pass"] is True
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__database_only(self, mock_call_anthropic) -> None:
@@ -365,14 +371,14 @@ class TestCompareFindings:
 
         assert result["overall_pass"] is True
 
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
+
         # Verify only database report is in the prompt (not security)
-        call_args = mock_call_anthropic.call_args
-        prompt = call_args[0][1]
+        prompt = mock_call_anthropic.call_args.args[1]
         assert "Security Review Report" not in prompt
         assert "Database Performance Review Report" in prompt
         assert "Database performance content" in prompt
-
-        assert len(mock_call_anthropic.mock_calls) == 1
 
     @patch("compare_review_results.call_anthropic")
     def test_compare_findings__unknown_eval_name(self, mock_call_anthropic) -> None:
@@ -391,7 +397,8 @@ class TestCompareFindings:
 
         assert result["eval_name"] == "unknown"
 
-        assert len(mock_call_anthropic.mock_calls) == 1
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
 
 class TestMain:
@@ -636,34 +643,34 @@ class TestMain:
         assert mock_compare.mock_calls == exp_compare_calls
 
     @patch("compare_review_results.sys.exit")
-    @patch("compare_review_results.print")
     @patch("compare_review_results.compare_findings")
     @patch("compare_review_results.json.loads")
     @patch("compare_review_results.Path")
     @patch("compare_review_results.os.environ.get")
     @patch("compare_review_results.argparse.ArgumentParser")
     def test_main__no_output_prints_json(
-        self, mock_argparse, mock_env_get, mock_path_cls, mock_json_loads, mock_compare, mock_print, mock_exit
+        self, mock_argparse, mock_env_get, mock_path_cls, mock_json_loads, mock_compare, mock_exit, capsys
     ) -> None:
         """Test main prints JSON when no output file specified."""
         mock_parser = MagicMock()
-        mock_argparse.return_value = mock_parser
-        mock_args = MagicMock()
-        mock_args.security_report = "/path/to/security.md"
-        mock_args.database_report = None
-        mock_args.expected = "/path/to/expected.json"
-        mock_args.output = None
-        mock_parser.parse_args.return_value = mock_args
+        mock_argparse.side_effect = [mock_parser]
+        mock_args = SimpleNamespace(
+            security_report="/path/to/security.md",
+            database_report=None,
+            expected="/path/to/expected.json",
+            output=None,
+        )
+        mock_parser.parse_args.side_effect = [mock_args]
 
         mock_env_get.side_effect = ["test-api-key"]
 
         mock_expected_path = MagicMock()
-        mock_expected_path.exists.return_value = True
-        mock_expected_path.read_text.return_value = '{"eval_name": "test"}'
+        mock_expected_path.exists.side_effect = [True]
+        mock_expected_path.read_text.side_effect = ['{"eval_name": "test"}']
 
         mock_security_path = MagicMock()
-        mock_security_path.exists.return_value = True
-        mock_security_path.read_text.return_value = "Security content"
+        mock_security_path.exists.side_effect = [True]
+        mock_security_path.read_text.side_effect = ["Security content"]
 
         path_calls = [mock_expected_path, mock_security_path]
         mock_path_cls.side_effect = path_calls
@@ -674,11 +681,9 @@ class TestMain:
         tested = main
         tested()
 
-        # Verify JSON is printed (second call after potential warning)
-        assert any(
-            '{\n  "overall_pass": false' in str(c) or '"overall_pass": false' in str(c)
-            for c in mock_print.mock_calls
-        )
+        # Verify JSON is printed to stdout
+        captured = capsys.readouterr()
+        assert '"overall_pass": false' in captured.out
 
         exp_exit_calls = [call(1)]  # Fails because overall_pass is False
         assert mock_exit.mock_calls == exp_exit_calls

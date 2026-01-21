@@ -3,7 +3,8 @@
 import subprocess
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from types import SimpleNamespace
+from unittest.mock import call, patch
 
 import pytest
 
@@ -76,11 +77,10 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__no_changes_detected(
-        self, mock_exit, mock_has_changes, mock_print, tmp_path
+        self, mock_exit, mock_has_changes, tmp_path, capsys
     ):
         """Test run exits 0 when _has_changes returns False."""
         hook_info = make_hook_info(tmp_path)
@@ -101,21 +101,18 @@ class TestGitCommitPlugin:
         assert mock_has_changes.mock_calls == exp_has_changes_calls
 
         # Verify print calls for wrap-up found and no changes detected
-        assert len(mock_print.mock_calls) == 2
-        assert "Wrap-up report found: wrap-up-report-20240101.md" in str(
-            mock_print.mock_calls[0]
-        )
-        assert "No changes detected in plugin directory" in str(mock_print.mock_calls[1])
+        captured = capsys.readouterr()
+        assert "Wrap-up report found: wrap-up-report-20240101.md" in captured.err
+        assert "No changes detected in plugin directory" in captured.err
 
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__success(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_print, tmp_path
+        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
     ):
         """Test run exits 0 on successful commit and push."""
         hook_info = make_hook_info(tmp_path)
@@ -140,21 +137,18 @@ class TestGitCommitPlugin:
         assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
 
         # Verify print calls for wrap-up found and committing
-        assert len(mock_print.mock_calls) == 2
-        assert "Wrap-up report found: wrap-up-report-20240101.md" in str(
-            mock_print.mock_calls[0]
-        )
-        assert "Committing plugin changes..." in str(mock_print.mock_calls[1])
+        captured = capsys.readouterr()
+        assert "Wrap-up report found: wrap-up-report-20240101.md" in captured.err
+        assert "Committing plugin changes..." in captured.err
 
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__subprocess_error(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_print, tmp_path
+        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
     ):
         """Test run exits 1 when subprocess.CalledProcessError is raised."""
         hook_info = make_hook_info(tmp_path)
@@ -180,20 +174,19 @@ class TestGitCommitPlugin:
         assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
 
         # Verify print was called with error message to stderr
-        assert len(mock_print.mock_calls) == 3
-        assert "Wrap-up report found" in str(mock_print.mock_calls[0])
-        assert "Committing plugin changes..." in str(mock_print.mock_calls[1])
-        assert "Git command failed:" in str(mock_print.mock_calls[2])
+        captured = capsys.readouterr()
+        assert "Wrap-up report found" in captured.err
+        assert "Committing plugin changes..." in captured.err
+        assert "Git command failed:" in captured.err
 
         exp_exit_calls = [call(1)]
         assert mock_exit.mock_calls == exp_exit_calls
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__generic_error(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_print, tmp_path
+        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
     ):
         """Test run exits 1 when a generic Exception is raised."""
         hook_info = make_hook_info(tmp_path)
@@ -218,19 +211,18 @@ class TestGitCommitPlugin:
         assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
 
         # Verify print was called with error message to stderr
-        assert len(mock_print.mock_calls) == 3
-        assert "Wrap-up report found" in str(mock_print.mock_calls[0])
-        assert "Committing plugin changes..." in str(mock_print.mock_calls[1])
-        assert "Error in git commit hook:" in str(mock_print.mock_calls[2])
+        captured = capsys.readouterr()
+        assert "Wrap-up report found" in captured.err
+        assert "Committing plugin changes..." in captured.err
+        assert "Error in git commit hook:" in captured.err
 
         exp_exit_calls = [call(1)]
         assert mock_exit.mock_calls == exp_exit_calls
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__multiple_reports_selects_most_recent(
-        self, mock_exit, mock_has_changes, mock_print, tmp_path
+        self, mock_exit, mock_has_changes, tmp_path, capsys
     ):
         """Test run selects the most recent wrap-up report by mtime."""
         hook_info = make_hook_info(tmp_path)
@@ -258,8 +250,8 @@ class TestGitCommitPlugin:
         assert mock_has_changes.mock_calls == exp_has_changes_calls
 
         # Verify the print shows the most recent report
-        assert len(mock_print.mock_calls) == 2
-        assert "wrap-up-report-newest.md" in str(mock_print.mock_calls[0])
+        captured = capsys.readouterr()
+        assert "wrap-up-report-newest.md" in captured.err
 
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
@@ -275,8 +267,7 @@ class TestGitCommitPlugin:
         """Test _has_changes returns True when there are uncommitted changes."""
         mock_cwd.side_effect = [tmp_path]
 
-        mock_result = MagicMock()
-        mock_result.stdout = "M  modified_file.py\n"
+        mock_result = SimpleNamespace(stdout="M  modified_file.py\n")
         mock_subprocess_run.side_effect = [mock_result]
 
         plugin_dir = tmp_path / "my-plugin"
@@ -314,8 +305,7 @@ class TestGitCommitPlugin:
         """Test _has_changes returns False when there are no uncommitted changes."""
         mock_cwd.side_effect = [tmp_path]
 
-        mock_result = MagicMock()
-        mock_result.stdout = ""
+        mock_result = SimpleNamespace(stdout="")
         mock_subprocess_run.side_effect = [mock_result]
 
         plugin_dir = tmp_path / "my-plugin"
@@ -353,8 +343,7 @@ class TestGitCommitPlugin:
         """Test _has_changes returns False when output is whitespace only."""
         mock_cwd.side_effect = [tmp_path]
 
-        mock_result = MagicMock()
-        mock_result.stdout = "   \n\t\n  "
+        mock_result = SimpleNamespace(stdout="   \n\t\n  ")
         mock_subprocess_run.side_effect = [mock_result]
 
         plugin_dir = tmp_path / "my-plugin"
@@ -385,21 +374,19 @@ class TestGitCommitPlugin:
 
     # ==================== _commit_and_push() tests ====================
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.subprocess.run")
     @patch("git_commit_plugin.os.chdir")
     @patch("git_commit_plugin.Path.cwd")
     def test__commit_and_push__with_changes(
-        self, mock_cwd, mock_chdir, mock_subprocess_run, mock_print, tmp_path
+        self, mock_cwd, mock_chdir, mock_subprocess_run, tmp_path, capsys
     ):
         """Test _commit_and_push commits and pushes when there are staged changes."""
         mock_cwd.side_effect = [tmp_path]
 
-        mock_add_result = MagicMock()
-        mock_diff_result = MagicMock()
-        mock_diff_result.returncode = 1  # Non-zero means there are staged changes
-        mock_commit_result = MagicMock()
-        mock_push_result = MagicMock()
+        mock_add_result = SimpleNamespace()
+        mock_diff_result = SimpleNamespace(returncode=1)  # Non-zero means there are staged changes
+        mock_commit_result = SimpleNamespace()
+        mock_push_result = SimpleNamespace()
         mock_subprocess_run.side_effect = [
             mock_add_result,
             mock_diff_result,
@@ -443,22 +430,20 @@ class TestGitCommitPlugin:
         assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
 
         # Verify success message printed to stderr
-        assert len(mock_print.mock_calls) == 1
-        assert "Plugin changes committed and pushed" in str(mock_print.mock_calls[0])
+        captured = capsys.readouterr()
+        assert "Plugin changes committed and pushed" in captured.err
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.subprocess.run")
     @patch("git_commit_plugin.os.chdir")
     @patch("git_commit_plugin.Path.cwd")
     def test__commit_and_push__no_staged_changes(
-        self, mock_cwd, mock_chdir, mock_subprocess_run, mock_print, tmp_path
+        self, mock_cwd, mock_chdir, mock_subprocess_run, tmp_path, capsys
     ):
         """Test _commit_and_push prints message when there are no staged changes."""
         mock_cwd.side_effect = [tmp_path]
 
-        mock_add_result = MagicMock()
-        mock_diff_result = MagicMock()
-        mock_diff_result.returncode = 0  # Zero means no staged changes
+        mock_add_result = SimpleNamespace()
+        mock_diff_result = SimpleNamespace(returncode=0)  # Zero means no staged changes
         mock_subprocess_run.side_effect = [mock_add_result, mock_diff_result]
 
         plugin_dir = tmp_path / "my-test-plugin"
@@ -486,15 +471,14 @@ class TestGitCommitPlugin:
         assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
 
         # Verify "No changes to commit" printed to stderr
-        assert len(mock_print.mock_calls) == 1
-        assert "No changes to commit" in str(mock_print.mock_calls[0])
+        captured = capsys.readouterr()
+        assert "No changes to commit" in captured.err
 
-    @patch("git_commit_plugin.print")
     @patch("git_commit_plugin.subprocess.run")
     @patch("git_commit_plugin.os.chdir")
     @patch("git_commit_plugin.Path.cwd")
     def test__commit_and_push__restores_cwd_on_exception(
-        self, mock_cwd, mock_chdir, mock_subprocess_run, mock_print, tmp_path
+        self, mock_cwd, mock_chdir, mock_subprocess_run, tmp_path, capsys
     ):
         """Test _commit_and_push restores original cwd even when exception occurs."""
         mock_cwd.side_effect = [tmp_path]
@@ -528,4 +512,7 @@ class TestGitCommitPlugin:
         ]
         assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
 
-        assert mock_print.mock_calls == []
+        # No output expected (no print calls)
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""

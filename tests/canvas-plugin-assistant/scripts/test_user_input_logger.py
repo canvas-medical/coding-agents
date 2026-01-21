@@ -12,11 +12,13 @@ from user_input_logger import UserInputsLogger
 
 def test_inheritance():
     """Verify UserInputsLogger inherits from BaseLogger."""
-    assert issubclass(UserInputsLogger, BaseLogger)
+    tested = UserInputsLogger
+    assert issubclass(tested, BaseLogger)
 
 
 def test_session_directory():
     """Test session_directory returns correct path."""
+    tested = UserInputsLogger
     hook_info = HookInformation(
         session_id="test123",
         exit_reason="user_exit",
@@ -25,7 +27,7 @@ def test_session_directory():
         working_directory=Path("/home/user/project/subdir"),
     )
 
-    result = UserInputsLogger.session_directory(hook_info)
+    result = tested.session_directory(hook_info)
 
     expected = Path("/home/user/project/.cpa-workflow-artifacts/user_inputs")
     assert result == expected
@@ -175,6 +177,7 @@ def test_session_directory():
 )
 def test_extraction(jsonl_lines, expected):
     """Test extraction with various JSONL content scenarios."""
+    tested = UserInputsLogger
     hook_info = HookInformation(
         session_id="test456",
         exit_reason="user_exit",
@@ -189,7 +192,7 @@ def test_extraction(jsonl_lines, expected):
     mock_file.__iter__.side_effect = [iter(jsonl_lines)]
 
     with patch.object(Path, "open", side_effect=[mock_file]) as mock_open:
-        result = UserInputsLogger.extraction(hook_info)
+        result = tested.extraction(hook_info)
 
     assert result == expected
 
@@ -202,6 +205,7 @@ def test_extraction(jsonl_lines, expected):
 
 def test_aggregation():
     """Test aggregation combines, sorts by timestamp, and flattens user inputs."""
+    tested = UserInputsLogger
     session_directory = Path(
         "/home/user/project/.cpa-workflow-artifacts/user_inputs"
     )
@@ -242,7 +246,7 @@ def test_aggregation():
                     },
                 ]) as mock_load:
                     with patch("json.dump") as mock_dump:
-                        UserInputsLogger.aggregation(session_directory)
+                        tested.aggregation(session_directory)
 
     exp_glob_calls = [call("*.json")]
     assert mock_glob.mock_calls == exp_glob_calls
@@ -295,6 +299,7 @@ def test_aggregation():
 
 def test_aggregation__json_decode_error():
     """Test aggregation skips files with invalid JSON."""
+    tested = UserInputsLogger
     session_directory = Path(
         "/home/user/project/.cpa-workflow-artifacts/user_inputs"
     )
@@ -332,7 +337,7 @@ def test_aggregation__json_decode_error():
                     },
                 ]):
                     with patch("json.dump") as mock_dump:
-                        UserInputsLogger.aggregation(session_directory)
+                        tested.aggregation(session_directory)
 
     exp_dump_calls = [
         call(
@@ -346,6 +351,7 @@ def test_aggregation__json_decode_error():
 
 def test_aggregation__missing_timestamp():
     """Test aggregation handles sessions with missing timestamp field."""
+    tested = UserInputsLogger
     session_directory = Path(
         "/home/user/project/.cpa-workflow-artifacts/user_inputs"
     )
@@ -374,7 +380,7 @@ def test_aggregation__missing_timestamp():
                     {"user_inputs": [{"input": "No timestamp", "type": "free_text"}]},
                 ]):
                     with patch("json.dump") as mock_dump:
-                        UserInputsLogger.aggregation(session_directory)
+                        tested.aggregation(session_directory)
 
     exp_dump_calls = [
         call(
@@ -388,6 +394,7 @@ def test_aggregation__missing_timestamp():
 
 def test_aggregation__empty_directory():
     """Test aggregation with no session files."""
+    tested = UserInputsLogger
     session_directory = Path(
         "/home/user/project/.cpa-workflow-artifacts/user_inputs"
     )
@@ -405,7 +412,7 @@ def test_aggregation__empty_directory():
     with patch.object(Path, "glob", mock_glob):
         with patch.object(Path, "open", mock_path_open):
             with patch("json.dump") as mock_dump:
-                UserInputsLogger.aggregation(session_directory)
+                tested.aggregation(session_directory)
 
     exp_glob_calls = [call("*.json")]
     assert mock_glob.mock_calls == exp_glob_calls

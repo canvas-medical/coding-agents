@@ -64,29 +64,3 @@ class TestPluginDir:
 
             exp_path_calls = [call.cwd()]
             assert mock_path.mock_calls == exp_path_calls
-
-
-class TestMainBlock:
-    """Tests for the __main__ block execution."""
-
-    def test_main_prints_plugin_dir(self) -> None:
-        """Test that running the module as main prints the plugin directory."""
-        with patch("get_plugin_dir.PluginDir") as mock_plugin_dir, patch(
-            "builtins.print"
-        ) as mock_print:
-            mock_plugin_dir.run.side_effect = [Path("/test/dir")]
-
-            exec(
-                compile(
-                    'if __name__ == "__main__":\n    print(PluginDir.run())',
-                    "<string>",
-                    "exec",
-                ),
-                {"__name__": "__main__", "PluginDir": mock_plugin_dir, "print": mock_print},
-            )
-
-            exp_plugin_dir_calls = [call.run()]
-            assert mock_plugin_dir.mock_calls == exp_plugin_dir_calls
-
-            exp_print_calls = [call(Path("/test/dir"))]
-            assert mock_print.mock_calls == exp_print_calls

@@ -4,6 +4,41 @@ import sys
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass as dataclass_is_dataclass
 from pathlib import Path
+from typing import Any
+
+
+class MockContextManager:
+    """
+    A simple context manager for testing that avoids MagicMock.
+
+    Use this instead of MagicMock when mocking context managers like urlopen or open.
+    This class doesn't require mock_calls verification since it's just a data container.
+
+    Example:
+        mock_response = MockContextManager(read_data=b'{"data": "value"}')
+        mock_urlopen.side_effect = [mock_response]
+    """
+
+    def __init__(self, read_data: bytes | str | None = None, **kwargs: Any) -> None:
+        """
+        Initialize the mock context manager.
+
+        Args:
+            read_data: Data to return from read() method
+            **kwargs: Additional attributes to set on the instance
+        """
+        self._read_data = read_data
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __enter__(self) -> "MockContextManager":
+        return self
+
+    def __exit__(self, *args: Any) -> bool:
+        return False
+
+    def read(self) -> bytes | str | None:
+        return self._read_data
 
 # Add the tests directory to sys.path for helper imports
 tests_dir = Path(__file__).parent

@@ -3,11 +3,12 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import call, patch
 
 import pytest
 
 from base_logger import BaseLogger
+from conftest import MockContextManager
 from hook_information import HookInformation
 
 
@@ -35,6 +36,7 @@ class TestHookInformation:
     @patch("base_logger.json")
     def test_hook_information__success(self, mock_json, mock_plugin_dir):
         """Test hook_information with valid JSON input returns HookInformation."""
+        tested = BaseLogger
         mock_json.load.side_effect = [
             {
                 "session_id": "abc123",
@@ -46,7 +48,7 @@ class TestHookInformation:
         mock_json.JSONDecodeError = json.JSONDecodeError
         mock_plugin_dir.run.side_effect = [Path("/workspace")]
 
-        result = BaseLogger.hook_information()
+        result = tested.hook_information()
 
         expected = HookInformation(
             session_id="abc123",
@@ -66,11 +68,11 @@ class TestHookInformation:
     @patch("base_logger.sys")
     @patch("base_logger.PluginDir")
     @patch("base_logger.json")
-    @patch("builtins.print")
     def test_hook_information__json_decode_error(
-        self, mock_print, mock_json, mock_plugin_dir, mock_sys
+        self, mock_json, mock_plugin_dir, mock_sys, capsys
     ):
         """Test hook_information with invalid JSON triggers error and exit."""
+        tested = BaseLogger
         mock_json.load.side_effect = [json.JSONDecodeError("test error", "doc", 0)]
         mock_json.JSONDecodeError = json.JSONDecodeError
         mock_sys.stdin = sys.stdin
@@ -78,15 +80,20 @@ class TestHookInformation:
         mock_sys.exit.side_effect = [SystemExit(1)]
 
         with pytest.raises(SystemExit):
-            BaseLogger.hook_information()
+            tested.hook_information()
 
-        exp_print_calls = [
-            call("Error parsing hook input: test error: line 1 column 1 (char 0)", file=sys.stderr)
-        ]
-        assert mock_print.mock_calls == exp_print_calls
+        captured = capsys.readouterr()
+        expected = "Error parsing hook input: test error: line 1 column 1 (char 0)"
+        assert expected in captured.err
 
         exp_sys_calls = [call.exit(1)]
         assert mock_sys.mock_calls == exp_sys_calls
+
+        exp_json_calls = [call.load(sys.stdin)]
+        assert mock_json.mock_calls == exp_json_calls
+
+        exp_plugin_dir_calls = []
+        assert mock_plugin_dir.mock_calls == exp_plugin_dir_calls
 
 
 class TestRun:
@@ -95,15 +102,12 @@ class TestRun:
     @patch("base_logger.sys")
     @patch("base_logger.datetime")
     @patch("builtins.open")
-    @patch("builtins.print")
     @patch("base_logger.json")
-    def test_run__success(
-        self, mock_json, mock_print, mock_open, mock_datetime, mock_sys
-    ):
+    def test_run__success(self, mock_json, mock_open, mock_datetime, mock_sys, capsys):
         """Test run creates directory, writes JSON, calls extraction/aggregation, exits 0."""
-        mock_file = MagicMock()
-        mock_open.return_value.__enter__ = MagicMock(side_effect=[mock_file])
-        mock_open.return_value.__exit__ = MagicMock(side_effect=[None])
+        tested = ConcreteLogger
+        mock_file = MockContextManager()
+        mock_open.side_effect = [mock_file]
 
         # Mock datetime.now() to return a fixed datetime
         fixed_datetime = datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc)
@@ -126,7 +130,7 @@ class TestRun:
             mock_mkdir.side_effect = [None]
 
             with pytest.raises(SystemExit):
-                ConcreteLogger.run(hook_info)
+                tested.run(hook_info)
 
             exp_mkdir_calls = [call(parents=True, exist_ok=True)]
             assert mock_mkdir.mock_calls == exp_mkdir_calls
@@ -139,8 +143,6 @@ class TestRun:
                 Path("/workspace/.cpa-workflow-artifacts/test-logs/session123.json"),
                 "w",
             ),
-            call().__enter__(),
-            call().__exit__(None, None, None),
         ]
         assert mock_open.mock_calls == exp_open_calls
 
@@ -160,22 +162,18 @@ class TestRun:
         ]
         assert mock_json.mock_calls == exp_json_calls
 
-        exp_print_calls = [
-            call(
-                "Session data saved to: /workspace/.cpa-workflow-artifacts/test-logs/session123.json",
-                file=sys.stderr,
-            )
-        ]
-        assert mock_print.mock_calls == exp_print_calls
+        captured = capsys.readouterr()
+        expected = "Session data saved to: /workspace/.cpa-workflow-artifacts/test-logs/session123.json"
+        assert expected in captured.err
 
         exp_sys_calls = [call.exit(0)]
         assert mock_sys.mock_calls == exp_sys_calls
 
     @patch("base_logger.sys")
     @patch("builtins.open")
-    @patch("builtins.print")
-    def test_run__write_error(self, mock_print, mock_open, mock_sys):
+    def test_run__write_error(self, mock_open, mock_sys, capsys):
         """Test run with write error triggers error message and exit 1."""
+        tested = ConcreteLogger
         mock_open.side_effect = [PermissionError("Permission denied")]
         mock_sys.stderr = sys.stderr
         mock_sys.exit.side_effect = [SystemExit(1)]
@@ -192,7 +190,7 @@ class TestRun:
             mock_mkdir.side_effect = [None]
 
             with pytest.raises(SystemExit):
-                ConcreteLogger.run(hook_info)
+                tested.run(hook_info)
 
             exp_mkdir_calls = [call(parents=True, exist_ok=True)]
             assert mock_mkdir.mock_calls == exp_mkdir_calls
@@ -205,10 +203,9 @@ class TestRun:
         ]
         assert mock_open.mock_calls == exp_open_calls
 
-        exp_print_calls = [
-            call("Error writing session data: Permission denied", file=sys.stderr)
-        ]
-        assert mock_print.mock_calls == exp_print_calls
+        captured = capsys.readouterr()
+        expected = "Error writing session data: Permission denied"
+        assert expected in captured.err
 
         exp_sys_calls = [call.exit(1)]
         assert mock_sys.mock_calls == exp_sys_calls
@@ -219,6 +216,7 @@ class TestSessionDirectory:
 
     def test_session_directory(self):
         """Test session_directory raises NotImplementedError."""
+        tested = BaseLogger
         hook_info = HookInformation(
             session_id="test123",
             exit_reason="completed",
@@ -228,7 +226,7 @@ class TestSessionDirectory:
         )
 
         with pytest.raises(NotImplementedError):
-            BaseLogger.session_directory(hook_info)
+            tested.session_directory(hook_info)
 
 
 class TestExtraction:
@@ -236,6 +234,7 @@ class TestExtraction:
 
     def test_extraction(self):
         """Test extraction raises NotImplementedError."""
+        tested = BaseLogger
         hook_info = HookInformation(
             session_id="test123",
             exit_reason="completed",
@@ -245,7 +244,7 @@ class TestExtraction:
         )
 
         with pytest.raises(NotImplementedError):
-            BaseLogger.extraction(hook_info)
+            tested.extraction(hook_info)
 
 
 class TestAggregation:
@@ -253,7 +252,8 @@ class TestAggregation:
 
     def test_aggregation(self):
         """Test aggregation raises NotImplementedError."""
-        tested = Path("/workspace/.cpa-workflow-artifacts/test-logs")
+        tested = BaseLogger
+        session_directory = Path("/workspace/.cpa-workflow-artifacts/test-logs")
 
         with pytest.raises(NotImplementedError):
-            BaseLogger.aggregation(tested)
+            tested.aggregation(session_directory)
