@@ -17,7 +17,7 @@ API_URL = "https://api.anthropic.com/v1/models"
 PRICING_URL = "https://claude.com/pricing#api"
 PRICING_FILE = Path(__file__).parent.parent / "model_costs.json"
 
-def fetch_models_from_api(api_key):
+def fetch_models_from_api(api_key: str) -> list[str] | None:
     """
     Fetch available models from Anthropic API.
 
@@ -67,7 +67,7 @@ def fetch_models_from_api(api_key):
         print(f"Unexpected error: {e}", file=sys.stderr)
         return None
 
-def normalize_model_id(model_id):
+def normalize_model_id(model_id: str) -> str:
     """
     Normalize a model ID to its base version.
 
@@ -111,7 +111,7 @@ def normalize_model_id(model_id):
 
     return model_id
 
-def fetch_pricing_from_web():
+def fetch_pricing_from_web() -> dict[str, dict[str, float]] | None:
     """
     Fetch pricing information from Claude pricing page.
 
@@ -229,7 +229,7 @@ def fetch_pricing_from_web():
         traceback.print_exc(file=sys.stderr)
         return None
 
-def load_current_pricing():
+def load_current_pricing() -> dict | None:
     """
     Load current pricing data from the model_costs.json file.
 
@@ -245,7 +245,7 @@ def load_current_pricing():
         print(f"Error parsing current pricing file: {e}", file=sys.stderr)
         return None
 
-def save_pricing(pricing_data):
+def save_pricing(pricing_data: dict) -> bool:
     """
     Save pricing data to the model_costs.json file.
 
@@ -264,7 +264,7 @@ def save_pricing(pricing_data):
         print(f"Error saving pricing data: {e}", file=sys.stderr)
         return False
 
-def automated_update_mode(api_models, web_pricing):
+def automated_update_mode(api_models: list[str], web_pricing: dict[str, dict[str, float]]) -> bool:
     """
     Automated mode for updating pricing using API models and web pricing.
 
@@ -384,7 +384,7 @@ def automated_update_mode(api_models, web_pricing):
         print("\nChanges discarded.")
         return False
 
-def main():
+def main() -> bool | None:
     """Main function."""
     import argparse
 
