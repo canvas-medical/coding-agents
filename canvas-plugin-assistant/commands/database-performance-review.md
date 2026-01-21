@@ -2,92 +2,25 @@
 
 Review Canvas plugin for database query performance issues, focusing on N+1 queries and ORM optimization.
 
-## Prerequisites
-
-This command requires:
-- `CPA_RUNNING` must be set to 1
-- `CPA_WORKSPACE_DIR` must be set
-- `CPA_PLUGIN_DIR` must be set to an existing plugin directory
-
 ## Instructions
 
-### Step 1: Check CPA_RUNNING
+### Step 1: Validate Environment
 
 ```bash
-echo $CPA_RUNNING
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --require-plugin-dir
 ```
 
-**If CPA_RUNNING is not set to "1":**
-- STOP and tell the user:
-  ```
-  ERROR: CPA_RUNNING is not set to 1.
+**If the script exits with an error:** STOP and show the user the error message. Do NOT proceed.
 
-  Please /exit and run:
-  export CPA_RUNNING=1 && claude
-
-  Then run this command again.
-  ```
-
-### Step 2: Check CPA_WORKSPACE_DIR
+**If validation passes:** Continue with the steps below.
 
 ```bash
-echo $CPA_WORKSPACE_DIR
+cd "$CPA_PLUGIN_DIR"
 ```
-
-**If CPA_WORKSPACE_DIR is not set:**
-- STOP and tell the user:
-  ```
-  ERROR: CPA_WORKSPACE_DIR is not set.
-
-  Please /exit, navigate to your workspace directory, and run:
-  export CPA_WORKSPACE_DIR=$(pwd) && claude
-
-  Then run this command again.
-  ```
-
-### Step 3: Check CPA_PLUGIN_DIR
-
-```bash
-echo $CPA_PLUGIN_DIR
-```
-
-**If CPA_PLUGIN_DIR is not set or empty:**
-- STOP and tell the user:
-  ```
-  ERROR: CPA_PLUGIN_DIR is not set.
-
-  This command requires an existing plugin. To work on a plugin:
-
-  1. /exit
-  2. Run: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/[plugin-name]
-  3. Run: claude
-
-  To see available plugins, list subdirectories in your workspace.
-  ```
-
-**If CPA_PLUGIN_DIR is set:**
-- Verify it's a subdirectory of CPA_WORKSPACE_DIR and exists:
-
-```bash
-if [[ "$CPA_PLUGIN_DIR" != "$CPA_WORKSPACE_DIR"/* ]]; then
-  echo "ERROR: CPA_PLUGIN_DIR must be a subdirectory of CPA_WORKSPACE_DIR"
-  echo "  CPA_PLUGIN_DIR: $CPA_PLUGIN_DIR"
-  echo "  CPA_WORKSPACE_DIR: $CPA_WORKSPACE_DIR"
-  exit 1
-elif [ ! -d "$CPA_PLUGIN_DIR" ]; then
-  echo "ERROR: CPA_PLUGIN_DIR points to non-existent directory: $CPA_PLUGIN_DIR"
-  exit 1
-else
-  cd "$CPA_PLUGIN_DIR"
-  echo "Working in plugin: $(basename "$CPA_PLUGIN_DIR")"
-fi
-```
-
----
 
 Run through each check, document findings, generate a report, and offer to fix issues.
 
-### 1. Check for Data Model Queries
+### Step 2: Check for Data Model Queries
 
 Identify if the plugin queries Canvas data models:
 
