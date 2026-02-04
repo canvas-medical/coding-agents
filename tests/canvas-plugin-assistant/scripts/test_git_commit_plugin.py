@@ -77,10 +77,11 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
+    @patch("git_commit_plugin.GitCommitPlugin._stage_files")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__no_changes_detected(
-        self, mock_exit, mock_has_changes, tmp_path, capsys
+        self, mock_exit, mock_has_changes, mock_stage_files, tmp_path, capsys
     ):
         """Test run exits 0 when _has_changes returns False."""
         hook_info = make_hook_info(tmp_path)
@@ -89,6 +90,7 @@ class TestGitCommitPlugin:
         artifacts_dir.mkdir()
         (artifacts_dir / "wrap-up-report-20240101.md").write_text("report content")
 
+        mock_stage_files.side_effect = [None]
         mock_has_changes.side_effect = [False]
         mock_exit.side_effect = [SystemExit(0)]
 
@@ -97,8 +99,9 @@ class TestGitCommitPlugin:
         with pytest.raises(SystemExit):
             tested.run(hook_info)
 
-        exp_has_changes_calls = [call(hook_info.workspace_dir)]
-        assert mock_has_changes.mock_calls == exp_has_changes_calls
+        exp_calls = [call(hook_info.workspace_dir)]
+        assert mock_stage_files.mock_calls == exp_calls
+        assert mock_has_changes.mock_calls == exp_calls
 
         # Verify print calls for wrap-up found and no changes detected
         captured = capsys.readouterr()
@@ -108,11 +111,12 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
+    @patch("git_commit_plugin.GitCommitPlugin._stage_files")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__success(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
+        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_stage_files, tmp_path, capsys
     ):
         """Test run exits 0 on successful commit and push."""
         hook_info = make_hook_info(tmp_path)
@@ -121,6 +125,7 @@ class TestGitCommitPlugin:
         artifacts_dir.mkdir()
         (artifacts_dir / "wrap-up-report-20240101.md").write_text("report content")
 
+        mock_stage_files.side_effect = [None]
         mock_has_changes.side_effect = [True]
         mock_commit_and_push.side_effect = [None]
         mock_exit.side_effect = [SystemExit(0)]
@@ -130,11 +135,10 @@ class TestGitCommitPlugin:
         with pytest.raises(SystemExit):
             tested.run(hook_info)
 
-        exp_has_changes_calls = [call(hook_info.workspace_dir)]
-        assert mock_has_changes.mock_calls == exp_has_changes_calls
-
-        exp_commit_and_push_calls = [call(hook_info.workspace_dir)]
-        assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
+        exp_calls = [call(hook_info.workspace_dir)]
+        assert mock_stage_files.mock_calls == exp_calls
+        assert mock_has_changes.mock_calls == exp_calls
+        assert mock_commit_and_push.mock_calls == exp_calls
 
         # Verify print calls for wrap-up found and committing
         captured = capsys.readouterr()
@@ -144,11 +148,12 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(0)]
         assert mock_exit.mock_calls == exp_exit_calls
 
+    @patch("git_commit_plugin.GitCommitPlugin._stage_files")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__subprocess_error(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
+        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_stage_files, tmp_path, capsys
     ):
         """Test run exits 1 when subprocess.CalledProcessError is raised."""
         hook_info = make_hook_info(tmp_path)
@@ -157,6 +162,7 @@ class TestGitCommitPlugin:
         artifacts_dir.mkdir()
         (artifacts_dir / "wrap-up-report-20240101.md").write_text("report content")
 
+        mock_stage_files.side_effect = [None]
         mock_has_changes.side_effect = [True]
         error = subprocess.CalledProcessError(1, "git push", stderr="push failed")
         mock_commit_and_push.side_effect = [error]
@@ -167,11 +173,10 @@ class TestGitCommitPlugin:
         with pytest.raises(SystemExit):
             tested.run(hook_info)
 
-        exp_has_changes_calls = [call(hook_info.workspace_dir)]
-        assert mock_has_changes.mock_calls == exp_has_changes_calls
-
-        exp_commit_and_push_calls = [call(hook_info.workspace_dir)]
-        assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
+        exp_calls = [call(hook_info.workspace_dir)]
+        assert mock_stage_files.mock_calls == exp_calls
+        assert mock_has_changes.mock_calls == exp_calls
+        assert mock_commit_and_push.mock_calls == exp_calls
 
         # Verify print was called with error message to stderr
         captured = capsys.readouterr()
@@ -182,11 +187,12 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(1)]
         assert mock_exit.mock_calls == exp_exit_calls
 
+    @patch("git_commit_plugin.GitCommitPlugin._stage_files")
     @patch("git_commit_plugin.GitCommitPlugin._commit_and_push")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__generic_error(
-        self, mock_exit, mock_has_changes, mock_commit_and_push, tmp_path, capsys
+        self, mock_exit, mock_has_changes, mock_commit_and_push, mock_stage_files, tmp_path, capsys
     ):
         """Test run exits 1 when a generic Exception is raised."""
         hook_info = make_hook_info(tmp_path)
@@ -195,6 +201,7 @@ class TestGitCommitPlugin:
         artifacts_dir.mkdir()
         (artifacts_dir / "wrap-up-report-20240101.md").write_text("report content")
 
+        mock_stage_files.side_effect = [None]
         mock_has_changes.side_effect = [True]
         mock_commit_and_push.side_effect = [Exception("Unexpected error occurred")]
         mock_exit.side_effect = [SystemExit(1)]
@@ -204,11 +211,10 @@ class TestGitCommitPlugin:
         with pytest.raises(SystemExit):
             tested.run(hook_info)
 
-        exp_has_changes_calls = [call(hook_info.workspace_dir)]
-        assert mock_has_changes.mock_calls == exp_has_changes_calls
-
-        exp_commit_and_push_calls = [call(hook_info.workspace_dir)]
-        assert mock_commit_and_push.mock_calls == exp_commit_and_push_calls
+        exp_calls = [call(hook_info.workspace_dir)]
+        assert mock_stage_files.mock_calls == exp_calls
+        assert mock_has_changes.mock_calls == exp_calls
+        assert mock_commit_and_push.mock_calls == exp_calls
 
         # Verify print was called with error message to stderr
         captured = capsys.readouterr()
@@ -219,10 +225,11 @@ class TestGitCommitPlugin:
         exp_exit_calls = [call(1)]
         assert mock_exit.mock_calls == exp_exit_calls
 
+    @patch("git_commit_plugin.GitCommitPlugin._stage_files")
     @patch("git_commit_plugin.GitCommitPlugin._has_changes")
     @patch("git_commit_plugin.sys.exit")
     def test_run__multiple_reports_selects_most_recent(
-        self, mock_exit, mock_has_changes, tmp_path, capsys
+        self, mock_exit, mock_has_changes, mock_stage_files, tmp_path, capsys
     ):
         """Test run selects the most recent wrap-up report by mtime."""
         hook_info = make_hook_info(tmp_path)
@@ -238,6 +245,7 @@ class TestGitCommitPlugin:
         report_newest = artifacts_dir / "wrap-up-report-newest.md"
         report_newest.write_text("newest report")
 
+        mock_stage_files.side_effect = [None]
         mock_has_changes.side_effect = [False]
         mock_exit.side_effect = [SystemExit(0)]
 
@@ -246,8 +254,9 @@ class TestGitCommitPlugin:
         with pytest.raises(SystemExit):
             tested.run(hook_info)
 
-        exp_has_changes_calls = [call(hook_info.workspace_dir)]
-        assert mock_has_changes.mock_calls == exp_has_changes_calls
+        exp_calls = [call(hook_info.workspace_dir)]
+        assert mock_stage_files.mock_calls == exp_calls
+        assert mock_has_changes.mock_calls == exp_calls
 
         # Verify the print shows the most recent report
         captured = capsys.readouterr()
