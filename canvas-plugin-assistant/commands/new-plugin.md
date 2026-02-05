@@ -2,54 +2,24 @@
 
 Start the plugin brainstorming process to transform requirements into a concrete specification, then implement it.
 
-## Prerequisites
-
-Before running this command:
-- `CPA_RUNNING` must be set to 1
-- `CPA_WORKSPACE_DIR` must be set and match current directory
-- `CPA_PLUGIN_DIR` can be set (continue implementation) or unset (create new plugin)
-
 ## Instructions
 
-### Step 1: Check CPA_RUNNING
+### Step 1: Validate Environment
 
 ```bash
-echo $CPA_RUNNING
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --plugin-dir-optional
 ```
 
-**If CPA_RUNNING is not set to "1":**
-- STOP and tell the user:
-  ```
-  ERROR: CPA_RUNNING is not set to 1.
+**If the script exits with an error:** STOP and show the user the error message. Do NOT proceed.
 
-  Please /exit and run:
-  export CPA_RUNNING=1 && claude
+**If validation passes:** The output will indicate whether this is a new plugin creation or continuing implementation.
 
-  Then run /cpa:new-plugin again.
-  ```
+### Step 2: Determine Workflow Phase
 
-### Step 2: Check CPA_WORKSPACE_DIR
+Check whether this is a new plugin creation or continuing implementation:
 
 ```bash
-echo $CPA_WORKSPACE_DIR
-pwd
-```
-
-**If CPA_WORKSPACE_DIR is not set or doesn't match current directory:**
-- STOP and tell the user:
-  ```
-  ERROR: CPA_WORKSPACE_DIR is not set correctly.
-
-  Please /exit, navigate to your workspace directory, and run:
-  export CPA_WORKSPACE_DIR=$(pwd) && claude
-
-  Then run /cpa:new-plugin again.
-  ```
-
-### Step 3: Determine Workflow Phase
-
-```bash
-echo $CPA_PLUGIN_DIR
+echo "CPA_PLUGIN_DIR: $CPA_PLUGIN_DIR"
 ```
 
 **If CPA_PLUGIN_DIR is NOT set or empty:**
@@ -58,25 +28,12 @@ echo $CPA_PLUGIN_DIR
 
 **If CPA_PLUGIN_DIR IS set:**
 - This is **continuing implementation** after scaffolding
-- Verify the directory exists and contains a plugin:
+- Change to the plugin directory and skip to **Phase 3: Implementation** below
 
 ```bash
-if [ -d "$CPA_PLUGIN_DIR" ]; then
-  cd "$CPA_PLUGIN_DIR"
-  plugin_name_snake=$(basename "$CPA_PLUGIN_DIR" | tr '-' '_')
-  if [ -f "$plugin_name_snake/CANVAS_MANIFEST.json" ]; then
-    echo "Continuing implementation for: $(basename "$CPA_PLUGIN_DIR")"
-  else
-    echo "ERROR: $CPA_PLUGIN_DIR does not contain a valid plugin structure"
-    exit 1
-  fi
-else
-  echo "ERROR: CPA_PLUGIN_DIR points to non-existent directory: $CPA_PLUGIN_DIR"
-  exit 1
-fi
+cd "$CPA_PLUGIN_DIR"
+echo "Continuing implementation for: $(basename "$CPA_PLUGIN_DIR")"
 ```
-
-- Skip to **Phase 3: Implementation** below
 
 ---
 
