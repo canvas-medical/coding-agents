@@ -24,7 +24,7 @@ echo "CPA_PLUGIN_DIR: $CPA_PLUGIN_DIR"
 
 **If CPA_PLUGIN_DIR is NOT set or empty:**
 - This is a **new plugin creation**
-- Continue to **Phase 0: Create a Git Branch** below
+- Continue to **Phase 1: Gather Requirements** below
 
 **If CPA_PLUGIN_DIR IS set:**
 - This is **continuing implementation** after scaffolding
@@ -42,9 +42,8 @@ echo "Continuing implementation for: $(basename "$CPA_PLUGIN_DIR")"
 This command handles two scenarios:
 
 1. **New Plugin Creation** (CPA_PLUGIN_DIR not set):
-   - Phase 0: Create Git Branch
    - Phase 1: Gather Requirements
-   - Phase 2: Scaffold Plugin Structure
+   - Phase 2: Scaffold Plugin Structure (includes creating git branch)
    - Then STOP and instruct user to set CPA_PLUGIN_DIR
 
 2. **Continue Implementation** (CPA_PLUGIN_DIR is set):
@@ -53,24 +52,6 @@ This command handles two scenarios:
 ---
 
 Use the **plugin-brainstorm** agent for the full workflow from spec to deployment.
-
-### Phase 0: Create a Git Branch
-
-**Only run this phase if CPA_PLUGIN_DIR is NOT set (new plugin creation).**
-
-**Before anything else, create a new branch for this plugin to work.**
-
-Generate a branch name using three random words in kebab-case. Examples:
-- `mercury-purring-lion`
-- `crystal-dancing-falcon`
-- `amber-swift-turtle`
-
-```bash
-git checkout -b {branch_name}
-git push -u origin {branch_name}
-```
-
-Tell the user the branch name you created.
 
 ### Phase 1: Gather Requirements
 
@@ -108,7 +89,17 @@ The name should be:
 - In kebab-case (lowercase with hyphens)
 - 2-4 words maximum
 
-#### Step 2: Run canvas init
+#### Step 2: Create the Git Branch
+
+Now that the plugin name is determined, create a branch for this work:
+
+```bash
+git checkout -b "plugin-$plugin_name"
+```
+
+Tell the user the branch `plugin-{plugin_name}` has been created.
+
+#### Step 3: Run canvas init
 
 ```bash
 # Store the plugin name
@@ -131,7 +122,7 @@ $CPA_WORKSPACE_DIR/
         └── protocols/
 ```
 
-#### Step 3: Verify Project Structure
+#### Step 4: Verify Project Structure
 
 ```bash
 cd "$CPA_WORKSPACE_DIR/$plugin_name"
@@ -159,7 +150,7 @@ $CPA_WORKSPACE_DIR/
 
 **If any checks fail:** Report errors to the user and investigate before proceeding.
 
-#### Step 4: Configure Plugin Directory
+#### Step 5: Configure Plugin Directory
 
 **Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
 
@@ -236,7 +227,7 @@ python_version = 3.12
 exclude = debug
 ```
 
-#### Step 5: Commit the Scaffolded Plugin
+#### Step 6: Commit the Scaffolded Plugin
 
 ```bash
 cd "$CPA_WORKSPACE_DIR/$plugin_name"
@@ -244,12 +235,12 @@ git add -A .
 git commit -m "initialize $plugin_name plugin scaffold
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-git push
+git push -u origin HEAD
 ```
 
 **CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only.
 
-#### Step 6: Instruct User to Set CPA_PLUGIN_DIR
+#### Step 7: Instruct User to Set CPA_PLUGIN_DIR
 
 **STOP and tell the user:**
 
