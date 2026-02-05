@@ -131,7 +131,7 @@ from pathlib import Path
 
 # Get workspace root directory using helper script
 workspace_dir = Path(subprocess.run(
-    ["python3", "scripts/get_plugin_dir.py"],
+    ["uv run python", "scripts/get_plugin_dir.py"],
     capture_output=True,
     text=True,
     check=True

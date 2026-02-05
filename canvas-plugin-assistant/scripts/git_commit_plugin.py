@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 SessionEnd hook that automatically commits and pushes plugin changes after wrap-up.
 
@@ -63,6 +62,9 @@ class GitCommitPlugin:
 
             print(f"Wrap-up report found: {latest_report.name}", file=sys.stderr)
 
+            # Stage all files in the plugin directory
+            cls._stage_files(plugin_dir)
+
             # Check if there are any changes in the plugin directory
             if not cls._has_changes(plugin_dir):
                 print("No changes detected in plugin directory, skipping commit", file=sys.stderr)
@@ -111,6 +113,35 @@ class GitCommitPlugin:
 
             # If output is empty, there are no changes
             return bool(result.stdout.strip())
+
+        finally:
+            os.chdir(original_cwd)
+
+    @classmethod
+    def _stage_files(cls, plugin_dir: Path) -> None:
+        """
+        Stage all files in the plugin directory.
+
+        Uses `git add -A .` to stage all modified, added, and deleted files
+        within the plugin directory.
+
+        Args:
+            plugin_dir: Path to the plugin directory
+
+        Raises:
+            subprocess.CalledProcessError: If the git command fails
+        """
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(plugin_dir)
+
+            # Stage all changes in plugin directory
+            subprocess.run(
+                ["git", "add", "-A", "."],
+                check=True,
+                capture_output=True,
+                text=True
+            )
 
         finally:
             os.chdir(original_cwd)

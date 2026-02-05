@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 """
 Usage:
-    workspace_dir = $(python3 scripts/get-plugin-dir.py)
+    workspace_dir = $(uv run python scripts/get_plugin_dir.py)
 """
 from os import environ
 from pathlib import Path

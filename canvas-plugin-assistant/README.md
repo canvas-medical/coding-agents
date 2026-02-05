@@ -26,6 +26,57 @@ Once enabled, commands are available with a namespace prefix (e.g., `/cpa:new-pl
 
 Run `/cpa:new-plugin` to start a guided brainstorming session that asks clarifying questions and produces a plugin specification for your approval.
 
+## Environment Variables
+
+CPA uses three environment variables to manage workspace context and enable session tracking. These must be set before starting Claude.
+
+### Starting a CPA Session
+
+```bash
+# Navigate to your workspace directory first
+cd /path/to/your/workspace
+
+# Start Claude with CPA environment
+export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && claude
+```
+
+To work on an existing plugin:
+```bash
+export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR=$(pwd)/my-plugin && claude
+```
+
+### Variable Reference
+
+| Variable | Required | Purpose                                                                                                                                             |
+|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CPA_RUNNING` | Always | Set to `1` to enable CPA. Activates SessionEnd hooks for cost tracking and user input logging on `/exit`.                                           |
+| `CPA_WORKSPACE_DIR` | Always | Root workspace directory. Used for storing workflow artifacts in `.cpa-workflow-artifacts/` before being moved within the created plugin directory. |
+| `CPA_PLUGIN_DIR` | For most commands | Specific plugin directory to work on. Must be a subdirectory of `CPA_WORKSPACE_DIR`.                                                                |
+
+### Command Requirements
+
+Commands validate environment variables at startup using `validate_cpa_environment.py`:
+
+| Command | CPA_PLUGIN_DIR Required? |
+|---------|-------------------------|
+| `:check-setup` | No (validates all variables) |
+| `:new-plugin` | Optional (required for Phase 3 implementation) |
+| `:coverage` | Yes |
+| `:security-review` | Yes |
+| `:database-performance-review` | Yes |
+| `:deploy` | Yes |
+| `:wrap-up` | Yes |
+
+### SessionEnd Hooks
+
+When `CPA_RUNNING=1`, the following actions run automatically when you `/exit`:
+
+1. **Cost Logger** - Saves session cost data (tokens, duration, model) to `.cpa-workflow-artifacts/costs/`
+2. **User Input Logger** - Saves user prompts to `.cpa-workflow-artifacts/user_inputs/`
+3. **Git Commit Plugin** - Auto-commits plugin changes (if in a plugin directory)
+
+Without `CPA_RUNNING=1`, these hooks are skipped and session data is not tracked.
+
 ## What This Assistant Does
 
 ### Agents
@@ -284,3 +335,46 @@ export EVALS_ANTHROPIC_API_KEY=sk-ant-...
 
 **Adding new evals:**
 See `evals/README.md` for instructions. Use `case_index.md` (human-readable only) to track what each case tests.
+
+## Tests
+
+CPA includes a comprehensive test suite for the scripts in `scripts/`. Tests are located in `tests/canvas-plugin-assistant/scripts/` at the repository root.
+
+### Running Tests
+
+```bash
+# Compact view
+uv run pytest tests/canvas-plugin-assistant/scripts/ -q
+
+# Compact view + coverage
+uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assistant/scripts --cov-report=term-missing -q
+
+# Standard view + coverage
+uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assistant/scripts --cov-report=term-missing
+```
+
+### Tested Modules
+
+| Module | Description |
+|--------|-------------|
+| `base_logger.py` | Base class for session logging |
+| `compare_review_results.py` | Eval comparison using Anthropic API |
+| `constants.py` | CPA environment variable constants |
+| `convert_svg_to_png.py` | SVG to 48x48 PNG conversion |
+| `cost_logger.py` | Session cost tracking |
+| `get_plugin_dir.py` | Plugin directory resolution |
+| `git_commit_plugin.py` | Git commit automation for plugins |
+| `hook_information.py` | Hook data structures |
+| `session_end_orchestrator.py` | SessionEnd hook orchestration |
+| `update_pricing.py` | Model pricing data updater |
+| `user_input_logger.py` | User input tracking |
+| `validate_cpa_environment.py` | Environment variable validation |
+| `verify_plugin_structure.py` | Plugin structure verification |
+
+### Test Guidelines
+
+Tests follow strict pytest guidelines with 100% coverage target:
+- Use `pytest.mark.parametrize` for multiple scenarios
+- Use `capsys` fixture for capturing print output
+- Verify all mocks with `mock_calls` property
+- Follow naming convention: `test_<method>__<case>`
