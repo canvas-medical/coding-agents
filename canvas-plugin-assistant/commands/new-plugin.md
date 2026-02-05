@@ -164,6 +164,15 @@ elif ! grep -q "^\.claude$" .gitignore; then
 fi
 ```
 
+The same way, add to `.gitignore`:
+- `.pytest_cache`
+- `.__pycache__`
+- `.coverage`
+- any other files or directories that git should ignored 
+
+**DO NOT add the folder `.cpa-workflow-artifacts` to `.gitignore`: it has to be committed to the repo.**
+
+
 **Replace `pyproject.toml` with the minimal version:**
 
 ```toml
@@ -234,7 +243,7 @@ cd "$CPA_WORKSPACE_DIR/$plugin_name"
 git add -A .
 git commit -m "initialize $plugin_name plugin scaffold
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push -u origin HEAD
 ```
 

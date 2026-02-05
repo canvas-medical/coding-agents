@@ -28,6 +28,9 @@ Check if the plugin exposes any API endpoints:
 grep -rn "SimpleAPI\|WebSocket\|SimpleAPIRoute" --include="*.py" .
 ```
 
+Ignore all directories that are not part of the project, e.g. `.venv`, `.pytest_cache`... with `--exclude-dir`.
+
+
 **If endpoints exist:**
 - Invoke the **plugin-api-server-security** skill
 - Review all handlers for:
