@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session_end_orchestrator.py"
+            "command": "uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_end_orchestrator.py"
           }
         ]
       }
