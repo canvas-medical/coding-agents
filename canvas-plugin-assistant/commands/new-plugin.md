@@ -1,6 +1,6 @@
 # New Plugin
 
-Start the plugin brainstorming process to transform requirements into a concrete specification, then implement it.
+Start the plugin brainstorming process to transform requirements into a concrete specification, then implement it. Also supports updating an existing plugin with version bumping.
 
 ## Instructions
 
@@ -39,19 +39,22 @@ echo "Continuing implementation for: $(basename "$CPA_PLUGIN_DIR")"
 
 ## Workflow Phases
 
-This command handles two scenarios:
+This command handles three scenarios:
 
 1. **New Plugin Creation** (CPA_PLUGIN_DIR not set):
    - Phase 1: Gather Requirements
    - Phase 2: Scaffold Plugin Structure (includes creating git branch)
    - Then STOP and instruct user to set CPA_PLUGIN_DIR
 
-2. **Continue Implementation** (CPA_PLUGIN_DIR is set):
+2. **Continue Implementation** (CPA_PLUGIN_DIR is set, user chooses "Continue implementation"):
    - Skip directly to Phase 3: Implementation
+
+3. **Update Existing Plugin** (CPA_PLUGIN_DIR is set, user chooses "Update existing plugin"):
+   - Skip directly to Phase 3: Update Mode
 
 ---
 
-Use the **plugin-brainstorm** agent for the full workflow from spec to deployment.
+Use the **plugin-brainstorm** agent for the full workflow from spec to deployment, or in **update mode** for modifying existing plugins.
 
 ### Phase 1: Gather Requirements
 
@@ -270,7 +273,7 @@ DO NOT PROCEED until the user has set CPA_PLUGIN_DIR and restarted Claude.
 
 ---
 
-### Phase 3: Implementation (when CPA_PLUGIN_DIR is set)
+### Phase 3: Implementation or Update (when CPA_PLUGIN_DIR is set)
 
 **This phase runs when the user has already scaffolded the plugin and set CPA_PLUGIN_DIR.**
 
@@ -285,17 +288,55 @@ if [ -d "$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts" ]; then
 fi
 ```
 
-#### Step 2: Continue Implementation
-
-Verify we're in the plugin directory:
+#### Step 2: Verify Plugin Directory
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
 plugin_name=$(basename "$CPA_PLUGIN_DIR")
-echo "Continuing implementation for: $plugin_name"
+echo "Plugin directory: $plugin_name"
 ```
 
-This phase is handled by the **plugin-brainstorm** agent.
+#### Step 3: Determine Mode
+
+Check if the plugin has already been through the wrap-up process (i.e., is a completed plugin):
+
+```bash
+cd "$CPA_PLUGIN_DIR"
+plugin_name_snake=$(echo "$(basename "$CPA_PLUGIN_DIR")" | tr '-' '_')
+if ls "$plugin_name_snake/.cpa-workflow-artifacts"/wrap-up-report-*.md 1>/dev/null 2>&1; then
+  echo "PLUGIN_COMPLETED=true"
+else
+  echo "PLUGIN_COMPLETED=false"
+fi
+```
+
+**If `PLUGIN_COMPLETED=true`:** The plugin has been through wrap-up — this is an **update**. Proceed directly to **Step 4b**.
+
+**If `PLUGIN_COMPLETED=false`:** Ask the user what they want to do:
+
+```json
+{
+  "questions": [
+    {
+      "question": "What would you like to do with this plugin?",
+      "header": "Mode",
+      "options": [
+        {"label": "Continue implementation", "description": "Resume building the plugin from where you left off"},
+        {"label": "Update existing plugin", "description": "Make changes to a completed plugin (includes version bump)"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**If "Continue implementation":** Proceed to **Step 4a** below.
+
+**If "Update existing plugin":** Proceed to **Step 4b** below.
+
+#### Step 4a: Continue Implementation
+
+This is the standard resume flow. The **plugin-brainstorm** agent will handle implementation.
 
 The agent will:
 - Edit the generated protocol handler
@@ -303,6 +344,18 @@ The agent will:
 - Generate icon for Applications (mandatory)
 - Write tests following the testing skill guidelines
 - Deploy for UAT
+
+#### Step 4b: Update Existing Plugin
+
+This flow handles modifying a completed plugin. The **plugin-brainstorm** agent will run in **update mode**.
+
+Tell the agent to run in **update mode**. The agent will:
+1. Read and summarize the existing plugin code and CANVAS_MANIFEST.json
+2. Ask the user what changes they want
+3. Implement the changes using the canvas-sdk skill for reference
+4. Run security checks and tests
+5. Bump the version in CANVAS_MANIFEST.json with user confirmation
+6. Proceed to deployment
 
 ## Git Commit Style
 

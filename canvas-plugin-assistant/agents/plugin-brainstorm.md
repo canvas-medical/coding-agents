@@ -1,6 +1,6 @@
 ---
 name: plugin-brainstorm
-description: Collaborative dialogue to transform vague requirements into concrete Canvas plugin specifications
+description: Collaborative dialogue to transform vague requirements into concrete Canvas plugin specifications, or update existing plugins with version bumping
 model: sonnet
 ---
 
@@ -392,6 +392,139 @@ Then use the `/cpa:deploy` command to start the deployment and UAT process.
 6. **Answers are final** - Once AskUserQuestion returns, those answers are recorded. Use them.
 
 7. **Complete the full workflow** - The workflow is: Spec → Implement → Test → Deploy → UAT → Coverage → Security Review → Database Performance Review → Wrap-up. After UAT passes, guide user to `/cpa:coverage`, then `/cpa:security-review`, then `/cpa:database-performance-review`, then `/cpa:wrap-up`.
+
+---
+
+## Update Mode
+
+When invoked to **update an existing plugin** (not create a new one), follow this workflow instead of the creation workflow above.
+
+### Update Step 1: Understand Current Plugin
+
+Read and summarize the existing plugin:
+
+1. Read the `CANVAS_MANIFEST.json` to get name, version, components, secrets
+2. Read all handler files (protocols/, applications/, api/)
+3. Read tests
+4. Read `plugin-spec.md` from `.cpa-workflow-artifacts/` if it exists
+
+Summarize to the user:
+
+> "**Current plugin: {name} v{version}**
+> - Handlers: {list of class paths from manifest}
+> - Effects: {list of effects used in handlers}
+> - Secrets: {list or 'None'}
+> - Description: {description from manifest}"
+
+### Update Step 2: Gather Update Requirements
+
+First, ask the user what kind of update this is:
+
+```json
+{
+  "questions": [
+    {
+      "question": "What kind of changes are you making?",
+      "header": "Change type",
+      "options": [
+        {"label": "Bug fix", "description": "Fix an issue in existing behavior"},
+        {"label": "New feature", "description": "Add new functionality to the plugin"},
+        {"label": "Modify behavior", "description": "Change how existing features work"},
+        {"label": "Refactor", "description": "Restructure code without changing behavior"}
+      ],
+      "multiSelect": true
+    }
+  ]
+}
+```
+
+Then ask the user to describe the specific changes they want in their own words. Record the change type(s) — they will be used to suggest the version bump later.
+
+### Update Step 3: Implement Changes
+
+1. **Invoke the canvas-sdk skill** to look up any new EventType enums, Effect classes, or data models needed
+2. **Edit existing files** — prefer editing over creating new files
+3. **Update CANVAS_MANIFEST.json** if components, secrets, or description changed
+4. **Update tests** to reflect the changes
+5. **Validate** the manifest:
+
+```bash
+uv run canvas validate-manifest .
+```
+
+### Update Step 4: Security Check
+
+Same checks as creation mode:
+
+- If the plugin has **any SimpleAPI handlers**, invoke the **plugin-api-server-security** skill
+- If the plugin **calls FHIR APIs or uses Http()**, invoke the **fhir-api-client-security** skill
+
+### Update Step 5: Run Tests
+
+Invoke the **testing skill** and run tests:
+
+```bash
+uv run pytest
+```
+
+Update or add tests as needed to maintain 90% coverage for the changed code.
+
+### Update Step 6: Version Bump
+
+**After all changes are implemented and tests pass**, bump the plugin version.
+
+1. Read the current `plugin_version` from `CANVAS_MANIFEST.json`
+
+2. Based on the change type(s) from Step 2, suggest a version bump:
+   - **Bug fix** or **Refactor** → suggest **Patch** (0.0.X)
+   - **New feature** or **Modify behavior** → suggest **Minor** (0.X.0)
+   - If the user mentioned breaking changes → suggest **Major** (X.0.0)
+
+3. Ask the user to confirm, presenting the suggested option first:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Current version is {current_version}. What type of version bump?",
+      "header": "Version bump",
+      "options": [
+        {"label": "{suggested} (Recommended)", "description": "{description for suggested type}"},
+        {"label": "Patch (0.0.X)", "description": "Bug fixes, minor tweaks, no new functionality"},
+        {"label": "Minor (0.X.0)", "description": "New features, backward-compatible changes"},
+        {"label": "Major (X.0.0)", "description": "Breaking changes, major refactors"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Note: Adjust the options so the recommended one comes first and the remaining options fill the other slots (no duplicates). Maximum 4 options.
+
+4. Apply the version bump:
+   - **Patch**: increment Z only (`0.0.1` → `0.0.2`)
+   - **Minor**: increment Y, reset Z (`0.0.2` → `0.1.0`)
+   - **Major**: increment X, reset Y and Z (`0.1.5` → `1.0.0`)
+
+5. Update the `plugin_version` field in `CANVAS_MANIFEST.json`
+
+6. Report the change:
+   > "Bumped version: {old_version} → {new_version}"
+
+### Update Step 7: Deploy for UAT
+
+After version bump, tell the user:
+
+> "The plugin has been updated and version bumped to {new_version}. The next step is to deploy it for user acceptance testing.
+>
+> Ready to deploy? I'll guide you through deploying and monitoring logs."
+
+Then use the `/cpa:deploy` command to start the deployment and UAT process.
+
+**Do NOT stop and wait after completing the version bump.** Always move to deployment.
+
+---
 
 ## Example Flow
 
