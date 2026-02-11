@@ -23,7 +23,7 @@ jobs:
           mkdir -p canvas-plugin-assistant/skills/canvas-sdk
 
           # Download the context file
-          curl -sSL https://raw.githubusercontent.com/Medical-Software-Foundation/canvas/refs/heads/main/coding_agent_context.txt \
+          curl -sSL https://raw.githubusercontent.com/canvas-medical/documentation/refs/heads/main/coding-agent-context.txt \
             -o canvas-plugin-assistant/skills/canvas-sdk/coding_agent_context.txt
 
       - name: Configure Git
