@@ -381,6 +381,80 @@ class TestGitCommitPlugin:
         ]
         assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
 
+    # ==================== _stage_files() tests ====================
+
+    @patch("git_commit_plugin.subprocess.run")
+    @patch("git_commit_plugin.os.chdir")
+    @patch("git_commit_plugin.Path.cwd")
+    def test__stage_files__success(
+        self, mock_cwd, mock_chdir, mock_subprocess_run, tmp_path
+    ):
+        """Test _stage_files stages all files and restores cwd."""
+        mock_cwd.side_effect = [tmp_path]
+
+        mock_add_result = SimpleNamespace()
+        mock_subprocess_run.side_effect = [mock_add_result]
+
+        plugin_dir = tmp_path / "my-plugin"
+        plugin_dir.mkdir()
+
+        tested = GitCommitPlugin
+
+        tested._stage_files(plugin_dir)
+
+        exp_cwd_calls = [call()]
+        assert mock_cwd.mock_calls == exp_cwd_calls
+
+        exp_chdir_calls = [call(plugin_dir), call(tmp_path)]
+        assert mock_chdir.mock_calls == exp_chdir_calls
+
+        exp_subprocess_run_calls = [
+            call(
+                ["git", "add", "-A", "."],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        ]
+        assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
+
+    @patch("git_commit_plugin.subprocess.run")
+    @patch("git_commit_plugin.os.chdir")
+    @patch("git_commit_plugin.Path.cwd")
+    def test__stage_files__restores_cwd_on_exception(
+        self, mock_cwd, mock_chdir, mock_subprocess_run, tmp_path
+    ):
+        """Test _stage_files restores original cwd even when exception occurs."""
+        mock_cwd.side_effect = [tmp_path]
+
+        mock_subprocess_run.side_effect = [
+            subprocess.CalledProcessError(1, "git add")
+        ]
+
+        plugin_dir = tmp_path / "my-plugin"
+        plugin_dir.mkdir()
+
+        tested = GitCommitPlugin
+
+        with pytest.raises(subprocess.CalledProcessError):
+            tested._stage_files(plugin_dir)
+
+        exp_cwd_calls = [call()]
+        assert mock_cwd.mock_calls == exp_cwd_calls
+
+        exp_chdir_calls = [call(plugin_dir), call(tmp_path)]
+        assert mock_chdir.mock_calls == exp_chdir_calls
+
+        exp_subprocess_run_calls = [
+            call(
+                ["git", "add", "-A", "."],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        ]
+        assert mock_subprocess_run.mock_calls == exp_subprocess_run_calls
+
     # ==================== _commit_and_push() tests ====================
 
     @patch("git_commit_plugin.subprocess.run")
