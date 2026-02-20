@@ -1182,40 +1182,55 @@ else:
 
 ---
 
-### SendGrid Email Client (`sendgrid_client.py`)
+### SendGrid Email — Use the Canvas SDK Native Client
+
+**Do NOT copy a custom SendGrid client.** The Canvas SDK provides a native SendGrid client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-sendgrid/`) for full documentation.
 
 **When to use:** Plugin needs to send emails, patient communications, reports, notifications.
 
 **Features:**
-- Simple SendGrid API wrapper (no sendgrid SDK dependency)
+- Structured email composition with `Email`, `Address`, `Recipient`, and `BodyContent` objects
 - HTML and plain text email support
-- Typed response with success status, message ID, or error details
+- File attachments and inline images
+- CC/BCC recipients
+- Email log querying
+- Inbound parse and outbound event webhooks
+- Error handling via `RequestFailed` exception
 
 **Usage:**
 ```python
-from {plugin_name}.clients.sendgrid_client import SendGridClient
-
-sendgrid = SendGridClient(
-    api_key=self.secrets["SENDGRID_API_KEY"],
-    from_email="notifications@clinic.com"
+from canvas_sdk.clients.sendgrid.libraries import EmailClient
+from canvas_sdk.clients.sendgrid.constants import RecipientType
+from canvas_sdk.clients.sendgrid.structures import (
+    Address, BodyContent, Email, Recipient, RequestFailed, Settings,
 )
 
-# Send email
-response = sendgrid.send_email(
-    to="patient@example.com",
+client = EmailClient(Settings(key=self.secrets["SENDGRID_API_KEY"]))
+
+email = Email(
+    sender=Address(email="notifications@clinic.com", name="Clinic"),
+    reply_tos=[Address(email="reply@clinic.com", name="Reply To")],
+    recipients=[
+        Recipient(
+            address=Address(email="patient@example.com", name="Patient"),
+            type=RecipientType.TO,
+        )
+    ],
     subject="Your Lab Results Are Ready",
-    html_body="<h1>Lab Results</h1><p>Your results are now available...</p>",
-    plain_text_body="Your lab results are now available..."  # Optional fallback
+    bodies=[
+        BodyContent(type="text/plain", value="Your lab results are now available..."),
+        BodyContent(type="text/html", value="<h1>Lab Results</h1><p>Your results are now available...</p>"),
+    ],
+    attachments=[],
+    send_at=Email.now(),
 )
-if response.success:
-    log.info(f"Email sent: {response.message_id}")
-else:
-    log.error(f"Email failed: {response.error_message}")
+
+client.simple_send(email)
 ```
 
 **Required secrets:** `SENDGRID_API_KEY`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the SendGrid client is included in the Canvas SDK.
 
 ---
 
