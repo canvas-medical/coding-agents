@@ -1006,7 +1006,7 @@ None of this is needed. Canvas doesn't use your build system, and you don't need
 
 ## Client Libraries
 
-Pre-built client libraries are available in `skills/plugin-patterns/client-library/` for common integrations. **Copy these files into your plugin** when needed rather than writing from scratch.
+The Canvas SDK provides native clients for common integrations. **Use these SDK clients directly** — do NOT copy custom client files into your plugin. See the **canvas-sdk** skill for full documentation of each client.
 
 ### AWS S3 — Use the Canvas SDK Native Client
 
@@ -1146,39 +1146,52 @@ client = LlmGoogle(LlmSettingsGemini(api_key=self.secrets["GOOGLE_API_KEY"], mod
 
 ---
 
-### Twilio SMS Client (`twilio_client.py`)
+### Twilio SMS/MMS — Use the Canvas SDK Native Client
 
-**When to use:** Plugin needs to send SMS messages, patient notifications, appointment reminders.
+**Do NOT copy a custom Twilio client.** The Canvas SDK provides a native Twilio client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-twilio/`) for full documentation.
+
+**When to use:** Plugin needs to send SMS/MMS messages, patient notifications, appointment reminders, inbound message handling.
 
 **Features:**
-- Simple Twilio API wrapper (no twilio SDK dependency)
-- E.164 phone number format support
-- Typed response with success status, message SID, or error details
+- SMS and MMS sending with `SmsMms` structured objects
+- Phone number management
+- Message history retrieval
+- Inbound message webhook handling with TwiML responses
+- Status callback support
+- Error handling via `RequestFailed` exception
 
 **Usage:**
 ```python
-from {plugin_name}.clients.twilio_client import TwilioClient
+from canvas_sdk.clients.twilio.libraries import SmsClient
+from canvas_sdk.clients.twilio.structures import Settings, SmsMms, RequestFailed
 
-twilio = TwilioClient(
+settings = Settings(
     account_sid=self.secrets["TWILIO_ACCOUNT_SID"],
-    auth_token=self.secrets["TWILIO_AUTH_TOKEN"],
-    from_number=self.secrets["TWILIO_FROM_NUMBER"]  # E.164 format: +15551234567
+    key=self.secrets["TWILIO_API_KEY"],
+    secret=self.secrets["TWILIO_API_SECRET"],
 )
+client = SmsClient(settings)
+
+# Get the account phone number
+phones = list(client.account_phone_numbers())
+phone = phones[0]
 
 # Send SMS
-response = twilio.send_sms(
-    to="+15559876543",
-    body="Your appointment is confirmed for tomorrow at 2pm."
+sms = SmsMms(
+    number_from=phone.phone_number,
+    number_from_sid=phone.sid,
+    number_to="+15559876543",
+    message="Your appointment is confirmed for tomorrow at 2pm.",
+    media_url="",
+    status_callback_url="",
 )
-if response.success:
-    log.info(f"SMS sent: {response.message_sid}")
-else:
-    log.error(f"SMS failed: {response.error_message}")
+message = client.send_sms_mms(sms)
+log.info(f"SMS sent: {message.sid}")
 ```
 
-**Required secrets:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
+**Required secrets:** `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`, `TWILIO_API_SECRET`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the Twilio client is included in the Canvas SDK.
 
 ---
 
@@ -1234,36 +1247,29 @@ client.simple_send(email)
 
 ---
 
-### How to Add a Client Library to Your Plugin
+### How to Use a Canvas SDK Client in Your Plugin
 
-1. **Copy the file** into your plugin's inner folder:
-   ```bash
-   # From inside the plugin container folder
-   mkdir -p {inner_folder}/clients
-   cp /path/to/skills/plugin-patterns/client-library/<client_file>.py {inner_folder}/clients/
-   ```
-
-2. **Add `__init__.py`** to make it a package:
-   ```bash
-   touch {inner_folder}/clients/__init__.py
-   ```
-
-3. **Add secrets** to `CANVAS_MANIFEST.json`:
-   ```json
-   "secrets": ["SECRET_1", "SECRET_2"]
-   ```
-
-4. **Add dependency** to `pyproject.toml`:
-   ```toml
-   dependencies = [
-       "django>=4.2.0",
-       "requests>=2.28.0",
-   ]
-   ```
-
-5. **Import and use** in your handler:
+1. **Import** the client directly from the Canvas SDK in your handler:
    ```python
-   from {plugin_name}.clients.<client_module> import ClientClass
+   from canvas_sdk.clients.aws import S3, Credentials
+   from canvas_sdk.clients.llms import LlmAnthropic
+   from canvas_sdk.clients.twilio.libraries import SmsClient
+   from canvas_sdk.clients.sendgrid.libraries import EmailClient
    ```
 
-**Note:** For AWS S3, do NOT copy a client file — use the Canvas SDK native client instead. See the "AWS S3" section above.
+2. **Add secrets** to `CANVAS_MANIFEST.json`:
+   ```json
+   "secrets": ["API_KEY", "API_SECRET"]
+   ```
+
+3. **Initialize** the client in your handler using `self.secrets`:
+   ```python
+   client = S3(Credentials(
+       key=self.secrets["S3_ACCESS_KEY"],
+       secret=self.secrets["S3_SECRET_KEY"],
+       region=self.secrets["S3_REGION"],
+       bucket=self.secrets["S3_BUCKET"],
+   ))
+   ```
+
+No extra dependencies or file copying needed — all clients are included in the Canvas SDK.

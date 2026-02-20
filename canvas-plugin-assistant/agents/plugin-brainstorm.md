@@ -287,7 +287,7 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 7. **Check if client libraries are needed** based on the spec:
    - **S3/file storage/uploads** → Use the Canvas SDK native S3 client (`from canvas_sdk.clients.aws import S3, Credentials`). Do NOT copy a custom client file.
    - **LLM/AI/Claude/OpenAI/Gemini** → Use the Canvas SDK native LLM clients (`from canvas_sdk.clients.llms import LlmAnthropic, LlmOpenai, LlmGoogle`). Do NOT copy a custom client file.
-   - **SMS/text messages/Twilio** → Copy `twilio_client.py` from `skills/plugin-patterns/client-library/`
+   - **SMS/text messages/Twilio** → Use the Canvas SDK native Twilio client (`from canvas_sdk.clients.twilio.libraries import SmsClient`). Do NOT copy a custom client file.
    - **Email/SendGrid** → Use the Canvas SDK native SendGrid client (`from canvas_sdk.clients.sendgrid.libraries import EmailClient`). Do NOT copy a custom client file.
 
    See the "Client Libraries" section in the plugin-patterns skill for usage details.
