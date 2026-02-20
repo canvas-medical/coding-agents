@@ -289,6 +289,7 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
    - **LLM/AI/Claude/OpenAI/Gemini** → Use the Canvas SDK native LLM clients (`from canvas_sdk.clients.llms import LlmAnthropic, LlmOpenai, LlmGoogle`). Do NOT copy a custom client file.
    - **SMS/text messages/Twilio** → Use the Canvas SDK native Twilio client (`from canvas_sdk.clients.twilio.libraries import SmsClient`). Do NOT copy a custom client file.
    - **Email/SendGrid** → Use the Canvas SDK native SendGrid client (`from canvas_sdk.clients.sendgrid.libraries import EmailClient`). Do NOT copy a custom client file.
+   - **Document processing/extraction/classification/splitting** → Use the Canvas SDK native Extend AI client (`from canvas_sdk.clients.extend_ai.libraries import Client`). Do NOT copy a custom client file.
 
    See the "Client Libraries" section in the plugin-patterns skill for usage details.
 

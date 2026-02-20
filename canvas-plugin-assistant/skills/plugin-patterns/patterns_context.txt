@@ -1247,6 +1247,60 @@ client.simple_send(email)
 
 ---
 
+### Extend AI Document Processing — Use the Canvas SDK Native Client
+
+The Canvas SDK provides a native Extend AI client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-extend-ai/`) for full documentation.
+
+**When to use:** Plugin needs intelligent document processing — extracting structured data from documents, classifying documents into categories, or splitting multi-page documents into logical sections.
+
+**Features:**
+- Document extraction (extract structured data from PDFs and images using a defined schema)
+- Document classification (classify documents into predefined categories)
+- Document splitting (split multi-page documents into logical sections)
+- Processor management (list, create, configure processors)
+- File management (list, delete uploaded files)
+- Async processing with status polling
+
+**Usage:**
+```python
+import time
+from canvas_sdk.clients.extend_ai.libraries import Client
+from canvas_sdk.clients.extend_ai.constants import RunStatus
+from canvas_sdk.clients.extend_ai.structures import RequestFailed
+
+client = Client(key=self.secrets["EXTEND_AI_API_KEY"])
+
+# Run an extraction processor on a document
+run = client.run_processor(
+    processor_id="proc_xxxxxxxxxxxxxxxxx",
+    file_name="document.pdf",
+    file_url="https://example.com/document.pdf",
+    config=None,  # Use processor's default configuration
+)
+
+# Poll for completion
+while run.status in (RunStatus.PENDING, RunStatus.PROCESSING):
+    time.sleep(2)
+    run = client.run_status(run.id)
+
+# Get results
+if run.status == RunStatus.PROCESSED:
+    extracted_data = run.output.value
+    # Clean up files after processing
+    for file in run.files:
+        client.delete_file(file.id)
+
+# List available processors
+for processor in client.list_processors():
+    log.info(f"Processor: {processor.name} ({processor.type.value})")
+```
+
+**Required secrets:** `EXTEND_AI_API_KEY`
+
+**No extra dependency needed** — the Extend AI client is included in the Canvas SDK.
+
+---
+
 ### How to Use a Canvas SDK Client in Your Plugin
 
 1. **Import** the client directly from the Canvas SDK in your handler:
@@ -1255,6 +1309,7 @@ client.simple_send(email)
    from canvas_sdk.clients.llms import LlmAnthropic
    from canvas_sdk.clients.twilio.libraries import SmsClient
    from canvas_sdk.clients.sendgrid.libraries import EmailClient
+   from canvas_sdk.clients.extend_ai.libraries import Client as ExtendAiClient
    ```
 
 2. **Add secrets** to `CANVAS_MANIFEST.json`:
