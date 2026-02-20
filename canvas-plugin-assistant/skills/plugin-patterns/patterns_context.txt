@@ -459,12 +459,10 @@ LaunchModalEffect(
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.clients.aws_s3 import AwsS3
 from my_plugin_name.protocols.handler import MyHandler
 from my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
-from ..clients.aws_s3 import AwsS3
 from .handler import MyHandler
 from ...utils.helpers import format_date
 ```
@@ -1008,183 +1006,325 @@ None of this is needed. Canvas doesn't use your build system, and you don't need
 
 ## Client Libraries
 
-Pre-built client libraries are available in `skills/plugin-patterns/client-library/` for common integrations. **Copy these files into your plugin** when needed rather than writing from scratch.
+The Canvas SDK provides native clients for common integrations. **Use these SDK clients directly** — do NOT copy custom client files into your plugin. See the **canvas-sdk** skill for full documentation of each client.
 
-### AWS S3 Client (`aws_s3.py`)
+### AWS S3 — Use the Canvas SDK Native Client
+
+**Do NOT copy a custom S3 client.** The Canvas SDK provides a native S3 client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-aws-s3/`) for full documentation.
 
 **When to use:** Plugin needs to store or retrieve files, data persistence beyond Canvas, file uploads/downloads.
 
 **Features:**
 - AWS Signature Version 4 authentication (no boto3 dependency)
-- Automatic instance-prefixed keys (`{instance}-plugins/{key}`) for isolation
-- Simple `get_object()` and `put_object()` methods
+- Upload text and binary files
+- Download, delete, and list objects
+- Generate presigned URLs for temporary access
 
 **Usage:**
 ```python
-from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+from canvas_sdk.clients.aws import S3, Credentials
 
-credentials = AwsS3Credentials(
-    aws_key=self.secrets["AWS_ACCESS_KEY"],
-    aws_secret=self.secrets["AWS_SECRET_KEY"],
-    instance="customer-instance"
+credentials = Credentials(
+    key=self.secrets["S3_ACCESS_KEY"],
+    secret=self.secrets["S3_SECRET_KEY"],
+    region=self.secrets["S3_REGION"],
+    bucket=self.secrets["S3_BUCKET"],
 )
-s3 = AwsS3(credentials)
+client = S3(credentials)
 
-# Upload JSON data
-s3.put_object("my-data.json", json.dumps(data))
+if not client.is_ready():
+    return []
 
-# Retrieve data
-response = s3.get_object("my-data.json")
-if response.status_code == 200:
+# Upload text data
+client.upload_text_to_s3("my-data.json", json.dumps(data))
+
+# Download data
+response = client.access_s3_object("my-data.json")
+if response and response.status_code == 200:
     data = response.json()
+
+# Upload binary data
+client.upload_binary_to_s3("image.png", binary_data, "image/png")
+
+# List objects
+items = client.list_s3_objects("prefix/")
+
+# Delete an object
+client.delete_object("my-data.json")
+
+# Generate a presigned URL (1 hour)
+url = client.generate_presigned_url("my-data.json", 3600)
 ```
 
-**Required secrets:** `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`
+**Required secrets:** `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION`, `S3_BUCKET`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the S3 client is included in the Canvas SDK.
 
 ---
 
-### Anthropic LLM Client (`llm_anthropic.py`)
+### LLMs (Anthropic Claude, OpenAI ChatGPT, Google Gemini) — Use the Canvas SDK Native Client
 
-**When to use:** Plugin needs AI/LLM capabilities, text generation, clinical recommendations, structured data extraction.
+**Do NOT copy a custom LLM client.** The Canvas SDK provides native LLM clients for multiple providers. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-llms/`) for full documentation.
+
+**When to use:** Plugin needs AI/LLM capabilities, text generation, clinical recommendations, structured data extraction, image/PDF analysis.
 
 **Features:**
-- Lightweight Anthropic Claude API wrapper (no anthropic SDK dependency)
-- Conversation message management
-- `chat()` for free-form responses
-- `chat_with_json()` for structured JSON responses with automatic retry
+- Unified interface for OpenAI (GPT), Anthropic (Claude), and Google (Gemini)
+- Text conversations with multi-turn support
+- File attachments (images, PDFs, text) via URL or direct content
+- Structured JSON output with Pydantic models
+- Built-in retry logic with `attempt_requests()`
+- Token usage tracking
 
-**Usage:**
+**Usage (Anthropic Claude example):**
 ```python
-from {plugin_name}.clients.llm_anthropic import LlmAnthropic
+from http import HTTPStatus
+from canvas_sdk.clients.llms import LlmAnthropic
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsAnthropic
 
-llm = LlmAnthropic(api_key=self.secrets["ANTHROPIC_API_KEY"])
+client = LlmAnthropic(LlmSettingsAnthropic(
+    api_key=self.secrets["ANTHROPIC_API_KEY"],
+    model="claude-sonnet-4-5-20250929",
+    temperature=0.0,
+    max_tokens=8192,
+))
 
-# Simple chat
-response = llm.chat(
-    system_prompt="You are a clinical assistant.",
-    user_prompt="Summarize these vitals..."
-)
-if response["success"]:
-    summary = response["content"]
+# Simple conversation
+client.set_system_prompt(["You are a clinical assistant."])
+client.set_user_prompt(["Summarize these vitals..."])
 
-# JSON response with automatic retry
-result = llm.chat_with_json(
-    system_prompt="Return JSON with keys: recommendation, urgency",
-    user_prompt="Analyze this lab result..."
-)
-if result["success"]:
-    data = result["data"]  # Parsed dict
+response = client.request()
+if response.code == HTTPStatus.OK:
+    summary = response.response
+
+# Multi-turn conversation
+client.set_model_prompt(["Here is the summary..."])
+client.set_user_prompt(["Now provide recommendations."])
+response = client.request()
+
+# Retry logic
+responses = client.attempt_requests(attempts=3)
+last = responses[-1]
+if last.code == HTTPStatus.OK:
+    content = last.response
 ```
 
-**Required secrets:** `ANTHROPIC_API_KEY`
+**For structured JSON output:**
+```python
+from pydantic import Field
+from canvas_sdk.clients.llms.structures import BaseModelLlmJson
 
-**Required dependency:** `requests>=2.28.0`
+class Recommendation(BaseModelLlmJson):
+    recommendation: str = Field(description="Clinical recommendation")
+    urgency: str = Field(description="Urgency level")
+
+client.set_system_prompt(["Return structured clinical recommendations."])
+client.set_user_prompt(["Analyze this lab result..."])
+client.json_schema = Recommendation
+
+response = client.request()
+if response.code == HTTPStatus.OK:
+    data = Recommendation.model_validate_json(response.response)
+```
+
+**Other providers:**
+```python
+# OpenAI
+from canvas_sdk.clients.llms import LlmOpenai
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsGpt4
+client = LlmOpenai(LlmSettingsGpt4(api_key=self.secrets["OPENAI_API_KEY"], model="gpt-4o"))
+
+# Google Gemini
+from canvas_sdk.clients.llms import LlmGoogle
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsGemini
+client = LlmGoogle(LlmSettingsGemini(api_key=self.secrets["GOOGLE_API_KEY"], model="models/gemini-2.0-flash"))
+```
+
+**Required secrets:** Provider API key (e.g., `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY`)
+
+**No extra dependency needed** — the LLM clients are included in the Canvas SDK.
 
 ---
 
-### Twilio SMS Client (`twilio_client.py`)
+### Twilio SMS/MMS — Use the Canvas SDK Native Client
 
-**When to use:** Plugin needs to send SMS messages, patient notifications, appointment reminders.
+**Do NOT copy a custom Twilio client.** The Canvas SDK provides a native Twilio client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-twilio/`) for full documentation.
+
+**When to use:** Plugin needs to send SMS/MMS messages, patient notifications, appointment reminders, inbound message handling.
 
 **Features:**
-- Simple Twilio API wrapper (no twilio SDK dependency)
-- E.164 phone number format support
-- Typed response with success status, message SID, or error details
+- SMS and MMS sending with `SmsMms` structured objects
+- Phone number management
+- Message history retrieval
+- Inbound message webhook handling with TwiML responses
+- Status callback support
+- Error handling via `RequestFailed` exception
 
 **Usage:**
 ```python
-from {plugin_name}.clients.twilio_client import TwilioClient
+from canvas_sdk.clients.twilio.libraries import SmsClient
+from canvas_sdk.clients.twilio.structures import Settings, SmsMms, RequestFailed
 
-twilio = TwilioClient(
+settings = Settings(
     account_sid=self.secrets["TWILIO_ACCOUNT_SID"],
-    auth_token=self.secrets["TWILIO_AUTH_TOKEN"],
-    from_number=self.secrets["TWILIO_FROM_NUMBER"]  # E.164 format: +15551234567
+    key=self.secrets["TWILIO_API_KEY"],
+    secret=self.secrets["TWILIO_API_SECRET"],
 )
+client = SmsClient(settings)
+
+# Get the account phone number
+phones = list(client.account_phone_numbers())
+phone = phones[0]
 
 # Send SMS
-response = twilio.send_sms(
-    to="+15559876543",
-    body="Your appointment is confirmed for tomorrow at 2pm."
+sms = SmsMms(
+    number_from=phone.phone_number,
+    number_from_sid=phone.sid,
+    number_to="+15559876543",
+    message="Your appointment is confirmed for tomorrow at 2pm.",
+    media_url="",
+    status_callback_url="",
 )
-if response.success:
-    log.info(f"SMS sent: {response.message_sid}")
-else:
-    log.error(f"SMS failed: {response.error_message}")
+message = client.send_sms_mms(sms)
+log.info(f"SMS sent: {message.sid}")
 ```
 
-**Required secrets:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
+**Required secrets:** `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`, `TWILIO_API_SECRET`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the Twilio client is included in the Canvas SDK.
 
 ---
 
-### SendGrid Email Client (`sendgrid_client.py`)
+### SendGrid Email — Use the Canvas SDK Native Client
+
+**Do NOT copy a custom SendGrid client.** The Canvas SDK provides a native SendGrid client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-sendgrid/`) for full documentation.
 
 **When to use:** Plugin needs to send emails, patient communications, reports, notifications.
 
 **Features:**
-- Simple SendGrid API wrapper (no sendgrid SDK dependency)
+- Structured email composition with `Email`, `Address`, `Recipient`, and `BodyContent` objects
 - HTML and plain text email support
-- Typed response with success status, message ID, or error details
+- File attachments and inline images
+- CC/BCC recipients
+- Email log querying
+- Inbound parse and outbound event webhooks
+- Error handling via `RequestFailed` exception
 
 **Usage:**
 ```python
-from {plugin_name}.clients.sendgrid_client import SendGridClient
-
-sendgrid = SendGridClient(
-    api_key=self.secrets["SENDGRID_API_KEY"],
-    from_email="notifications@clinic.com"
+from canvas_sdk.clients.sendgrid.libraries import EmailClient
+from canvas_sdk.clients.sendgrid.constants import RecipientType
+from canvas_sdk.clients.sendgrid.structures import (
+    Address, BodyContent, Email, Recipient, RequestFailed, Settings,
 )
 
-# Send email
-response = sendgrid.send_email(
-    to="patient@example.com",
+client = EmailClient(Settings(key=self.secrets["SENDGRID_API_KEY"]))
+
+email = Email(
+    sender=Address(email="notifications@clinic.com", name="Clinic"),
+    reply_tos=[Address(email="reply@clinic.com", name="Reply To")],
+    recipients=[
+        Recipient(
+            address=Address(email="patient@example.com", name="Patient"),
+            type=RecipientType.TO,
+        )
+    ],
     subject="Your Lab Results Are Ready",
-    html_body="<h1>Lab Results</h1><p>Your results are now available...</p>",
-    plain_text_body="Your lab results are now available..."  # Optional fallback
+    bodies=[
+        BodyContent(type="text/plain", value="Your lab results are now available..."),
+        BodyContent(type="text/html", value="<h1>Lab Results</h1><p>Your results are now available...</p>"),
+    ],
+    attachments=[],
+    send_at=Email.now(),
 )
-if response.success:
-    log.info(f"Email sent: {response.message_id}")
-else:
-    log.error(f"Email failed: {response.error_message}")
+
+client.simple_send(email)
 ```
 
 **Required secrets:** `SENDGRID_API_KEY`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the SendGrid client is included in the Canvas SDK.
 
 ---
 
-### How to Add a Client Library to Your Plugin
+### Extend AI Document Processing — Use the Canvas SDK Native Client
 
-1. **Copy the file** into your plugin's inner folder:
-   ```bash
-   # From inside the plugin container folder
-   mkdir -p {inner_folder}/clients
-   cp /path/to/skills/plugin-patterns/client-library/aws_s3.py {inner_folder}/clients/
-   ```
+The Canvas SDK provides a native Extend AI client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-extend-ai/`) for full documentation.
 
-2. **Add `__init__.py`** to make it a package:
-   ```bash
-   touch {inner_folder}/clients/__init__.py
-   ```
+**When to use:** Plugin needs intelligent document processing — extracting structured data from documents, classifying documents into categories, or splitting multi-page documents into logical sections.
 
-3. **Add secrets** to `CANVAS_MANIFEST.json`:
-   ```json
-   "secrets": ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
-   ```
+**Features:**
+- Document extraction (extract structured data from PDFs and images using a defined schema)
+- Document classification (classify documents into predefined categories)
+- Document splitting (split multi-page documents into logical sections)
+- Processor management (list, create, configure processors)
+- File management (list, delete uploaded files)
+- Async processing with status polling
 
-4. **Add dependency** to `pyproject.toml`:
-   ```toml
-   dependencies = [
-       "django>=4.2.0",
-       "requests>=2.28.0",
-   ]
-   ```
+**Usage:**
+```python
+import time
+from canvas_sdk.clients.extend_ai.libraries import Client
+from canvas_sdk.clients.extend_ai.constants import RunStatus
+from canvas_sdk.clients.extend_ai.structures import RequestFailed
 
-5. **Import and use** in your handler:
+client = Client(key=self.secrets["EXTEND_AI_API_KEY"])
+
+# Run an extraction processor on a document
+run = client.run_processor(
+    processor_id="proc_xxxxxxxxxxxxxxxxx",
+    file_name="document.pdf",
+    file_url="https://example.com/document.pdf",
+    config=None,  # Use processor's default configuration
+)
+
+# Poll for completion
+while run.status in (RunStatus.PENDING, RunStatus.PROCESSING):
+    time.sleep(2)
+    run = client.run_status(run.id)
+
+# Get results
+if run.status == RunStatus.PROCESSED:
+    extracted_data = run.output.value
+    # Clean up files after processing
+    for file in run.files:
+        client.delete_file(file.id)
+
+# List available processors
+for processor in client.list_processors():
+    log.info(f"Processor: {processor.name} ({processor.type.value})")
+```
+
+**Required secrets:** `EXTEND_AI_API_KEY`
+
+**No extra dependency needed** — the Extend AI client is included in the Canvas SDK.
+
+---
+
+### How to Use a Canvas SDK Client in Your Plugin
+
+1. **Import** the client directly from the Canvas SDK in your handler:
    ```python
-   from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+   from canvas_sdk.clients.aws import S3, Credentials
+   from canvas_sdk.clients.llms import LlmAnthropic
+   from canvas_sdk.clients.twilio.libraries import SmsClient
+   from canvas_sdk.clients.sendgrid.libraries import EmailClient
+   from canvas_sdk.clients.extend_ai.libraries import Client as ExtendAiClient
    ```
+
+2. **Add secrets** to `CANVAS_MANIFEST.json`:
+   ```json
+   "secrets": ["API_KEY", "API_SECRET"]
+   ```
+
+3. **Initialize** the client in your handler using `self.secrets`:
+   ```python
+   client = S3(Credentials(
+       key=self.secrets["S3_ACCESS_KEY"],
+       secret=self.secrets["S3_SECRET_KEY"],
+       region=self.secrets["S3_REGION"],
+       bucket=self.secrets["S3_BUCKET"],
+   ))
+   ```
+
+No extra dependencies or file copying needed — all clients are included in the Canvas SDK.

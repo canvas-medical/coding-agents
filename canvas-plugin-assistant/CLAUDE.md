@@ -12,7 +12,6 @@ Relative imports will fail in the Canvas runtime. Always use the full package pa
 
 ```python
 # BAD - relative imports (will fail in Canvas)
-from ..clients.aws_s3 import AwsS3
 from .handler import MyHandler
 from ...utils.helpers import format_date
 ```
@@ -21,7 +20,6 @@ from ...utils.helpers import format_date
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.clients.aws_s3 import AwsS3
 from my_plugin_name.protocols.handler import MyHandler
 from my_plugin_name.utils.helpers import format_date
 ```
