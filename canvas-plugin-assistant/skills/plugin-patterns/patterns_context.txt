@@ -1062,42 +1062,87 @@ url = client.generate_presigned_url("my-data.json", 3600)
 
 ---
 
-### Anthropic LLM Client (`llm_anthropic.py`)
+### LLMs (Anthropic Claude, OpenAI ChatGPT, Google Gemini) — Use the Canvas SDK Native Client
 
-**When to use:** Plugin needs AI/LLM capabilities, text generation, clinical recommendations, structured data extraction.
+**Do NOT copy a custom LLM client.** The Canvas SDK provides native LLM clients for multiple providers. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-llms/`) for full documentation.
+
+**When to use:** Plugin needs AI/LLM capabilities, text generation, clinical recommendations, structured data extraction, image/PDF analysis.
 
 **Features:**
-- Lightweight Anthropic Claude API wrapper (no anthropic SDK dependency)
-- Conversation message management
-- `chat()` for free-form responses
-- `chat_with_json()` for structured JSON responses with automatic retry
+- Unified interface for OpenAI (GPT), Anthropic (Claude), and Google (Gemini)
+- Text conversations with multi-turn support
+- File attachments (images, PDFs, text) via URL or direct content
+- Structured JSON output with Pydantic models
+- Built-in retry logic with `attempt_requests()`
+- Token usage tracking
 
-**Usage:**
+**Usage (Anthropic Claude example):**
 ```python
-from {plugin_name}.clients.llm_anthropic import LlmAnthropic
+from http import HTTPStatus
+from canvas_sdk.clients.llms import LlmAnthropic
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsAnthropic
 
-llm = LlmAnthropic(api_key=self.secrets["ANTHROPIC_API_KEY"])
+client = LlmAnthropic(LlmSettingsAnthropic(
+    api_key=self.secrets["ANTHROPIC_API_KEY"],
+    model="claude-sonnet-4-5-20250929",
+    temperature=0.0,
+    max_tokens=8192,
+))
 
-# Simple chat
-response = llm.chat(
-    system_prompt="You are a clinical assistant.",
-    user_prompt="Summarize these vitals..."
-)
-if response["success"]:
-    summary = response["content"]
+# Simple conversation
+client.set_system_prompt(["You are a clinical assistant."])
+client.set_user_prompt(["Summarize these vitals..."])
 
-# JSON response with automatic retry
-result = llm.chat_with_json(
-    system_prompt="Return JSON with keys: recommendation, urgency",
-    user_prompt="Analyze this lab result..."
-)
-if result["success"]:
-    data = result["data"]  # Parsed dict
+response = client.request()
+if response.code == HTTPStatus.OK:
+    summary = response.response
+
+# Multi-turn conversation
+client.set_model_prompt(["Here is the summary..."])
+client.set_user_prompt(["Now provide recommendations."])
+response = client.request()
+
+# Retry logic
+responses = client.attempt_requests(attempts=3)
+last = responses[-1]
+if last.code == HTTPStatus.OK:
+    content = last.response
 ```
 
-**Required secrets:** `ANTHROPIC_API_KEY`
+**For structured JSON output:**
+```python
+from pydantic import Field
+from canvas_sdk.clients.llms.structures import BaseModelLlmJson
 
-**Required dependency:** `requests>=2.28.0`
+class Recommendation(BaseModelLlmJson):
+    recommendation: str = Field(description="Clinical recommendation")
+    urgency: str = Field(description="Urgency level")
+
+client.set_system_prompt(["Return structured clinical recommendations."])
+client.set_user_prompt(["Analyze this lab result..."])
+client.json_schema = Recommendation
+
+response = client.request()
+if response.code == HTTPStatus.OK:
+    data = Recommendation.model_validate_json(response.response)
+```
+
+**Other providers:**
+```python
+# OpenAI
+from canvas_sdk.clients.llms import LlmOpenai
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsGpt4
+client = LlmOpenai(LlmSettingsGpt4(api_key=self.secrets["OPENAI_API_KEY"], model="gpt-4o"))
+
+# Google Gemini
+from canvas_sdk.clients.llms import LlmGoogle
+from canvas_sdk.clients.llms.structures.settings import LlmSettingsGemini
+client = LlmGoogle(LlmSettingsGemini(api_key=self.secrets["GOOGLE_API_KEY"], model="models/gemini-2.0-flash"))
+```
+
+**Required secrets:** Provider API key (e.g., `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY`)
+
+**No extra dependency needed** — the LLM clients are included in the Canvas SDK.
 
 ---
 
