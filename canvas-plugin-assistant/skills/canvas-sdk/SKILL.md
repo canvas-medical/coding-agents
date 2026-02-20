@@ -44,6 +44,17 @@ Use this skill when you need information about:
 - Condition, AllergyIntolerance, Observation
 - Note, Task, Staff, Team
 
+### Third-Party Libraries
+- AWS S3
+- LLM:
+  - Anthropic Claude, 
+  - OpenAI ChatGPT, 
+  - Google Gemini
+- Twilio
+- SendGrid
+- Extend.ai
+
+
 ## Usage
 
 **IMPORTANT**: The full SDK documentation is bundled with this skill. **DO NOT download, curl, or fetch remote files.**

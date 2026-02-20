@@ -15,6 +15,12 @@ Use this skill when you need:
 - Best practices for testing, error handling, security
 - Guidance on plugin complexity decisions
 - Common anti-patterns to avoid
+- Implementation of:
+  - AWS S3
+  - LLM (Anthropic Claude, OpenAI ChatGPT, Google Gemini)
+  - Twilio
+  - SendGrid
+  - Extend.ai
 
 ## Quick Reference
 
