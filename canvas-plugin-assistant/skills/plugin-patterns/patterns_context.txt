@@ -459,12 +459,10 @@ LaunchModalEffect(
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.clients.aws_s3 import AwsS3
 from my_plugin_name.protocols.handler import MyHandler
 from my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
-from ..clients.aws_s3 import AwsS3
 from .handler import MyHandler
 from ...utils.helpers import format_date
 ```
@@ -1010,38 +1008,57 @@ None of this is needed. Canvas doesn't use your build system, and you don't need
 
 Pre-built client libraries are available in `skills/plugin-patterns/client-library/` for common integrations. **Copy these files into your plugin** when needed rather than writing from scratch.
 
-### AWS S3 Client (`aws_s3.py`)
+### AWS S3 — Use the Canvas SDK Native Client
+
+**Do NOT copy a custom S3 client.** The Canvas SDK provides a native S3 client. See the **canvas-sdk** skill (`https://docs.canvasmedical.com/sdk/clients-aws-s3/`) for full documentation.
 
 **When to use:** Plugin needs to store or retrieve files, data persistence beyond Canvas, file uploads/downloads.
 
 **Features:**
 - AWS Signature Version 4 authentication (no boto3 dependency)
-- Automatic instance-prefixed keys (`{instance}-plugins/{key}`) for isolation
-- Simple `get_object()` and `put_object()` methods
+- Upload text and binary files
+- Download, delete, and list objects
+- Generate presigned URLs for temporary access
 
 **Usage:**
 ```python
-from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+from canvas_sdk.clients.aws import S3, Credentials
 
-credentials = AwsS3Credentials(
-    aws_key=self.secrets["AWS_ACCESS_KEY"],
-    aws_secret=self.secrets["AWS_SECRET_KEY"],
-    instance="customer-instance"
+credentials = Credentials(
+    key=self.secrets["S3_ACCESS_KEY"],
+    secret=self.secrets["S3_SECRET_KEY"],
+    region=self.secrets["S3_REGION"],
+    bucket=self.secrets["S3_BUCKET"],
 )
-s3 = AwsS3(credentials)
+client = S3(credentials)
 
-# Upload JSON data
-s3.put_object("my-data.json", json.dumps(data))
+if not client.is_ready():
+    return []
 
-# Retrieve data
-response = s3.get_object("my-data.json")
-if response.status_code == 200:
+# Upload text data
+client.upload_text_to_s3("my-data.json", json.dumps(data))
+
+# Download data
+response = client.access_s3_object("my-data.json")
+if response and response.status_code == 200:
     data = response.json()
+
+# Upload binary data
+client.upload_binary_to_s3("image.png", binary_data, "image/png")
+
+# List objects
+items = client.list_s3_objects("prefix/")
+
+# Delete an object
+client.delete_object("my-data.json")
+
+# Generate a presigned URL (1 hour)
+url = client.generate_presigned_url("my-data.json", 3600)
 ```
 
-**Required secrets:** `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`
+**Required secrets:** `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION`, `S3_BUCKET`
 
-**Required dependency:** `requests>=2.28.0`
+**No extra dependency needed** — the S3 client is included in the Canvas SDK.
 
 ---
 
@@ -1163,7 +1180,7 @@ else:
    ```bash
    # From inside the plugin container folder
    mkdir -p {inner_folder}/clients
-   cp /path/to/skills/plugin-patterns/client-library/aws_s3.py {inner_folder}/clients/
+   cp /path/to/skills/plugin-patterns/client-library/<client_file>.py {inner_folder}/clients/
    ```
 
 2. **Add `__init__.py`** to make it a package:
@@ -1173,7 +1190,7 @@ else:
 
 3. **Add secrets** to `CANVAS_MANIFEST.json`:
    ```json
-   "secrets": ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
+   "secrets": ["SECRET_1", "SECRET_2"]
    ```
 
 4. **Add dependency** to `pyproject.toml`:
@@ -1186,5 +1203,7 @@ else:
 
 5. **Import and use** in your handler:
    ```python
-   from {plugin_name}.clients.aws_s3 import AwsS3, AwsS3Credentials
+   from {plugin_name}.clients.<client_module> import ClientClass
    ```
+
+**Note:** For AWS S3, do NOT copy a client file — use the Canvas SDK native client instead. See the "AWS S3" section above.

@@ -285,7 +285,7 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 5. **Update CANVAS_MANIFEST.json** with correct class paths
 6. **Add secrets** to manifest if needed
 7. **Check if client libraries are needed** based on the spec:
-   - **S3/file storage/uploads** → Copy `aws_s3.py` from `skills/plugin-patterns/client-library/`
+   - **S3/file storage/uploads** → Use the Canvas SDK native S3 client (`from canvas_sdk.clients.aws import S3, Credentials`). Do NOT copy a custom client file.
    - **LLM/AI/Claude** → Copy `llm_anthropic.py` from `skills/plugin-patterns/client-library/`
    - **SMS/text messages/Twilio** → Copy `twilio_client.py` from `skills/plugin-patterns/client-library/`
    - **Email/SendGrid** → Copy `sendgrid_client.py` from `skills/plugin-patterns/client-library/`
@@ -300,11 +300,9 @@ Canvas plugins MUST use absolute imports with the full package path. Relative im
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.clients.aws_s3 import AwsS3
 from my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
-from ..clients.aws_s3 import AwsS3
 from .helpers import format_date
 ```
 
