@@ -4,6 +4,8 @@ Start the plugin brainstorming process to transform requirements into a concrete
 
 ## Instructions
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ### Step 1: Validate Environment
 
 ```bash

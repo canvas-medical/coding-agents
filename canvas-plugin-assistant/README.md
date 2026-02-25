@@ -57,6 +57,8 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 
 Commands validate environment variables at startup using `validate_cpa_environment.py`:
 
+All Python tooling in skills, agents, commands, and scripts must be executed via `uv run ...` (for scripts, use `uv run python <script>.py ...`). Do not use bare `python` or `pip` in command workflows.
+
 | Command | CPA_PLUGIN_DIR Required? |
 |---------|-------------------------|
 | `:check-setup` | No (validates all variables) |

@@ -4,6 +4,8 @@ Execute eval cases to verify that security and database performance review comma
 
 ## Instructions
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ### 1. Discover Eval Cases
 
 ```bash
@@ -33,7 +35,7 @@ cd evals/{eval_name}
 
 First, get the workspace directory:
 ```bash
-WORKSPACE_DIR = $(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 ```
 
 Run both reviews on each eval case - the comparison script will determine which findings are relevant:
@@ -77,7 +79,7 @@ cd -
 ### 3. Generate Eval Results Report
 
 ```bash
-WORKSPACE_DIR = $(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
+WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 ```
 Create `$WORKSPACE_DIR/.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 

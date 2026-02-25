@@ -7,6 +7,8 @@ description: Analyze Canvas instance configuration to understand the target envi
 
 This skill provides guidance for analyzing a Canvas Medical instance's configuration before building plugins. The analysis informs plugin design decisions and identifies existing resources to leverage.
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ## When to Use This Skill
 
 Use this skill when:

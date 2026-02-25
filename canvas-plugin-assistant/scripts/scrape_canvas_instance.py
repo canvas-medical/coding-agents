@@ -358,7 +358,7 @@ class CanvasInstanceScraper:
     def main(cls, argv: list[str]) -> None:
         """Entry point for CLI execution."""
         if len(argv) < 3:
-            print("Usage: python scrape_canvas_instance.py <instance_name> <root_password>")
+            print("Usage: uv run python scrape_canvas_instance.py <instance_name> <root_password>")
             sys.exit(1)
 
         instance_name = argv[1]

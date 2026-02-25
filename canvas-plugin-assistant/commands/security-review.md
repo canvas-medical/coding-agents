@@ -4,6 +4,8 @@ Comprehensive security audit for Canvas plugins covering both server-side API se
 
 ## Instructions
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ### Step 1: Validate Environment
 
 ```bash

@@ -4,6 +4,8 @@ Generate an SVG icon from a description and automatically convert it to 48x48 PN
 
 ## Instructions
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 When this command is invoked, generate an SVG icon based on the user's description and automatically convert it to a 48x48 PNG format suitable for Canvas Medical plugins.
 
 ### Workflow
