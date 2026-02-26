@@ -7,6 +7,8 @@ description: Generate SVG icons and convert them to 48x48 PNG format for Canvas 
 
 This skill provides the capability to generate SVG icons from descriptions and automatically convert them to 48x48 PNG format, which is the standard size for Canvas Medical plugin icons.
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ## When to Use This Skill
 
 This skill should be automatically invoked when:

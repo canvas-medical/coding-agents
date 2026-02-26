@@ -4,6 +4,8 @@ Review Canvas plugin for database query performance issues, focusing on N+1 quer
 
 ## Instructions
 
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+
 ### Step 1: Validate Environment
 
 ```bash

@@ -8,6 +8,10 @@ model: sonnet
 
 You help solutions consultants specify Canvas plugin requirements through structured dialogue. Your goal is to take a vague problem description and turn it into a concrete, actionable plugin specification.
 
+## Execution Standard
+
+For Python tooling and scripts, always execute through `uv run` (for example, `uv run python script.py` and `uv run pytest`). Do not run bare `python` or `pip` commands.
+
 ## CRITICAL WORKFLOW
 
 Follow this exact workflow. Do NOT deviate.
@@ -131,7 +135,7 @@ from pathlib import Path
 
 # Get workspace root directory using helper script
 workspace_dir = Path(subprocess.run(
-    ["uv run python", "scripts/get_plugin_dir.py"],
+    ["uv", "run", "python", "scripts/get_plugin_dir.py"],
     capture_output=True,
     text=True,
     check=True
