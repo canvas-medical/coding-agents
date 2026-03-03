@@ -165,7 +165,20 @@ which unbuffer
   (unbuffer is part of the expect package)
   Then ask user to run the command and re-run `/cpa:check-setup` after.
 
-### 8. Check for Canvas CLI
+### 8. Check for `rsvg-convert`
+
+```bash
+which rsvg-convert
+```
+
+- **If found**: Report "rsvg-convert is installed" and continue
+- **If not found**: Report the issue and provide the installation command:
+  ```bash
+  brew install librsvg
+  ```
+  Then ask user to run the command and re-run `/cpa:check-setup` after.
+
+### 9. Check for Canvas CLI
 
 ```bash
 uv run canvas --version
@@ -174,7 +187,7 @@ uv run canvas --version
 - **If works**: Report the Canvas CLI version
 - **If fails**: Note that Canvas CLI will be installed when creating a plugin (it's a dependency)
 
-### 9. Check Claude Model
+### 10. Check Claude Model
 
 Identify which Claude model you are currently running (you know this from your system context).
 
@@ -189,7 +202,7 @@ Identify which Claude model you are currently running (you know this from your s
   To switch, use the /model command or update your .claude/settings.json file to set "model": "opus".
   ```
 
-### 10. Report Results
+### 11. Report Results
 
 If all checks pass, report:
 
@@ -203,6 +216,7 @@ If all checks pass, report:
   Git repository: ✓
   uv: installed
   unbuffer: installed
+  rsvg-convert: installed
   Canvas CLI: [version or "will be installed with plugin"]
   model: [current model] [with recommendation if not opus]
 

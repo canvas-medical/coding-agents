@@ -280,9 +280,12 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
    - **MANDATORY STEP**: If you created an Application class in step 3, you MUST generate an icon NOW
    - Do NOT skip this step - Applications will not work without icons
    - Invoke the **icon-generation skill**: `Skill(skill="icon-generation")`
-   - Generate an appropriate icon based on the plugin name and purpose
+   - The skill's "Automated Flow Context" section applies — auto-save to `{plugin_name_snake}/assets/` without asking
+   - Infer the icon subject from the plugin name and purpose
+   - Search Lucide/Tabler for a matching icon, fetch the SVG, extract inner elements, wrap in the 128x128 template
    - Create the assets directory: `mkdir -p {plugin_name_snake}/assets`
-   - Save SVG and PNG (48x48) to `{plugin_name_snake}/assets/`
+   - Write the SVG to `/tmp`, convert with `rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o {plugin_name_snake}/assets/icon-name.png`
+   - Delete the temporary SVG from `/tmp`
    - Update `CANVAS_MANIFEST.json` applications entry with `"icon": "assets/{icon-filename}.png"`
    - Example: For a "patient-scheduler" Application, create "assets/patient-scheduler-icon.png"
    - **Verify the icon files exist before proceeding**: `ls -lh {plugin_name_snake}/assets/*.png`
