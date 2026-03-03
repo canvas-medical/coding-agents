@@ -1,216 +1,204 @@
 ---
 name: icon-generation
-description: Generate SVG icons and convert them to 48x48 PNG format for Canvas plugins and applications
+description: Generate app icons — black rounded square with white symbol, 128x128 PNG
 ---
 
 # Icon Generation Skill
 
-This skill provides the capability to generate SVG icons from descriptions and automatically convert them to 48x48 PNG format, which is the standard size for Canvas Medical plugin icons.
-
-**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+Generate consistent, branded icons for Canvas SDK plugins and small applications. Every icon follows the same visual language: a black rounded square with a simple white symbol, on a transparent background.
 
 ## When to Use This Skill
 
-This skill should be automatically invoked when:
-- Creating a new Canvas plugin that requires an application icon
-- The user explicitly requests an icon (e.g., "create an icon", "I need an icon", "generate an icon")
-- Working on a plugin's `CANVAS_MANIFEST.json` and an `icon` field needs to be populated
-- The user describes an icon they want (e.g., "I want a blue rocket ship icon")
+- Creating a new plugin or app that needs an icon
+- User requests an icon for an existing project
+- Regenerating or updating an existing icon
 
-## Icon Generation Workflow
+## Design Specification
 
-Follow these steps to generate an icon:
+### Canvas & Background
 
-### 1. Parse Description
+- SVG with `viewBox="0 0 128 128"`
+- Transparent background (no background rectangle)
 
-Extract or generate a clear description of the icon. If working on a plugin:
-- Use the plugin name and purpose to generate an appropriate icon description
-- Consider the medical/healthcare context for Canvas plugins
-- Keep descriptions clear and specific
+### Rounded Square
 
-Examples:
-- "medical chart with checkmark"
-- "stethoscope with blue accent"
-- "vitals monitoring dashboard icon"
-- "patient alert notification bell"
+- Black (`#000000`) filled rectangle
+- Full bleed: `x="0" y="0"` with `width="128" height="128"`
+- Corner radius `rx="24"`
 
-### 2. Generate SVG Icon
+### Layout & Safe Zone
 
-Create a clean, professional SVG icon based on the description:
-- Use appropriate colors, shapes, and design elements
-- Ensure the SVG is well-formed with proper viewBox and dimensions
-- Target a square aspect ratio (e.g., viewBox="0 0 100 100")
-- Keep the design simple and clear at small sizes (will be 48x48 PNG)
-- For medical/healthcare icons, use professional, clean styling
-- Avoid overly complex details that won't render well at 48x48
+- Icons must be visually centered around `(64, 64)`
+- The `scale(3.5)` transform produces an **84x84** bounding box (66% canvas fill), within the recommended 60–80% range
+- `translate(22,22)` centers the scaled icon on the 128x128 canvas
+- Allow pointed shapes (triangles, arrows) or circular elements to slightly overshoot the safe zone to carry the same visual weight as blocky shapes
 
-**SVG Best Practices:**
+### Symbol
+
+- White (`#FFFFFF`) only — stroke-based, matching Lucide's native style
+- Stroke weight is controlled by the `<g>` wrapper: `stroke-width="2"` in the 24x24 coordinate space scales to **7px** at 3.5×
+- Always use `stroke-linecap="round"` and `stroke-linejoin="round"`
+- No gradients, no drop shadows, no color, no fills on icon shapes
+
+### Optical Centering
+
+- **Play/triangle icons:** Nudge 1–2px right (in the 24x24 space) to compensate for left-heavy visual weight
+- **Circular icons:** Scale 102% to match the perceived size of rectangular icons
+- **Top-heavy icons:** Nudge 1px down
+
+## SVG Template
+
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Simple, clear shapes -->
-  <!-- Appropriate colors -->
-  <!-- Professional styling -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#000000"/>
+  <g transform="translate(22,22) scale(3.5)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- icon inner elements here (path, rect, circle, line, polyline) -->
+  </g>
 </svg>
 ```
 
-### 3. Generate Filename
+The `<g>` wrapper handles all styling. Icon elements inside it need only their geometry attributes — strip any `fill`, `stroke`, `stroke-width`, `stroke-linecap`, and `stroke-linejoin` from the source SVG elements before inserting them.
 
-Convert the description to kebab-case:
-- Lowercase with hyphens
-- Remove special characters and extra spaces
-- Limit to reasonable length
-- Examples:
-  - "medical chart with checkmark" → `medical-chart-with-checkmark.svg`
-  - "vitals monitoring icon" → `vitals-monitoring-icon.svg`
+## Icon Source: Lucide Library
 
-### 4. Save SVG File
+**Always use professional icon library paths.** Never hand-draw SVG coordinates — library paths produce dramatically better results.
 
-Use the Write tool to save the SVG content:
-- Save to current working directory with generated filename
-- For Canvas plugins, save to the inner plugin directory's `assets/` folder (snake_case folder)
-- Create the `assets/` directory if it doesn't exist: `mkdir -p {plugin_name_snake}/assets`
-- Example: `{plugin_name_snake}/assets/medical-chart-icon.svg`
+### Primary: Lucide Icons
 
-### 5. Check UV Installation
+Fetch the raw SVG from GitHub:
 
-Before converting, verify `uv` is installed:
-
-```bash
-which uv
+```
+https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/{name}.svg
 ```
 
-If not installed, install it:
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+1. Fetch the SVG using `WebFetch` or `curl`
+2. Extract the inner elements (`<path>`, `<rect>`, `<circle>`, `<line>`, `<polyline>`) — discard the outer `<svg>` tag
+3. Strip styling attributes from each element (`fill`, `stroke`, `stroke-width`, `stroke-linecap`, `stroke-linejoin`) — the `<g>` wrapper provides these
+4. Place the cleaned elements inside the `<g>` wrapper in the template
+
+### Fallback: Tabler Icons
+
+If Lucide doesn't have a matching icon, try Tabler (5,000+ icons, same 24x24 format):
+
+```
+https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{name}.svg
 ```
 
-After installation, you may need to use the full path: `~/.cargo/bin/uv`
+Same extraction and wrapping process.
 
-### 6. Convert to PNG
+### Last Resort: Hand-Draw
 
-Use the conversion script to create a 48x48 PNG:
+Only if neither library has a suitable icon, hand-draw in the **24x24 coordinate space** using the same `<g transform>` wrapper. This ensures consistent sizing and style.
 
-```bash
-uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert_svg_to_png.py <svg-file> <png-file>
-```
+### Choosing the Right Icon
 
-Replace:
-- `<svg-file>` with the generated SVG filename
-- `<png-file>` with the same base name but `.png` extension
+- **Search Lucide first** at [lucide.dev](https://lucide.dev) — browse by name, tags, categories
+- **Prefer concrete symbols** over abstract ones (`camera` > "media", `lock` > "security")
+- **Pick the simplest variant** — `bell` not `bell-ring`, `video` not `video-off`
+- **Search by metaphor**, not just literal name ("group therapy" → `users`, "telehealth" → `video` or `monitor`)
 
-The script creates a 48x48 pixel PNG suitable for Canvas applications.
+## Composing Compound Icons
 
-### 7. Update CANVAS_MANIFEST.json (if applicable)
+When a single icon can't represent the concept, compose two:
 
-If generating an icon for a Canvas plugin, update the manifest:
-
-```json
-{
-  "name": "Plugin Name",
-  "version": "1.0.0",
-  "applications": [
-    {
-      "class": "plugin_name.applications.my_app:MyApp",
-      "name": "My Application",
-      "icon": "assets/icon-filename.png",
-      ...
-    }
-  ]
-}
-```
-
-The `icon` field should reference the path relative to the manifest location (e.g., `assets/icon-filename.png`).
-
-### 8. Handle Results
-
-**On Success:**
-- Report both file paths to the user
-- Confirm the icon is ready for use
-- If for a plugin, confirm the manifest has been updated
-
-**On Failure:**
-- Inform user that PNG conversion failed
-- Confirm SVG file was still saved successfully
-- Provide the SVG file path for manual conversion if needed
-
-## Output Format
-
-After successful generation, display:
-```
-Icon created successfully:
-  SVG: /path/to/assets/icon-name.svg
-  PNG: /path/to/assets/icon-name.png (48x48)
-```
-
-For Canvas plugins, also mention:
-```
-CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
-```
-
-## Important Notes
-
-- Always save both SVG and PNG files (do not delete the SVG)
-- Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
-- The conversion script uses cairosvg via uv for dependency isolation
-- Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
-- Create the `assets/` directory if it doesn't exist before saving icons
-- Do not show SVG code to user unless there's an error or they specifically request it
-- Canvas Medical plugins should have professional, healthcare-appropriate icon designs
-
-## Canvas Plugin Context
-
-When generating icons for Canvas Medical plugins:
-- Consider the healthcare/medical context
-- Use professional, trustworthy design language
-- Common themes: medical charts, stethoscopes, alerts, vitals, patient care
-- Colors should be professional (blues, greens, neutrals are common)
-- Avoid overly playful or casual designs
-- The icon represents the plugin in the Canvas UI, so it should be immediately recognizable
-
-## Error Handling
-
-- **UV Installation Fails**: Provide clear error message and manual installation instructions
-- **SVG Generation Issues**: Ensure valid SVG syntax before writing file
-- **File Write Errors**: Check permissions and report clear error messages
-- **Conversion Script Errors**: Keep SVG file and report the error from the conversion script
-- **Manifest Update Errors**: Ensure the manifest file exists and is valid JSON
+- **Primary icon:** Place normally within the `<g>` wrapper
+- **Badge icon:** 30–35% size, positioned in the bottom-right or top-right corner of the 24x24 space
+- Maintain **4px+** separation between primary and badge elements (in 24x24 space)
+- Maximum **2 concepts** per icon — more than that becomes unreadable
+- Example concept: telehealth = `monitor` (primary) + `heart-pulse` (badge)
 
 ## Examples
 
-### Example 1: New Plugin Icon
-```
-User is creating a "vitals-alert" plugin that monitors patient vital signs.
+All examples use Lucide icon paths wrapped in the `translate(22,22) scale(3.5)` template.
 
-1. Generate description: "medical vitals monitor with alert icon"
-2. Create SVG with heart rate line and alert symbol
-3. Create assets directory: mkdir -p vitals_alert/assets
-4. Save as: vitals_alert/assets/vitals-alert-icon.svg
-5. Convert to: vitals_alert/assets/vitals-alert-icon.png
-6. Update CANVAS_MANIFEST.json applications entry: "icon": "assets/vitals-alert-icon.png"
-```
+### Lock
 
-### Example 2: User Request
-```
-User says: "I need a blue database icon with a checkmark"
+Simple security icon — a rectangle (body) and a path (shackle). Two elements, immediately recognizable.
 
-1. Use description: "blue database icon with checkmark"
-2. Create SVG with database cylinder and green checkmark
-3. Save as: blue-database-icon-with-checkmark.svg
-4. Convert to: blue-database-icon-with-checkmark.png
-5. Report both files created
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#000000"/>
+  <g transform="translate(22,22) scale(3.5)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </g>
+</svg>
 ```
 
-### Example 3: Auto-detection During Plugin Creation
-```
-Assistant is running canvas init for a new plugin called "patient-scheduler"
-After scaffold is created, CANVAS_MANIFEST.json needs an icon.
+### Bell
 
-1. Generate description from plugin purpose: "calendar scheduling icon for patient appointments"
-2. Create professional SVG with calendar and medical cross
-3. Create assets directory: mkdir -p patient_scheduler/assets
-4. Save as: patient_scheduler/assets/patient-scheduler-icon.svg
-5. Convert to: patient_scheduler/assets/patient-scheduler-icon.png
-6. Update manifest applications entry: "icon": "assets/patient-scheduler-icon.png"
-7. Commit with other scaffold files
+Organic curves — two paths forming the bell body and clapper. Shows how professional paths handle complex curves cleanly.
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#000000"/>
+  <g transform="translate(22,22) scale(3.5)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+    <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+  </g>
+</svg>
 ```
+
+### Bookmark
+
+Minimal — a single path. Demonstrates the elegance of simplicity.
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#000000"/>
+  <g transform="translate(22,22) scale(3.5)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>
+  </g>
+</svg>
+```
+
+## Quality Checklist
+
+Before converting to PNG, verify:
+
+1. **Thumbnail test** — Is the icon recognizable at 32px? If not, simplify.
+2. **Element count** — Fewer than 6 distinct visual elements? If not, simplify.
+3. **Optical centering** — Apply nudges for triangles, circles, or top-heavy shapes (see Optical Centering above).
+4. **Stroke consistency** — All strokes should be the same weight (the `<g>` wrapper handles this automatically when using library paths).
+
+## Workflow
+
+1. **Infer the icon subject** from the plugin's name, purpose, or surrounding context. Do not ask the user what to draw — figure it out.
+2. **Ask the user where to save** the PNG file. Always ask; never assume.
+3. **Search Lucide** for a matching icon at [lucide.dev](https://lucide.dev) or by fetching from the GitHub URL pattern. If found, fetch the SVG, extract inner elements, strip styling attributes, and wrap in the template.
+4. **If no Lucide match**, search Tabler Icons. Same fetch → extract → wrap process.
+5. **If no library match**, hand-draw in the 24x24 coordinate space using the same `<g transform>` wrapper.
+6. **Run the quality checklist** — thumbnail test, element count, optical centering, stroke consistency.
+7. **Write the SVG to `/tmp`** as a temporary intermediate file (e.g. `/tmp/icon-name.svg`).
+8. **Convert to 128x128 PNG** at the user's chosen location using `rsvg-convert`:
+   ```bash
+   rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o output.png
+   ```
+9. **Delete the temporary SVG** — `rm /tmp/icon-name.svg`. Only the PNG should remain.
+10. **Report results** — provide the path to the PNG file.
+
+## Conversion
+
+The SVG is a temporary intermediate — write it to `/tmp`, convert to PNG, then delete it.
+
+```bash
+rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o output.png && rm /tmp/icon-name.svg
+```
+
+## Error Handling
+
+If `rsvg-convert` is not available:
+1. Keep the temporary SVG file in `/tmp` so the user can convert it manually
+2. Inform the user that the PNG could not be generated
+3. Suggest installing librsvg: `brew install librsvg`
+
+## Automated Flow Context
+
+When this skill is invoked from an **automated workflow** — specifically the **plugin-brainstorm agent** (during new plugin creation) or the **wrap-up command** (when generating a missing icon) — the following overrides apply:
+
+- **Do NOT ask the user where to save.** Auto-save the PNG to `{plugin_name_snake}/assets/`.
+- **Create the assets directory** if it doesn't exist: `mkdir -p {plugin_name_snake}/assets`
+- **Update `CANVAS_MANIFEST.json`** with the icon path: `"icon": "assets/{icon-filename}.png"`
+- **Skip workflow step 2** (ask user where to save) — the save location is predetermined.
+
+This keeps the automated flows non-interactive while preserving the "ask where to save" behavior for manual `/cpa:create-icon` invocations.

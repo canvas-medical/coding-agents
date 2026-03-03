@@ -116,7 +116,7 @@ Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
 - **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
-- **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
+- **icon-generation**: Generate branded app icons — black rounded square with white symbol, 128x128 PNG
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
 
 ### Slash Commands
@@ -127,7 +127,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 |--------------------------------|-------------------------------------------------------------|
 | `:check-setup`                 | Verify environment tools (uv, unbuffer)                     |
 | `:new-plugin`                  | Start brainstorming a new plugin specification              |
-| `:create-icon`                 | Generate SVG icon and convert to 48x48 PNG for Applications |
+| `:create-icon`                 | Generate branded app icon (128x128 PNG) for Applications    |
 | `:analyze-instance`            | Analyze Canvas instance configuration                       |
 | `:deploy`                      | Deploy plugin and monitor logs                              |
 | `:coverage`                    | Run tests with coverage, offer to improve if below 90%      |
@@ -241,8 +241,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 ## Icon Generation
 
-Canvas Medical plugin Applications require a 48x48 PNG icon. The `:create-icon` command generates SVG icons and automatically converts them to the
-required format.
+Canvas Medical plugin Applications require a 128x128 PNG icon. The `:create-icon` command generates branded icons (black rounded square with white Lucide/Tabler symbol) and converts them using `rsvg-convert`.
 
 **When icons are needed:**
 
@@ -254,7 +253,7 @@ required format.
 
 ```bash
 # In a plugin directory
-/cpa:create-icon "medical chart with checkmark"
+/cpa:create-icon
 
 # Or just ask Claude to create an icon
 "I need an icon for a patient scheduling application"
@@ -262,13 +261,12 @@ required format.
 
 **Icon requirements:**
 
-- 48x48 PNG format (automatically generated)
+- 128x128 PNG format (generated via `rsvg-convert`)
 - Saved to `{plugin_name}/assets/` directory
 - Referenced in CANVAS_MANIFEST.json as `"icon": "assets/icon-name.png"`
-- Professional, healthcare-appropriate design
+- Consistent branded style: black rounded square, white stroke icon
 
-The command generates both SVG (vector) and PNG (48x48) versions, storing them in the plugin's `assets/` directory and updating the manifest
-automatically.
+The command fetches icon paths from Lucide/Tabler, wraps them in a branded SVG template, converts to PNG, and stores the result in the plugin's `assets/` directory.
 
 ## Plugin Complexity Guide
 
@@ -304,7 +302,7 @@ automatically.
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── plugin-patterns/       # Architecture patterns
-│   ├── icon-generation/       # SVG icon generation and PNG conversion
+│   ├── icon-generation/       # Branded app icon generation (128x128 PNG)
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
 │   ├── fhir-api-client-security/    # FHIR API token security
 │   ├── database-performance/  # N+1 query detection
@@ -317,7 +315,6 @@ automatically.
 ├── hooks/
 │   └── hooks.json             # SessionEnd hooks for cost tracking and user inputs tracking
 ├── scripts/
-    ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
 │   ├── user_input_logger.py       # Full user inputs tracking
 │   ├── compare_review_results.py  # Eval comparison using Anthropic API
 │   ├── cost_logger.py             # SessionEnd hook script for cost tracking
@@ -426,7 +423,6 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `base_logger.py`              | Base class for session logging              |
 | `compare_review_results.py`   | Eval comparison using Anthropic API         |
 | `constants.py`                | CPA environment variable constants          |
-| `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `cost_logger.py`              | Session cost tracking                       |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
 | `hook_information.py`         | Hook data structures                        |
