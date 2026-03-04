@@ -41,35 +41,26 @@ Follow these steps in order:
    - Use Write tool to save the SVG content to `/tmp/icon-name.svg`
    - This is a temporary intermediate file
 
-7. **Check `rsvg-convert` Installation**:
-   - Use Bash to check if `rsvg-convert` is installed: `which rsvg-convert`
-   - If not installed, suggest:
-     ```bash
-     brew install librsvg
-     ```
-   - Do not proceed with conversion if `rsvg-convert` is not available — keep the SVG in `/tmp` for manual conversion
-
-8. **Convert to PNG**:
+7. **Convert to PNG**:
    - Use Bash to execute the conversion command:
      ```bash
-     rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o <user-chosen-path>/icon-name.png
+     uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='/tmp/icon-name.svg', write_to='<user-chosen-path>/icon-name.png', output_width=128, output_height=128)"
      ```
    - This creates a 128x128 pixel PNG at the user's chosen location
 
-9. **Delete Temporary SVG**:
+8. **Delete Temporary SVG**:
    - Remove the temporary file: `rm /tmp/icon-name.svg`
    - Only delete after successful conversion
 
-10. **Report Completion**:
+9. **Report Completion**:
     - Show the path to the generated PNG file
     - Confirm where it was saved
 
 ## Error Handling
 
-- **`rsvg-convert` not available**: Keep the SVG in `/tmp`, inform the user, suggest `brew install librsvg`
+- **Conversion Failure**: Keep the SVG in `/tmp` so the user can convert it manually
 - **SVG Generation Issues**: Ensure valid SVG syntax before writing file
 - **File Write Errors**: Check permissions and report clear error messages
-- **Conversion Failure**: Keep the SVG in `/tmp` so the user can convert it manually
 
 ## Output Format
 

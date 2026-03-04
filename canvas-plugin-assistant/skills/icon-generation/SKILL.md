@@ -170,9 +170,9 @@ Before converting to PNG, verify:
 5. **If no library match**, hand-draw in the 24x24 coordinate space using the same `<g transform>` wrapper.
 6. **Run the quality checklist** — thumbnail test, element count, optical centering, stroke consistency.
 7. **Write the SVG to `/tmp`** as a temporary intermediate file (e.g. `/tmp/icon-name.svg`).
-8. **Convert to 128x128 PNG** at the user's chosen location using `rsvg-convert`:
+8. **Convert to 128x128 PNG** at the user's chosen location:
    ```bash
-   rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o output.png
+   uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='/tmp/icon-name.svg', write_to='output.png', output_width=128, output_height=128)"
    ```
 9. **Delete the temporary SVG** — `rm /tmp/icon-name.svg`. Only the PNG should remain.
 10. **Report results** — provide the path to the PNG file.
@@ -182,15 +182,15 @@ Before converting to PNG, verify:
 The SVG is a temporary intermediate — write it to `/tmp`, convert to PNG, then delete it.
 
 ```bash
-rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o output.png && rm /tmp/icon-name.svg
+uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='/tmp/icon-name.svg', write_to='output.png', output_width=128, output_height=128)" && rm /tmp/icon-name.svg
 ```
 
 ## Error Handling
 
-If `rsvg-convert` is not available:
+If conversion fails:
 1. Keep the temporary SVG file in `/tmp` so the user can convert it manually
 2. Inform the user that the PNG could not be generated
-3. Suggest installing librsvg: `brew install librsvg`
+3. Suggest checking the SVG is well-formed and that `uv` is installed
 
 ## Automated Flow Context
 

@@ -192,7 +192,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 ## Icon Generation
 
-Canvas Medical plugin Applications require a 128x128 PNG icon. The `:create-icon` command generates branded icons (black rounded square with white Lucide/Tabler symbol) and converts them using `rsvg-convert`.
+Canvas Medical plugin Applications require a 128x128 PNG icon. The `:create-icon` command generates branded icons (black rounded square with white Lucide/Tabler symbol) and converts them using `cairosvg` via `uv`.
 
 **When icons are needed:**
 - Any plugin with an `Application` component (interactive UI panels)
@@ -209,7 +209,7 @@ Canvas Medical plugin Applications require a 128x128 PNG icon. The `:create-icon
 ```
 
 **Icon requirements:**
-- 128x128 PNG format (generated via `rsvg-convert`)
+- 128x128 PNG format (generated via `cairosvg`)
 - Saved to `{plugin_name}/assets/` directory
 - Referenced in CANVAS_MANIFEST.json as `"icon": "assets/icon-name.png"`
 - Consistent branded style: black rounded square, white stroke icon

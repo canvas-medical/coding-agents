@@ -284,7 +284,7 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
    - Infer the icon subject from the plugin name and purpose
    - Search Lucide/Tabler for a matching icon, fetch the SVG, extract inner elements, wrap in the 128x128 template
    - Create the assets directory: `mkdir -p {plugin_name_snake}/assets`
-   - Write the SVG to `/tmp`, convert with `rsvg-convert -w 128 -h 128 /tmp/icon-name.svg -o {plugin_name_snake}/assets/icon-name.png`
+   - Write the SVG to `/tmp`, convert with `uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='/tmp/icon-name.svg', write_to='{plugin_name_snake}/assets/icon-name.png', output_width=128, output_height=128)"`
    - Delete the temporary SVG from `/tmp`
    - Update `CANVAS_MANIFEST.json` applications entry with `"icon": "assets/{icon-filename}.png"`
    - Example: For a "patient-scheduler" Application, create "assets/patient-scheduler-icon.png"
