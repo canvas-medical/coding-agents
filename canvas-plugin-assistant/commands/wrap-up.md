@@ -226,7 +226,7 @@ grep -A 10 '"applications"' "$INNER/CANVAS_MANIFEST.json" 2>/dev/null
 For each application entry, verify:
 - [ ] The `icon` field is present
 - [ ] The icon file exists in the inner plugin directory
-- [ ] The icon is a PNG file (48x48 recommended)
+- [ ] The icon is a PNG file (128x128 recommended)
 - [ ] The filename matches what's in the manifest
 
 Check icon files:
