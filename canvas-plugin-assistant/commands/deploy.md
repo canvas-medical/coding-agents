@@ -26,43 +26,65 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --requ
 cd "$CPA_PLUGIN_DIR"
 ```
 
-Use the **deploy-uat** agent to handle deployment and testing.
+### Step 2: Determine Target Hostname
+
+Resolve the deployment target **before** delegating to the agent — the parent needs the hostname to start log monitoring.
 
 1. Verify the current directory contains a valid Canvas plugin (check for CANVAS_MANIFEST.json)
 
 2. **Handle target instance argument:**
    - If `$1` is provided:
      - Check if `[$1]` section exists in `~/.canvas/credentials.ini`
-     - If found: use `$1` as the target hostname and skip to step 4
+     - If found: use `$1` as the target hostname
      - If NOT found: list available instances from credentials.ini and ask the user to choose or correct the name
    - If `$1` is not provided:
-     - Ask which environment to deploy to (current behavior)
+     - Ask which environment to deploy to
 
-3. Ask which environment to deploy to (only if no valid `$1` was provided)
+Save the resolved hostname — you will pass it to the agent and use it for log monitoring.
 
-4. **Version bump (if changes are detected):**
-   - Check `git status --porcelain` for uncommitted changes
-   - Ask the user: Patch (bug fix), Minor (new feature), or Major (breaking change)?
-   - Read current `plugin_version` from `CANVAS_MANIFEST.json`
-   - Bump version: Patch increments Z, Minor increments Y and resets Z, Major increments X and resets Y,Z
-   - Update `CANVAS_MANIFEST.json` with a new version
-   - Report: "Bumped version: X.Y.Z → X.Y.Z+1"
+### Step 3: Start Log Monitoring (BEFORE install)
 
-5. Run pre-deployment validation:
-   - `uv run canvas validate-manifest .`
-   - `uv run pytest` (if tests exist)
-   - `uv run mypy --config-file=mypy.ini .`
+**Start log monitoring in the parent context** so the background process survives the agent lifecycle.
 
-6. **Start log monitoring BEFORE install** (background task with `run_in_background: true`):
-   - `unbuffer uv run canvas logs --host {hostname}`
-   - This captures installation errors and runtime behavior
+Start log streaming as a **background task** (`run_in_background: true`):
 
-7. Deploy using `uv run canvas install`
+```bash
+unbuffer uv run canvas logs --host {hostname}
+```
 
-8. For UAT:
-   - Tell user logs are running to test and say "check the logs" when ready
-   - Use BashOutput to retrieve and analyze log entries on a user request
-   - Use KillShell when testing is complete
+Save the `bash_id` — you will use it later to check logs. This captures installation errors and runtime behavior.
+
+### Step 4: Deploy via Agent
+
+Use the **deploy-uat** agent to handle version bump, validation, git commit/push, and install. Pass the resolved hostname so the agent does not need to ask again.
+
+Tell the agent: "Deploy to {hostname}".
+
+The agent will return when the install is complete.
+
+### Step 5: Post-Deployment Log Check
+
+After the agent returns and the install is complete, check the logs **in the parent context** (you own the background process).
+
+1. Wait 5 seconds for logs to accumulate (`sleep 5`)
+2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
+3. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, install failures)
+4. **If errors are found:**
+   1. Stop log monitoring (KillShell)
+   2. Show the errors to the user
+   3. Analyze root cause and fix the code
+   4. Re-deploy (repeat from step 3)
+5. **If no errors:** leave log monitoring running and continue to UAT
+
+### Step 6: UAT
+
+Log monitoring is still running in the background (owned by this parent context).
+
+- Tell user: "Plugin deployed successfully — no errors detected in logs. Log monitoring is running — go ahead and test in Canvas. Tell me to 'check the logs' when you want to see what happened."
+- When the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries
+- When testing is complete: use KillShell to stop the background log stream
+
+After successful UAT, guide the user to the next step in the workflow.
 
 ## Credentials
 
