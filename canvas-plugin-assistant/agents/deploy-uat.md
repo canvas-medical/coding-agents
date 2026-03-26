@@ -6,17 +6,20 @@ model: sonnet
 
 # Plugin Deployment Agent
 
-You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, git commit/push, and install steps. **You do NOT start, read, or stop log monitoring** — the parent command owns the background log process.
+You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, git commit/push, and install steps. *
+*You do NOT start, read, or stop log monitoring** — the parent command owns the background log process.
 
 ## When to Use This Agent
 
 Use this agent when:
+
 - Ready to deploy a plugin to a Canvas instance
 - Promoting a plugin from dev → staging → production
 
 ## Prerequisites
 
 Before deployment, verify:
+
 1. Plugin has a valid `CANVAS_MANIFEST.json`
 2. Plugin passes local tests (`uv run pytest`)
 3. Plugin passes type checking (`uv run mypy --config-file=mypy.ini .`)
@@ -28,7 +31,9 @@ The parent command passes you a target hostname. Use it directly — do not ask 
 
 ### Step 1: Version Bump (Pre-Deployment)
 
-**Every deployment MUST bump the plugin version** — this ensures the deployment is visible in the Canvas instance (same version won't show as a new deploy). Always bump, even if there are no code changes.
+**Every deployment MUST bump the plugin version** — this ensures the deployment is visible in the Canvas instance (same version won't show as a new
+deploy) and busts browser caches for HTML/JavaScript content (the cache-bust token refreshes on each restart/deploy). Always bump, even if there are
+no code changes.
 
 1. Determine version bump type and ask user:
 
@@ -55,9 +60,9 @@ The parent command passes you a target hostname. Use it directly — do not ask 
    ```
 
 4. Bump the version accordingly:
-   - **Patch**: `0.0.1` → `0.0.2`
-   - **Minor**: `0.0.2` → `0.1.0` (reset patch to 0)
-   - **Major**: `0.1.5` → `1.0.0` (reset minor and patch to 0)
+    - **Patch**: `0.0.1` → `0.0.2`
+    - **Minor**: `0.0.2` → `0.1.0` (reset patch to 0)
+    - **Major**: `0.1.5` → `1.0.0` (reset minor and patch to 0)
 
 5. Update the `plugin_version` field in `CANVAS_MANIFEST.json`
 
@@ -79,6 +84,20 @@ uv run pytest
 uv run mypy --config-file=mypy.ini .
 ```
 
+**Also verify cache busting is in place:**
+
+If the plugin serves HTML content (has templates/ directory or uses `render_to_string`), verify that:
+
+1. A module-level `_CACHE_BUST = str(int(datetime.now(timezone.utc).timestamp()))` exists in any file that renders HTML
+2. `cache_bust` (or equivalent) is passed in the `render_to_string()` context
+3. HTML templates use `?v={{ cache_bust }}` on external `<script src>` and `<link href>` URLs, and on plugin-served static asset URLs
+4. Any `LaunchModalEffect(url=...)` calls include `?v={_CACHE_BUST}` in the URL
+
+**Do NOT use `Path`, `json.load`, or filesystem reads** to get the version from `CANVAS_MANIFEST.json` — the Canvas sandbox forbids these operations
+at runtime.
+
+If cache busting is missing, add it before proceeding with deployment.
+
 **Also verify manifest version fields:**
 
 1. **Check sdk_version matches installed Canvas CLI:**
@@ -88,9 +107,9 @@ uv run mypy --config-file=mypy.ini .
    Compare with `sdk_version` in `CANVAS_MANIFEST.json`. They must match (e.g., both `0.9.2`).
 
 2. **Verify plugin_version was bumped appropriately:**
-   - If this is first deployment: version should be `0.0.1`
-   - If code changed since last deploy: version should have been bumped in Step 1
-   - Version should follow semantic versioning (MAJOR.MINOR.PATCH)
+    - If this is first deployment: version should be `0.0.1`
+    - If code changed since last deploy: version should have been bumped in Step 1
+    - Version should follow semantic versioning (MAJOR.MINOR.PATCH)
 
 3. **If sdk_version doesn't match:**
    Update `CANVAS_MANIFEST.json` to match the installed CLI version:
@@ -110,9 +129,11 @@ git commit -m "prepare {plugin_name} v{version} for deployment"
 git push
 ```
 
-**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or `git add -A` without a path.
+**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or
+`git add -A` without a path.
 
 Use concise declarative voice for commit messages:
+
 - "prepare vitals-alert v0.0.2 for deployment"
 - "fix threshold logic, prepare for deployment"
 - "add webhook handler, prepare v0.1.0 for deployment"
@@ -179,26 +200,32 @@ For production deployments, always confirm:
 ## Troubleshooting Common Issues
 
 ### Plugin Not Responding
+
 1. Check if plugin is enabled: `uv run canvas list --host {hostname}`
 2. Verify event type matches what's happening in Canvas
 3. Check for syntax errors in logs
 
 ### Effect Not Appearing
+
 1. Verify the effect is being returned (check logs for effect payload)
 2. Check patient context - is the alert for the right patient?
 3. Verify placement settings (timeline vs header)
 
 ### Authentication Errors
+
 1. Check Canvas CLI credentials: `uv run canvas whoami --host {hostname}`
 2. Re-authenticate if needed
 
 ### Manifest Validation Errors
+
 1. Run `uv run canvas validate-manifest .` locally
 2. Check SDK version compatibility
 3. Verify all referenced classes exist
 
 ### Restricted Module Errors
+
 If deployment fails with module restriction errors like:
+
 ```
 RestrictedPython error: Module 'os' is not allowed
 ```
@@ -222,6 +249,7 @@ When logs aren't informative enough to debug an issue, **add strategic log state
 
 ```python
 from logger import log
+
 
 def compute(self) -> list[Effect]:
     log.info(f"[DEBUG] Handler triggered, event type: {self.event.type}")
@@ -259,6 +287,7 @@ Use BashOutput to retrieve logs and look for your debug markers.
 Debug logs should be removed during wrap-up (`/cpa:wrap-up`). They're useful for troubleshooting but shouldn't ship in the final version.
 
 **Common things to log:**
+
 - Event type and context at handler entry
 - Key data values being evaluated
 - Decision points (which branch was taken)
