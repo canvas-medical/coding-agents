@@ -8,30 +8,37 @@ version: 0.1.0
 
 ## Overview
 
-These guidelines define a rigorous testing approach for Python projects using pytest, emphasizing 100% code coverage, strict naming conventions, comprehensive mock verification, and maintainable test structure. Follow these guidelines to create tests that ensure code reliability and prevent regressions.
+These guidelines define a rigorous testing approach for Python projects using pytest, emphasizing 100% code coverage, strict naming conventions,
+comprehensive mock verification, and maintainable test structure. Follow these guidelines to create tests that ensure code reliability and prevent
+regressions.
 
 ## Core Principles
 
 **100% Coverage Requirement**: Every line of code must be tested. This ensures that any code change will not have negative impact on untested code.
 
-**Comprehensive Mock Verification**: All mock interactions must be verified through the `mock_calls` property. This ensures that all manipulations of mocks are checked, preventing incomplete test coverage of external dependencies.
+**Comprehensive Mock Verification**: All mock interactions must be verified through the `mock_calls` property. This ensures that all manipulations of
+mocks are checked, preventing incomplete test coverage of external dependencies.
 
 **Consistent Naming**: Strict naming conventions improve test readability and maintenance, making it immediately clear what each test covers.
 
-**Test Order Matches Source**: Tests should appear in the same order as methods in the source file, making it easy to verify complete coverage by visual inspection.
+**Test Order Matches Source**: Tests should appear in the same order as methods in the source file, making it easy to verify complete coverage by
+visual inspection.
 
 ## Source Code Requirements
 
 ### Type Annotations Validation
 
-**MANDATORY PRE-CHECK**: Before generating tests, improving tests, or validating tests, the commands `generate-tests`, `improve-tests`, and `validate-tests` must first verify that the source code has complete type annotations.
+**MANDATORY PRE-CHECK**: Before generating tests, improving tests, or validating tests, the commands `generate-tests`, `improve-tests`, and
+`validate-tests` must first verify that the source code has complete type annotations.
 
 **Required type annotations**:
+
 - All method/function parameters must have type annotations
 - All method/function return values must have type annotations
 - Class attributes should have type annotations where applicable
 
 **Example of properly typed code**:
+
 ```python
 class DataProcessor:
     def __init__(self, config: dict[str, str]) -> None:
@@ -47,6 +54,7 @@ class DataProcessor:
 ```
 
 **Example of code missing type annotations** (will be rejected):
+
 ```python
 class DataProcessor:
     def __init__(self, config):  # Missing parameter and return types
@@ -60,17 +68,19 @@ class DataProcessor:
 ```
 
 **Validation process**:
+
 1. Parse the source file to identify all functions and methods
 2. Check each function/method for:
-   - Type annotations on ALL parameters (except `self` and `cls`)
-   - Return type annotation (including `-> None` for void functions)
+    - Type annotations on ALL parameters (except `self` and `cls`)
+    - Return type annotation (including `-> None` for void functions)
 3. If any type annotations are missing:
-   - Report which functions/methods are missing annotations
-   - List the specific parameters or return types that need annotations
-   - **STOP** - do not proceed with test generation/improvement/validation
+    - Report which functions/methods are missing annotations
+    - List the specific parameters or return types that need annotations
+    - **STOP** - do not proceed with test generation/improvement/validation
 4. Only proceed with the requested operation if all type annotations are present
 
 **Why this matters**:
+
 - Type annotations enable better test generation with correct expected types
 - They improve mock configuration accuracy
 - They help verify test assertions match the expected return types
@@ -94,28 +104,35 @@ Each test file name must start with `test_` prefix.
 Follow this pattern: `test_<method_name>` for single-scenario tests, or `test_<method_name>__<case_description>` for multiple scenarios.
 
 **Basic format**:
+
 ```python
 def test_calculate_total():
-    # Tests the calculate_total method
+# Tests the calculate_total method
 ```
 
 **Include underscore prefix for private methods**:
+
 ```python
 # For method named _private_helper
 def test__private_helper():
-    # Underscore is included in test name
+# Underscore is included in test name
 ```
 
 **Multiple test cases**:
+
 ```python
 def test_validate_input__valid_data():
-    # Test with valid data
+
+
+# Test with valid data
 
 def test_validate_input__invalid_format():
-    # Test with invalid format
+
+
+# Test with invalid format
 
 def test_validate_input__empty_input():
-    # Test with empty input
+# Test with empty input
 ```
 
 The double underscore `__` separates the method name from the case description.
@@ -139,6 +156,7 @@ Every test MUST follow these naming conventions strictly:
 - Call methods on `tested`, NEVER directly on the class name
 
 **Example for instance methods**:
+
 ```python
 def test_format_name():
     tested = NameFormatter()  # Assign instance to tested
@@ -148,6 +166,7 @@ def test_format_name():
 ```
 
 **Example for class/static methods**:
+
 ```python
 def test_parse_arguments():
     tested = SvgToPngConverter  # Assign CLASS to tested (not an instance)
@@ -157,6 +176,7 @@ def test_parse_arguments():
 ```
 
 **FORBIDDEN**:
+
 ```python
 # WRONG - calling directly on class name
 def test_parse_arguments():
@@ -170,6 +190,7 @@ def test_parse_arguments():
 - NEVER use alternative names like `output`, `ret`, `actual`, `response`, `value`, etc.
 
 **CORRECT**:
+
 ```python
 def test_calculate_total():
     tested = Calculator()
@@ -179,12 +200,13 @@ def test_calculate_total():
 ```
 
 **FORBIDDEN**:
+
 ```python
 def test_calculate_total():
     tested = Calculator()
     output = tested.calculate_total([1, 2, 3])  # FORBIDDEN: don't use 'output'
-    total = tested.calculate_total([1, 2, 3])   # FORBIDDEN: don't use 'total'
-    ret = tested.calculate_total([1, 2, 3])     # FORBIDDEN: don't use 'ret'
+    total = tested.calculate_total([1, 2, 3])  # FORBIDDEN: don't use 'total'
+    ret = tested.calculate_total([1, 2, 3])  # FORBIDDEN: don't use 'ret'
     ...
 ```
 
@@ -195,6 +217,7 @@ def test_calculate_total():
 - NEVER inline the expected value in the assertion
 
 **CORRECT**:
+
 ```python
 def test_format_date():
     tested = DateFormatter()
@@ -204,6 +227,7 @@ def test_format_date():
 ```
 
 **FORBIDDEN**:
+
 ```python
 def test_format_date():
     tested = DateFormatter()
@@ -224,6 +248,7 @@ def test_format_date():
 - NEVER use `expected_` prefix (too long) - always use `exp_`
 
 **CORRECT**:
+
 ```python
 @patch('module.api')
 def test_fetch_data(mock_api):
@@ -240,6 +265,7 @@ def test_fetch_data(mock_api):
 ```
 
 **FORBIDDEN**:
+
 ```python
 @patch('module.api')
 def test_fetch_data(mock_api):
@@ -257,6 +283,7 @@ For detailed naming examples, see `references/naming-conventions.md`.
 **Singleton Comparisons**: Use `is` (not `==`) when comparing to singletons: `True`, `False`, `None`.
 
 **Correct**:
+
 ```python
 def test_is_valid():
     tested = Validator()
@@ -266,6 +293,7 @@ def test_is_valid():
 ```
 
 **Incorrect**:
+
 ```python
 def test_is_valid():
     tested = Validator()
@@ -275,11 +303,13 @@ def test_is_valid():
 ```
 
 **When to use `is`**:
+
 - Comparing to `True`
 - Comparing to `False`
 - Comparing to `None`
 
 **When to use `==`**:
+
 - All other comparisons (strings, numbers, lists, dicts, objects, etc.)
 
 ## Test Structure and Order
@@ -287,11 +317,13 @@ def test_is_valid():
 ### Test Order Matches Source Code
 
 Tests must appear in the same order as methods appear in the source file. This enables:
+
 - Quick visual verification of coverage
 - Easy navigation between source and tests
 - Clear indication of missing tests
 
 **Source file order**:
+
 ```python
 class Calculator:
     def __init__(self):
@@ -308,6 +340,7 @@ class Calculator:
 ```
 
 **Test file order**:
+
 ```python
 def test_add():
     pass
@@ -321,24 +354,29 @@ def test__validate():
 
 ### First Test: Verify Inheritance
 
-**MANDATORY**: When testing a class that inherits from a base class, the very first test in the test file must verify the inheritance relationship using `issubclass()`.
+**MANDATORY**: When testing a class that inherits from a base class, the very first test in the test file must verify the inheritance relationship
+using `issubclass()`.
 
 This test ensures that:
+
 - The class is properly inheriting from the expected base class
 - The inheritance hierarchy is correct
 - Any refactoring that breaks inheritance is immediately caught
 
 **Example**:
+
 ```python
 # Source: scripts/user_input_logger.py
 class UserInputsLogger(BaseLogger):
     def process(self, data):
         pass
 
+
 # Test file: tests/scripts/test_user_input_logger.py
 def test_inheritance():
     """Verify UserInputsLogger inherits from BaseLogger."""
     assert issubclass(UserInputsLogger, BaseLogger)
+
 
 def test_process():
     # Remaining tests follow...
@@ -346,6 +384,7 @@ def test_process():
 ```
 
 **Pattern**:
+
 ```python
 def test_inheritance():
     """Verify <ClassName> inherits from <BaseClassName>."""
@@ -353,6 +392,7 @@ def test_inheritance():
 ```
 
 This test should:
+
 - Always be named `test_inheritance`
 - Always be the first test in the file
 - Include a docstring describing the inheritance relationship
@@ -363,6 +403,7 @@ This test should:
 **MANDATORY**: When testing a NamedTuple class, the first test must verify the NamedTuple structure using the `is_namedtuple()` helper function.
 
 The test must:
+
 1. Be named `test_class` (not `test_inheritance`)
 2. Assign the class itself to the `tested` variable (not an instance)
 3. Define a `fields` dictionary with field names and their types
@@ -389,15 +430,16 @@ def is_namedtuple(cls, fields: dict) -> bool:
         bool: True if cls is a NamedTuple with exactly the specified fields and types
     """
     return (
-        issubclass(cls, tuple)
-        and hasattr(cls, "_fields")
-        and isinstance(cls._fields, tuple)
-        and len([field for field in cls._fields if field in fields]) == len(fields.keys())
-        and get_type_hints(cls) == fields
+            issubclass(cls, tuple)
+            and hasattr(cls, "_fields")
+            and isinstance(cls._fields, tuple)
+            and len([field for field in cls._fields if field in fields]) == len(fields.keys())
+            and get_type_hints(cls) == fields
     )
 ```
 
 **Example usage in tests**:
+
 ```python
 # Source: models/validation_result.py
 from typing import NamedTuple
@@ -419,6 +461,7 @@ def test_class():
 ```
 
 **Why use `is_namedtuple()` instead of `issubclass()`:**
+
 - Verifies it's a tuple subclass
 - Checks the `_fields` attribute exists and is correct
 - Validates all expected fields are present
@@ -432,6 +475,7 @@ For a complete NamedTuple testing example, see `examples/namedtuple-test-file.py
 **MANDATORY**: When testing a dataclass, the first test must verify the dataclass structure using the `is_dataclass()` helper function.
 
 The test must:
+
 1. Be named `test_class` (not `test_inheritance`)
 2. Assign the class itself to the `tested` variable (not an instance)
 3. Define a `fields` dictionary with field names and their type strings
@@ -472,6 +516,7 @@ def is_dataclass(cls, fields: dict) -> bool:
 ```
 
 **Example usage in tests**:
+
 ```python
 # Source: models/transcript_segment.py
 from dataclasses import dataclass
@@ -503,6 +548,7 @@ def test_class():
 ```
 
 **Why use `is_dataclass()` helper:**
+
 - Verifies the class is decorated with `@dataclass`
 - Checks all expected fields are present
 - Validates field types match expectations
@@ -513,18 +559,21 @@ For a complete dataclass testing example, see `examples/dataclass-test-file.py`.
 
 ### One Test Per Method Minimum
 
-Every method must have at least one test. If a method requires multiple test scenarios, prefer parametrization (see below) or create multiple test functions with case suffixes.
+Every method must have at least one test. If a method requires multiple test scenarios, prefer parametrization (see below) or create multiple test
+functions with case suffixes.
 
 ### Exclude `__main__` Blocks from Tests
 
 **IMPORTANT**: Do NOT write tests for `if __name__ == "__main__":` blocks.
 
 These blocks are:
+
 1. Excluded from coverage by default (configured in `pyproject.toml` via `exclude_lines`)
 2. Entry points that simply call other methods which should already be tested
 3. Difficult to test properly without hacky approaches like `exec(compile(...))`
 
 **FORBIDDEN**:
+
 ```python
 class TestMainBlock:
     """Tests for the __main__ block execution."""
@@ -535,6 +584,7 @@ class TestMainBlock:
 ```
 
 **Why this matters**:
+
 - The `__main__` block typically just calls `ClassName.run()` which should already have tests
 - Testing it requires hacky approaches that are fragile and hard to maintain
 - Coverage tools are configured to exclude these lines, so testing them adds no value
@@ -544,9 +594,12 @@ class TestMainBlock:
 
 ### Use `side_effect` for Return Values
 
-**MANDATORY**: When configuring mock return values, use `side_effect` instead of `return_value`. This is a strict requirement and must never be violated. For call chains, only the final call in the chain must use `side_effect` (for example: `mock.return_value.get.return_value.add.side_effect = [...]`).
+**MANDATORY**: When configuring mock return values, use `side_effect` instead of `return_value`. This is a strict requirement and must never be
+violated. For call chains, only the final call in the chain must use `side_effect` (for example:
+`mock.return_value.get.return_value.add.side_effect = [...]`).
 
 **Correct**:
+
 ```python
 @patch('module.api_client')
 def test_fetch_data(mock_client):
@@ -554,6 +607,7 @@ def test_fetch_data(mock_client):
 ```
 
 **Incorrect - FORBIDDEN**:
+
 ```python
 @patch('module.api_client')
 def test_fetch_data(mock_client):
@@ -562,9 +616,11 @@ def test_fetch_data(mock_client):
 
 **For complex return objects** (like HTTP responses), use `SimpleNamespace` instead of `MagicMock`:
 
-**CRITICAL**: When a mock returns an object with attributes or methods, use `SimpleNamespace` NOT `MagicMock`. This avoids the need to verify `mock_calls` on the returned object.
+**CRITICAL**: When a mock returns an object with attributes or methods, use `SimpleNamespace` NOT `MagicMock`. This avoids the need to verify
+`mock_calls` on the returned object.
 
 **CORRECT - Use SimpleNamespace for response objects**:
+
 ```python
 from types import SimpleNamespace
 
@@ -591,6 +647,7 @@ def test_api_call(mock_post):
 ```
 
 **FORBIDDEN - Using MagicMock for response objects**:
+
 ```python
 @patch('module.requests.post')
 def test_api_call(mock_post):
@@ -608,6 +665,7 @@ def test_api_call(mock_post):
 ```
 
 **Why SimpleNamespace is preferred**:
+
 - No `mock_calls` verification needed - it's just a data container
 - Simpler test code with less boilerplate
 - No risk of forgetting to verify mock interactions
@@ -618,6 +676,7 @@ def test_api_call(mock_post):
 **CRITICAL**: When testing code that uses `print()`, use pytest's built-in `capsys` fixture instead of mocking `print`.
 
 **FORBIDDEN - Mocking print**:
+
 ```python
 @patch("module.print")
 def test_output(mock_print):
@@ -634,6 +693,7 @@ def test_output(mock_print):
 ```
 
 **CORRECT - Using capsys fixture**:
+
 ```python
 def test_output(self, capsys) -> None:
     tested = MyClass()
@@ -648,6 +708,7 @@ def test_output(self, capsys) -> None:
 ```
 
 **Why capsys is preferred**:
+
 - Built-in pytest fixture - no imports or patches needed
 - Simpler assertion syntax - just check `captured.out` or `captured.err`
 - No mock_calls verification required
@@ -656,6 +717,7 @@ def test_output(self, capsys) -> None:
 - Less boilerplate and setup code
 
 **capsys usage patterns**:
+
 ```python
 def test_stdout(self, capsys) -> None:
     print("Hello")
@@ -679,14 +741,17 @@ def test_multiple_prints(self, capsys) -> None:
 ### Verify All Mocks with `mock_calls`
 
 **MANDATORY**: After each test, ALL mock objects must be verified through the `mock_calls` property. This includes:
+
 - The main patched mock (e.g., `mock_db`)
 - Any `MagicMock()` objects you create (e.g., `mock_response`)
 - Any `.return_value` mock instances (e.g., `mock_db_class.return_value`)
 
 **CRITICAL - Parametrized Tests Are NOT Exempt**:
-Parametrized tests MUST verify all mocks just like regular tests. If a test has mock parameters, each mock MUST have a corresponding `assert mock.mock_calls == exp_*` statement.
+Parametrized tests MUST verify all mocks just like regular tests. If a test has mock parameters, each mock MUST have a corresponding
+`assert mock.mock_calls == exp_*` statement.
 
 **FORBIDDEN - Parametrized test without mock verification**:
+
 ```python
 @pytest.mark.parametrize("input_val,expected", [...])
 @patch("module.api")
@@ -699,6 +764,7 @@ def test_fetch(mock_api, input_val, expected):
 ```
 
 **CORRECT - Parametrized test with mock verification**:
+
 ```python
 @pytest.mark.parametrize("input_val,expected", [...])
 @patch("module.api")
@@ -714,13 +780,16 @@ def test_fetch(mock_api, input_val, expected):
 ```
 
 **When to avoid parametrization with mocks**:
-If mock verification differs significantly between test cases, use separate non-parametrized tests instead of trying to parametrize with complex mock verification logic.
+If mock verification differs significantly between test cases, use separate non-parametrized tests instead of trying to parametrize with complex mock
+verification logic.
 
 **CRITICAL**: Always verify at the **mock object level**, NOT at individual method level:
+
 - **CORRECT**: `assert mock_response.mock_calls == exp_calls` (object level)
 - **FORBIDDEN**: `assert mock_response.read.mock_calls == exp_calls` (method level)
 
 **CRITICAL**: Use single assertion with hard-coded values:
+
 - **CORRECT**: `assert mock.mock_calls == exp_calls` (single assertion)
 - **FORBIDDEN**: `assert len(mock.mock_calls) == 3` then checking individual items
 - **FORBIDDEN**: Using variables in expected values: `call(f"URL: {tested_url}")`
@@ -729,11 +798,12 @@ If mock verification differs significantly between test cases, use separate non-
 **Correct verification**:
 
 Using `SimpleNamespace`:
+
 ```python
 @patch('module.requests.get')
 def test_fetch_data(mock_get):
     # Create mock response object
-    mock_get.side_effect = [SimpleNamespace(status_code=200, json=lambda :{"data": "value"})]
+    mock_get.side_effect = [SimpleNamespace(status_code=200, json=lambda: {"data": "value"})]
 
     tested = APIClient()
     result = tested.fetch_data("http://api.example.com/data")
@@ -747,6 +817,7 @@ def test_fetch_data(mock_get):
 ```
 
 Using embedded mocks:
+
 ```python
 @patch('module.requests.get')
 def test_fetch_data(mock_get):
@@ -773,6 +844,7 @@ def test_fetch_data(mock_get):
 **Common mistakes**:
 
 1. **Forgetting to verify mock objects**:
+
 ```python
 # WRONG - mock_response is not verified!
 @patch('module.requests.get')
@@ -788,6 +860,7 @@ def test_fetch_data(mock_get):
 ```
 
 2. **Verifying at wrong level**:
+
 ```python
 # WRONG - verifying individual methods instead of object!
 @patch('module.urlopen')
@@ -807,6 +880,7 @@ def test_fetch(mock_urlopen):
 ```
 
 3. **Checking length and using variables**:
+
 ```python
 # WRONG - checking length then individual calls with variables!
 @patch('builtins.print')
@@ -830,6 +904,7 @@ def test_process(mock_print):
 ### Forbidden Mock Assertions
 
 **NEVER USE** these assertion helper methods:
+
 - `mock.assert_called()`
 - `mock.assert_called_once()`
 - `mock.assert_called_with(...)`
@@ -841,21 +916,59 @@ def test_process(mock_print):
 - `mock.call_args`
 - `mock.call_args_list`
 
+**NEVER USE `ANY` from `unittest.mock` in mock_calls assertions or expected values**:
+
+- `ANY` is a lazy matcher that defeats the purpose of precise mock verification
+- Instead of `call.method(ANY)`, construct the exact expected argument
+- If the argument is hard to predict (e.g., a timestamp), mock the source of non-determinism and construct the exact expected object
+
+**FORBIDDEN**:
+
+```python
+from unittest.mock import ANY
+
+# FORBIDDEN: ANY hides what the actual argument should be
+assert mock_client.mock_calls == [call.send(ANY)]
+
+# FORBIDDEN: ANY in expected values
+assert result == ANY
+```
+
+**CORRECT** — mock the non-deterministic source and construct exact expected values:
+
+```python
+@patch("module.Email.now")  # Mock the timestamp source
+@patch("module.EmailClient")
+def test_send(mock_client_cls, mock_email_now):
+    mock_email_now.side_effect = ["2026-01-01T00:00:00Z"]
+    # ... setup ...
+
+    expected_email = Email(
+        subject="Hello",
+        send_at="2026-01-01T00:00:00Z",  # Exact value from mocked source
+    )
+    assert mock_client.mock_calls == [call.send(expected_email)]  # Exact match!
+```
+
 **NEVER verify at method or attribute level**:
+
 - `mock_response.read.mock_calls` (FORBIDDEN - method level)
 - `mock_response.read.return_value.decode.mock_calls` (FORBIDDEN - nested attribute level)
 
 **NEVER check length or index mock_calls**:
+
 - `assert len(mock.mock_calls) == 3` (FORBIDDEN - checking length)
 - `assert mock.mock_calls[0] == call(...)` (FORBIDDEN - indexing)
 - `assert call(...) == mock.mock_calls[1]` (FORBIDDEN - indexing with reversed order)
 
 **NEVER use variables in expected values**:
+
 - `call(f"URL: {tested_url}")` (FORBIDDEN - using variable)
 - `call(tested_value)` (FORBIDDEN - using variable)
 - Always use hard-coded literals: `call("URL: http://example.com")` (CORRECT)
 
 **ALWAYS use**:
+
 - `mock.mock_calls` property at the **object level** for verification
 - Pattern: `assert mock_object.mock_calls == exp_calls` (single assertion)
 - Hard-coded literal values in all expected calls
@@ -883,6 +996,7 @@ def test_add_five(input_value, expected):
 ```
 
 Benefits:
+
 - Compact representation
 - Clear scenario identification
 - Easy to add new cases
@@ -916,9 +1030,11 @@ def test_process_data__valid_input():
     # Complex setup for valid input
     pass
 
+
 def test_process_data__invalid_format():
     # Different setup for invalid format
     pass
+
 
 def test_process_data__network_error():
     # Mock network error scenario
@@ -939,6 +1055,7 @@ Use mocks for:
 4. **Internal class dependencies**: When a method depends on other methods of the same class, mock those methods to avoid test duplication
 
 **Example with internal method dependency:**
+
 ```python
 class DataProcessor:
     def validate(self, data):
@@ -974,6 +1091,7 @@ def test_process__duplicates_validation_tests():
 ```
 
 **Example with datetime**:
+
 ```python
 @patch('module.datetime')
 def test_create_timestamp(mock_datetime):
@@ -991,7 +1109,8 @@ def test_create_timestamp(mock_datetime):
 
 ### When NOT to Use Mocks
 
-**Prefer real instances over mocks for simple data objects.** Mocks should isolate code from external dependencies, not replace simple data structures.
+**Prefer real instances over mocks for simple data objects.** Mocks should isolate code from external dependencies, not replace simple data
+structures.
 
 **Use real instances when:**
 
@@ -1000,12 +1119,17 @@ def test_create_timestamp(mock_datetime):
 3. **Trivial construction**: When creating a real instance requires no more effort than configuring a mock and checking its calls
 
 **IMPORTANT for NamedTuples and Dataclasses**:
-- NEVER mock NamedTuple classes or instances. NamedTuples are immutable data containers with no side effects - always use real instances created with keyword arguments.
-- NEVER mock dataclass classes or instances. Dataclasses are data containers - always use real instances created with keyword arguments. Only mock external dependencies or internal methods when testing other methods on the same class.
+
+- NEVER mock NamedTuple classes or instances. NamedTuples are immutable data containers with no side effects - always use real instances created with
+  keyword arguments.
+- NEVER mock dataclass classes or instances. Dataclasses are data containers - always use real instances created with keyword arguments. Only mock
+  external dependencies or internal methods when testing other methods on the same class.
 
 **Example - Prefer real instance:**
+
 ```python
 from hook_information import HookInformation
+
 
 # GOOD - HookInformation is a simple NamedTuple, use real instance
 def test_session_directory():
@@ -1024,6 +1148,7 @@ def test_session_directory():
 ```
 
 **Example - Avoid unnecessary mocks:**
+
 ```python
 # BAD - Using Mock for a simple data object adds indirection without benefit
 def test_session_directory():
@@ -1035,6 +1160,7 @@ def test_session_directory():
 ```
 
 **Why prefer real instances:**
+
 - **Type safety**: Real objects catch attribute typos and type errors at test time
 - **Better documentation**: Tests using real objects show the actual interface requirements
 - **Detect breaking changes**: Mocks can hide breaking changes (e.g., renamed attributes still "work" on mocks)
@@ -1047,11 +1173,13 @@ def test_session_directory():
 Tests must pass these commands without errors:
 
 ### Run All Tests
+
 ```bash
 uv run pytest tests/
 ```
 
 ### Run with Coverage
+
 ```bash
 uv run pytest -v tests/ --cov=.
 ```
@@ -1059,6 +1187,7 @@ uv run pytest -v tests/ --cov=.
 Coverage must reach 100% for all source files.
 
 ### Run Specific Test File
+
 ```bash
 uv run pytest tests/utils/test_parser.py -v
 ```
@@ -1068,6 +1197,7 @@ uv run pytest tests/utils/test_parser.py -v
 ### Regular Classes
 
 See `examples/complete-test-file.py` for a full working example that demonstrates:
+
 - Proper test file structure with inheritance testing
 - Naming conventions for all scenarios
 - Mock usage with `side_effect` and `mock_calls`
@@ -1077,6 +1207,7 @@ See `examples/complete-test-file.py` for a full working example that demonstrate
 ### NamedTuple Classes
 
 See `examples/namedtuple-test-file.py` for a full working example that demonstrates:
+
 - NamedTuple structure verification with `is_namedtuple()` helper
 - Testing NamedTuple methods and immutability
 - Creating test instances with keyword arguments
@@ -1086,6 +1217,7 @@ See `examples/namedtuple-test-file.py` for a full working example that demonstra
 ### Dataclass Classes
 
 See `examples/dataclass-test-file.py` for a full working example that demonstrates:
+
 - Dataclass structure verification with `is_dataclass()` helper
 - Testing dataclass methods and mutability
 - Testing default values and default_factory fields
@@ -1099,6 +1231,7 @@ See `examples/dataclass-test-file.py` for a full working example that demonstrat
 ### Reference Files
 
 For detailed guidance on specific topics:
+
 - **`references/naming-conventions.md`** - Comprehensive naming examples for all scenarios
 - **`references/mock-patterns.md`** - Mock patterns with `side_effect` and `mock_calls` verification
 - **`references/parametrize-examples.md`** - Advanced parametrization techniques
@@ -1106,6 +1239,7 @@ For detailed guidance on specific topics:
 ### Example Files
 
 Working examples demonstrating guidelines:
+
 - **`examples/conftest.py`** - Example conftest.py with `is_namedtuple()` and `is_dataclass()` helper functions
 - **`examples/complete-test-file.py`** - Complete test file with source code showing all patterns for regular classes
 - **`examples/namedtuple-test-file.py`** - Complete test file demonstrating NamedTuple testing patterns
@@ -1114,31 +1248,39 @@ Working examples demonstrating guidelines:
 ## Quick Reference
 
 **Test structure**:
+
 - For classes with inheritance: First test must be `test_inheritance()` verifying `issubclass(DerivedClass, BaseClass)`
 - For NamedTuple classes: First test must be `test_class()` using `is_namedtuple(tested, fields)` helper (add helper to `tests/conftest.py`)
-- For dataclass classes: First test must be `test_class()` using `is_dataclass(tested, fields)` helper with string type values (add helper to `tests/conftest.py`)
+- For dataclass classes: First test must be `test_class()` using `is_dataclass(tested, fields)` helper with string type values (add helper to
+  `tests/conftest.py`)
 
 **Test naming**: `test_method_name` or `test_method_name__case`
 
 **Variable naming** (MANDATORY - use these exact names):
+
 - `tested` - the class or instance being tested (assign FIRST, call methods on it)
 - `result` - the return value from the method under test (NEVER use `output`, `ret`, `actual`)
 - `expected` - the expected value for single assertions (NEVER inline in assert)
 - `exp_*` - expected values for multiple assertions (NEVER use `expected_*` prefix)
 
 **Assertions**:
+
 - Use `is` for singletons: `assert result is True`, `assert result is None`
 - Use `==` for everything else: `assert result == "value"`
 
 **Mock setup**: Always use `side_effect` - `mock.method.side_effect = [return_value]`
 
-**Mock return objects**: Use `SimpleNamespace` NOT `MagicMock` for return objects (like HTTP responses). Use lambdas for methods: `SimpleNamespace(status_code=200, json=lambda: {"data": "value"})`
+**Mock return objects**: Use `SimpleNamespace` NOT `MagicMock` for return objects (like HTTP responses). Use lambdas for methods:
+`SimpleNamespace(status_code=200, json=lambda: {"data": "value"})`
 
-**Capturing print output**: Use pytest's `capsys` fixture - NEVER mock `print`. Pattern: `captured = capsys.readouterr()` then `assert "message" in captured.out`
+**Capturing print output**: Use pytest's `capsys` fixture - NEVER mock `print`. Pattern: `captured = capsys.readouterr()` then
+`assert "message" in captured.out`
 
-**Mock scope**: Mock external systems, I/O, non-deterministic behavior, and internal class method dependencies. Use real instances for simple data objects (NamedTuples, dataclasses). For dataclasses, you may mock internal methods when testing other methods to avoid duplication.
+**Mock scope**: Mock external systems, I/O, non-deterministic behavior, and internal class method dependencies. Use real instances for simple data
+objects (NamedTuples, dataclasses). For dataclasses, you may mock internal methods when testing other methods to avoid duplication.
 
 **Mock verification**: Verify ALL mock objects at object level with single assertion and hard-coded values
+
 - Main patched mocks must be verified
 - Created MagicMock() objects must be verified
 - .return_value instances must be verified
@@ -1157,7 +1299,9 @@ Working examples demonstrating guidelines:
 **Excluded from tests**: `if __name__ == "__main__":` blocks - do NOT write tests for these (excluded from coverage)
 
 **Critical Rules**:
-1. ALWAYS start with `test_inheritance()` as the first test when testing a class that inherits from a base class, OR `test_class()` using `is_namedtuple()` helper for NamedTuple classes, OR `test_class()` using `is_dataclass()` helper for dataclass classes
+
+1. ALWAYS start with `test_inheritance()` as the first test when testing a class that inherits from a base class, OR `test_class()` using
+   `is_namedtuple()` helper for NamedTuple classes, OR `test_class()` using `is_dataclass()` helper for dataclass classes
 2. ALWAYS assign the class or instance to a `tested` variable FIRST, then call methods on `tested` - NEVER call methods directly on the class name
 3. ALWAYS store return values in a variable named `result` - NEVER use `output`, `ret`, `actual`, `response`, etc.
 4. ALWAYS store expected values in a variable named `expected` - NEVER inline expected values in assertions

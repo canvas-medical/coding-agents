@@ -1,6 +1,7 @@
 # Mock Patterns - Comprehensive Guide
 
-This reference provides detailed patterns for using mocks in pytest tests, emphasizing `side_effect` for return values and `mock_calls` for verification.
+This reference provides detailed patterns for using mocks in pytest tests, emphasizing `side_effect` for return values and `mock_calls` for
+verification.
 
 ## Core Mock Principles
 
@@ -9,6 +10,7 @@ This reference provides detailed patterns for using mocks in pytest tests, empha
 **MANDATORY**: Use `side_effect` instead of `return_value` for all mock return values, even for single returns.
 
 **Rationale**:
+
 - Consistent pattern across all mocks
 - Supports sequential return values naturally
 - Makes mock behavior explicit
@@ -17,7 +19,9 @@ This reference provides detailed patterns for using mocks in pytest tests, empha
 
 **FORBIDDEN**: Never use `mock.return_value = value` or `mock_obj.method.return_value = value` to set return values.
 
-**Exception**: Using `.return_value` to access a mock instance is acceptable ONLY when you need to configure the instance that a mocked class constructor returns:
+**Exception**: Using `.return_value` to access a mock instance is acceptable ONLY when you need to configure the instance that a mocked class
+constructor returns:
+
 ```python
 @patch('module.Database')
 def test_example(mock_db_class):
@@ -30,16 +34,19 @@ def test_example(mock_db_class):
 **MANDATORY**: After every test involving mocks, verify ALL mock interactions using the `mock_calls` property.
 
 **Critical Rule**: If you create a mock object (using `MagicMock()`, `mock.return_value`, etc.), you MUST verify its calls. This includes:
+
 - The main patched mock (e.g., `mock_urlopen`)
 - Any `MagicMock()` objects you create (e.g., `mock_response`)
 - Any `.return_value` mock instances (e.g., `mock_db_class.return_value`)
 
 **Verification Level**: ALWAYS verify at the **mock object level**, not individual method level:
+
 - **CORRECT**: `assert mock_response.mock_calls == exp_calls`
 - **FORBIDDEN**: `assert mock_response.read.mock_calls == exp_calls` (verifying individual method)
 - **FORBIDDEN**: `assert mock_response.read.return_value.decode.mock_calls == exp_calls` (verifying nested attribute)
 
 **Rationale**:
+
 - Ensures complete verification of mock usage
 - Catches unexpected or missing method calls
 - Prevents partial verification that might miss issues
@@ -47,6 +54,7 @@ def test_example(mock_db_class):
 - Verifying at object level captures ALL interactions
 
 **Pattern**: For each mock object created, define its expected calls and verify:
+
 ```python
 # Verify at the mock OBJECT level
 exp_main_calls = [call(...)]
@@ -58,6 +66,7 @@ assert mock_response.mock_calls == exp_response_calls
 ```
 
 **Verification Format**:
+
 - **CORRECT**: `assert mock.mock_calls == exp_calls` (single assertion with list comparison)
 - **FORBIDDEN**: Checking length then individual calls:
   ```python
@@ -68,6 +77,7 @@ assert mock_response.mock_calls == exp_response_calls
   ```
 
 **Hard-Coded Values Required**:
+
 - ALWAYS use hard-coded literal values in expected calls
 - **FORBIDDEN**: Using variables in expected values
   ```python
@@ -82,6 +92,7 @@ assert mock_response.mock_calls == exp_response_calls
 ### Forbidden Assertion Methods
 
 **NEVER USE** these mock assertion helpers:
+
 - `mock.assert_called()`
 - `mock.assert_called_once()`
 - `mock.assert_called_with(...)`
@@ -92,13 +103,16 @@ assert mock_response.mock_calls == exp_response_calls
 - `mock.call_count`
 - `mock.call_args`
 - `mock.call_args_list`
+- `ANY` from `unittest.mock` (lazy matcher that defeats precise verification)
 
 **NEVER verify at method or nested attribute level**:
+
 - `mock_response.read.mock_calls` (FORBIDDEN - verifying individual method)
 - `mock_response.read.return_value.decode.mock_calls` (FORBIDDEN - verifying nested attribute)
 - `mock_obj.method.mock_calls` (FORBIDDEN - always verify at object level)
 
 **ONLY use `mock_calls` at object level for all verification**:
+
 - `assert mock_object.mock_calls == exp_calls` (CORRECT - object level verification)
 
 ## Basic Mock Patterns
@@ -109,6 +123,7 @@ assert mock_response.mock_calls == exp_response_calls
 
 ```python
 from unittest.mock import patch, call
+
 
 @patch('module.external_function')
 def test_call_external(mock_func):
@@ -294,6 +309,7 @@ def test_api_request(mock_client):
 from datetime import datetime
 from unittest.mock import patch, call
 
+
 @patch('module.datetime')
 def test_timestamp_creation(mock_datetime):
     mock_datetime.now.side_effect = [datetime(2024, 1, 1, 15, 30, 0)]
@@ -402,6 +418,7 @@ def test_query_users(mock_connect):
 
 ```python
 from unittest.mock import patch, call, MagicMock
+
 
 @patch('module.requests.get')
 def test_fetch_api_data(mock_get):
@@ -573,6 +590,7 @@ def test_counter_increment(mock_counter_class):
 ```python
 from unittest.mock import patch, call, MagicMock
 
+
 def test_partial_mock():
     tested = DataProcessor()
 
@@ -617,10 +635,12 @@ def test_cache_hit(mock_cache, mock_expensive):
 ## Complete Example
 
 **Source code**:
+
 ```python
 # services/user_service.py
 import requests
 from datetime import datetime
+
 
 class UserService:
     def create_user(self, name, email):
@@ -650,6 +670,7 @@ class UserService:
 ```
 
 **Test code**:
+
 ```python
 # tests/services/test_user_service.py
 from unittest.mock import patch, call, MagicMock
@@ -657,6 +678,7 @@ from datetime import datetime
 import pytest
 
 from services.user_service import UserService
+
 
 @patch('services.user_service.datetime')
 @patch('services.user_service.requests')
@@ -727,6 +749,7 @@ These patterns are **STRICTLY FORBIDDEN** and must never appear in generated tes
 ### ❌ Using `return_value` to Set Return Values
 
 **WRONG**:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -734,6 +757,7 @@ def test_fetch(mock_urlopen):
 ```
 
 **CORRECT**:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -743,6 +767,7 @@ def test_fetch(mock_urlopen):
 ### ❌ Using `return_value` on Methods
 
 **WRONG**:
+
 ```python
 @patch('module.api_client')
 def test_call(mock_client):
@@ -750,6 +775,7 @@ def test_call(mock_client):
 ```
 
 **CORRECT**:
+
 ```python
 @patch('module.api_client')
 def test_call(mock_client):
@@ -759,6 +785,7 @@ def test_call(mock_client):
 ### ❌ Using Mock Assert Helpers
 
 **WRONG**:
+
 ```python
 mock_func.assert_called_once()  # FORBIDDEN!
 mock_func.assert_called_with(arg)  # FORBIDDEN!
@@ -766,6 +793,7 @@ assert mock_func.call_count == 1  # FORBIDDEN!
 ```
 
 **CORRECT**:
+
 ```python
 exp_calls = [call(arg)]
 assert mock_func.mock_calls == exp_calls  # Always use mock_calls
@@ -774,6 +802,7 @@ assert mock_func.mock_calls == exp_calls  # Always use mock_calls
 ### ❌ Not Verifying All Mock Objects
 
 **WRONG** - Missing verification of mock_response:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -789,6 +818,7 @@ def test_fetch(mock_urlopen):
 ```
 
 **CORRECT** - Verify ALL mock objects:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -810,6 +840,7 @@ def test_fetch(mock_urlopen):
 ### ❌ Verifying Individual Methods Instead of Mock Object
 
 **WRONG** - Verifying at method level:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -828,6 +859,7 @@ def test_fetch(mock_urlopen):
 ```
 
 **CORRECT** - Verify at object level:
+
 ```python
 @patch('module.urlopen')
 def test_fetch(mock_urlopen):
@@ -849,6 +881,7 @@ def test_fetch(mock_urlopen):
 ### ❌ Checking Length and Individual Calls
 
 **WRONG** - Checking length then individual items:
+
 ```python
 @patch('builtins.print')
 def test_print_messages(mock_print):
@@ -865,6 +898,7 @@ def test_print_messages(mock_print):
 ```
 
 **CORRECT** - Single assertion with hard-coded values:
+
 ```python
 @patch('builtins.print')
 def test_print_messages(mock_print):
@@ -884,6 +918,7 @@ def test_print_messages(mock_print):
 **Use `side_effect` for returns**: Always use `side_effect` even for single values - NEVER use `return_value` to set what a mock returns
 
 **Verify ALL mocks with `mock_calls`**:
+
 - EVERY mock object must be verified: patched mocks, `MagicMock()` objects, `.return_value` instances
 - ALWAYS verify at the **mock object level**: `assert mock_object.mock_calls == exp_calls`
 - NEVER verify individual methods: `assert mock_object.method.mock_calls == exp_calls` (FORBIDDEN)
@@ -891,16 +926,19 @@ def test_print_messages(mock_print):
 - NEVER use assert helpers like `assert_called_with()`
 
 **Verification format rules**:
+
 - Use single assertion: `assert mock.mock_calls == exp_calls`
 - NEVER check length then individual items: `assert len(mock.mock_calls) == 3` (FORBIDDEN)
 - NEVER index mock_calls: `assert mock.mock_calls[0] == call(...)` (FORBIDDEN)
 
 **Hard-coded values required**:
+
 - ALWAYS use hard-coded literal values in expected calls
 - NEVER use variables in expected values: `call(f"URL: {tested_url}")` (FORBIDDEN)
 - Use literals directly: `call("URL: http://example.com")` (CORRECT)
 
 **Critical verification rule**: Verify at object level with single assertion and hard-coded values:
+
 ```python
 # Create it
 mock_response = MagicMock()
