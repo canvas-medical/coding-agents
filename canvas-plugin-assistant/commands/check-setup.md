@@ -1,3 +1,7 @@
+---
+name: check-setup
+---
+
 # Check Setup
 
 Verify the development environment has all required tools and configuration before starting plugin development.

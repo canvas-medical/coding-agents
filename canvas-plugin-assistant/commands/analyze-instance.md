@@ -1,3 +1,7 @@
+---
+name: analyze-instance
+---
+
 # Analyze Instance
 
 Analyze a Canvas instance's configuration to understand the target environment.

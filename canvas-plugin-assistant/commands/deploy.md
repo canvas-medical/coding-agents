@@ -1,3 +1,7 @@
+---
+name: deploy
+---
+
 # Deploy Plugin
 
 Deploy the current plugin to a Canvas instance with log monitoring.

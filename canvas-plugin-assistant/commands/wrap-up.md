@@ -1,3 +1,7 @@
+---
+name: wrap-up
+---
+
 # Wrap Up Plugin
 
 Final checklist before calling a plugin "done" for this version.

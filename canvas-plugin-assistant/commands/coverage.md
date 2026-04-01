@@ -1,3 +1,7 @@
+---
+name: coverage
+---
+
 # Test Coverage Report
 
 Run tests with coverage and offer to improve if below 90%.
