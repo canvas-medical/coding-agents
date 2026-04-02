@@ -79,59 +79,14 @@ If the install command itself fails, show the error and stop.
 
 ### Step 6: Post-Deployment Log Check
 
-After install completes, check the logs.
+After install completes, check the logs and report the result. Do NOT attempt to fix any errors.
 
 1. Wait 5 seconds for logs to accumulate (`sleep 5`)
 2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
 3. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, install failures)
-4. **If errors are found:**
-   1. Stop log monitoring (KillShell)
-   2. Show the errors to the user
-   3. Use AskUserQuestion to ask:
-      ```json
-      {
-        "questions": [
-          {
-            "question": "Errors were detected in the deployment logs. What would you like to do?",
-            "header": "Deployment errors",
-            "options": [
-              {"label": "Try to fix the issue", "description": "I'll analyze the errors and attempt a fix, then redeploy"},
-              {"label": "Stop here", "description": "I'll look into this myself"}
-            ],
-            "multiSelect": false
-          }
-        ]
-      }
-      ```
-   4. If the user chooses "Try to fix the issue": analyze root cause, fix the code, and re-deploy (repeat from Step 3)
-   5. If the user chooses "Stop here": stop and let the user take over
-5. **If no errors:** leave log monitoring running and continue to Step 7
-
-### Step 7: User Testing
-
-Log monitoring is still running in the background.
-
-Use AskUserQuestion to tell the user:
-
-```json
-{
-  "questions": [
-    {
-      "question": "Plugin deployed successfully — no errors detected in logs. Log monitoring is running. Please test the plugin in Canvas and let me know the result.",
-      "header": "Test the plugin",
-      "options": [
-        {"label": "Everything works", "description": "The plugin is working as expected"},
-        {"label": "There's a problem", "description": "Something isn't working right — I'll describe the issue"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-- If **"Everything works"**: use KillShell to stop the background log stream. Report success.
-- If **"There's a problem"**: use BashOutput with the saved bash_id to retrieve logs. Show the user any relevant log entries and ask them to describe the problem. Then work with the user to diagnose and fix the issue. If a fix is made, re-deploy (repeat from Step 3).
-- If at any point the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries.
+4. Stop log monitoring (KillShell) — always stop regardless of outcome
+5. **If errors are found:** show the errors to the user. Do NOT offer to fix them or re-deploy. Just report the errors and stop.
+6. **If no errors:** inform the user that the deployment completed successfully. Stop.
 
 ## Credentials
 
