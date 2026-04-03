@@ -1,3 +1,7 @@
+---
+name: wrap-up
+---
+
 # Wrap Up Plugin
 
 Final checklist before calling a plugin "done" for this version.
@@ -186,7 +190,48 @@ Check that all test files test code that still exists:
 
 **Remove dead code rather than commenting it out.** Git history preserves old code if needed.
 
-### 7. README Review
+### 7. Cache Busting Verification
+
+**If the plugin serves HTML content**, verify cache busting is properly implemented.
+
+Check if the plugin uses HTML templates or `render_to_string`:
+
+```bash
+INNER=$(basename "$PWD" | tr '-' '_')
+ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py" .
+```
+
+**If HTML content exists, verify all four requirements:**
+
+1. **Module-level `_CACHE_BUST` token** exists in every file that renders HTML:
+   ```bash
+   grep -rn "_CACHE_BUST" --include="*.py" .
+   ```
+   Expected: `_CACHE_BUST = str(int(datetime.now(timezone.utc).timestamp()))` at module level.
+
+2. **`cache_bust` passed in template context** for every `render_to_string()` call:
+   ```bash
+   grep -rn "render_to_string" --include="*.py" -A 5 .
+   ```
+   Every call must include `"cache_bust": _CACHE_BUST` (or equivalent) in its context dict.
+
+3. **HTML templates use `?v={{ cache_bust }}`** on all external resource URLs:
+   ```bash
+   grep -rn "src=\|href=" --include="*.html" .
+   ```
+   Every `<script src>`, `<link href>`, and plugin-served static asset URL must end with `?v={{ cache_bust }}`. Flag any that don't.
+
+4. **`LaunchModalEffect(url=...)` calls include cache busting**:
+   ```bash
+   grep -rn "LaunchModalEffect" --include="*.py" -A 3 .
+   ```
+   Any `url=` argument must include `?v={_CACHE_BUST}`.
+
+**If any requirement is missing:** Fix it before proceeding. Do NOT use `Path`, `json.load`, or filesystem reads for the token — use the UTC timestamp approach.
+
+**If no HTML content:** Mark as N/A.
+
+### 8. README Review
 
 Read the plugin's README.md and verify:
 
@@ -210,7 +255,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 8. Application Icon Check
+### 9. Application Icon Check
 
 **If the plugin has an Application component, verify it has an icon.**
 
@@ -242,7 +287,7 @@ ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 
 **If no applications:** Mark as N/A.
 
-### 9. License Check
+### 10. License Check
 
 Check for any license file or license mentions:
 
@@ -273,7 +318,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 10. Final Verdict
+### 11. Final Verdict
 
 After all checks, present a summary:
 
@@ -290,6 +335,7 @@ After all checks, present a summary:
 | Coverage | ✅ 92% / ❌ 78% | ... |
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
+| Cache Busting | ✅ Pass / ⚠️ Fixed / N/A | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
 | Application Icon | ✅ Present / ⚠️ Created / N/A | ... |
 | License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
@@ -333,6 +379,7 @@ cat > "$REPORT_FILE" <<'REPORT_END'
 | Coverage | {status} | {notes} |
 | Debug Logs | {status} | {notes} |
 | Dead Code | {status} | {notes} |
+| Cache Busting | {status} | {notes} |
 | README | {status} | {notes} |
 | Application Icon | {status} | {notes} |
 | License | {status} | {notes} |
@@ -367,7 +414,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 11. Wrap-Up Complete
+### 12. Wrap-Up Complete
 
 **After all checks pass (or issues are resolved), the plugin is ready.**
 

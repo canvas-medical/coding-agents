@@ -299,6 +299,31 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 
 #### Implementation Guidelines
 
+**CRITICAL: Cache bust all HTML/JavaScript content using a UTC timestamp token.**
+
+When a plugin serves HTML content (via `render_to_string()` for modals, panels, or API responses), you MUST add cache busting. The Canvas sandbox forbids filesystem access (`Path`, `open()`, `json.load`), so you **cannot** read `CANVAS_MANIFEST.json` at runtime. Instead, generate a timestamp token at module load time.
+
+1. **Generate the cache-bust token once** at module level in any file that renders HTML:
+
+```python
+from datetime import datetime, timezone
+
+_CACHE_BUST = str(int(datetime.now(timezone.utc).timestamp()))
+```
+
+2. **Pass `cache_bust` in every `render_to_string()` context:**
+
+```python
+content = render_to_string("templates/index.html", {
+    "cache_bust": _CACHE_BUST,
+    # ... other context variables
+})
+```
+
+3. **In HTML templates**, append `?v={{ cache_bust }}` to all external `<script src>` and `<link href>` URLs, and to plugin-served static asset URLs.
+
+4. **For `LaunchModalEffect(url=...)`**, append `?v={_CACHE_BUST}` to the URL so the browser fetches the latest version.
+
 **CRITICAL: Use absolute imports only.**
 
 Canvas plugins MUST use absolute imports with the full package path. Relative imports will fail in the Canvas runtime.

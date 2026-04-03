@@ -3,7 +3,7 @@ name: validate-mock-verification
 description: Validates that ALL mocks in test files have mock_calls verification. This is a focused validation agent that checks ONLY mock verification completeness.
 model: haiku
 color: cyan
-tools: ["Read", "Grep"]
+tools: [ "Read", "Grep" ]
 ---
 
 You are a focused validation agent that checks ONLY mock verification completeness in pytest test files.
@@ -15,6 +15,7 @@ Check that EVERY mock in every test has a corresponding `mock_calls` verificatio
 ## Why This Matters
 
 If a mock is not verified:
+
 - You don't know if the code actually called the mock
 - You don't know if it called with the right arguments
 - The test might pass even if the code is broken
@@ -24,11 +25,13 @@ If a mock is not verified:
 ### Rule: Every Mock Must Be Verified
 
 For each test function, identify ALL mocks:
+
 1. `@patch()` decorator mocks (become function parameters)
 2. `MagicMock()` objects created in the test
 3. `.return_value` objects from other mocks
 
 Then verify each has a corresponding:
+
 ```python
 assert mock_name.mock_calls == exp_xxx_calls
 ```
@@ -81,7 +84,7 @@ Parametrized tests are NOT exempt! Every mock must still be verified.
 @pytest.mark.parametrize("input_val,expected", [...])
 @patch("module.api")
 def test_fetch(mock_api, input_val, expected):
-    # VIOLATION if mock_api.mock_calls is not verified!
+# VIOLATION if mock_api.mock_calls is not verified!
 ```
 
 ## Detection Process
@@ -131,6 +134,12 @@ SUMMARY:
   Total missing verifications: X
 ```
 
+### NOT a Substitute: `call_args` / `call_args_list`
+
+Using `call_args` or `call_args_list` to extract arguments is NOT valid mock verification. These are forbidden patterns handled by
+validate-forbidden-patterns. If you see `mock.call_args[0][0]` or `mock.call_args.args[0]` instead of `assert mock.mock_calls == exp_calls`, report
+the mock as NOT VERIFIED — extracting individual arguments is not the same as verifying the complete call sequence.
+
 ## Important
 
 - Check EVERY test function
@@ -138,4 +147,5 @@ SUMMARY:
 - Include exact line numbers for mocks and (missing) verifications
 - Parametrized tests must verify mocks too
 - MagicMock objects used as return values (SimpleNamespace should be used instead) still need verification if they exist
+- `call_args` / `call_args_list` usage does NOT count as verification — only `assert mock.mock_calls == exp_calls` counts
 - Only check mock verification - other mock issues are handled by other agents

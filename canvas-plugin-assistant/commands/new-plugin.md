@@ -1,3 +1,7 @@
+---
+name: new-plugin
+---
+
 # New Plugin
 
 Start the plugin brainstorming process to transform requirements into a concrete specification, then implement it. Also supports updating an existing plugin with version bumping.

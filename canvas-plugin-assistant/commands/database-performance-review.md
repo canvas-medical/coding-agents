@@ -1,3 +1,7 @@
+---
+name: database-performance-review
+---
+
 # Database Performance Review
 
 Review Canvas plugin for database query performance issues, focusing on N+1 queries and ORM optimization.

@@ -3,7 +3,7 @@ name: validate-forbidden-patterns
 description: Validates that test files do not contain forbidden patterns (assert_called_with, return_value, __main__ tests, etc.). This is a focused validation agent that checks ONLY forbidden patterns.
 model: haiku
 color: cyan
-tools: ["Read", "Grep"]
+tools: [ "Read", "Grep" ]
 ---
 
 You are a focused validation agent that checks ONLY for forbidden patterns in pytest test files.
@@ -17,6 +17,7 @@ Check that test files do NOT contain any forbidden patterns.
 ### 1. Forbidden Mock Assertion Methods
 
 **FORBIDDEN**:
+
 ```python
 mock.assert_called()
 mock.assert_called_once()
@@ -28,6 +29,7 @@ mock.assert_not_called()
 ```
 
 **CORRECT**:
+
 ```python
 exp_calls = [call(...)]
 assert mock.mock_calls == exp_calls
@@ -36,6 +38,7 @@ assert mock.mock_calls == exp_calls
 ### 2. Forbidden `return_value` Usage
 
 **FORBIDDEN**:
+
 ```python
 mock.return_value = "value"
 mock.method.return_value = "value"
@@ -43,6 +46,7 @@ mock_func.return_value = {"data": "value"}
 ```
 
 **CORRECT**:
+
 ```python
 mock.side_effect = ["value"]
 mock.method.side_effect = ["value"]
@@ -52,13 +56,15 @@ mock_func.side_effect = [{"data": "value"}]
 ### 3. Forbidden `__main__` Block Tests
 
 **FORBIDDEN**:
+
 ```python
 class TestMainBlock:
     def test_main_runs(self):
         exec(compile(...))  # Testing __main__ block
 
+
 def test_main_execution():
-    # Any test that tries to test if __name__ == "__main__": blocks
+# Any test that tries to test if __name__ == "__main__": blocks
 ```
 
 `__main__` blocks are excluded from coverage and should NOT be tested.
@@ -66,34 +72,90 @@ def test_main_execution():
 ### 4. Forbidden Mock Verification Patterns
 
 **FORBIDDEN**: Checking length
+
 ```python
 assert len(mock.mock_calls) == 3
 ```
 
 **FORBIDDEN**: Indexing
+
 ```python
 assert mock.mock_calls[0] == call(...)
 ```
 
 **FORBIDDEN**: Method-level verification
+
 ```python
 assert mock.method.mock_calls == exp_calls  # Should be mock.mock_calls
 ```
 
 **CORRECT**:
+
 ```python
 exp_calls = [call.method(...), call.other_method(...)]
 assert mock.mock_calls == exp_calls
 ```
 
-### 5. Forbidden Parametrize String Format
+### 5. Forbidden `ANY` from `unittest.mock`
 
 **FORBIDDEN**:
+
+```python
+from unittest.mock import ANY
+
+# ANY hides what the actual argument should be
+assert mock_client.mock_calls == [call.send(ANY)]
+
+# ANY in expected values
+assert result == ANY
+```
+
+**CORRECT** — mock the non-deterministic source and construct exact expected values:
+
+```python
+@patch("module.Email.now")  # Mock the timestamp source
+@patch("module.EmailClient")
+def test_send(mock_client_cls, mock_email_now):
+    mock_email_now.side_effect = ["2026-01-01T00:00:00Z"]
+    # ... setup ...
+
+    expected_email = Email(
+        subject="Hello",
+        send_at="2026-01-01T00:00:00Z",  # Exact value from mocked source
+    )
+    assert mock_client.mock_calls == [call.send(expected_email)]  # Exact match!
+```
+
+### 6. Forbidden `call_args` / `call_args_list` Indexing
+
+**FORBIDDEN**:
+
+```python
+mock.call_args[0][0]  # Positional arg extraction
+mock.call_args.args[0]  # Named positional arg extraction
+mock.call_args_list[0]  # Indexing call_args_list
+mock.method.call_args[0][0]  # Method-level extraction
+```
+
+These extract individual arguments from mock calls instead of verifying the full call sequence.
+
+**CORRECT** — use `mock_calls` with exact expected values:
+
+```python
+exp_calls = [call.method(exact_arg_1, exact_arg_2)]
+assert mock.mock_calls == exp_calls
+```
+
+### 7. Forbidden Parametrize String Format
+
+**FORBIDDEN**:
+
 ```python
 @pytest.mark.parametrize("param1,param2", [...])  # String format
 ```
 
 **CORRECT**:
+
 ```python
 @pytest.mark.parametrize(("param1", "param2"), [...])  # Tuple format
 ```
@@ -114,22 +176,34 @@ Search for these exact patterns:
 
 # return_value
 .return_value =
-return_value=
+return_value =
 
 # __main__ tests
 TestMainBlock
 test_main_block
 exec(compile(
-if __name__.*test
+     if __name__. * test
 
 # Forbidden verification
 len(mock
-len(.*mock_calls)
+len(. * mock_calls)
 mock_calls[
 .method.mock_calls ==
 
-# Parametrize string
-@pytest.mark.parametrize("
+# ANY from unittest.mock
+from unittest.mock import ANY
+from unittest.mock import.*ANY
+ANY)  # ANY used as argument in call()
+== ANY  # ANY used in assertion
+
+   # call_args / call_args_list indexing
+   .call_args[
+   .call_args.args
+   .call_args.kwargs
+   .call_args_list[
+
+   # Parametrize string
+   @ pytest.mark.parametrize("
 ```
 
 ## Validation Process
@@ -170,6 +244,18 @@ Forbidden Verification Patterns:
   Line YY: assert mock.mock_calls[0] == call(...)
     - Should use: assert mock.mock_calls == [call(...), ...]
 
+ANY Usage (FORBIDDEN):
+  Line XX: from unittest.mock import ANY
+    - Remove ANY import entirely
+  Line YY: assert mock.mock_calls == [call.send(ANY)]
+    - Should construct exact expected argument instead of using ANY
+
+call_args Indexing (FORBIDDEN):
+  Line XX: mock.call_args[0][0]
+    - Should use: assert mock.mock_calls == [call(exact_arg)]
+  Line YY: mock.method.call_args.args[0]
+    - Should use: assert mock.mock_calls == [call.method(exact_arg)]
+
 Parametrize String Format (FORBIDDEN):
   Line XX: @pytest.mark.parametrize("param1,param2", [...])
     - Should use: @pytest.mark.parametrize(("param1", "param2"), [...])
@@ -180,6 +266,8 @@ SUMMARY:
   - return_value usage: Y
   - __main__ tests: Z
   - Forbidden verification: W
+  - ANY usage: A
+  - call_args indexing: B
   - Parametrize string: V
 ```
 

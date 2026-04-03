@@ -1,3 +1,7 @@
+---
+name: security-review
+---
+
 # Security Review
 
 Comprehensive security audit for Canvas plugins covering both server-side API security and client-side FHIR API security.

@@ -1132,7 +1132,7 @@ class TestCanvasInstanceScraper:
         assert exc_info.value.code == 1
 
         captured = capsys.readouterr()
-        expected = "Usage: python scrape_canvas_instance.py <instance_name> <root_password>\n"
+        expected = "Usage: uv run python scrape_canvas_instance.py <instance_name> <root_password>\n"
         assert captured.out == expected
 
     def test_main__insufficient_arguments_one_arg(self, capsys):
@@ -1145,7 +1145,7 @@ class TestCanvasInstanceScraper:
         assert exc_info.value.code == 1
 
         captured = capsys.readouterr()
-        expected = "Usage: python scrape_canvas_instance.py <instance_name> <root_password>\n"
+        expected = "Usage: uv run python scrape_canvas_instance.py <instance_name> <root_password>\n"
         assert captured.out == expected
 
     @patch("scrape_canvas_instance.requests.Session")
