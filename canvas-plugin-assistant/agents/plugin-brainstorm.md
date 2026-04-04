@@ -374,7 +374,23 @@ Run pre-deploy checks:
 uv run canvas validate-manifest .
 ```
 
-### Step 5: Security Check
+### Step 5: Custom Data Check
+
+If the plugin defines **any CustomModel subclasses or uses AttributeHub**, invoke the **custom-data-patterns** skill to verify the models follow best practices before proceeding. Common mistakes to catch early:
+- Unnecessary `CustomModel` availability checks (try/except ImportError)
+- Manual `app_label` in `class Meta`
+- `UniqueConstraint` added to a table that may already have duplicate data
+- Redundant `related_name` namespacing when using proxy models
+- Foreign keys targeting `id` instead of `dbid`
+- Copying data by value instead of using foreign key relationships
+- Filtered columns missing indexes, or indexes on columns never filtered
+- JSON stored in `TextField` instead of `JSONField`
+- Using `null=True` or `blank=True` (ignored by the plugin runner)
+- Complex JSON parsing that should be typed columns instead
+
+Fix any issues before moving on to security checks.
+
+### Step 6: Security Check
 
 If the plugin has **any SimpleAPI handlers**, invoke the **plugin-api-server-security** skill to verify:
 - Uses authentication mixins where appropriate (`StaffSessionMixin`, `PatientSessionMixin`, `APIKeyAuthMixin`)
@@ -387,13 +403,13 @@ If the plugin **calls FHIR APIs or uses Http()**, also invoke the **fhir-api-cli
 - Patient-facing apps use patient-scoped tokens
 - Minimum necessary scopes requested
 
-### Step 6: Write Tests
+### Step 7: Write Tests
 
 **Always write unit tests.** Invoke the **testing skill** and write tests targeting 90% coverage.
 
-After tests pass, **immediately proceed to Step 7**.
+After tests pass, **immediately proceed to Step 8**.
 
-### Step 7: Deploy for UAT
+### Step 8: Deploy for UAT
 
 After tests are written and passing, tell the user:
 
@@ -480,14 +496,18 @@ Then ask the user to describe the specific changes they want in their own words.
 uv run canvas validate-manifest .
 ```
 
-### Update Step 4: Security Check
+### Update Step 4: Custom Data Check
+
+Same as creation mode (Step 5) — if the plugin defines **any CustomModel subclasses or uses AttributeHub**, invoke the **custom-data-patterns** skill and fix any issues before proceeding.
+
+### Update Step 5: Security Check
 
 Same checks as creation mode:
 
 - If the plugin has **any SimpleAPI handlers**, invoke the **plugin-api-server-security** skill
 - If the plugin **calls FHIR APIs or uses Http()**, invoke the **fhir-api-client-security** skill
 
-### Update Step 5: Run Tests
+### Update Step 6: Run Tests
 
 Invoke the **testing skill** and run tests:
 
@@ -497,7 +517,7 @@ uv run pytest
 
 Update or add tests as needed to maintain 90% coverage for the changed code.
 
-### Update Step 6: Version Bump
+### Update Step 7: Version Bump
 
 **After all changes are implemented and tests pass**, bump the plugin version.
 
@@ -540,7 +560,7 @@ Note: Adjust the options so the recommended one comes first and the remaining op
 6. Report the change:
    > "Bumped version: {old_version} → {new_version}"
 
-### Update Step 7: Deploy for UAT
+### Update Step 8: Deploy for UAT
 
 After version bump, tell the user:
 
