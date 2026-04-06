@@ -1,0 +1,60 @@
+{
+  "skill_name": "canvas-plugin-ui",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a right chart pane plugin view that shows a table of active medications with columns for medication name, dose, and frequency.",
+      "expected_output": "HTML with right chart pane surface (pane-body class on body), a canvas-table with canvas-table-head, canvas-table-body, canvas-table-row, and canvas-table-cell elements for three columns, padding-bottom 120px on the scrollable container, tokens.css and canvas-components.js linked in the head, no canvas-button with variant primary, muted text for secondary data.",
+      "assertions": [
+        "Body element has class pane-body or outermost container has padding-bottom 120px",
+        "HTML contains a table element with aria-label attribute",
+        "HTML links tokens.css, typography.css, and canvas-components.js",
+        "Table uses canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell elements",
+        "No hardcoded hex colors outside the :root block",
+        "No canvas-button with variant primary on the page",
+        "Table headers include Medication, Dose, and Frequency or equivalent"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a settings page for a plugin with toggles for enabling email notifications, SMS notifications, and auto-scheduling, plus a Save button at the bottom.",
+      "expected_output": "The agent should detect the toggle/submit violation and use canvas-checkbox elements instead of canvas-toggle since the page has a Save button. The Save button should be a canvas-button without variant primary.",
+      "assertions": [
+        "No canvas-toggle elements on the page",
+        "Boolean controls use canvas-checkbox elements",
+        "Save button is a canvas-button without variant primary",
+        "HTML links tokens.css, typography.css, and canvas-components.js",
+        "No hardcoded hex colors in plugin-specific CSS"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML that has inline styles with raw hex colors (#333, #4CAF50 for buttons, #e0e0e0 for borders), a purple (#9C27B0) status badge, a toggle switch next to a Submit button, and no ARIA attributes on interactive elements.",
+      "expected_output": "All raw hex values replaced with CSS variable references, purple badge replaced with a palette color, toggle replaced with canvas-checkbox since Submit button is present, ARIA attributes added to interactive elements.",
+      "assertions": [
+        "No raw hex color values in CSS rules outside :root",
+        "No purple, teal, cyan, or pink colors anywhere",
+        "No toggle switch on the page (has Submit button)",
+        "Boolean controls use canvas-checkbox elements",
+        "Interactive elements have appropriate ARIA attributes",
+        "HTML links tokens.css, typography.css, and canvas-components.js"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML. It has tabs built with <div class=\"tab\" onclick=\"switchTab('settings')\"> where a switchTab function queries document.querySelectorAll('.tab') and toggles active state. It has a native <select id=\"provider-filter\" onchange=\"updateFilter(this.value)\"> where updateFilter sends an API request with the selected value. It also has inline styles with raw hex colors (#333333, #f0f0f0) and missing ARIA attributes.",
+      "expected_output": "Tabs replaced with canvas-tabs, canvas-tab, canvas-tab-label, and canvas-tab-panel elements. Tab switching handled by the canvas-tabs component via the tab-change event, with the switchTab function updated accordingly. Native select replaced with canvas-dropdown or canvas-combobox, and the updateFilter function updated to read from the component. All raw hex replaced with tokens. All original function names preserved in the refactored script blocks.",
+      "assertions": [
+        "Tabs use canvas-tabs, canvas-tab, canvas-tab-label, and canvas-tab-panel elements",
+        "No native select elements. Dropdowns use canvas-dropdown or canvas-combobox",
+        "No raw hex color values in plugin-specific CSS",
+        "JavaScript function switchTab is defined in a script tag",
+        "JavaScript function updateFilter is defined in a script tag",
+        "Tab switching handled by canvas-tabs component via tab-change event",
+        "The dropdown component has a mechanism to pass the selected value to updateFilter",
+        "Every getElementById call in the scripts has a matching id in the HTML",
+        "Every inline onclick or onchange handler calls a function that exists in the scripts"
+      ]
+    }
+  ]
+}

@@ -115,6 +115,7 @@ Without `CPA_RUNNING=1`, these hooks are skipped and session data is not tracked
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
 - **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
+- **plugin-ui**: Canvas plugin UI design system with 18 web components, token system, clinical UX rules, and validation checklist
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 
 ### Slash Commands
@@ -303,6 +304,7 @@ automatically.
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── plugin-patterns/       # Architecture patterns
+│   ├── plugin-ui/             # UI design system (web components, tokens, clinical UX)
 │   ├── icon-generation/       # SVG icon generation and PNG conversion
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
 │   ├── fhir-api-client-security/    # FHIR API token security

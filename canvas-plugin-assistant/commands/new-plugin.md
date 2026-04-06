@@ -344,10 +344,30 @@ fi
 
 This is the standard resume flow. The **plugin-brainstorm** agent will handle implementation.
 
+#### Step 3: Set Up UI Design System (if needed)
+
+Before building any UI, check if the plugin spec requires a user interface. The plugin needs UI when it uses any of these: HTMLResponse, ActionButton, Application class, SimpleAPI with HTML-serving routes, or LaunchModalEffect with a URL.
+
+If UI is needed, run the bundle script to place the design system files in the plugin's static directory:
+
+```bash
+plugin_name_snake=$(basename "$CPA_PLUGIN_DIR" | tr '-' '_')
+./skills/plugin-ui/scripts/bundle.sh --create "$CPA_PLUGIN_DIR/$plugin_name_snake/static/"
+```
+
+This bundles all web component JS files into `canvas-components.js` and copies `tokens.css` and `typography.css` into the plugin's static directory.
+
+After bundling, invoke the **plugin-ui** skill. The skill's references document how to create the SimpleAPI asset-serving routes, register them in the manifest, and wire the design system files into HTML templates. Follow the skill's 6-step workflow for building page content.
+
+If the plugin does not need UI, skip this step entirely.
+
+#### Step 4: Implement Plugin
+
 The agent will:
 - Edit the generated protocol handler
 - Create Application class if needed
 - Generate icon for Applications (mandatory)
+- Build UI pages following the plugin-ui skill (if UI was set up in Step 3)
 - Write tests following the testing skill guidelines
 - Deploy for UAT
 

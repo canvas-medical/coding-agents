@@ -50,6 +50,8 @@ Save the resolved hostname — you will pass it to the agent and use it for log 
 
 **Start log monitoring in the parent context** so the background process survives the agent lifecycle.
 
+If the plugin has SimpleAPI routes serving HTML (check for `HTMLResponse` or `render_to_string` in Python files), verify the static directory contains `canvas-components.js`, `tokens.css`, and `typography.css`. Warn if any are missing.
+
 Start log streaming as a **background task** (`run_in_background: true`):
 
 ```bash

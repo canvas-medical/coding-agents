@@ -55,7 +55,25 @@ INNER=$(echo "$CONTAINER" | tr '-' '_')
 
 ---
 
-### 1. Security Review
+### 1. UI Design System Validation
+
+Check if the plugin serves HTML pages:
+
+```bash
+INNER=$(basename "$PWD" | tr '-' '_')
+grep -rn "HTMLResponse\|render_to_string" --include="*.py" "$INNER/" 2>/dev/null
+ls "$INNER"/static/*.html "$INNER"/templates/*.html 2>/dev/null
+```
+
+**If HTML pages exist:**
+- Invoke the **plugin-ui** skill
+- Run the validation checklist (phases 0 through 6) from the skill's `references/validation-checklist.md`
+- This checks palette compliance, web component usage, toggle-submit prohibition, ARIA attributes, touch targets, right pane padding, and token usage
+- Report any violations found
+
+**If no HTML pages:** Mark UI validation as N/A.
+
+### 2. Security Review
 
 Run the comprehensive security review command:
 
@@ -71,7 +89,7 @@ This covers:
 
 The command saves a timestamped report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
 
-### 2. Database Performance Review
+### 3. Database Performance Review
 
 Check if the plugin queries Canvas data models:
 
@@ -88,7 +106,7 @@ grep -rn "\.objects\." --include="*.py" .
 
 **If no data queries:** Mark database performance as N/A.
 
-### 3. Type checking
+### 4. Type checking
 
 ```bash
 uv run mypy --config-file=mypy.ini .
@@ -96,7 +114,7 @@ uv run mypy --config-file=mypy.ini .
 
 **If errors exist:** Flag this as a blocker.
 
-### 4. Test Coverage
+### 5. Test Coverage
 
 Run coverage check:
 
@@ -112,7 +130,7 @@ uv run pytest --cov=. --cov-report=term-missing --cov-branch
 
 **If no tests exist:** Flag this as a blocker.
 
-### 5. Debug Log Cleanup
+### 6. Debug Log Cleanup
 
 Check for debug logging statements that were added during UAT troubleshooting:
 
@@ -145,7 +163,7 @@ log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
 print(f"vitals: {vitals}")  # Should use logger, and too verbose
 ```
 
-### 6. Dead Code Removal
+### 7. Dead Code Removal
 
 Identify and remove unused code:
 
@@ -190,7 +208,7 @@ Check that all test files test code that still exists:
 
 **Remove dead code rather than commenting it out.** Git history preserves old code if needed.
 
-### 7. Cache Busting Verification
+### 8. Cache Busting Verification
 
 **If the plugin serves HTML content**, verify cache busting is properly implemented.
 
@@ -231,7 +249,7 @@ ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py"
 
 **If no HTML content:** Mark as N/A.
 
-### 8. README Review
+### 9. README Review
 
 Read the plugin's README.md and verify:
 
@@ -255,7 +273,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 9. Application Icon Check
+### 10. Application Icon Check
 
 **If the plugin has an Application component, verify it has an icon.**
 
@@ -287,7 +305,7 @@ ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 
 **If no applications:** Mark as N/A.
 
-### 10. License Check
+### 11. License Check
 
 Check for any license file or license mentions:
 
@@ -318,7 +336,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 11. Final Verdict
+### 12. Final Verdict
 
 After all checks, present a summary:
 
@@ -328,6 +346,7 @@ After all checks, present a summary:
 | Check | Status | Notes |
 |-------|--------|-------|
 | Project Structure | ✅ Pass / ❌ Errors | ... |
+| UI Design System | ✅ Pass / ⚠️ Issues / N/A | ... |
 | Plugin API Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | FHIR Client Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
@@ -372,6 +391,7 @@ cat > "$REPORT_FILE" <<'REPORT_END'
 | Check | Status | Notes |
 |-------|--------|-------|
 | Project Structure | {status} | {notes} |
+| UI Design System | {status} | {notes} |
 | Plugin API Security | {status} | {notes} |
 | FHIR Client Security | {status} | {notes} |
 | DB Performance | {status} | {notes} |
@@ -414,7 +434,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 12. Wrap-Up Complete
+### 13. Wrap-Up Complete
 
 **After all checks pass (or issues are resolved), the plugin is ready.**
 
