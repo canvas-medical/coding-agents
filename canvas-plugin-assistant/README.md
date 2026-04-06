@@ -112,6 +112,7 @@ scanned for secrets) and pushing is confirmed with you first.
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
 - **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
+- **plugin-ui**: Canvas plugin UI design system with 18 web components, token system, clinical UX rules, and validation checklist
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
 
@@ -301,6 +302,7 @@ automatically.
 │   ├── canvas-sdk/            # SDK documentation
 │   ├── canvas-platform/       # Native-feature reference
 │   ├── plugin-patterns/       # Architecture patterns
+│   ├── plugin-ui/             # UI design system (web components, tokens, clinical UX)
 │   ├── icon-generation/       # SVG icon generation and PNG conversion
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
 │   ├── fhir-api-client-security/    # FHIR API token security
