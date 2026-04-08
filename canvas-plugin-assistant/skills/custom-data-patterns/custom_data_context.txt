@@ -423,3 +423,268 @@ staged_keys = list(staged_entries.values_list("key", flat=True))
 ```
 
 If your plugin code is iterating over JSON values and checking types or keys to filter records, consider whether those values should be columns instead. Keep `JSONField` for the parts that are genuinely variable.
+
+---
+
+## 11. Design for Testability
+
+Plugins that use Custom Data are closer to full applications than stateless event-handler plugins. They have data models, business rules, and CRUD operations that all need to be tested. Structure the plugin so that business logic can be exercised independently of the Canvas event system.
+
+### 11a. Separate Business Logic into Service Classes
+
+Event handlers should be thin — they extract context from the event and delegate to a service class that contains the actual logic. This makes the business logic testable without constructing event objects or mocking the plugin runtime.
+
+#### BAD — Business logic tangled into the handler
+
+```python
+class OnLabResult(BaseHandler):
+    RESPONDS_TO = EventType.Name(EventType.LAB_REPORT__POST_UPDATE)
+
+    def compute(self) -> list[Effect]:
+        report = LabReport.objects.select_related("patient").get(
+            id=self.event.target
+        )
+        patient = CustomPatient.objects.get(dbid=report.patient.dbid)
+        profile = patient.risk_profile
+
+        # Business logic embedded in handler
+        if report.is_abnormal and profile.risk_score > 7:
+            task = CareTask.objects.create(
+                patient=patient,
+                category="urgent_review",
+                description=f"Abnormal lab for high-risk patient",
+            )
+            return AddTask(
+                title=task.description,
+                assignee_identifier=patient.primary_care_provider.npi,
+            ).apply()
+        return []
+```
+
+Testing this requires building a full event and running `compute()`, which couples the test to the event system.
+
+#### GOOD — Handler delegates to a service
+
+```python
+# services/care_tasks.py
+class CareTaskService:
+    @staticmethod
+    def handle_abnormal_lab(patient: CustomPatient, report: LabReport) -> CareTask | None:
+        profile = patient.risk_profile
+        if report.is_abnormal and profile.risk_score > 7:
+            return CareTask.objects.create(
+                patient=patient,
+                category="urgent_review",
+                description="Abnormal lab for high-risk patient",
+            )
+        return None
+
+# protocols/on_lab_result.py
+class OnLabResult(BaseHandler):
+    RESPONDS_TO = EventType.Name(EventType.LAB_REPORT__POST_UPDATE)
+
+    def compute(self) -> list[Effect]:
+        report = LabReport.objects.select_related("patient").get(
+            id=self.event.target
+        )
+        patient = CustomPatient.objects.get(dbid=report.patient.dbid)
+        task = CareTaskService.handle_abnormal_lab(patient, report)
+        if task:
+            return AddTask(
+                title=task.description,
+                assignee_identifier=patient.primary_care_provider.npi,
+            ).apply()
+        return []
+```
+
+Now the business rule ("abnormal lab + high risk score = urgent task") can be tested by calling `CareTaskService.handle_abnormal_lab()` directly with factory-created data, without any event machinery.
+
+### 11b. Create Data Factories for All CustomModels
+
+Every CustomModel should have a corresponding factory. Factories make tests readable, reduce boilerplate, and ensure test data is consistent. Use `factory_boy` with `SubFactory` for relationships.
+
+```python
+# tests/factories.py
+import factory
+from canvas_sdk.test_utils.factories import PatientFactory, StaffFactory
+from my_plugin.models import CustomPatient, CustomStaff, RiskProfile, CareTask
+
+class CustomPatientFactory(PatientFactory, factory.django.DjangoModelFactory[CustomPatient]):
+    class Meta:
+        model = CustomPatient
+
+class CustomStaffFactory(StaffFactory, factory.django.DjangoModelFactory[CustomStaff]):
+    class Meta:
+        model = CustomStaff
+
+class RiskProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskProfile
+    patient = factory.SubFactory(CustomPatientFactory)
+    risk_score = factory.Faker("random_int", min=1, max=10)
+
+class CareTaskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CareTask
+    patient = factory.SubFactory(CustomPatientFactory)
+    category = "routine_review"
+    description = factory.Faker("sentence")
+```
+
+### 11c. Tests Must Manage Their Own Data
+
+Each test must set up the data it needs and not depend on data created by other tests. The SDK's test framework runs each test in a transaction that rolls back automatically, which provides isolation. However, tests must still be written to be self-contained — do not rely on rollback as a substitute for explicit setup.
+
+#### BAD — Shared state between tests
+
+```python
+# Module-level setup that tests implicitly depend on
+patient = CustomPatientFactory.create()
+RiskProfileFactory.create(patient=patient, risk_score=8)
+
+def test_high_risk_creates_task():
+    # Depends on module-level patient — fragile and unclear
+    task = CareTaskService.handle_abnormal_lab(patient, abnormal_report)
+    assert task is not None
+
+def test_low_risk_skips_task():
+    # Mutates shared state — affects other tests if rollback fails
+    patient.risk_profile.risk_score = 2
+    patient.risk_profile.save()
+    task = CareTaskService.handle_abnormal_lab(patient, abnormal_report)
+    assert task is None
+```
+
+#### GOOD — Each test creates its own data
+
+```python
+def test_high_risk_creates_task():
+    patient = CustomPatientFactory.create()
+    RiskProfileFactory.create(patient=patient, risk_score=8)
+    report = LabReportFactory.create(patient=patient, is_abnormal=True)
+
+    task = CareTaskService.handle_abnormal_lab(patient, report)
+
+    assert task is not None
+    assert task.category == "urgent_review"
+
+def test_low_risk_skips_task():
+    patient = CustomPatientFactory.create()
+    RiskProfileFactory.create(patient=patient, risk_score=2)
+    report = LabReportFactory.create(patient=patient, is_abnormal=True)
+
+    task = CareTaskService.handle_abnormal_lab(patient, report)
+
+    assert task is None
+```
+
+Each test is self-explanatory, independent, and safe to run in any order.
+
+---
+
+## 12. Namespace Naming
+
+A namespace name has two parts separated by a double underscore: `org__purpose`. The name should communicate **who** owns the namespace and **what it's for**. Getting this right matters because namespaces are designed to be shared across plugins, so the name is a contract that other developers will rely on.
+
+### BAD — Vague or non-descriptive
+
+```json
+{
+  "custom_data": {
+    "namespace": "custom_data__status",
+    "access": "read_write"
+  }
+}
+```
+
+"custom_data" doesn't identify who owns this namespace, and "status" could mean anything. Another team could easily create a conflicting namespace with the same name.
+
+### BAD — Overly specific to one plugin or developer
+
+```json
+{
+  "custom_data": {
+    "namespace": "john__intake_wizard_plugin",
+    "access": "read_write"
+  }
+}
+```
+
+Tying the namespace to a developer name or a specific plugin name defeats the purpose of sharing. If another plugin needs to join this namespace, the name no longer makes sense. Namespaces outlive individual plugins and developers.
+
+### GOOD — Organization + domain purpose
+
+```json
+{
+  "custom_data": {
+    "namespace": "acme_clinic__patient_intake",
+    "access": "read_write"
+  }
+}
+```
+
+"acme_clinic" identifies the organization responsible. "patient_intake" describes the domain of data, not a specific plugin. Multiple plugins related to patient intake can share this namespace naturally.
+
+### More examples
+
+| Namespace | Why it works |
+|-----------|-------------|
+| `acme_corp__scheduling` | Clear org, clear domain |
+| `healthsys__lab_integrations` | Org that manages it, what the data is about |
+| `canvas_demo__provider_profiles` | Identifies the customer/org, describes the data |
+
+### Guidance
+
+When choosing a namespace name:
+1. **First part (org):** Use the organization, team, or customer name — whoever is responsible for the data
+2. **Second part (purpose):** Describe the domain or use case the data serves, not the plugin that creates it
+3. Think: "If a second plugin needed to share this data, would the name still make sense?"
+
+---
+
+## 13. Managing Schema Evolution
+
+The Custom Data system supports **additive** schema changes only:
+- New CustomModels (new tables) can be added
+- New fields (new columns) can be added to existing models
+
+Tables and columns **cannot** be dropped, renamed, or altered. This is by design — it protects production data from destructive migrations.
+
+During development, schemas will evolve as requirements change. When you need to rename a model, remove a column, or start fresh, use the Canvas CLI namespace commands:
+
+- `canvas namespace reset <namespace> --host <instance>` — Drops custom tables and truncates system tables, but preserves the namespace and its authentication keys. Use this when iterating on model definitions.
+- `canvas namespace drop <namespace> --host <instance>` — Removes the entire namespace, all tables, all data, and all authentication keys. Use this to start completely over.
+
+Both commands run in **dry-run mode** by default and require `--execute` to take effect.
+
+### CRITICAL: Production Safety
+
+> **NEVER run `canvas namespace reset` or `canvas namespace drop` against a production instance.** These commands destroy data irreversibly. They are only appropriate for development, staging, and test instances.
+
+When a developer's schema has diverged during iteration and they need to clean up:
+
+1. Confirm the target instance is **not production**
+2. Explain that the operation will destroy all data in the namespace
+3. Recommend `reset` if they want to keep the namespace and its access keys, or `drop` if they want to start completely fresh
+4. Run the command in dry-run mode first so the developer can see what will be affected
+5. Only proceed with `--execute` after the developer confirms
+
+### Example workflow
+
+```bash
+# 1. See what's in the namespace
+canvas namespace inspect acme_clinic__patient_intake --host dev-instance
+
+# 2. Dry run to see what reset would do
+canvas namespace reset acme_clinic__patient_intake --host dev-instance
+
+# 3. Execute after reviewing
+canvas namespace reset acme_clinic__patient_intake --host dev-instance --execute
+
+# 4. Reinstall the plugin to recreate tables with updated models
+canvas install my_plugin --host dev-instance
+```
+
+### For production schema issues
+
+If a production namespace has orphaned columns from removed fields, or tables from renamed models, these are harmless — unused columns take no space and do not affect queries. Communicate this to the developer rather than suggesting destructive operations.

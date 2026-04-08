@@ -387,6 +387,11 @@ If the plugin defines **any CustomModel subclasses or uses AttributeHub**, invok
 - JSON stored in `TextField` instead of `JSONField`
 - Using `null=True` or `blank=True` (ignored by the plugin runner)
 - Complex JSON parsing that should be typed columns instead
+- Business logic embedded in handlers instead of service classes
+- Missing data factories for CustomModels
+- Tests sharing mutable state instead of creating their own data
+- Namespace names that are too vague (e.g., `custom_data__status`) or too specific (e.g., `john__my_plugin`)
+- Schema evolution issues — offer `canvas namespace reset/drop` for non-production instances only; **NEVER** against production
 
 Fix any issues before moving on to security checks.
 
