@@ -1,0 +1,690 @@
+# Custom Data Anti-Patterns
+
+This document catalogs anti-patterns observed in real Canvas plugins that use Custom Data. When reviewing or generating plugin code, flag these patterns and apply the recommended fix.
+
+---
+
+## 1. Unnecessary CustomModel Availability Check
+
+Custom Data is globally available on all environments where plugins can be installed. There is no need to check whether `CustomModel` can be imported or to provide a fallback.
+
+### BAD
+
+```python
+try:
+    from canvas_sdk.v1.data.base import CustomModel
+
+    _HAS_CUSTOM_MODEL = True
+except ImportError:
+    from django.db.models import Model as CustomModel
+
+    _HAS_CUSTOM_MODEL = False
+```
+
+This pattern adds dead code, a misleading fallback to `django.db.models.Model`, and a flag that gates logic unnecessarily.
+
+### GOOD
+
+```python
+from canvas_sdk.v1.data.base import CustomModel
+```
+
+Import `CustomModel` directly. No try/except, no feature flag. If other parts of the plugin conditionally check `_HAS_CUSTOM_MODEL`, remove those guards as well.
+
+---
+
+## 2. Manual `app_label` on CustomModel Subclasses
+
+The SDK automatically sets `app_label` for all `CustomModel` subclasses based on the plugin's module path. Specifying it manually in `class Meta` is unnecessary and incorrect — it can conflict with the SDK's namespace management.
+
+This often appears alongside anti-pattern #1 as a conditional fallback:
+
+### BAD
+
+```python
+class MyModel(CustomModel):
+    name = TextField()
+
+    class Meta:
+        if not _HAS_CUSTOM_MODEL:
+            app_label = "intake_wizard"
+```
+
+### ALSO BAD
+
+```python
+class MyModel(CustomModel):
+    name = TextField()
+
+    class Meta:
+        app_label = "intake_wizard"
+```
+
+Even without the conditional, hardcoding `app_label` on a `CustomModel` subclass is wrong.
+
+### GOOD
+
+```python
+class MyModel(CustomModel):
+    name = TextField()
+```
+
+No `class Meta` with `app_label` needed. The SDK handles it. Only include `class Meta` if you need `indexes` or `constraints`.
+
+---
+
+## 3. Adding a UniqueConstraint to an Existing Table
+
+When adding a `UniqueConstraint` to a CustomModel, the database will attempt to create a unique index on the specified columns. If the table already contains data with duplicate values in those columns, the migration will fail.
+
+This is not a risk for brand-new models, but it is a real risk when a constraint is added to a model that has already been deployed and has data.
+
+### WARNING
+
+When generating or reviewing code that adds a `UniqueConstraint`, always communicate to the developer:
+
+> **If this plugin has already been deployed, you are responsible for ensuring that no duplicate records exist in the table before adding this constraint.** If duplicates exist, the migration will fail and the plugin will not install. Query the read replica or use a Simple API endpoint to check for duplicates, and deduplicate the data before deploying the updated plugin.
+
+### Example
+
+```python
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import TextField, UniqueConstraint
+
+class ExternalMapping(CustomModel):
+    source_system = TextField()
+    external_id = TextField()
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["source_system", "external_id"],
+                name="unique_external_mapping",
+            )
+        ]
+```
+
+If this model previously existed without the constraint and already has rows where `(source_system, external_id)` is duplicated, the deploy will fail. The developer must deduplicate first.
+
+---
+
+## 4. Redundant `related_name` Namespacing with Proxy Models
+
+The `related_name` namespacing pattern (`%(app_label)s_...`) and the proxy model pattern (`ModelExtension`) both solve the same problem: preventing two plugins from registering the same reverse relation name on a shared SDK model. Only one approach is needed — using both is redundant.
+
+### BAD — Both proxy and namespaced `related_name`
+
+```python
+from canvas_sdk.v1.data import Note, ModelExtension
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import DO_NOTHING, OneToOneField, TextField
+
+class NoteProxy(Note, ModelExtension):
+    pass
+
+class Transcript(CustomModel):
+    note = OneToOneField(
+        NoteProxy,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="%(app_label)s__transcript",
+        primary_key=True,
+    )
+    text = TextField()
+```
+
+The proxy already scopes the reverse relation to this plugin. Adding `%(app_label)s__` on top is unnecessary and makes the reverse accessor name longer for no benefit.
+
+### GOOD — Proxy model with simple `related_name` (recommended)
+
+```python
+from canvas_sdk.v1.data import Note, ModelExtension
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import DO_NOTHING, OneToOneField, TextField
+
+class NoteProxy(Note, ModelExtension):
+    pass
+
+class Transcript(CustomModel):
+    note = OneToOneField(
+        NoteProxy,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="transcript",
+        primary_key=True,
+    )
+    text = TextField()
+```
+
+### ALSO GOOD — Direct SDK model with namespaced `related_name`
+
+```python
+from canvas_sdk.v1.data import Note
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import DO_NOTHING, OneToOneField, TextField
+
+class Transcript(CustomModel):
+    note = OneToOneField(
+        Note,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="%(app_label)s_transcript",
+        primary_key=True,
+    )
+    text = TextField()
+```
+
+### Which to choose
+
+- **Proxy model** (Approach 1) is preferred in most cases — it gives short `related_name` values and the proxy is reusable across multiple CustomModels in the same plugin.
+- **Namespaced `related_name`** (Approach 2) is fine when you don't need a proxy for other reasons and want to avoid the extra class.
+
+---
+
+## 5. Foreign Keys Should Target `dbid`, Not `id`
+
+SDK models have two identifier fields:
+- **`dbid`** — the surrogate primary key (auto-incrementing integer). This is the actual primary key used for database joins.
+- **`id`** — a UUID intended as an external handle for APIs, FHIR resources, and URLs. It is not the primary key column.
+
+Foreign key fields should always use `to_field="dbid"`. Using `to_field="id"` or omitting `to_field` (which defaults to the primary key, i.e., `dbid`) will often work, but joining on a UUID column is less efficient and conflates the external identifier with the internal join key.
+
+### BAD — Joining on the UUID `id` field
+
+```python
+class Transcript(CustomModel):
+    note = OneToOneField(
+        NoteProxy,
+        to_field="id",
+        on_delete=DO_NOTHING,
+        related_name="transcript",
+    )
+```
+
+The `id` field is a UUID meant for external reference, not for database joins. This creates a text-based foreign key instead of an integer-based one.
+
+### GOOD — Joining on `dbid`
+
+```python
+class Transcript(CustomModel):
+    note = OneToOneField(
+        NoteProxy,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="transcript",
+    )
+```
+
+Always use `to_field="dbid"` when creating `ForeignKey`, `OneToOneField`, or `ManyToManyField` relationships to SDK models.
+
+---
+
+## 6. Copying Data by Value Instead of Using Foreign Keys
+
+When a CustomModel needs to reference another entity (a Staff member, Patient, Note, etc.), use a foreign key relationship rather than storing a denormalized copy of the data (like a name string or an ID in a TextField). Copied values go stale if the source record changes, and they prevent you from traversing the relationship via the ORM.
+
+### BAD — Storing a display name as text
+
+```python
+class AuditEntry(CustomModel):
+    updated_by = TextField(default="")  # staff display name
+    action = TextField()
+```
+
+If the staff member's name changes, every historical record is wrong — or at best inconsistent. You also can't join to `Staff` to get other details without a separate lookup.
+
+### BAD — Storing an ID as text
+
+```python
+class AuditEntry(CustomModel):
+    updated_by_id = TextField(default="")  # staff UUID stored as string
+    action = TextField()
+```
+
+Marginally better, but you lose ORM traversal, type safety, and indexing benefits of a real foreign key.
+
+### GOOD — Foreign key to Staff
+
+```python
+from canvas_sdk.v1.data import Staff, ModelExtension
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import DO_NOTHING, ForeignKey, TextField
+
+class CustomStaff(Staff, ModelExtension):
+    pass
+
+class AuditEntry(CustomModel):
+    updated_by = ForeignKey(
+        CustomStaff,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="audit_entries",
+    )
+    action = TextField()
+```
+
+The staff name is always current via `entry.updated_by.first_name`, and you can query in either direction (`staff.audit_entries.all()`).
+
+---
+
+## 7. Index/Filter Mismatch
+
+Indexes and query filters should be aligned. Two scenarios to watch for:
+
+### 7a. Filtering without an index
+
+If the plugin filters on a column using `.filter()`, `.exclude()`, or `.order_by()`, but that column has no index, queries will degrade as the table grows. This is not an error, but is worth flagging.
+
+### WARNING
+
+When reviewing code that filters on CustomModel fields, cross-reference the filtered columns against the model's `Meta.indexes`. If a filtered column is not indexed, flag it:
+
+> **This plugin filters on `{field}` but does not index it. If this table is expected to grow, consider adding an index to avoid slow queries.**
+
+### Example
+
+```python
+# Model with no indexes
+class TaskLog(CustomModel):
+    status = TextField()
+    created_at = DateTimeField(auto_now_add=True)
+    description = TextField()
+
+# Handler filters on status and orders by created_at — both unindexed
+logs = TaskLog.objects.filter(status="pending").order_by("-created_at")
+```
+
+Should become:
+
+```python
+class TaskLog(CustomModel):
+    status = TextField()
+    created_at = DateTimeField(auto_now_add=True)
+    description = TextField()
+
+    class Meta:
+        indexes = [
+            Index(fields=["status"]),
+            Index(fields=["-created_at"]),
+        ]
+```
+
+### 7b. Indexes without corresponding filters
+
+If the model declares indexes on columns that the plugin never filters or orders by, the indexes add write overhead with no read benefit. This is also not an error, but is worth flagging.
+
+### WARNING
+
+When reviewing a CustomModel with indexes, check that each indexed column is actually used in a `.filter()`, `.exclude()`, or `.order_by()` somewhere in the plugin. If not, flag it:
+
+> **This plugin indexes `{field}` but never filters or orders by it. If this is intentional (e.g., for read-replica queries), keep it. Otherwise, consider removing the index to reduce write overhead.**
+
+---
+
+## 8. Storing JSON in a TextField
+
+If a field stores JSON data (dictionaries, lists, structured payloads), use `JSONField` instead of `TextField`. `JSONField` maps to PostgreSQL's `jsonb` type, which supports efficient key-path queries, GIN indexing, and containment operators. A `TextField` storing JSON is just an opaque string to the database — you lose all of that, and must serialize/deserialize manually.
+
+### BAD
+
+```python
+import json
+
+class IntegrationState(CustomModel):
+    config = TextField(default="{}")  # JSON stored as text
+
+# Requires manual serialization
+state = IntegrationState.objects.get(dbid=1)
+config = json.loads(state.config)
+config["last_sync"] = "2026-04-03"
+state.config = json.dumps(config)
+state.save()
+```
+
+### GOOD
+
+```python
+class IntegrationState(CustomModel):
+    config = JSONField(default=dict)
+
+# Native dict access, no manual serialization
+state = IntegrationState.objects.get(dbid=1)
+state.config["last_sync"] = "2026-04-03"
+state.save()
+```
+
+---
+
+## 9. Using `null=True` or `blank=True` on CustomModel Fields
+
+The `null` and `blank` field attributes are ignored by the plugin runner. They have no effect — no `NOT NULL` constraint is created in the database regardless, and Django form validation (`blank`) is not used in the plugin context. Including them is misleading because it suggests they control behavior when they don't.
+
+### BAD
+
+```python
+class PatientProfile(CustomModel):
+    preferred_language = TextField(null=True, blank=True)
+    risk_score = IntegerField(null=True, blank=True)
+    notes = TextField(null=True, blank=True, default="")
+```
+
+### GOOD
+
+```python
+class PatientProfile(CustomModel):
+    preferred_language = TextField()
+    risk_score = IntegerField()
+    notes = TextField(default="")
+```
+
+Omit `null` and `blank` entirely. All CustomModel columns are nullable at the database level regardless of these attributes.
+
+---
+
+## 10. Using JSONField When Typed Columns Would Be Better
+
+`JSONField` is appropriate for truly dynamic or schemaless data. But if the plugin regularly filters, iterates, or branches on values inside the JSON, that's a sign the data should be promoted to typed columns. Querying into JSON structures requires manual parsing, type-checking, and nested iteration — all of which disappear with proper columns and ORM queries.
+
+### BAD — Parsing JSON to find filterable values
+
+```python
+# Scan all draft entries for staged=True to detect staging
+_staged_keys = []
+for dk, val in _drafts.items():
+    if dk.startswith("_"):
+        continue
+    if isinstance(val, dict) and val.get("staged"):
+        _staged_keys.append(dk)
+    elif isinstance(val, list):
+        for item in val:
+            if isinstance(item, dict) and item.get("staged"):
+                _staged_keys.append(dk)
+                break
+```
+
+This code exists because `staged` is buried inside a JSON blob. The plugin has to walk the structure, handle multiple shapes (dict vs list of dicts), and do type checks at every step.
+
+### GOOD — Typed column with ORM filter
+
+```python
+class DraftEntry(CustomModel):
+    key = TextField()
+    staged = BooleanField(default=False)
+    content = JSONField(default=dict)
+
+    class Meta:
+        indexes = [
+            Index(fields=["staged"]),
+        ]
+
+# Simple ORM query replaces all the manual parsing
+staged_entries = DraftEntry.objects.filter(staged=True)
+staged_keys = list(staged_entries.values_list("key", flat=True))
+```
+
+If your plugin code is iterating over JSON values and checking types or keys to filter records, consider whether those values should be columns instead. Keep `JSONField` for the parts that are genuinely variable.
+
+---
+
+## 11. Design for Testability
+
+Plugins that use Custom Data are closer to full applications than stateless event-handler plugins. They have data models, business rules, and CRUD operations that all need to be tested. Structure the plugin so that business logic can be exercised independently of the Canvas event system.
+
+### 11a. Separate Business Logic into Service Classes
+
+Event handlers should be thin — they extract context from the event and delegate to a service class that contains the actual logic. This makes the business logic testable without constructing event objects or mocking the plugin runtime.
+
+#### BAD — Business logic tangled into the handler
+
+```python
+class OnLabResult(BaseHandler):
+    RESPONDS_TO = EventType.Name(EventType.LAB_REPORT__POST_UPDATE)
+
+    def compute(self) -> list[Effect]:
+        report = LabReport.objects.select_related("patient").get(
+            id=self.event.target
+        )
+        patient = CustomPatient.objects.get(dbid=report.patient.dbid)
+        profile = patient.risk_profile
+
+        # Business logic embedded in handler
+        if report.is_abnormal and profile.risk_score > 7:
+            task = CareTask.objects.create(
+                patient=patient,
+                category="urgent_review",
+                description=f"Abnormal lab for high-risk patient",
+            )
+            return AddTask(
+                title=task.description,
+                assignee_identifier=patient.primary_care_provider.npi,
+            ).apply()
+        return []
+```
+
+Testing this requires building a full event and running `compute()`, which couples the test to the event system.
+
+#### GOOD — Handler delegates to a service
+
+```python
+# services/care_tasks.py
+class CareTaskService:
+    @staticmethod
+    def handle_abnormal_lab(patient: CustomPatient, report: LabReport) -> CareTask | None:
+        profile = patient.risk_profile
+        if report.is_abnormal and profile.risk_score > 7:
+            return CareTask.objects.create(
+                patient=patient,
+                category="urgent_review",
+                description="Abnormal lab for high-risk patient",
+            )
+        return None
+
+# protocols/on_lab_result.py
+class OnLabResult(BaseHandler):
+    RESPONDS_TO = EventType.Name(EventType.LAB_REPORT__POST_UPDATE)
+
+    def compute(self) -> list[Effect]:
+        report = LabReport.objects.select_related("patient").get(
+            id=self.event.target
+        )
+        patient = CustomPatient.objects.get(dbid=report.patient.dbid)
+        task = CareTaskService.handle_abnormal_lab(patient, report)
+        if task:
+            return AddTask(
+                title=task.description,
+                assignee_identifier=patient.primary_care_provider.npi,
+            ).apply()
+        return []
+```
+
+Now the business rule ("abnormal lab + high risk score = urgent task") can be tested by calling `CareTaskService.handle_abnormal_lab()` directly with factory-created data, without any event machinery.
+
+### 11b. Create Data Factories for All CustomModels
+
+Every CustomModel should have a corresponding factory. Factories make tests readable, reduce boilerplate, and ensure test data is consistent. Use `factory_boy` with `SubFactory` for relationships.
+
+```python
+# tests/factories.py
+import factory
+from canvas_sdk.test_utils.factories import PatientFactory, StaffFactory
+from my_plugin.models import CustomPatient, CustomStaff, RiskProfile, CareTask
+
+class CustomPatientFactory(PatientFactory, factory.django.DjangoModelFactory[CustomPatient]):
+    class Meta:
+        model = CustomPatient
+
+class CustomStaffFactory(StaffFactory, factory.django.DjangoModelFactory[CustomStaff]):
+    class Meta:
+        model = CustomStaff
+
+class RiskProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskProfile
+    patient = factory.SubFactory(CustomPatientFactory)
+    risk_score = factory.Faker("random_int", min=1, max=10)
+
+class CareTaskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CareTask
+    patient = factory.SubFactory(CustomPatientFactory)
+    category = "routine_review"
+    description = factory.Faker("sentence")
+```
+
+### 11c. Tests Must Manage Their Own Data
+
+Each test must set up the data it needs and not depend on data created by other tests. The SDK's test framework runs each test in a transaction that rolls back automatically, which provides isolation. However, tests must still be written to be self-contained — do not rely on rollback as a substitute for explicit setup.
+
+#### BAD — Shared state between tests
+
+```python
+# Module-level setup that tests implicitly depend on
+patient = CustomPatientFactory.create()
+RiskProfileFactory.create(patient=patient, risk_score=8)
+
+def test_high_risk_creates_task():
+    # Depends on module-level patient — fragile and unclear
+    task = CareTaskService.handle_abnormal_lab(patient, abnormal_report)
+    assert task is not None
+
+def test_low_risk_skips_task():
+    # Mutates shared state — affects other tests if rollback fails
+    patient.risk_profile.risk_score = 2
+    patient.risk_profile.save()
+    task = CareTaskService.handle_abnormal_lab(patient, abnormal_report)
+    assert task is None
+```
+
+#### GOOD — Each test creates its own data
+
+```python
+def test_high_risk_creates_task():
+    patient = CustomPatientFactory.create()
+    RiskProfileFactory.create(patient=patient, risk_score=8)
+    report = LabReportFactory.create(patient=patient, is_abnormal=True)
+
+    task = CareTaskService.handle_abnormal_lab(patient, report)
+
+    assert task is not None
+    assert task.category == "urgent_review"
+
+def test_low_risk_skips_task():
+    patient = CustomPatientFactory.create()
+    RiskProfileFactory.create(patient=patient, risk_score=2)
+    report = LabReportFactory.create(patient=patient, is_abnormal=True)
+
+    task = CareTaskService.handle_abnormal_lab(patient, report)
+
+    assert task is None
+```
+
+Each test is self-explanatory, independent, and safe to run in any order.
+
+---
+
+## 12. Namespace Naming
+
+A namespace name has two parts separated by a double underscore: `org__purpose`. The name should communicate **who** owns the namespace and **what it's for**. Getting this right matters because namespaces are designed to be shared across plugins, so the name is a contract that other developers will rely on.
+
+### BAD — Vague or non-descriptive
+
+```json
+{
+  "custom_data": {
+    "namespace": "custom_data__status",
+    "access": "read_write"
+  }
+}
+```
+
+"custom_data" doesn't identify who owns this namespace, and "status" could mean anything. Another team could easily create a conflicting namespace with the same name.
+
+### BAD — Overly specific to one plugin or developer
+
+```json
+{
+  "custom_data": {
+    "namespace": "john__intake_wizard_plugin",
+    "access": "read_write"
+  }
+}
+```
+
+Tying the namespace to a developer name or a specific plugin name defeats the purpose of sharing. If another plugin needs to join this namespace, the name no longer makes sense. Namespaces outlive individual plugins and developers.
+
+### GOOD — Organization + domain purpose
+
+```json
+{
+  "custom_data": {
+    "namespace": "acme_clinic__patient_intake",
+    "access": "read_write"
+  }
+}
+```
+
+"acme_clinic" identifies the organization responsible. "patient_intake" describes the domain of data, not a specific plugin. Multiple plugins related to patient intake can share this namespace naturally.
+
+### More examples
+
+| Namespace | Why it works |
+|-----------|-------------|
+| `acme_corp__scheduling` | Clear org, clear domain |
+| `healthsys__lab_integrations` | Org that manages it, what the data is about |
+| `canvas_demo__provider_profiles` | Identifies the customer/org, describes the data |
+
+### Guidance
+
+When choosing a namespace name:
+1. **First part (org):** Use the organization, team, or customer name — whoever is responsible for the data
+2. **Second part (purpose):** Describe the domain or use case the data serves, not the plugin that creates it
+3. Think: "If a second plugin needed to share this data, would the name still make sense?"
+
+---
+
+## 13. Managing Schema Evolution
+
+The Custom Data system supports **additive** schema changes only:
+- New CustomModels (new tables) can be added
+- New fields (new columns) can be added to existing models
+
+Tables and columns **cannot** be dropped, renamed, or altered. This is by design — it protects production data from destructive migrations.
+
+During development, schemas will evolve as requirements change. When you need to rename a model, remove a column, or start fresh, use the Canvas CLI namespace commands:
+
+- `canvas namespace reset <namespace> --host <instance>` — Drops custom tables and truncates system tables, but preserves the namespace and its authentication keys. Use this when iterating on model definitions.
+- `canvas namespace drop <namespace> --host <instance>` — Removes the entire namespace, all tables, all data, and all authentication keys. Use this to start completely over.
+
+Both commands run in **dry-run mode** by default and require `--execute` to take effect.
+
+### CRITICAL: Production Safety
+
+> **NEVER run `canvas namespace reset` or `canvas namespace drop` against a production instance.** These commands destroy data irreversibly. They are only appropriate for development, staging, and test instances.
+
+When a developer's schema has diverged during iteration and they need to clean up:
+
+1. Confirm the target instance is **not production**
+2. Explain that the operation will destroy all data in the namespace
+3. Recommend `reset` if they want to keep the namespace and its access keys, or `drop` if they want to start completely fresh
+4. Run the command in dry-run mode first so the developer can see what will be affected
+5. Only proceed with `--execute` after the developer confirms
+
+### Example workflow
+
+```bash
+# 1. See what's in the namespace
+canvas namespace inspect acme_clinic__patient_intake --host dev-instance
+
+# 2. Dry run to see what reset would do
+canvas namespace reset acme_clinic__patient_intake --host dev-instance
+
+# 3. Execute after reviewing
+canvas namespace reset acme_clinic__patient_intake --host dev-instance --execute
+
+# 4. Reinstall the plugin to recreate tables with updated models
+canvas install my_plugin --host dev-instance
+```
+
+### For production schema issues
+
+If a production namespace has orphaned columns from removed fields, or tables from renamed models, these are harmless — unused columns take no space and do not affect queries. Communicate this to the developer rather than suggesting destructive operations.
