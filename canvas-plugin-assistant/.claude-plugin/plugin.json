@@ -8,5 +8,14 @@
   },
   "homepage": "https://github.com/canvas-medical/coding-agents",
   "repository": "https://github.com/canvas-medical/coding-agents",
-  "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"]
+  "keywords": ["canvas", "medical", "healthcare", "plugin-development", "sdk"],
+  "mcpServers": {
+    "canvas_cmd_line": {
+      "command": "uv",
+      "args": ["run", "--with", "mcp", "python", "${CLAUDE_PLUGIN_ROOT}/scripts/mcp_canvas_installer.py"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/scripts"
+      }
+    }
+  }
 }

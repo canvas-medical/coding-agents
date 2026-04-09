@@ -12,7 +12,8 @@ Quick-deploy the current plugin to a Canvas instance — no version bump, no tes
 
 ## Instructions
 
-**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
+**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke
+bare `python` or `pip`.
 
 ### Step 1: Validate Environment
 
@@ -35,14 +36,14 @@ Resolve the deployment target.
 1. Verify the current directory contains a valid Canvas plugin (check for CANVAS_MANIFEST.json)
 
 2. **Handle target instance argument:**
-   - If `$1` is provided:
-     - Check if `[$1]` section exists in `~/.canvas/credentials.ini`
-     - If found: use `$1` as the target hostname
-     - If NOT found: list available instances from credentials.ini and use AskUserQuestion to let the user choose
-   - If `$1` is not provided:
-     - Read `~/.canvas/credentials.ini` and list all available section headers (instance names)
-     - **If exactly one instance exists:** use it automatically without asking
-     - **If multiple instances exist:** use AskUserQuestion to let the user choose which instance to deploy to. Present each instance as an option.
+    - If `$1` is provided:
+        - Check if `[$1]` section exists in `~/.canvas/credentials.ini`
+        - If found: use `$1` as the target hostname
+        - If NOT found: list available instances from credentials.ini and use AskUserQuestion to let the user choose
+    - If `$1` is not provided:
+        - Read `~/.canvas/credentials.ini` and list all available section headers (instance names)
+        - **If exactly one instance exists:** use it automatically without asking
+        - **If multiple instances exist:** use AskUserQuestion to let the user choose which instance to deploy to. Present each instance as an option.
 
 Save the resolved hostname for the install command and log monitoring.
 
@@ -69,11 +70,16 @@ If cache busting is missing, add it before proceeding with deployment.
 
 ### Step 5: Install Plugin
 
-Read the plugin name from `CANVAS_MANIFEST.json` and install directly — no version bump, no other validation, no git commit.
+Use the **`installer`** MCP tool (provided by the `canvas_cmd_line` MCP server) to install the plugin with its secrets:
 
-```bash
-uv run canvas install {plugin_name} --host {hostname}
-```
+- `plugin_name`: the inner folder name (snake_case)
+- `instance`: the resolved hostname
+- `cwd`: current working directory (the plugin container directory)
+
+The MCP tool reads secret names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{hostname}.json`, and passes them
+to the canvas install command. Secret values are never exposed to Claude Code.
+
+If the response includes a warning about missing secrets, show the warning to the user. The install still proceeds — the warning is informational.
 
 If the install command itself fails, show the error and stop.
 
@@ -90,7 +96,8 @@ After install completes, check the logs and report the result. Do NOT attempt to
 
 ## Credentials
 
-Deployment uses credentials from `~/.canvas/credentials.ini`. Instance names are the section headers (e.g., `[plugin-testing]` means the instance name is `plugin-testing`).
+Deployment uses credentials from `~/.canvas/credentials.ini`. Instance names are the section headers (e.g., `[plugin-testing]` means the instance name
+is `plugin-testing`).
 
 ## Examples
 

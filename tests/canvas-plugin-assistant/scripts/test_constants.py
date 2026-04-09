@@ -22,6 +22,7 @@ class TestConstants:
             pytest.param("CPA_RUNNING", "CPA_RUNNING", id="cpa_running"),
             pytest.param("CPA_WORKSPACE_DIR", "CPA_WORKSPACE_DIR", id="cpa_workspace_dir"),
             pytest.param("CPA_PLUGIN_DIR", "CPA_PLUGIN_DIR", id="cpa_plugin_dir"),
+            pytest.param("CPA_SECRET_FILEPATH", "CPA_SECRET_FILEPATH", id="cpa_secret_filepath"),
         ],
     )
     def test_constant_values(self, attr_name: str, expected: str) -> None:
