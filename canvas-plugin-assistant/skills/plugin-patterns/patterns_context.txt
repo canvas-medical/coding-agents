@@ -201,7 +201,7 @@ complex-plugin/
 │   ├── __init__.py
 │   └── my_app.py
 ├── assets/                  # Required for Application icons
-│   └── icon.png            # 48x48 PNG icon
+│   └── icon.png            # 128x128 PNG icon
 ├── protocols/
 │   ├── __init__.py
 │   └── listener.py
@@ -272,7 +272,7 @@ class WebhookHandler(SimpleAPI):
 ### Pattern 3: Application with API Backend
 For interactive UI applications.
 
-**CRITICAL: Applications REQUIRE an icon (48x48 PNG).**
+**CRITICAL: Applications REQUIRE an icon (128x128 PNG).**
 - Generate the icon IMMEDIATELY after creating the Application class
 - Invoke the icon-generation skill: `Skill(skill="icon-generation")`
 - Create assets directory: `mkdir -p {plugin_name_snake}/assets`
@@ -372,7 +372,7 @@ class MyAPI(SimpleAPI):
                 "class": "my_plugin.applications.my_app:MyApp",
                 "name": "My Application",
                 "description": "Interactive UI",
-                "icon": "assets/icon-name.png",  # Required: 48x48 PNG
+                "icon": "assets/icon-name.png",  # Required: 128x128 PNG
                 "scope": "patient_specific",
                 "show_in_panel": true,
                 "panel_priority": 100

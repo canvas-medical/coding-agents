@@ -4,13 +4,11 @@ name: create-icon
 
 # Create Icon
 
-Generate an SVG icon from a description and automatically convert it to 48x48 PNG format.
+Generate a branded app icon (black rounded square with white symbol) and convert it to a 128x128 PNG.
 
 ## Instructions
 
-**Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
-
-When this command is invoked, generate an SVG icon based on the user's description and automatically convert it to a 48x48 PNG format suitable for Canvas Medical plugins.
+When this command is invoked, generate an icon following the icon-generation skill and save the PNG to a location chosen by the user.
 
 ### Workflow
 
@@ -20,117 +18,66 @@ Follow these steps in order:
    - First, invoke the icon-generation skill to have all icon generation patterns and best practices available
    - Use: `Skill(skill="icon-generation")`
 
-2. **Parse Description**:
-   - Extract the icon description from the command argument
-   - If no description is provided, ask the user what kind of icon they want
-   - Consider the context (e.g., if working in a plugin directory, tailor suggestions)
+2. **Infer Icon Subject**:
+   - Infer an appropriate icon from context — plugin name, purpose, surrounding code
+   - Do not ask the user what to draw; figure it out from context
+   - If there is truly no context available, then ask
 
 3. **Generate SVG Icon**:
-   - Create a clean, professional SVG icon based on the description
-   - Follow the patterns from the icon-generation skill
-   - For Canvas Medical contexts, use professional healthcare-appropriate designs
-   - Use appropriate colors, shapes, and design elements
-   - Ensure the SVG is well-formed with proper viewBox and dimensions (e.g., viewBox="0 0 100 100")
-   - Keep the design simple and clear at small sizes (will be rendered at 48x48)
+   - Search Lucide for a matching icon by fetching from `https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/{name}.svg`
+   - If no Lucide match, try Tabler at `https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{name}.svg`
+   - Extract inner elements, strip styling attributes, and wrap in the 128x128 template (see skill for details)
+   - If no library match, hand-draw in the 24x24 coordinate space using the `<g transform>` wrapper
+   - Run the quality checklist: thumbnail test, element count, optical centering, stroke consistency
 
 4. **Generate Filename**:
-   - Convert the description to kebab-case (lowercase with hyphens)
+   - Convert the icon subject to kebab-case (lowercase with hyphens)
    - Remove special characters and extra spaces
    - Limit to a reasonable length (e.g., "patient-vitals-monitor")
-   - Add `.svg` extension for an SVG file
-   - Add `.png` extension for a PNG file
+   - Add `.png` extension for the output file
 
-5. **Determine Save Location**:
-   - Check if currently in a Canvas plugin directory (look for CANVAS_MANIFEST.json)
-   - If in plugin directory: save to the inner plugin folder's `assets/` directory (snake_case folder name)
-   - If not in the plugin directory: save to the current working directory
-   - Report the save location to the user
+5. **Ask Where to Save**:
+   - Ask the user where they want the PNG saved
+   - Suggest a default based on context (e.g., `{plugin_name_snake}/assets/` if in a plugin directory, or current directory otherwise)
+   - Use the user's chosen location for the output path
 
-6. **Create Assets Directory (if needed)**:
-   - If saving to a Canvas plugin directory, ensure the `assets/` directory exists
-   - Use: `mkdir -p {plugin_name_snake}/assets`
-   - Skip this step if not in a plugin directory
+6. **Write SVG to `/tmp`**:
+   - Use Write tool to save the SVG content to `/tmp/icon-name.svg`
+   - This is a temporary intermediate file
 
-7. **Save SVG File**:
-   - Use Write tool to save the SVG content
-   - Save with the generated filename
-   - For plugins: `{plugin_name_snake}/assets/icon-name.svg`
-   - For non-plugins: `icon-name.svg`
-
-8. **Check UV Installation**:
-   - Use Bash to check if `uv` is installed: `which uv`
-   - If not installed, install it automatically:
-     ```bash
-     curl -LsSf https://astral.sh/uv/install.sh | sh
-     ```
-   - After installation, may need to use the full path: `~/.cargo/bin/uv`
-
-9. **Convert to PNG**:
+7. **Convert to PNG**:
    - Use Bash to execute the conversion command:
      ```bash
-     uv run --with cairosvg python ${CLAUDE_PLUGIN_ROOT}/scripts/convert_svg_to_png.py <svg-file> <png-file>
+     uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='/tmp/icon-name.svg', write_to='<user-chosen-path>/icon-name.png', output_width=128, output_height=128)"
      ```
-   - Replace `<svg-file>` with the generated SVG filename (include the path if not in current directory)
-   - Replace `<png-file>` with the same base name but `.png` extension
-   - The script will create a 48x48 pixel PNG
+   - This creates a 128x128 pixel PNG at the user's chosen location
 
-10. **Update CANVAS_MANIFEST.json (if applicable)**:
-    - If in a Canvas plugin directory, ask the user if they want to update the manifest
-    - If yes, update the applications entry's `icon` field with the relative path
-    - Example: `"icon": "assets/icon-name.png"`
+8. **Delete Temporary SVG**:
+   - Remove the temporary file: `rm /tmp/icon-name.svg`
+   - Only delete after successful conversion
 
-11. **Handle Conversion Results**:
-    - **On Success**: Report both file paths to the user
-    - **On Failure**:
-      - Inform user that PNG conversion failed
-      - Confirm SVG file was still saved successfully
-      - Provide the SVG file path for manual conversion if needed
-
-12. **Report Completion**:
-    - Show paths to both generated files
-    - Confirm where they were saved
-    - If manifest was updated, mention that as well
+9. **Report Completion**:
+    - Show the path to the generated PNG file
+    - Confirm where it was saved
 
 ## Error Handling
 
-- **UV Installation Fails**: Provide a clear error message and manual installation instructions
-- **SVG Generation Issues**: Ensure valid SVG syntax before writing a file
+- **Conversion Failure**: Keep the SVG in `/tmp` so the user can convert it manually
+- **SVG Generation Issues**: Ensure valid SVG syntax before writing file
 - **File Write Errors**: Check permissions and report clear error messages
-- **Conversion Script Errors**: Keep the SVG file and report the error from the conversion script
-- **Manifest Update Errors**: Ensure the manifest exists and is valid JSON
 
 ## Output Format
 
-After a successful generation, display:
+After successful generation, display:
 ```
 Icon created successfully:
-  SVG: /path/to/icon-name.svg
-  PNG: /path/to/icon-name.png (48x48)
-```
-
-If in a plugin directory and manifest was updated:
-```
-Icon created successfully:
-  SVG: /path/to/plugin_name/assets/icon-name.svg
-  PNG: /path/to/plugin_name/assets/icon-name.png (48x48)
-
-CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
+  PNG: /path/to/icon-name.png (128x128)
 ```
 
 ## Important Notes
 
-- Always save both SVG and PNG files (do not delete the SVG)
-- Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
-- The conversion script uses cairosvg via uv for dependency isolation
-- Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
-- Create the `assets/` directory if it doesn't exist before saving icons
-- Both files save to the appropriate directory based on context
-- Do not show SVG code to the user unless there's an error, or they request it
-- Canvas Medical plugin icons should be professional and healthcare-appropriate
-
-## Examples
-
-Example 1 - Basic usage:
-```
-User: /cpa:create-icon "medical chart with checkmark"
+- SVG files are temporary — written to `/tmp` and deleted after conversion
+- Only the PNG is kept as the final output
+- Filenames are auto-generated from the inferred icon subject (kebab-case)
+- Do not show SVG code to the user unless there's an error or they request it
+- This command does NOT auto-update CANVAS_MANIFEST.json — that's for automated flows only
