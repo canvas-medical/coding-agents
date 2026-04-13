@@ -44,9 +44,18 @@ no code changes.
       "question": "What type of change is this deployment?",
       "header": "Version bump",
       "options": [
-        {"label": "Patch (0.0.X)", "description": "Bug fixes, minor tweaks, no new functionality"},
-        {"label": "Minor (0.X.0)", "description": "New features, backward-compatible changes"},
-        {"label": "Major (X.0.0)", "description": "Breaking changes, major refactors"}
+        {
+          "label": "Patch (0.0.X)",
+          "description": "Bug fixes, minor tweaks, no new functionality"
+        },
+        {
+          "label": "Minor (0.X.0)",
+          "description": "New features, backward-compatible changes"
+        },
+        {
+          "label": "Major (X.0.0)",
+          "description": "Breaking changes, major refactors"
+        }
       ],
       "multiSelect": false
     }
@@ -140,15 +149,26 @@ Use concise declarative voice for commit messages:
 
 ### Step 4: Deploy Plugin
 
-Execute deployment:
+Use the **`installer`** MCP tool (provided by the `canvas_cmd_line` MCP server) to install the plugin with its secrets:
+
+- `plugin_name`: the inner folder name (snake_case)
+- `instance`: the target hostname
+- `cwd`: current working directory (the plugin container directory)
+
+The MCP tool reads secret names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{hostname}.json`, and passes them
+to the canvas install command. Secret values are never exposed to Claude Code.
+
+If the response includes a warning about missing secrets, show the warning to the user. The install still proceeds — the warning is informational.
+
+If updating an existing plugin, you may need to disable first and re-enable after:
 
 ```bash
-# Install/update the plugin
-uv run canvas install {plugin_name} --host {hostname}
-
-# If updating, may need to disable first
 uv run canvas disable {plugin_name} --host {hostname}
-uv run canvas install {plugin_name} --host {hostname}
+```
+
+Then call the `installer` MCP tool again, followed by:
+
+```bash
 uv run canvas enable {plugin_name} --host {hostname}
 ```
 

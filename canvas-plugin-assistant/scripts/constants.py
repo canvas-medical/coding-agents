@@ -6,6 +6,7 @@ class _Constants:
     CPA_RUNNING: str = "CPA_RUNNING"
     CPA_WORKSPACE_DIR: str = "CPA_WORKSPACE_DIR"
     CPA_PLUGIN_DIR: str = "CPA_PLUGIN_DIR"
+    CPA_SECRET_FILEPATH: str = "CPA_SECRET_FILEPATH"
 
 
 Constants = _Constants()
