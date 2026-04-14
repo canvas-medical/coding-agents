@@ -1,5 +1,4 @@
 {
-  "model": "opus",
   "permissions": {
     "allow": [
       "Bash",
@@ -15,12 +14,16 @@
       "Read(**/evals/case_index.md)"
     ],
     "ask": [
-        "Bash(rm:*)",
-        "Bash(mount:*)",
-        "Bash(sudo:*)",
-        "Bash(dd:*)",
-        "Bash(chmod:*)",
-        "Bash(chown:*)"
+      "Bash(rm:*)",
+      "Bash(mount:*)",
+      "Bash(sudo:*)",
+      "Bash(dd:*)",
+      "Bash(chmod:*)",
+      "Bash(chown:*)"
     ]
+  },
+  "model": "opus",
+  "enabledPlugins": {
+    "cpa@canvas-medical": true
   }
 }
