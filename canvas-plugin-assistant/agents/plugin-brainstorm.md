@@ -392,6 +392,7 @@ If the plugin defines **any CustomModel subclasses or uses AttributeHub**, invok
 - Tests sharing mutable state instead of creating their own data
 - Namespace names that are too vague (e.g., `custom_data__status`) or too specific (e.g., `john__my_plugin`)
 - Schema evolution issues — offer `canvas namespace reset/drop` for non-production instances only; **NEVER** against production
+- Using `db_index=True` on fields instead of explicit `Index` in `Meta.indexes`
 
 Fix any issues before moving on to security checks.
 

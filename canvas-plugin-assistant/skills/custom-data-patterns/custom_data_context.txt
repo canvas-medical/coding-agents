@@ -243,6 +243,39 @@ class AuditEntry(CustomModel):
 
 Marginally better, but you lose ORM traversal, type safety, and indexing benefits of a real foreign key.
 
+### BAD — Denormalizing both ID and name
+
+```python
+class Referral(CustomModel):
+    patient_id = TextField()
+    patient_name = TextField()
+    reason = TextField()
+```
+
+This stores two denormalized copies of Patient data — the ID as a plain string and the name as a snapshot. The name goes stale, the ID isn't a real foreign key, and you can't traverse the relationship or use `select_related`. This pattern often also includes unsupported field parameters like `CharField(max_length=256, db_index=True)` — see anti-patterns #9 and #14.
+
+### GOOD — Foreign key to Patient
+
+```python
+from canvas_sdk.v1.data import Patient, ModelExtension
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import DO_NOTHING, ForeignKey, TextField
+
+class CustomPatient(Patient, ModelExtension):
+    pass
+
+class Referral(CustomModel):
+    patient = ForeignKey(
+        CustomPatient,
+        to_field="dbid",
+        on_delete=DO_NOTHING,
+        related_name="referrals",
+    )
+    reason = TextField()
+```
+
+The patient's name is always current via `referral.patient.first_name`, and you don't need to store or maintain a separate copy. Any SDK model (Patient, Staff, Note, etc.) that a CustomModel references should be a foreign key, not denormalized text fields.
+
 ### GOOD — Foreign key to Staff
 
 ```python
@@ -355,9 +388,14 @@ state.save()
 
 ---
 
-## 9. Using `null=True` or `blank=True` on CustomModel Fields
+## 9. Unsupported Field Parameters: `null`, `blank`, `max_length`
 
-The `null` and `blank` field attributes are ignored by the plugin runner. They have no effect — no `NOT NULL` constraint is created in the database regardless, and Django form validation (`blank`) is not used in the plugin context. Including them is misleading because it suggests they control behavior when they don't.
+The field parameters `null`, `blank`, and `max_length` are not supported on CustomModel fields. They have no effect and will not produce database constraints. Including them is misleading because it suggests they control behavior when they don't.
+
+- **`null=True`** — All CustomModel columns are nullable at the database level regardless. No `NOT NULL` constraint is ever created.
+- **`blank=True`** — Django form validation is not used in the plugin context.
+- **`max_length`** — No `VARCHAR(N)` constraint is created. Text columns are always unbounded `text` type.
+- **`unique=True`** — No unique constraint is created. Use `UniqueConstraint` in `Meta.constraints` instead (see anti-pattern #3).
 
 ### BAD
 
@@ -366,18 +404,29 @@ class PatientProfile(CustomModel):
     preferred_language = TextField(null=True, blank=True)
     risk_score = IntegerField(null=True, blank=True)
     notes = TextField(null=True, blank=True, default="")
+    phone_number = TextField(max_length=20)
+    external_id = TextField(unique=True)  # will NOT create a unique constraint
 ```
 
 ### GOOD
 
 ```python
+from django.db.models import UniqueConstraint
+
 class PatientProfile(CustomModel):
     preferred_language = TextField()
     risk_score = IntegerField()
     notes = TextField(default="")
+    phone_number = TextField()
+    external_id = TextField()
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["external_id"], name="unique_external_id"),
+        ]
 ```
 
-Omit `null` and `blank` entirely. All CustomModel columns are nullable at the database level regardless of these attributes.
+Omit `null`, `blank`, `max_length`, and `unique` entirely. If you need uniqueness, use `UniqueConstraint` in `Meta.constraints`. If you need to enforce length or nullability, do so in your plugin's application code.
 
 ---
 
@@ -688,3 +737,35 @@ canvas install my_plugin --host dev-instance
 ### For production schema issues
 
 If a production namespace has orphaned columns from removed fields, or tables from renamed models, these are harmless — unused columns take no space and do not affect queries. Communicate this to the developer rather than suggesting destructive operations.
+
+---
+
+## 14. Using `db_index=True` on Fields
+
+Do not use `db_index=True` as a field parameter — it is not supported and **will not create an index**. The field attribute is silently ignored, so the developer may believe their column is indexed when it is not. Instead, declare indexes explicitly in `class Meta` using `Index`.
+
+### BAD
+
+```python
+class TaskLog(CustomModel):
+    status = TextField(db_index=True)
+    created_at = DateTimeField(auto_now_add=True, db_index=True)
+```
+
+### GOOD
+
+```python
+from django.db.models import Index
+
+class TaskLog(CustomModel):
+    status = TextField()
+    created_at = DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            Index(fields=["status"]),
+            Index(fields=["-created_at"]),
+        ]
+```
+
+All indexes should be declared in one place (`Meta.indexes`), making it easy to see the full indexing strategy at a glance.
