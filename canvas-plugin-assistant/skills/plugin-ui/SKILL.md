@@ -14,7 +14,7 @@ description: >
   Canvas does not use those patterns.
 compatibility: Designed for Claude Code. Targets Canvas plugin SDK with HTMLResponse delivery.
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   author: Vicert
 allowed-tools: Read, Grep, Glob
 ---

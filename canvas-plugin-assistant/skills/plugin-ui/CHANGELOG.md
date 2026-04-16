@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.2.0
+
+### Changed
+
+- Refactor Safety Part D rewritten from a structural-only pre-listing to a three-tier risk summary (cosmetic, clear migration, unclear migration). The agent now presents all proposed changes grouped by risk before modifying any markup. The user sees the full scope and approves before work begins.
+- Refactor Safety Part A expanded to scan for child selectors targeting elements inside nodes being replaced by web components. These children move behind a Shadow DOM boundary after migration and existing selectors will not reach them.
+
 ## 3.1.0
 
 ### Added
