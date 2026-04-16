@@ -1,5 +1,88 @@
 # Changelog
 
+## 3.1.0
+
+### Added
+
+- DESIGN.md at the skill root as the visual specification layer. Single source of truth for colors, typography, spacing, shape, token system, text-background pairing, visual hierarchy, information density, truncation, dates, badge color semantics, button spacing, patterns without components, and consolidated do's and don'ts.
+
+### Changed
+
+- Extracted visual specification content from web-components.md (token system, fallback chain, button spacing, patterns without components), component-usage.md (text-background pairing, badge color semantics, visual anti-patterns), interaction-patterns.md (visual hierarchy, information density, long text truncation, date formatting), and SKILL.md (color palette, spacing, shape rules). Each donor file now cross-references DESIGN.md.
+- Updated workflow.md routing table Steps 4 and 5 to include DESIGN.md as a reference.
+- Updated validation-checklist.md attributions to point to DESIGN.md for visual rules.
+- Updated CLAUDE.md maintenance workflow with design spec checks and file consistency matrix column.
+- Updated SKILL.md escalation ladder Level 4 to reference DESIGN.md for token selection.
+
+## 3.0.1
+
+### Fixed
+
+- All 12 eval assertions referenced old file names (tokens.css, typography.css, canvas-components.js). Updated to canvas-plugin-ui.css and canvas-plugin-ui.js.
+- SKILL.md restructured to lead with the workflow pointer so Claude reads the execution sequence before rules. Color palette and customization boundaries moved after key rules.
+- Stale escalation ladder cross-reference to web-components.md removed (section was deleted in 3.0.0).
+- btn-default CSS class name in customization boundaries replaced with variant="ghost" web component attribute.
+- Duplicate toggle-submit prohibition removed from SKILL.md customization boundaries (canonical location is Key Rules).
+- Toggle-submit rule deduplicated across component-usage.md and interaction-patterns.md with cross-references to the canonical statement in SKILL.md.
+- Duplicate keyboard efficiency section removed from interaction-patterns.md Clinical Environment (already covered by Form Submission section).
+- Validation checklist cross-references hardened. Every "see SKILL.md" or "see interaction-patterns.md" check now includes the rule criterion inline. Duplicate select check (Phase 1 and Phase 2) and duplicate table aria-label check (Phase 2 and Phase 5) removed.
+- Confirmation hierarchy moved from interaction-patterns.md to component-usage.md where it belongs as "when to use which pattern" guidance.
+- README.md design rules section expanded with a one-sentence summary before the SKILL.md redirect.
+- CLAUDE.md journal directory section clarified with guidance on identifying the active issue directory.
+
+## 3.0.0
+
+### Breaking
+
+- Asset pipeline restructured. The 24 individual component files in assets/components/, the two CSS files (tokens.css, typography.css), and the bundle script (scripts/bundle.sh) are replaced by three files. assets/canvas-plugin-ui.js (all components and utilities), assets/canvas-plugin-ui.css (tokens and typography merged), assets/head.html (canonical head snippet).
+- All components wrapped in a single IIFE under the CanvasUI namespace on window. CanvasUI.register(tag, cls) replaces per-file customElements.define with double registration guards.
+- Google Fonts @import removed from CSS. Lato now loads via a link tag in the head snippet. Plugins must include the Google Fonts link tag.
+- Bundle script removed. Claude copies canvas-plugin-ui.js and canvas-plugin-ui.css directly to the plugin static directory during setup.
+- Plugin HTML boilerplate changed from two link tags and one script tag to three tags (Google Fonts link, CSS link, JS script).
+- SimpleAPI routes reduced from three (tokens.css, typography.css, canvas-components.js) to two (canvas-plugin-ui.css, canvas-plugin-ui.js).
+
+### Added
+
+- CanvasUI.utils.dismissModal() and CanvasUI.utils.resizeModal(width, height) for host communication on DEFAULT_MODAL and NOTE surfaces. MessageChannel handshake (INIT_CHANNEL) handled automatically.
+- canvas-option defined once as a shared element instead of duplicated across canvas-dropdown, canvas-combobox, and canvas-multi-select.
+- assets/head.html as the canonical reference for the three tags every plugin includes in its head.
+- Host Communication section added to surface-selection.md documenting CanvasUI.utils.
+
+### Changed
+
+- All documentation updated. SKILL.md, README.md, CLAUDE.md, web-components.md, validation-checklist.md, workflow.md, surface-selection.md, CHANGELOG.md.
+- Component count remains 24 (22 files, 44 tag names). No components added or removed.
+- Version bumped to 3.0.0 in SKILL.md frontmatter.
+
+## 2.2.0
+
+### Added
+
+- `canvas-button-group`. Layout wrapper that joins canvas-button children into a connected unit. Uses ::slotted to override border-radius on first, middle, and last children. Fluid attribute for full-width equal distribution.
+- `canvas-textarea`. Dedicated multi-line text area replacing the multiline attribute on canvas-input. Auto-resize via grid overlay, max-rows to cap growth and scroll, maxlength with live character counter, no-resize option. Shares visual tokens with canvas-input.
+- `canvas-tooltip`. Infrastructure component placed once in the body. Activates a global tooltip system via data-canvas-tooltip attributes on any element. Direct mouseenter/mouseleave listeners per element, MutationObserver for dynamic elements, SVG arrows per direction, scroll listener hides tooltip immediately, viewport edge flipping.
+
+### Changed
+
+- `canvas-loader` rewritten. Positioning modes changed from inline/centered/inverted to inline/overlay/fullscreen. Overlay and fullscreen modes include a backdrop with light (default), dark, or none options. Spinner colors auto-invert on dark backdrop. Flex centering replaces absolute centering.
+- `canvas-input` multiline attribute removed. Use `canvas-textarea` instead.
+- Component count updated from 19 to 22 in SKILL.md, README.md, workflow.md, and validation-checklist.md.
+- component-usage.md updated with tabs as the view mode switching pattern, textarea variants section, and tooltip best practices.
+- bundle.sh gained a --create flag that runs mkdir -p on the target directory if it does not exist.
+
+## 2.1.0
+
+### Added
+
+- `canvas-loader`. Loading spinner matching the Semantic UI Loader used in Canvas. Four sizes (mini, small, default, large), inline and centered positioning modes, inverted mode for dark backgrounds, and optional text label. Arc color is #767676 (gray) matching the Canvas home-app, not blue.
+
+### Changed
+
+- Component count updated from 18 to 19 in SKILL.md and README.md.
+- Loading Spinner removed from the Patterns Without Components section of web-components.md since canvas-loader replaces it.
+- component-usage.md loading states guidance updated to reference canvas-loader.
+- canvas-loader added to the valid tag name list in validation-checklist.md.
+
 ## 2.0.0
 
 Web components migration. The design system moves from CSS class patterns with inlined base.css to 18 native Custom Elements with Shadow DOM scoped styles. This is a breaking change. Plugins built with the old class system need to be migrated to web component elements.
