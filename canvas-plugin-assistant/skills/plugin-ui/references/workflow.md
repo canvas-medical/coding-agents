@@ -17,7 +17,7 @@ This file sequences the agent through the right reference files for each phase o
 
 This protocol applies only when existing HTML contains `<script>` tags or inline event attributes. Skip it entirely for HTML without JavaScript. Complete all four parts before modifying any markup.
 
-**Part A. JavaScript Dependency Scan.** Read every `<script>` block and inline event attribute. Extract every DOM access point (getElementById, querySelector, getElementsByClassName, inline handlers, dataset reads, closest/parent/sibling traversals, FormData/form.elements references). Produce a dependency inventory pairing each DOM anchor with what the JavaScript does through it.
+**Part A. JavaScript Dependency Scan.** Read every `<script>` block and inline event attribute. Extract every DOM access point (getElementById, querySelector, getElementsByClassName, inline handlers, dataset reads, closest/parent/sibling traversals, FormData/form.elements references, child selectors that reach into elements being replaced by `<canvas-*>` components). Flag any selector targeting children of an element that will become a web component, because those children move behind a Shadow DOM boundary after migration (e.g., `querySelector('#wrapper input')` or `closest('.field').querySelector('select')`). Produce a dependency inventory pairing each DOM anchor with what the JavaScript does through it.
 
 **Part B. Risk Classification.** Classify each proposed change against the dependency inventory.
 
@@ -31,4 +31,12 @@ This protocol applies only when existing HTML contains `<script>` tags or inline
 
 Format: `MIGRATION: {old element} used by {function name} for {purpose}. New target: {new element}. JS update: {what changes}.`
 
-**Part D. Pre-modification listing.** If any structural changes exist, list all proposed changes with their migration declarations before modifying the markup. Cosmetic-only refactors do not require pre-listing regardless of how many violations exist.
+**Part D. Risk Summary.** Before modifying any markup, present all proposed changes grouped by risk tier.
+
+*Group 1, proceed (cosmetic).* Changes that do not touch any element in the dependency inventory. List each change in one line. Example: "Token swap on `#header` background color" or "Replace `div.badge` with `<canvas-badge>` (no JS references)."
+
+*Group 2, clear migration (will update JS alongside markup).* Changes that replace elements in the inventory where the replacement provides equivalent hooks. Include the migration declaration for each. Example: "Replace `<select id="status">` with `<canvas-dropdown id="status">`. MIGRATION: `select#status` used by `updateFilters()` for reading selected value. New target: `canvas-dropdown#status`. JS update: replace `selectedIndex` with `.value` comparison."
+
+*Group 3, needs your input (unclear migration).* Changes where the agent cannot confirm behavior preservation. Describe what breaks and what the options are. Example: "`querySelector('.field input')` in `validateForm()` reaches the inner input of `#patient-name`. After migration to `<canvas-input>`, that selector will not cross the Shadow DOM boundary. Options: change selector to target the custom element directly, or keep the native input."
+
+Wait for user approval before modifying markup. The user may approve all groups at once, approve groups 1 and 2 while discussing group 3, or ask to skip specific changes.
