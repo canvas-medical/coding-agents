@@ -1,8 +1,10 @@
 # Interaction Patterns
 
-Keyboard navigation, focus management, ARIA attributes, and behavioral rules for interactive elements. When-to-use guidance is in component-usage.md (loaded at Step 3).
+Keyboard navigation, focus management, ARIA attributes, and behavioral rules for interactive elements. Clinical environment guidelines for touch targets, confirmations, and patient safety. For visual specification rules (hierarchy, density, truncation, date formatting), see [DESIGN.md](../DESIGN.md). When-to-use guidance is in component-usage.md (loaded at Step 3).
 
-## Tab Keyboard Navigation
+## Interaction Behavior
+
+### Tab Keyboard Navigation
 
 - Left and Right arrow keys move focus between tab items within the tab menu.
 - Home jumps to the first tab. End jumps to the last tab.
@@ -11,7 +13,7 @@ Keyboard navigation, focus management, ARIA attributes, and behavioral rules for
 - Active tab has `aria-selected="true"`. Inactive tabs have `aria-selected="false"`.
 - Each tab has `aria-controls` pointing to its panel ID. Each panel has `aria-labelledby` pointing to its tab ID.
 
-## Combobox and Select Keyboard Navigation
+### Combobox and Select Keyboard Navigation
 
 - Click, Enter, or Space on the trigger opens the dropdown.
 - Escape closes the dropdown and returns focus to the trigger.
@@ -22,14 +24,14 @@ Keyboard navigation, focus management, ARIA attributes, and behavioral rules for
 - Tab closes the dropdown (selecting the highlighted option if any) and moves focus to the next focusable element.
 - Clicking outside the dropdown closes it without selecting.
 
-## Dropdown and Menu Behavior
+### Dropdown and Menu Behavior
 
 - Clicking outside the dropdown or menu closes it.
 - Dropdown menus must not exceed the viewport. If the menu would overflow below the trigger, flip it to open above. If it would overflow on the right, align it to the right edge of the trigger.
 - Long option lists should scroll within the dropdown rather than growing the dropdown beyond the viewport.
 - Menu items that perform actions use `role="menuitem"`. Menu items that toggle state use `role="menuitemcheckbox"` or `role="menuitemradio"`.
 
-## Focus Management
+### Focus Management
 
 - When a modal opens, move focus to the first focusable element inside (usually the close button or the first form input).
 - When a modal closes, return focus to the element that triggered it. Never leave focus in an undefined state.
@@ -37,16 +39,16 @@ Keyboard navigation, focus management, ARIA attributes, and behavioral rules for
 - When content loads dynamically (fetch, AJAX), focus should not jump unpredictably. If new content replaces the current view entirely, move focus to the top of the new content. If content is appended (like loading more list items), keep focus where it was.
 - When a banner or notification appears, it should not steal focus. Use `aria-live` to announce it to screen readers without disrupting the user's current position.
 
-## Toggle and Submit Prohibition
+### Toggle and Submit Prohibition
 
-This is the most common UX mistake in generated plugin UI. It must be prevented.
+This is the most common UX mistake in generated plugin UI. It must be prevented. (Summary in SKILL.md Key Rules.)
 
 - Toggles must never appear on a screen that has a Save or Submit button. This is a hard rule with no exceptions.
 - If a form collects settings that are saved together, every control must be a checkbox, radio button, or input. Never a toggle.
 - If a setting should take effect immediately, use a standalone toggle with no submit button anywhere on the screen. Provide instant visual feedback (an inline banner or confirmation).
 - Mixed patterns on the same screen (some toggles for instant effect, some checkboxes for deferred submission) confuse users about what is saved and what is not. Pick one model per screen and apply it consistently.
 
-## ARIA Essentials
+### ARIA Essentials
 
 These are the minimum ARIA attributes for common plugin UI elements. Do not over-apply ARIA. Use semantic HTML first (a `<button>` element does not need `role="button"`).
 
@@ -61,16 +63,35 @@ These are the minimum ARIA attributes for common plugin UI elements. Do not over
 - **Disabled elements** should use the `disabled` attribute on native HTML elements. For custom elements, use `aria-disabled="true"` and remove click handlers.
 - Do not use `aria-label` as a substitute for visible text. It is for screen readers when visible text is not feasible. If you can show the text, show it.
 
-## Scrollable Containers
+### Scrollable Containers
 
 - Scrollable regions need `tabindex="0"` so keyboard users can scroll them with arrow keys.
 - Scrollable regions need an accessible name via `aria-label` or `aria-labelledby` so screen readers can identify them.
-- If the plugin is in a right chart pane, the outermost scrollable container must have `padding-bottom: 120px` to clear the Pylon Chat widget.
 
-## Form Submission
+### Form Submission
 
 - Pressing Enter in a single-line text input should submit the form when there is only one input and one submit action on the screen.
 - In multi-field forms, Enter should not submit. Only the explicit submit button triggers submission.
 - The submit button must be reachable by tabbing from the last form field.
 - Tab order must follow the visual layout: top to bottom, left to right for side-by-side fields.
 - After a successful submission, move focus to the success message or back to the top of the form. Do not leave focus on the disabled submit button.
+
+## Clinical Environment
+
+These rules are driven by the clinical environment. Clinicians work under time pressure, use tablets at the bedside, deal with long medical terminology, and make decisions where errors have real-world patient consequences.
+
+### Accessibility and Touch Targets
+
+- Minimum touch target size is `44px` by `44px` for all interactive elements (buttons, checkboxes, toggles, links, table row actions). Clinicians use tablets at the bedside and rolling cart touchscreens.
+- Clickable areas can be visually smaller than 44px as long as the hit area (padding included) meets the minimum.
+- All color pairings must meet WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text). Green `#22BA45` on white and white on green both pass. Muted text `#767676` on white passes at 4.6:1.
+- Never rely on color alone to convey meaning. Pair color with text, icons, or patterns. A red badge should also have a label like "Critical" or an icon.
+
+### Confirmation Hierarchy
+
+For the confirmation hierarchy (no confirmation, soft undo, hard dialog, destructive typed input), see component-usage.md Confirmation Hierarchy.
+
+### Patient Context Safety
+
+- When a plugin displays patient-specific data, the patient's identity must be visible on the screen. In a right chart pane, the chart on the left provides this context. In a modal or standalone page, the plugin must show the patient's name and at least one identifier (date of birth or MRN) near the top. See [surface-selection.md](surface-selection.md) for which surfaces require a patient context header.
+- Never display clinical data from one patient in a context where the user might believe they are looking at a different patient.

@@ -11,6 +11,7 @@ These rules describe when to use each component and how interactions should beha
 - If there are more than 6 tabs, consider whether the information architecture needs rethinking. Too many tabs force horizontal scrolling or wrapping, both of which hurt usability.
 - The first tab should be the most commonly needed content. Do not default to a less important tab.
 - In narrow containers like the right chart pane, tabs still work but keep labels very short to avoid wrapping.
+- When the user picks between 2 to 4 ways to view the same data (list vs grid, day vs week vs month, active vs archived), use tabs. Canvas does not use segmented controls or toggle button groups for this purpose. Tabs are the standard pattern for mutually exclusive view modes. The button group component (`canvas-button-group`) is for grouping related actions, not for selection.
 
 ## Accordion vs Tabs
 
@@ -25,17 +26,24 @@ These rules describe when to use each component and how interactions should beha
 
 - Use a `canvas-toggle` for settings that take effect immediately (enable/disable a feature, show/hide a section). The user expects the change to apply as soon as they flip the toggle.
 - Use a `canvas-checkbox` for selections that are part of a form and only take effect when the user submits. Also use checkboxes when the user can select multiple items from a list.
-- Never mix toggles and checkboxes in the same form for the same type of choice.
-- Never combine toggle switches with a Save or Submit button. If the screen has a submit step, every control must be a checkbox, radio, or input. Never a toggle. Toggles imply instant effect and a submit button contradicts that.
-- If a setting should take effect immediately, use a standalone `canvas-toggle` with no submit button. Provide instant visual feedback (inline banner or confirmation).
-- Mixed patterns (some toggles, some checkboxes on the same screen) confuse users about what's saved and what isn't. Pick one model per screen.
+- The toggle-submit prohibition (SKILL.md Key Rules) forbids combining toggles with save or submit actions in the same UI segment. See interaction-patterns.md Toggle and Submit Prohibition for the full behavioral rule.
 
 ## Text Inputs vs Textareas
 
-- Use a text input for single-line values like names, emails, phone numbers, dates, and short identifiers.
-- Use a textarea for multi-line content like notes, descriptions, comments, and free-form text.
+- Use `canvas-input` for single-line values like names, emails, phone numbers, dates, and short identifiers.
+- Use `canvas-textarea` for multi-line content like notes, descriptions, comments, and free-form text.
 - Always include a visible label above the input. Do not rely on placeholder text as the only label. Placeholders disappear once the user starts typing, leaving a filled form with no visible field names.
 - Use placeholder text to show an example value or format hint, not to describe the field's purpose.
+
+## Textarea Variants
+
+Five common patterns for `canvas-textarea`, each suited to a different context.
+
+- **Fixed-height field.** Use a fixed `rows` value when the expected content length is known. Clinical notes (`rows="6"`), descriptions (`rows="4"`), short comments (`rows="2"`). The user can manually resize unless `no-resize` is set.
+- **Single-line expandable.** Use `auto-resize rows="1"` for a field that starts matching the height of a `canvas-input` and grows as the user types. Good for inline comments, quick notes, and any field where one line is usually enough but more space is occasionally needed.
+- **Capped expandable.** Use `auto-resize rows="1" max-rows="6"` when growth should stop at a reasonable point and scroll beyond it. This prevents the field from pushing the rest of the page out of view.
+- **Chat input.** Use `auto-resize rows="1" max-rows="4"` paired with a send button in a grid layout (`grid-template-columns: 1fr auto; align-items: end`). The field starts at one line, grows to four, then scrolls. The button stays at the bottom as the field grows.
+- **Character-limited field.** Add `maxlength="200"` (or any limit) to show a live counter below the field. Works with any of the patterns above. Use for override reasons, rejection notes, and any field with a backend length constraint.
 
 ## Dropdown vs Combobox vs Native Select
 
@@ -72,11 +80,8 @@ Plugins render in different surface widths. A full page plugin has room for wide
 
 ## Buttons
 
-Green is rare. Blue is the default. Most plugin screens will have blue buttons only.
+Follow the button color rules in SKILL.md. A screen should have at most one green button. When in doubt, use blue.
 
-- **Green** is only for clinical state transitions and confirmations that affect the patient record or leave the system. Sign/lock a note, send a message to a patient, submit a referral, confirm a fax, check in a patient. If the action doesn't change the patient record or leave the plugin's scope, it should not be green.
-- **Blue** is for all standard actions. Save, done, next, add, update, edit, adjust, refill, stop, back, return, skip. Form submissions are blue. Multi-step modal footers are blue.
-- A screen should have at most one green button. If you're not sure whether an action qualifies for green, use blue.
 - **Button sizing.** Three layout patterns determine the size tier.
   - **Input-paired buttons** (button in the same row as an input, forming a visual unit like "Add" next to a text field). Match the input height. Standard inputs are ~43px, so use base `canvas-button`. If the form uses compact inputs, use `size="sm"`. Never use `size="xs"` for input-paired buttons because the height mismatch looks broken.
   - **Floating utility buttons** (button near a field but not height-paired, like "+ Insert Field" above a textarea or "Clear" on a filter tag). Use `size="xs"`. These should not compete visually with the content they support.
@@ -131,6 +136,15 @@ Do not show a success banner after every save. Do not show multiple banners stac
 </canvas-modal>
 ```
 
+## Confirmation Hierarchy
+
+Not all consequential actions are destructive. Clinical workflows include actions that are irreversible or have real-world impact without being "delete" operations. Use this hierarchy to decide when confirmation is needed.
+
+- **No confirmation needed.** Saving a draft, toggling a UI preference, filtering a list, expanding or collapsing a section. These are low-risk and easily reversible.
+- **Soft confirmation (undo banner).** Closing a care gap flag, dismissing an alert, marking a task complete. Show an inline banner with an undo option for 5 seconds. The action takes effect immediately but can be reversed.
+- **Hard confirmation (dialog).** Sending a message to a patient, submitting a referral, signing a note, overriding a clinical alert. These leave the plugin's scope and affect external systems or the patient record. Show a confirmation dialog that names the specific action and its consequence.
+- **Destructive confirmation (dialog with typed input).** Deleting patient-facing data, removing a medication, canceling an order. Show a confirmation dialog that requires the user to type "delete" or the item name before proceeding.
+
 ## Badges
 
 - Use **mini** (`size="mini"`) as the default size for all status indicators in tables, cards, lists, and accordion titles. This is the size Canvas uses most frequently.
@@ -138,8 +152,8 @@ Do not show a success banner after every save. Do not show multiple banners stac
 - Use the **solid color** variants (`canvas-badge` with a color attribute like `green`, `red`, etc.) for status display. White text on a colored background. This matches the Semantic UI Label used throughout the Canvas home-app.
 - Use the **basic** variant (add the `basic` attribute) for de-emphasized or neutral statuses like "Inactive", "Self-pay", or "Draft" where a solid color would be too visually heavy.
 - Use the **circular** variant (add the `circular` attribute) for notification counts. Short content renders as a circle, longer content stretches into a pill.
-- Match colors to semantic meaning consistently. Green for accepted or active, red for denied or error, blue for submitted or pending, grey for done or draft, yellow for pending review, orange for warnings or preferred tags, teal for scheduled.
-- Do not use violet, purple, or pink for clinical statuses. Reserve those for non-clinical tags where a distinct color is needed to differentiate from the clinical palette.
+- Match colors to semantic meaning consistently. See [DESIGN.md](../DESIGN.md) Badge Color Semantics for the full mapping.
+- Follow the palette closure rule in [DESIGN.md](../DESIGN.md) Color Palette and Roles when choosing badge colors.
 
 ## Chips
 
@@ -156,12 +170,28 @@ Do not show a success banner after every save. Do not show multiple banners stac
 - When a list, table, or section has no data, show a short message explaining why and what the user can do next. Do not leave blank space with no explanation.
 - Use muted text (`#767676`) for empty state messages. Center them vertically and horizontally in the container.
 
+## Progress Indicators
+
+- Use `canvas-progress` for any percentage visualization. Campaign completion, outreach tracking, match scores, goal attainment.
+- Color is set by the consumer, not by the component. The component does not automatically change color based on the value. If the design needs red below 30% and green above 80%, set the color attribute from JavaScript based on the value.
+- Use **default size** for standalone progress bars where the bar is the primary content. Use **small** for lists and compact layouts where progress sits alongside other data. Use **tiny** for inline indicators like search match scores.
+- The `label` attribute shows the percentage inside the bar. Hide it at tiny size (the component does this automatically) and in contexts where an external label already shows the number.
+
+## Dividers
+
+- Use `canvas-divider` to visually separate content sections. A plain divider with no text renders a horizontal rule with 1rem vertical margin above and below.
+- The horizontal-with-text variant is the most common divider in Canvas. Campaign lists, availability cards, change request cards, and diagnosis tables all use centered text between lines. Default to this variant when separating labeled content groups.
+- Use the `fitted` attribute when the divider sits between tightly packed items and no extra spacing is needed (e.g., between condition detail rows or inside a table cell).
+- Use `canvas-divider` with text content to create a labeled section break. The text sits centered between two lines. Good for separating groups of results ("Or"), toggling section visibility ("Hide closed campaigns"), or labeling time boundaries.
+- Use the `hidden` attribute for invisible spacing in print layouts or contexts where vertical separation is needed without a visible line.
+- Do not use `canvas-divider` to separate items inside a list or table. Use borders on the list items or table rows instead. The divider is for separating distinct content groups, not individual rows.
+
 ## Loading States
 
-- Use a **skeleton** when the page layout is known (you know there will be a table with 3 columns, a card with a title and body, a list of items). Skeletons preview the expected structure and feel faster to the user.
-- Use a **spinner** when the layout is unknown, the entire view is loading, or the loading area is too small for meaningful skeleton shapes.
-- If a specific section is loading while the rest of the page is ready, show the loading indicator only in that section rather than blocking the whole screen.
+- Use `canvas-loader` for all loading states in plugins. It supports full-page overlay, inline section loading, and compact indicators.
+- If a specific section is loading while the rest of the page is ready, show the loader only in that section rather than blocking the whole screen.
 - Do not leave the screen blank during loads.
+- There is no skeleton component. Skeleton placeholders require layout-specific shapes (line widths, column counts, card dimensions) that vary per view. An AI agent generating plugins cannot guarantee that a skeleton preview will match the actual content layout, which creates visual inconsistency when the real content arrives. Use `canvas-loader` instead.
 
 ## Form Layout
 
@@ -177,21 +207,25 @@ Do not show a success banner after every save. Do not show multiple banners stac
 
 ## Sidebar Width Awareness
 
-- Plugins in `RIGHT_CHART_PANE` are narrow (roughly 25% to 40% of the viewport). Avoid horizontal layouts, multi-column forms, and wide tables in sidebar plugins. Stack everything vertically.
-- Full-page plugins (`TargetType.PAGE`) have more room and can use multi-column layouts where appropriate.
+- Plugins in `RIGHT_CHART_PANE` are narrow (roughly 25% to 40% of the viewport). Avoid horizontal layouts, multi-column forms, and wide tables in sidebar plugins. Stack everything vertically. See [surface-selection.md](surface-selection.md) for all surface options and their constraints.
+- Full-page plugins (`PAGE`) have more room and can use multi-column layouts where appropriate.
 
-## Text and Background Pairing
+## Tooltips
 
-These rules are mandatory with no exceptions.
-
-- **On white (`#FFFFFF`) backgrounds.** Both dark text and muted gray text are allowed. This is the only background where gray text may appear.
-- **On light gray and mid gray backgrounds.** Only dark text. Never place gray text on a gray background.
-- **On colored backgrounds** (green, blue, red, orange, brown). Text must be white and bold.
+- Use tooltips for supplementary information the user does not need to see unless they hover. Ambiguous icon labels, truncated text expansion, disabled state explanations.
+- Do not add tooltips when the element is already clear by itself. A button labeled "Save", a close X, a trash icon, a back arrow, and a search magnifier do not need tooltips. Adding them clutters the UI without helping the user.
+- Icon-only buttons need a tooltip when the icon alone does not make the action obvious. A gear, lightning bolt, clipboard, or any domain-specific icon needs a tooltip to explain the action. Universal icons (close, delete, back, search) are exempt from the tooltip but still need `aria-label` for screen readers.
+- Truncated table cells should have a tooltip with the full text. When a cell uses `text-overflow: ellipsis`, the tooltip shows the complete value on hover.
+- Disabled elements should explain why they are disabled. Use an inverted tooltip with a delay to tell the user what condition must change before the element becomes active.
+- Do not put essential information in tooltips. If the user must see it to complete a task, it should be visible text, not hidden behind a hover.
+- Do not use tooltips as error messages or validation feedback. Errors should be visible inline via `canvas-input` error state or `canvas-banner`. Tooltips are hidden until hover and can be missed entirely.
+- Do not use tooltips for touch-only contexts. Tablets do not have hover. If the plugin runs in a right chart pane where clinicians may use a tablet, ensure all information is accessible without hover.
+- Do not add tooltips to elements inside a scrollable area the user drags or swipes. The scroll listener hides tooltips immediately, so they will flash and disappear.
+- Keep tooltip text short. One line, two at most. If you need a paragraph, use a popover or inline help text instead.
+- Use the inverted (dark) variant for disabled state explanations and secondary hints. Use the default (light) variant for primary content like truncated text expansion.
+- Add `data-canvas-tooltip-delay="1000"` for disabled state explanations so the tooltip does not flash when the user moves past the element quickly.
+- When a table row has multiple icon-only action buttons (edit, delete, view), each needs its own tooltip. Place them with enough gap that tooltips do not overlap when hovering adjacent buttons quickly.
 
 ## Anti-Patterns
 
-- Never use purple, teal, pink, cyan, or other colors outside the palette. These are common AI-generation defaults.
-- Never use `box-shadow` to simulate borders. Use actual `border` properties.
-- Never set `outline: none` on focusable elements without providing an alternative focus indicator.
-- Never use custom scrollbar styling in plugin CSS. Let the browser handle scrollbars natively.
-- Never use CSS media queries based on viewport width for plugin content. Plugin iframes do not respond to viewport breakpoints. Design for the known surface width.
+For visual anti-patterns (off-palette colors, box-shadow borders, custom scrollbars, CSS media queries), see [DESIGN.md](../DESIGN.md) Do's and Don'ts.
