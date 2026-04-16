@@ -1,94 +1,81 @@
 # Web Components
 
-Reference for the Canvas plugin web component system. Covers how components load, how the token system works, and the API for each component. Read this before writing any plugin that uses `<canvas-*>` elements.
+Reference for the Canvas plugin web component system. The system includes 24 components (43 tag names). This file covers how components load and the API for each component. For the token system, fallback chain, button spacing rules, and patterns without components, see [DESIGN.md](../DESIGN.md). Read this before writing any plugin that uses `<canvas-*>` elements.
+
+## Contents
+
+[Loading Components](#loading-components) | [Layout](#layout) | [Components](#components)
+
+**Components.** [canvas-button](#canvas-button) | [canvas-button-group](#canvas-button-group) | [canvas-badge](#canvas-badge) | [canvas-chip](#canvas-chip) | [canvas-input](#canvas-input) | [canvas-textarea](#canvas-textarea) | [canvas-radio](#canvas-radio) | [canvas-checkbox](#canvas-checkbox) | [canvas-toggle](#canvas-toggle) | [canvas-banner](#canvas-banner) | [canvas-card](#canvas-card) | [canvas-dropdown](#canvas-dropdown) | [canvas-combobox](#canvas-combobox) | [canvas-multi-select](#canvas-multi-select) | [canvas-tabs](#canvas-tabs) | [canvas-accordion](#canvas-accordion) | [canvas-modal](#canvas-modal) | [canvas-table](#canvas-table) | [canvas-sortable-list](#canvas-sortable-list) | [canvas-sidebar-layout](#canvas-sidebar-layout) | [canvas-loader](#canvas-loader) | [canvas-progress](#canvas-progress) | [canvas-tooltip](#canvas-tooltip) | [canvas-divider](#canvas-divider)
 
 ## Loading Components
 
-Components work with zero external dependencies. No tokens.css, no base.css, no linked stylesheets. Every visual default is hardcoded inside the component. External token files are optional overrides.
+For setup instructions and an overview of the three asset files, see SKILL.md.
 
-There are two loading modes depending on how the plugin is structured.
+### CanvasUI.utils
 
-### Inline mode
+The `canvas-plugin-ui.js` file registers a `CanvasUI.utils` object on the global `window`. This provides a host communication bridge that plugins use to send messages to the Canvas app through a MessageChannel.
 
-For simple single-page plugins or demos, paste the component JS file contents directly into a `<script>` tag before any markup that uses the component. Every file has a double registration guard so pasting the same component twice is safe.
+The MessageChannel handshake (`INIT_CHANNEL`) is handled automatically when the script loads. No setup code is needed.
+
+**CanvasUI.utils.dismissModal()** sends a `CLOSE_MODAL` message to the host app via the MessageChannel. Use this in plugins rendered on `DEFAULT_MODAL` or `NOTE` surfaces that need to close themselves after completing an action.
+
+```html
+<canvas-button onclick="CanvasUI.utils.dismissModal()">Done</canvas-button>
+```
+
+**CanvasUI.utils.resizeModal(width, height)** sends a `RESIZE` message with optional width and height values. Use this to adjust the iframe dimensions when the plugin content changes size.
 
 ```html
 <script>
-  /* contents of canvas-button.js */
+  // Expand the modal to fit a larger form
+  CanvasUI.utils.resizeModal(800, 600);
 </script>
-
-<canvas-button>Save</canvas-button>
 ```
 
-### Plugin mode
+Both width and height are optional. Omitting a value leaves that dimension unchanged on the host side.
 
-For plugins that use SimpleAPI routing, the design system ships as three static files served through dedicated API routes.
-
-#### Bundling
-
-The bundle script at `scripts/bundle.sh` concatenates all component JS files into a single `canvas-components.js` and copies `tokens.css` and `typography.css` alongside it into the target directory.
-
-```bash
-./scripts/bundle.sh /path/to/plugin/package/static/
-```
-
-This produces three files in the target `static/` directory.
-
-- `canvas-components.js` contains all web components with their registration guards
-- `tokens.css` contains the shared palette, semantic aliases, spacing, shape, and transition tokens
-- `typography.css` contains heading and paragraph styles matching Canvas Semantic UI, including a Google Fonts `@import` for Lato
-
-Plugin iframes are isolated from the parent Canvas app and do not inherit its fonts. The `@import` in `typography.css` is the only font loading mechanism needed. Do not add separate Google Fonts `<link>` tags in the HTML.
-
-#### Serving
+### Serving
 
 Each file needs a SimpleAPI GET route that reads it via `render_to_string` and returns it with the correct content type. The plugin sandbox does not allow `os`, `pathlib`, or `open()` for file access. Use `render_to_string("static/filename")` for all file reads.
 
 The SimpleAPI class serving these routes must inherit from `StaffSessionAuthMixin`. Plugin pages load inside an authenticated Canvas iframe that passes a staff session cookie. Without the mixin, asset routes return a credentials error instead of the file contents, and the page renders with no styling or components.
 
+If the plugin sets a custom `Content-Security-Policy` header, the policy must include `'self'` in `style-src` and `script-src`. Without it the browser silently blocks the design system CSS and JS files and the page renders unstyled. `'unsafe-inline'` alone is not enough because it only covers inline styles and scripts, not files loaded via `<link>` or `<script src>`.
+
 ```python
-@api.get("/tokens.css")
-def tokens_css(self) -> list[Response]:
+@api.get("/canvas-plugin-ui.css")
+def plugin_ui_css(self) -> list[Response]:
     return [
         Response(
-            render_to_string("static/tokens.css").encode(),
+            render_to_string("static/canvas-plugin-ui.css").encode(),
             status_code=HTTPStatus.OK,
             content_type="text/css",
         )
     ]
 
-@api.get("/typography.css")
-def typography_css(self) -> list[Response]:
+@api.get("/canvas-plugin-ui.js")
+def plugin_ui_js(self) -> list[Response]:
     return [
         Response(
-            render_to_string("static/typography.css").encode(),
-            status_code=HTTPStatus.OK,
-            content_type="text/css",
-        )
-    ]
-
-@api.get("/canvas-components.js")
-def components_js(self) -> list[Response]:
-    return [
-        Response(
-            render_to_string("static/canvas-components.js").encode(),
+            render_to_string("static/canvas-plugin-ui.js").encode(),
             status_code=HTTPStatus.OK,
             content_type="application/javascript",
         )
     ]
 ```
 
-#### Loading in the HTML shell
+### Loading in the HTML shell
 
-The plugin's index template includes all three files in the `<head>`. Replace `{plugin_name}` with the `name` field from `CANVAS_MANIFEST.json` (uses underscores) and `{prefix}` with the SimpleAPI PREFIX value (without the leading slash).
+The plugin's index template includes two asset files and a Google Fonts link in the `<head>`. Replace `{plugin_name}` with the `name` field from `CANVAS_MANIFEST.json` (uses underscores) and `{prefix}` with the SimpleAPI PREFIX value (without the leading slash).
 
 ```html
-<link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/tokens.css">
-<link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/typography.css">
-<script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-components.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
+<link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.css">
+<script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.js"></script>
 ```
 
-No other font or stylesheet links are needed. Every `<canvas-*>` element works anywhere in the page body without additional script tags.
+The Google Fonts link tag is required. The CSS file does not use `@import` for font loading, so without this tag the Lato typeface will not render. Every `<canvas-*>` element works anywhere in the page body without additional script tags.
 
 ### Plugin HTML Boilerplate
 
@@ -100,9 +87,9 @@ Start every plugin HTML page from this shell. Replace `{plugin_name}` with the n
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/tokens.css">
-  <link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/typography.css">
-  <script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-components.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
+  <link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.css">
+  <script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.js"></script>
   <style>
     /* Plugin-specific CSS only. Use var(--token) for all values. */
   </style>
@@ -112,116 +99,6 @@ Start every plugin HTML page from this shell. Replace `{plugin_name}` with the n
 </body>
 </html>
 ```
-
-For right chart pane plugins, add `padding-bottom: 120px` to the body or outermost scrollable container to clear the Pylon Chat widget.
-
-## Token System
-
-The component system uses CSS custom properties organized in three layers. Each layer can override the one below it. The browser resolves the first defined value and stops.
-
-```
-component token  →  global token  →  hardcoded default
- most specific       shared            fallback
-```
-
-### Layer 1. Hardcoded defaults
-
-Every value the component needs is hardcoded as the innermost fallback. If the page defines nothing, the component renders with the correct Canvas design system appearance. This is what makes components self sufficient.
-
-### Layer 2. Global tokens
-
-Shared properties that apply across all components. These are defined in `assets/tokens.css` but can also be set by the plugin author in a `:root` block or on any ancestor element.
-
-**Raw palette.** Named by color. Changing one shifts every component that uses that color.
-
-| Token | Default | Affects |
-|---|---|---|
-| `--palette-green` | `#22BA45` | Primary buttons, green badges, green chips |
-| `--palette-blue` | `#2185D0` | Secondary buttons, blue badges, focus rings |
-| `--palette-red` | `#BD0B00` | Danger buttons, red badges, error states |
-| `--palette-orange` | `#ED4A0B` | Warning banners, orange badges |
-| `--palette-yellow` | `#fbbd08` | Yellow badges |
-| `--palette-olive` | `#b5cc18` | Olive badges |
-| `--palette-teal` | `#00b5ad` | Teal badges |
-| `--palette-violet` | `#6435c9` | Violet badges |
-| `--palette-purple` | `#a333c8` | Purple badges |
-| `--palette-pink` | `#e03997` | Pink badges |
-| `--palette-brown` | `#935330` | Brown badges |
-| `--palette-grey` | `#767676` | Grey badges, muted text |
-| `--palette-black` | `#1b1c1d` | Black badges |
-| `--palette-white` | `#FFFFFF` | Surfaces, backgrounds |
-
-**Semantic aliases.** Named by role. Resolve through the palette. Changing one shifts every component that uses that role without affecting other uses of the same color.
-
-| Token | Resolves to | Role |
-|---|---|---|
-| `--color-primary` | `--palette-green` | Clinical state transitions (sign, lock, send) |
-| `--color-secondary` | `--palette-blue` | Standard actions (save, edit, add) |
-| `--color-danger` | `--palette-red` | Destructive actions (delete, remove) |
-| `--color-warning` | `--palette-orange` | Warnings |
-| `--color-text` | `--palette-text` | Primary body text |
-| `--color-text-active` | `--palette-text-active` | Hovered or active text |
-| `--color-text-muted` | `--palette-text-muted` | Secondary text on white backgrounds |
-| `--color-bg` | `--palette-bg` | Page backgrounds |
-| `--color-border` | `--palette-border` | Borders, dividers |
-| `--color-surface` | `--palette-white` | Card and input backgrounds |
-
-**Shared properties.** Typography, spacing, shape, and transitions used by multiple components.
-
-| Token | Default | Used by |
-|---|---|---|
-| `--font-family` | `lato, -apple-system, ...` | All components with text |
-| `--font-weight-bold` | `700` | Buttons, labels, headings |
-| `--radius` | `.28571429rem` | Buttons, inputs, cards, badges, dropdowns |
-| `--space-mini` | `4px` | Tight inline gaps |
-| `--space-tiny` | `8px` | Button icon gaps, compact spacing |
-| `--space-small` | `12px` | Form field spacing |
-| `--space-medium` | `16px` | Section padding |
-| `--space-large` | `20px` | Major section gaps |
-| `--space-huge` | `24px` | Page padding |
-| `--transition-fast` | `200ms` | Hover and color transitions |
-| `--transition-base` | `250ms` | Layout and visibility transitions |
-| `--focus-ring` | `2px solid #2185D0` | Focus outline on interactive elements |
-| `--focus-ring-offset` | `2px` | Focus outline offset |
-
-### Layer 3. Component tokens
-
-Prefixed with `--canvas-{component}-`. Override a single component type or a single instance without affecting anything else. These are checked first in the fallback chain so they always win.
-
-Set on a container to affect all instances of that component inside it, or inline on a single element to affect only that one.
-
-```html
-<!-- one button -->
-<canvas-button style="--canvas-button-radius: 999px">Pill</canvas-button>
-
-<!-- all buttons in this section -->
-<div style="--canvas-button-radius: 999px">
-  <canvas-button>Pill A</canvas-button>
-  <canvas-button>Pill B</canvas-button>
-</div>
-```
-
-## How Fallbacks Resolve
-
-An example with `border-radius` on a button.
-
-```css
-border-radius: var(--canvas-button-radius, var(--radius, .28571429rem));
-```
-
-The browser checks in order.
-
-1. Is `--canvas-button-radius` defined? If yes, use it. Done.
-2. Is `--radius` defined? If yes, use it. Done.
-3. Use `.28571429rem`.
-
-This means.
-
-- Setting `--radius: 0` in `:root` makes all components square (buttons, inputs, cards, badges).
-- Setting `--canvas-button-radius: 0` on one element makes only that button square.
-- Setting nothing gives every component the Canvas default radius.
-
-The same logic applies to every property in every component.
 
 ## Layout
 
@@ -246,46 +123,7 @@ Components are custom HTML elements. Standard CSS layout properties work directl
 
 The internal button fills the host element (`width: 100%; height: 100%`), so sizing the custom element sizes the visible button.
 
-## Button Spacing
-
-Adjacent buttons in Canvas have a `.25em` (4px at 16px base) gap between them. This is a layout concern, not a component concern. The component does not add outer spacing. Use whatever CSS achieves the correct visual result.
-
-```html
-<!-- flex with gap -->
-<div style="display: flex; gap: .25em">
-  <canvas-button variant="ghost">Cancel</canvas-button>
-  <canvas-button>Save</canvas-button>
-</div>
-
-<!-- margin -->
-<canvas-button variant="ghost">Cancel</canvas-button>
-<canvas-button style="margin-left: .25em">Save</canvas-button>
-```
-
-For button groups where one side is flush left and the other flush right (cancel on left, save on right), use `justify-content: space-between` on the container. The `.25em` gap only applies when buttons sit next to each other.
-
-```html
-<div style="display: flex; justify-content: space-between">
-  <canvas-button variant="ghost">Cancel</canvas-button>
-  <canvas-button>Save</canvas-button>
-</div>
-```
-
----
-
 ## Components
-
-## Escalation Ladder
-
-When building plugin UI, the agent should exhaust each level before moving to the next. Each level adds friction.
-
-**Level 1. Use existing components.** Compose `<canvas-*>` elements together. No friction, no approval needed. This handles the vast majority of plugin UI.
-
-**Level 2. Customize through attributes and slots.** Set variant, size, color, and other attributes. Place content in slots. Still no friction.
-
-**Level 3. Override through CSS custom properties.** Set `--canvas-{component}-{property}` tokens to adjust a single component or `--{global-token}` to adjust all components. Light friction. The agent should confirm the override is necessary and not achievable through attributes.
-
-**Level 4. Build novel HTML/CSS using tokens.css.** For layouts and patterns that no component covers. Use `var(--space-*)`, `var(--color-*)`, `var(--radius)`, and other tokens from tokens.css. Significant friction. The agent should exhaust component options first and push back before going custom. All custom CSS values must come from tokens.
 
 ### canvas-button
 
@@ -368,7 +206,54 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 | `--canvas-button-focus-ring` | Focus outline | `--focus-ring` then `2px solid #2185D0` |
 | `--canvas-button-focus-ring-offset` | Focus outline offset | `--focus-ring-offset` then `2px` |
 
-**File.** `assets/components/canvas-button.js`
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-button-group
+
+A layout wrapper that joins `canvas-button` children into a single connected unit. Removes inner border-radius so buttons sit flush with shared edges. Only the first and last buttons keep their outer radius.
+
+**Usage**
+
+```html
+<canvas-button-group>
+  <canvas-button>Edit</canvas-button>
+  <canvas-button>Duplicate</canvas-button>
+  <canvas-button variant="ghost">Delete</canvas-button>
+</canvas-button-group>
+
+<canvas-button-group>
+  <canvas-button>Done</canvas-button>
+  <canvas-button variant="ghost">Close</canvas-button>
+</canvas-button-group>
+
+<canvas-button-group fluid>
+  <canvas-button>Back</canvas-button>
+  <canvas-button>Today</canvas-button>
+  <canvas-button>Next</canvas-button>
+</canvas-button-group>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `fluid` | boolean | false (when set, stretches to full width with equal button sizing) |
+
+**How it works.** The wrapper sets `--canvas-button-radius` on slotted children via `::slotted(canvas-button)` selectors. First child gets left-side radius, last child gets right-side radius, middle children get zero. The `canvas-button` component already reads its border-radius from this custom property, so no changes to the button are needed.
+
+**Button sizing.** Each button controls its own variant, size, and disabled state. The group does not override these. In fluid mode, buttons get `flex: 1 0 auto` to distribute equally.
+
+**Slot.** Default slot accepts `canvas-button` elements only. Other elements will not receive radius adjustments.
+
+**ARIA.** The inner container has `role="group"`. Add `aria-label` on the group when the purpose is not obvious from context.
+
+**Component tokens**
+
+| Token | What it controls | Default |
+|---|---|---|
+| `--canvas-button-group-radius` | Outer edge border radius | `--radius` then `.28571429rem` |
+
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-badge
 
@@ -439,7 +324,7 @@ A status indicator with 13 colors, 4 sizes, a basic (outlined) variant, and a ci
 | `--canvas-badge-radius` | Border radius | `--radius` then `.28571429rem` |
 | `--canvas-badge-border` | Border | `0 solid transparent` |
 
-**File.** `assets/components/canvas-badge.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-chip
 
@@ -520,11 +405,11 @@ container.appendChild(chip);
 
 **Asymmetric padding.** The right padding is 15% less than the left to optically balance the dismiss icon. The X button adds visual weight to the right side, so reduced padding compensates. When overriding `--canvas-chip-padding`, keep the right value about 15% smaller than the left (e.g., if left is `1em`, right should be about `.85em`).
 
-**File.** `assets/components/canvas-chip.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-input
 
-A text input or textarea with integrated label, error state, and native form participation via `ElementInternals`. Renders either an `<input>` or `<textarea>` inside Shadow DOM depending on the `multiline` attribute.
+A single-line text input with integrated label, error state, and native form participation via `ElementInternals`. Renders an `<input>` inside Shadow DOM. For multi-line text, use `canvas-textarea`.
 
 **Usage**
 
@@ -532,7 +417,6 @@ A text input or textarea with integrated label, error state, and native form par
 <canvas-input label="Patient Name" placeholder="e.g. Jane Smith"></canvas-input>
 <canvas-input label="Email" type="email" placeholder="patient@example.com"></canvas-input>
 <canvas-input label="Date of Birth" type="date"></canvas-input>
-<canvas-input label="Notes" multiline rows="4" placeholder="Enter clinical notes"></canvas-input>
 <canvas-input label="First Name" required error="Required"></canvas-input>
 <canvas-input label="Patient ID" value="PAT-00421" disabled></canvas-input>
 <canvas-input placeholder="No label, just placeholder"></canvas-input>
@@ -545,8 +429,6 @@ A text input or textarea with integrated label, error state, and native form par
 | `label` | string | none (no label rendered) |
 | `placeholder` | string | none |
 | `type` | text, email, date, number, tel, url, password, etc. | text |
-| `multiline` | boolean | false (renders textarea when set) |
-| `rows` | number | 4 |
 | `required` | boolean | false |
 | `error` | string | none (shows error state when set, value becomes error message) |
 | `disabled` | boolean | false |
@@ -573,7 +455,7 @@ A text input or textarea with integrated label, error state, and native form par
 <form id="intake" onsubmit="event.preventDefault(); console.log(new FormData(this));">
   <canvas-input label="First Name" name="first_name" required></canvas-input>
   <canvas-input label="Last Name" name="last_name" required></canvas-input>
-  <canvas-input label="Reason" name="reason" multiline rows="3"></canvas-input>
+  <canvas-textarea label="Reason" name="reason" rows="3"></canvas-textarea>
   <canvas-button type="submit">Submit</canvas-button>
 </form>
 ```
@@ -596,7 +478,7 @@ When in error state, the label turns red (`#9f3a38`), the input background turns
 <div style="display: flex; flex-direction: column; gap: 12px">
   <canvas-input label="First Name"></canvas-input>
   <canvas-input label="Last Name"></canvas-input>
-  <canvas-input label="Notes" multiline rows="3"></canvas-input>
+  <canvas-textarea label="Notes" rows="3"></canvas-textarea>
 </div>
 ```
 
@@ -619,12 +501,109 @@ When in error state, the label turns red (`#9f3a38`), the input background turns
 | `--canvas-input-label-font-size` | Label font size | `.92857143em` |
 | `--canvas-input-label-font-weight` | Label font weight | `--font-weight-bold` then `700` |
 | `--canvas-input-label-color` | Label color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
-| `--canvas-input-textarea-min-height` | Textarea minimum height | `80px` |
 | `--canvas-input-error-text` | Error text and label color | `#9f3a38` |
 | `--canvas-input-error-bg` | Error input background | `#fff6f6` |
 | `--canvas-input-error-border` | Error border and placeholder color | `#e0b4b4` |
 
-**File.** `assets/components/canvas-input.js`
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-textarea
+
+A multi-line text area with integrated label, error state, optional auto-resize, character counter, and native form participation via `ElementInternals`. Shares visual styling with `canvas-input` so both look cohesive in the same form.
+
+**Usage**
+
+```html
+<canvas-textarea label="Notes" placeholder="Enter notes ..."></canvas-textarea>
+<canvas-textarea label="Description" rows="6" placeholder="Describe the issue ..."></canvas-textarea>
+<canvas-textarea label="Comment" auto-resize rows="1" placeholder="Add a comment ..."></canvas-textarea>
+<canvas-textarea label="Message" auto-resize rows="1" max-rows="6" placeholder="Type a message ..."></canvas-textarea>
+<canvas-textarea label="Reason" maxlength="200" placeholder="Override reason ..."></canvas-textarea>
+<canvas-textarea label="Notes" error="This field is required"></canvas-textarea>
+<canvas-textarea label="Notes" disabled value="Read-only content"></canvas-textarea>
+<canvas-textarea label="Notes" no-resize placeholder="Fixed height area"></canvas-textarea>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `label` | string | none (no label rendered) |
+| `placeholder` | string | none |
+| `rows` | number | 4 (initial height in rows) |
+| `max-rows` | number | none (caps auto-resize growth at this many rows, then scrolls) |
+| `maxlength` | number | none (when set, shows character counter below) |
+| `auto-resize` | boolean | false (grows with content using grid overlay) |
+| `no-resize` | boolean | false (hides the drag-to-resize handle) |
+| `required` | boolean | false |
+| `error` | string | none (shows error state when set, value becomes error message) |
+| `disabled` | boolean | false |
+| `value` | string | empty |
+| `name` | string | none (form field name for ElementInternals) |
+
+**Properties**
+
+| Property | Type | Description |
+|---|---|---|
+| `value` | string | Get or set the current textarea value. Setting also updates the form value via ElementInternals. |
+| `name` | string | The form field name (reads from attribute). |
+
+**Events**
+
+| Event | When |
+|---|---|
+| `input` | On every keystroke. Bubbles and composes through shadow DOM. |
+| `change` | On blur after value changed. Bubbles and composes through shadow DOM. |
+
+**Auto-resize.** When `auto-resize` is set, the textarea grows with its content. Uses the same grid overlay technique Canvas uses in its command fields. A hidden pseudo-element mirrors the content and pushes the container height. The resize handle is automatically hidden in this mode. Combine with `rows="1"` for a single-line starting height that matches `canvas-input`. Add `max-rows` to cap the growth and scroll beyond that point.
+
+**Chat input pattern.** For a message input that starts at one line, grows as the user types, and caps at a reasonable height.
+
+```html
+<canvas-textarea auto-resize rows="1" max-rows="6" placeholder="Type a message ..."></canvas-textarea>
+```
+
+**max-rows.** Only applies when `auto-resize` is set. The component measures the textarea's line-height and padding at render time and calculates a pixel max-height from the row count. Once content exceeds max-rows, the textarea stops growing and scrolls internally. For container-level height capping (e.g. filling a flex panel), use CSS on the host element instead.
+
+**Character counter.** When `maxlength` is set, a counter appears below the textarea showing the current length against the limit (e.g. "42 / 200"). The counter turns red and bold when the limit is reached.
+
+**Form participation.** Same as `canvas-input`. Uses `ElementInternals` with `formAssociated: true`. When placed inside a `<form>` with a `name` attribute, its value is automatically included in `FormData`.
+
+```html
+<form id="intake" onsubmit="event.preventDefault(); console.log(new FormData(this));">
+  <canvas-input label="First Name" name="first_name" required></canvas-input>
+  <canvas-textarea label="Reason" name="reason" rows="3" required></canvas-textarea>
+  <canvas-button type="submit">Submit</canvas-button>
+</form>
+```
+
+**Error state.** Same visual treatment as `canvas-input`. Red label, pink background, pink border, error message below.
+
+**Spacing.** The component does not add outer margin. Use the consumer layout for spacing between fields.
+
+**Component tokens**
+
+| Token | What it controls | Fallback chain |
+|---|---|---|
+| `--canvas-textarea-padding` | Textarea padding | `--canvas-input-padding` then `.67857143em 1em` |
+| `--canvas-textarea-font-size` | Textarea font size | `--canvas-input-font-size` then `1em` |
+| `--canvas-textarea-font-family` | Font family (label, textarea, error) | `--font-family` then `lato, ...` |
+| `--canvas-textarea-line-height` | Textarea line height | `--canvas-input-line-height` then `1.21428571em` |
+| `--canvas-textarea-color` | Textarea text color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
+| `--canvas-textarea-bg` | Textarea background | `--color-surface` then `#FFFFFF` |
+| `--canvas-textarea-border` | Textarea border | `--canvas-input-border` then `1px solid rgba(34, 36, 38, 0.15)` |
+| `--canvas-textarea-radius` | Border radius | `--canvas-input-radius` then `--radius` then `.28571429rem` |
+| `--canvas-textarea-focus-border` | Focus border color | `--canvas-input-focus-border` then `#85b7d9` |
+| `--canvas-textarea-placeholder` | Placeholder color | `--canvas-input-placeholder` then `rgba(191, 191, 191, 0.87)` |
+| `--canvas-textarea-disabled-bg` | Disabled background | `--canvas-input-disabled-bg` then `--color-bg` then `#F5F5F5` |
+| `--canvas-textarea-label-font-size` | Label font size | `--canvas-input-label-font-size` then `.92857143em` |
+| `--canvas-textarea-label-color` | Label color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
+| `--canvas-textarea-error-text` | Error text and label color | `--canvas-input-error-text` then `#9f3a38` |
+| `--canvas-textarea-error-bg` | Error background | `--canvas-input-error-bg` then `#fff6f6` |
+| `--canvas-textarea-error-border` | Error border color | `--canvas-input-error-border` then `#e0b4b4` |
+| `--canvas-textarea-counter-color` | Counter text color | `--color-text-muted` then `#767676` |
+
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-radio
 
@@ -689,7 +668,7 @@ A locked radio button matching the Canvas Semantic UI radio. No visual customiza
 
 **Locked component.** No visual customization tokens beyond touch targets. Focus border uses `#85b7d9` matching canvas-input for consistency across form elements.
 
-**File.** `assets/components/canvas-radio.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-checkbox
 
@@ -758,7 +737,7 @@ A locked checkbox matching the Canvas Semantic UI checkbox. White box with a dar
 
 **Locked component.** No visual customization tokens beyond touch targets. Focus border uses `#85b7d9` matching canvas-input and canvas-radio.
 
-**File.** `assets/components/canvas-checkbox.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-toggle
 
@@ -813,7 +792,7 @@ A locked toggle switch matching the Canvas Semantic UI toggle. Blue active track
 
 **Locked component.** No visual customization tokens beyond touch targets. Active track is always blue #0D71BC. Focus border uses `#85b7d9`.
 
-**File.** `assets/components/canvas-toggle.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-banner
 
@@ -902,13 +881,15 @@ Body only (simple inline messages).
 
 **Locked component.** No visual customization tokens. The four variant colors are fixed to match Canvas Semantic UI. The neutral default (no variant) uses gray.
 
-**File.** `assets/components/canvas-banner.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-card
 
-A segment card matching the Canvas Semantic UI segments pattern. White surface with border, border-radius, and box-shadow. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels.
+A segment card matching the Canvas Semantic UI segments pattern. White surface with border, border-radius, and box-shadow. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels.
 
 Three custom elements are registered from a single file: `canvas-card` (outer container), `canvas-card-body` (body sections), and `canvas-card-footer` (gray footer area).
+
+**Scrollable body.** Each `canvas-card-body` has `overflow-y: auto`. To activate scrolling, set a `max-height` on the body element. Without a height constraint the body grows to fit its content as before.
 
 **Usage**
 
@@ -994,9 +975,9 @@ The shadow token can be used for hover effects or to remove the shadow entirely.
 </canvas-card>
 ```
 
-**Typography dependency.** Headings (h4, h3, etc.) inside card body sections need `typography.css` loaded on the page for correct margin behavior. Without it, browser default heading margins add unwanted space at the top of card bodies. The `:first-child { margin-top: 0 }` rule in typography.css handles this.
+**Typography dependency.** Headings (h4, h3, etc.) inside card body sections need `canvas-plugin-ui.css` loaded on the page for correct margin behavior. Without it, browser default heading margins add unwanted space at the top of card bodies. The `:first-child { margin-top: 0 }` rule in the stylesheet handles this.
 
-**File.** `assets/components/canvas-card.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-dropdown
 
@@ -1089,7 +1070,7 @@ When a dropdown appears next to buttons, match the button size. If the buttons a
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match Canvas Semantic UI.
 
-**File.** `assets/components/canvas-dropdown.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-combobox
 
@@ -1145,7 +1126,7 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match Canvas Semantic UI.
 
-**File.** `assets/components/canvas-combobox.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-multi-select
 
@@ -1199,7 +1180,7 @@ A multi-value combobox with chip rendering, inline checkbox indicators, and sear
 
 **Locked component.** No visual customization tokens.
 
-**File.** `assets/components/canvas-multi-select.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-tabs
 
@@ -1275,7 +1256,7 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 | `--tab-label-max-width` | Maximum label width before truncation | `160px` |
 | `--tab-label-min-width` | Minimum label width | `60px` |
 
-**File.** `assets/components/canvas-tabs.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-accordion
 
@@ -1343,7 +1324,7 @@ A collapsible section container with chevron animation, ARIA, and keyboard suppo
 
 **Locked component.** No visual customization tokens beyond `--font-family`.
 
-**File.** `assets/components/canvas-accordion.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-modal
 
@@ -1428,7 +1409,7 @@ The modal does not render on page load. Call `modal.open()` to show it and `moda
 
 **Locked component.** No visual customization tokens. Box shadow, backdrop color, header/footer styling are all fixed.
 
-**File.** `assets/components/canvas-modal.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-table
 
@@ -1523,7 +1504,7 @@ Combine modifier attributes on the same `canvas-table` element as needed.
 | `--canvas-table-row-negative-text` | Negative row text | `#9f3a38` |
 | `--canvas-table-row-active-bg` | Active/selected row background | `#e0e0e0` |
 
-**File.** `assets/components/canvas-table.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-sortable-list
 
@@ -1567,7 +1548,7 @@ Each item renders a drag handle (grip icon) automatically. Drag the handle to re
 |---|---|---|
 | `--radius` | Border radius on drag overlay and handle hover | `.28571429rem` |
 
-**File.** `assets/components/canvas-sortable-list.js`
+**File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-sidebar-layout
 
@@ -1622,72 +1603,210 @@ A two-column layout with a fixed-width sidebar and flexible content area. Regist
 | `--canvas-content-bg` | Content area background | `#fff` |
 | `--canvas-content-padding` | Content area padding | `0` |
 
-**File.** `assets/components/canvas-sidebar-layout.js`
+**File.** `assets/canvas-plugin-ui.js`
 
-## Patterns Without Components
+### canvas-loader
 
-These patterns do not have web components yet. Use them as raw HTML/CSS when needed. All CSS values must come from tokens.css.
+A loading spinner matching the Semantic UI Loader used in Canvas. Renders a spinning circular border with a gray track and a colored arc. Uses a flex container for centering with three positioning modes.
 
-### Tooltip
-
-Uses the `data-tooltip` attribute on any element. The tooltip appears above the element on hover with a scale-in animation. No JavaScript needed.
+**Usage**
 
 ```html
-<canvas-button data-tooltip="Edit this record" size="sm" variant="ghost">Edit</canvas-button>
+<!-- Inline (default, normal document flow) -->
+<canvas-loader></canvas-loader>
+<canvas-loader size="large"></canvas-loader>
+<canvas-loader size="large" centered text="Loading ..."></canvas-loader>
+
+<!-- Overlay (fills relative parent, light backdrop by default) -->
+<canvas-loader mode="overlay" size="large"></canvas-loader>
+<canvas-loader mode="overlay" backdrop="dark" size="large" text="Refreshing ..."></canvas-loader>
+<canvas-loader mode="overlay" backdrop="none" size="large"></canvas-loader>
+
+<!-- Fullscreen (fills viewport, light backdrop by default) -->
+<canvas-loader mode="fullscreen" size="large"></canvas-loader>
+<canvas-loader mode="fullscreen" backdrop="dark" size="large" text="Please wait ..."></canvas-loader>
+
+<!-- Inverted (for dark backgrounds, works with any mode) -->
+<canvas-loader inverted size="large"></canvas-loader>
 ```
 
-Truncated text in a table cell.
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `size` | `mini`, `small`, (default), `large` | default (2.28rem) |
+| `mode` | (default), `overlay`, `fullscreen` | default (inline block) |
+| `centered` | boolean | false (centers inline loader horizontally) |
+| `inverted` | boolean | false (light spinner and text for dark backgrounds) |
+| `backdrop` | `light`, `dark`, `none` | `light` for overlay/fullscreen, ignored in inline |
+| `text` | string | none (label below the spinner) |
+| `aria-label` | string | `"Loading"` |
+
+**Positioning modes.** The component is always a flex container that centers the spinner. The mode attribute controls how that container is sized and positioned.
+
+- **Inline (default).** Normal document flow. The container is a block element. Use `centered` to horizontally center it. No backdrop.
+- **Overlay.** `position: absolute; inset: 0`. Fills the nearest relatively positioned parent. The parent must have `position: relative`. Includes a light semi-transparent backdrop by default.
+- **Fullscreen.** `position: fixed; inset: 0`. Fills the entire viewport. Includes a light semi-transparent backdrop by default.
+
+**Backdrop.** Overlay and fullscreen modes show a light backdrop (`rgba(255, 255, 255, 0.85)`) by default. Set `backdrop="dark"` for a dark backdrop (`rgba(0, 0, 0, 0.5)`) which automatically inverts the spinner and text colors. Set `backdrop="none"` to remove the backdrop. The backdrop attribute is ignored in inline mode.
+
+**Sizes.** Mini (1rem), small (1.71rem), default (2.28rem), large (3.42rem). All sizes follow the Semantic UI size scale. Canvas most commonly uses `size="large"`.
+
+**Text label.** The `text` attribute renders a label below the spinner. Font size scales with the size attribute. Use "Loading ..." for consistency with Canvas patterns.
+
+**Inverted mode.** For use on dark or colored backgrounds. Switches the track to rgba(255, 255, 255, 0.15) and the arc to white. The dark backdrop automatically inverts colors without needing the `inverted` attribute.
+
+**Events.** None.
+
+**Component tokens**
+
+| Token | What it controls | Default |
+|---|---|---|
+| `--canvas-loader-size` | Spinner width and height | `2.28571429rem` |
+| `--canvas-loader-size-mini` | Mini spinner dimensions | `1rem` |
+| `--canvas-loader-size-small` | Small spinner dimensions | `1.71428571rem` |
+| `--canvas-loader-size-large` | Large spinner dimensions | `3.42857143rem` |
+| `--canvas-loader-border-width` | Track and arc border width | `.2em` |
+| `--canvas-loader-track-color` | Track circle color | `rgba(0, 0, 0, 0.1)` |
+| `--canvas-loader-arc-color` | Spinning arc color | `#767676` |
+| `--canvas-loader-track-color-inverted` | Track color on dark backgrounds | `rgba(255, 255, 255, 0.15)` |
+| `--canvas-loader-arc-color-inverted` | Arc color on dark backgrounds | `#fff` |
+| `--canvas-loader-backdrop` | Light backdrop color | `rgba(255, 255, 255, 0.85)` |
+| `--canvas-loader-backdrop-dark` | Dark backdrop color | `rgba(0, 0, 0, 0.5)` |
+| `--canvas-loader-text-color` | Label text color | `rgba(0, 0, 0, 0.87)` |
+| `--canvas-loader-text-color-inverted` | Label text color on dark backgrounds | `rgba(255, 255, 255, 0.9)` |
+| `--canvas-loader-text-gap` | Space between spinner and label | `.78571429rem` |
+| `--canvas-loader-font-family` | Label font family | inherited from --font-family |
+| `--canvas-loader-font-size` | Label font size | `1em` |
+| `--canvas-loader-z-index` | Z-index for overlay and fullscreen | `1000` |
+| `--canvas-loader-min-height` | Min height for inline container | `auto` |
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-progress
+
+A horizontal fill bar matching the Semantic UI Progress used in Canvas. Shows completion percentages, match scores, and campaign tracking. The bar fills from left to right based on the value attribute.
+
+**Usage**
 
 ```html
+<canvas-progress value="65" label></canvas-progress>
+
+<canvas-progress value="88" color="green" size="small"></canvas-progress>
+
+<canvas-progress value="40" active label></canvas-progress>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `value` | 0 to 100 (number) | 0 |
+| `color` | `blue`, `grey`, `green`, `red`, `orange` | `blue` |
+| `size` | `tiny`, `small`, (default) | default |
+| `active` | boolean | false (pulsing animation when set) |
+| `label` | boolean | false (shows percentage text inside bar when set) |
+
+**Sizes.** Default (1.75em bar height) for standalone progress indicators. Small (1em) for campaign lists and compact layouts. Tiny (0.5em) for inline match scores. The label is automatically hidden at tiny size because the bar is too short for text.
+
+**Colors.** Blue is the default and matches active campaign progress in Canvas. Grey for inactive or selected states. Green for match scores and success indicators. Red and orange for error and warning contexts. The color is always set by the consumer. The component does not change color based on the percentage value.
+
+**Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Semantic UI active progress animation.
+
+**ARIA.** The bar element has `role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, and `aria-valuemax="100"`.
+
+**Component tokens**
+
+| Token | What it controls | Fallback chain |
+|---|---|---|
+| `--canvas-progress-track` | Track background | `rgba(0, 0, 0, 0.1)` |
+| `--canvas-progress-bar` | Bar fill color | color attribute value |
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-tooltip
+
+An infrastructure component that activates a global tooltip system. Place it once in the body. It renders nothing visible. On hover over any element with a `data-canvas-tooltip` attribute, it shows a positioned tooltip with an arrow pointing at the trigger. This is different from UI components. It is placed once per page and activates behavior via data attributes on other elements.
+
+**Usage**
+
+```html
+<!-- Place once in the body -->
+<canvas-tooltip></canvas-tooltip>
+
+<!-- Add data-canvas-tooltip to any element -->
+<canvas-button data-canvas-tooltip="Edit this record" size="sm" variant="ghost">Edit</canvas-button>
+<canvas-button data-canvas-tooltip="Previous day" data-canvas-tooltip-position="bottom">←</canvas-button>
+<canvas-badge data-canvas-tooltip="Coverage verified" data-canvas-tooltip-inverted>Active</canvas-badge>
+
+<!-- Truncated text -->
 <canvas-table-cell style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
-  data-tooltip="Metformin Hydrochloride Extended-Release 500mg">
+  data-canvas-tooltip="Metformin Hydrochloride Extended-Release 500mg">
   Metformin Hydrochloride Extended-Release 500mg
 </canvas-table-cell>
+
+<!-- Delayed tooltip for disabled state explanation -->
+<canvas-toggle data-canvas-tooltip="Disabled by admin policy" data-canvas-tooltip-inverted data-canvas-tooltip-delay="1000" disabled label="Auto-save"></canvas-toggle>
 ```
 
-Tooltip styles must be included in plugin-specific CSS. See the tooltip CSS spec in tokens.css comments or the showcase page for the full implementation.
+**Trigger attributes (on any element)**
 
-### Divider
+| Attribute | Values | Default |
+|---|---|---|
+| `data-canvas-tooltip` | string | required (tooltip text) |
+| `data-canvas-tooltip-position` | `top`, `bottom`, `left`, `right` | `top` |
+| `data-canvas-tooltip-inverted` | boolean | false (dark background with white text) |
+| `data-canvas-tooltip-delay` | number (ms) | 0 |
 
-A horizontal rule for separating content sections.
+**How it works.** On connect, the component queries all `[data-canvas-tooltip]` elements and attaches `mouseenter`/`mouseleave` listeners to each one. A MutationObserver watches for dynamically added elements. On hover, it reads the text and attributes, positions a shared floating div relative to the trigger, and shows it. On leave, hides it. Only one tooltip is visible at a time.
+
+**Viewport flipping.** If the tooltip would overflow the viewport edge on the requested side, it flips to the opposite side automatically.
+
+**Visual treatment.** Matches the Semantic UI Popup from the Canvas home-app. White background, 1px solid #d4d4d5 border, .28571429rem border-radius, drop shadow, .71428571em arrow rotated 45deg. Inverted variant uses #1b1c1d background with white text and no border/shadow.
+
+**Infrastructure component.** Unlike UI components, `canvas-tooltip` is placed once per page, not per element. It does not render visible content. The double registration guard prevents issues if it appears multiple times. The `connectedCallback` creates the shared tooltip div and attaches listeners. The `disconnectedCallback` cleans up both.
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-divider
+
+A horizontal rule matching the Semantic UI Divider used in Canvas. Separates content sections with a visible line or acts as an invisible spacer. When text content is placed inside, it renders a centered label with lines extending to each side.
+
+**Usage**
 
 ```html
-<div style="border-top: 1px solid var(--color-border); margin: var(--space-medium) 0"></div>
+<canvas-divider></canvas-divider>
+
+<canvas-divider fitted></canvas-divider>
+
+<canvas-divider>Or</canvas-divider>
+
+<canvas-divider hidden></canvas-divider>
 ```
 
-### Empty State
+**Attributes**
 
-```html
-<div style="padding: var(--space-huge); text-align: center; color: var(--color-text-muted, #767676)">
-  <p>No medications found</p>
-  <canvas-button size="sm" style="margin-top: var(--space-small)">Add Medication</canvas-button>
-</div>
-```
+| Attribute | Values | Default |
+|---|---|---|
+| `fitted` | boolean | false (removes vertical margin when set) |
+| `hidden` | boolean | false (invisible line, spacing only) |
 
-### Loading Spinner
+**Slot.** Default slot accepts text content. When text is present, the divider switches from a plain horizontal rule to the text-between-lines layout where the label sits centered between two lines. When the slot is empty, it renders a standard `<hr>`.
 
-```html
-<div role="status" aria-label="Loading" style="
-  width: 32px; height: 32px; margin: var(--space-huge) auto;
-  border: 3px solid var(--color-border, #E9E9E9);
-  border-top-color: var(--color-secondary, #2185D0);
-  border-radius: 50%; animation: spin 0.8s linear infinite;
-"></div>
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
-```
+**Fitted.** Removes the default 1rem vertical margin. Use between tightly packed items where no extra spacing is wanted.
 
-### Patient Context Header
+**Hidden.** Makes the line invisible while preserving the vertical space from margin. Used for spacing in print layouts or between sections where a visible line would be too heavy.
 
-Use in modals or standalone pages where the patient chart is not visible.
+**ARIA.** The divider has `role="separator"`. When text is present, screen readers announce the text content.
 
-```html
-<div style="display: flex; align-items: center; gap: var(--space-small);
-  padding-bottom: var(--space-small); border-bottom: 1px solid var(--color-border);
-  margin-bottom: var(--space-medium)">
-  <span style="font-weight: 700">Jane Smith</span>
-  <span style="color: var(--color-text-muted, #767676); font-size: .92857143em">DOB: Mar 15, 1985</span>
-  <span style="color: var(--color-text-muted, #767676); font-size: .92857143em">MRN: 12345</span>
-</div>
-```
+**Component tokens**
+
+| Token | What it controls | Fallback chain |
+|---|---|---|
+| `--canvas-divider-margin` | Vertical margin | `1rem 0` |
+| `--canvas-divider-border` | Line color | `var(--color-border, rgba(34, 36, 38, 0.15))` |
+| `--canvas-divider-color` | Text color | `var(--color-text, rgba(0, 0, 0, 0.85))` |
+| `--canvas-divider-font-size` | Text label size | `0.85714286rem` |
+
+**File.** `assets/canvas-plugin-ui.js`
+

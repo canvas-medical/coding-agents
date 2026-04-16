@@ -4,11 +4,11 @@
     {
       "id": 1,
       "prompt": "Build a right chart pane plugin view that shows a table of active medications with columns for medication name, dose, and frequency.",
-      "expected_output": "HTML with right chart pane surface (pane-body class on body), a canvas-table with canvas-table-head, canvas-table-body, canvas-table-row, and canvas-table-cell elements for three columns, padding-bottom 120px on the scrollable container, tokens.css and canvas-components.js linked in the head, no canvas-button with variant primary, muted text for secondary data.",
+      "expected_output": "HTML with right chart pane surface (pane-body class on body), a canvas-table with canvas-table-head, canvas-table-body, canvas-table-row, and canvas-table-cell elements for three columns, padding-bottom 120px on the scrollable container, canvas-plugin-ui.css and canvas-plugin-ui.js linked in the head, no canvas-button with variant primary, muted text for secondary data.",
       "assertions": [
         "Body element has class pane-body or outermost container has padding-bottom 120px",
         "HTML contains a table element with aria-label attribute",
-        "HTML links tokens.css, typography.css, and canvas-components.js",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
         "Table uses canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell elements",
         "No hardcoded hex colors outside the :root block",
         "No canvas-button with variant primary on the page",
@@ -23,7 +23,7 @@
         "No canvas-toggle elements on the page",
         "Boolean controls use canvas-checkbox elements",
         "Save button is a canvas-button without variant primary",
-        "HTML links tokens.css, typography.css, and canvas-components.js",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
         "No hardcoded hex colors in plugin-specific CSS"
       ]
     },
@@ -37,7 +37,7 @@
         "No toggle switch on the page (has Submit button)",
         "Boolean controls use canvas-checkbox elements",
         "Interactive elements have appropriate ARIA attributes",
-        "HTML links tokens.css, typography.css, and canvas-components.js"
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
       ]
     },
     {
@@ -54,6 +54,113 @@
         "The dropdown component has a mechanism to pass the selected value to updateFilter",
         "Every getElementById call in the scripts has a matching id in the HTML",
         "Every inline onclick or onchange handler calls a function that exists in the scripts"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Build a confirmation modal for a plugin. The modal should ask the user to confirm an action, have a Cancel button and a Confirm button, and close itself when the user clicks Confirm.",
+      "expected_output": "A canvas-modal with canvas-modal-header (dismissable attribute), canvas-modal-content with confirmation text, and canvas-modal-footer with Cancel and Confirm buttons. The Confirm button calls CanvasUI.utils.dismissModal() in its click handler. Cancel calls the modal's dismiss() method.",
+      "assertions": [
+        "HTML contains a canvas-modal element with an id attribute",
+        "HTML contains a canvas-modal-header with the dismissable attribute",
+        "HTML contains a canvas-modal-content element with confirmation text",
+        "HTML contains a canvas-modal-footer element",
+        "Footer contains a Cancel button that calls dismiss() on the modal",
+        "Footer contains a Confirm button whose click handler calls CanvasUI.utils.dismissModal()",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Create a provider filter using a multi-select dropdown. The user should be able to pick multiple providers from a list and the page should react when the selection changes.",
+      "expected_output": "A canvas-multi-select with a label attribute, placeholder, and canvas-option children for each provider. A change event listener on the multi-select reads the updated value array.",
+      "assertions": [
+        "HTML contains a canvas-multi-select element with a label attribute",
+        "canvas-multi-select contains at least three canvas-option children with value attributes",
+        "A script tag registers a change event listener on the canvas-multi-select",
+        "The change event handler reads the selected values from the component",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No native select elements on the page"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Build an FAQ section for a plugin with three expandable questions and answers.",
+      "expected_output": "A canvas-accordion containing three canvas-accordion-item children. Each item has a canvas-accordion-title with the question text and a canvas-accordion-content with the answer text.",
+      "assertions": [
+        "HTML contains a canvas-accordion element",
+        "canvas-accordion contains at least three canvas-accordion-item elements",
+        "Each canvas-accordion-item contains a canvas-accordion-title element",
+        "Each canvas-accordion-item contains a canvas-accordion-content element",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Create a patient intake form with fields for full name, date of birth (dropdown), notes (multiline), a consent checkbox, and a submit button.",
+      "expected_output": "A form with canvas-input for the name, canvas-dropdown for date of birth, canvas-textarea for notes, canvas-checkbox for consent, and a canvas-button for submit. The submit button should not use variant primary (green is reserved for clinical state transitions like sign or lock).",
+      "assertions": [
+        "HTML contains a canvas-input element with a label for the name field",
+        "HTML contains a canvas-dropdown element for date of birth",
+        "HTML contains a canvas-textarea element for notes",
+        "HTML contains a canvas-checkbox element for consent",
+        "HTML contains a canvas-button for form submission",
+        "The submit canvas-button does not have variant set to primary",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Build a right chart pane plugin that shows a patient risk score panel with a score value, a brief description, and a list of contributing factors.",
+      "expected_output": "HTML for a right chart pane surface. The outermost scrollable container has padding-bottom: 120px to clear the Pylon Chat widget. Content includes a score display, description text, and a list of risk factors.",
+      "assertions": [
+        "Outermost scrollable container has padding-bottom: 120px or body has class pane-body",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block",
+        "No canvas-button with variant primary on the page",
+        "Content includes a visible risk score value",
+        "Content includes a list of contributing factors"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Create a plugin page that displays a list of lab results, but when there are no results to show, it should display a friendly empty state message with a button to request new labs.",
+      "expected_output": "HTML with an empty state pattern using a centered container, a heading or description explaining no results exist, and an optional canvas-button to take action. The container uses text-align: center, color from the muted text token, and padding from a spacing token.",
+      "assertions": [
+        "HTML contains a centered container with text-align: center",
+        "Empty state container uses var(--color-text-muted) or the muted text color token",
+        "Empty state container uses a spacing token for padding",
+        "Empty state includes a text description about no results",
+        "Empty state includes a canvas-button for requesting new labs",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Build a plugin page with a data table that shows a loading spinner while the data is being fetched from an API.",
+      "expected_output": "HTML with a canvas-loader component displayed while data loads. The loader should use an appropriate mode (inline for within content, overlay for covering a container). A script handles showing and hiding the loader based on fetch state.",
+      "assertions": [
+        "HTML contains a canvas-loader element",
+        "canvas-loader has a mode attribute or uses the default inline mode",
+        "A script tag controls the visibility of the loader based on data fetching",
+        "HTML contains a canvas-table or table structure for displaying the data",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Create a dismissible info banner at the top of a plugin page that tells the user about a new feature. When the user dismisses it, the banner should be removed from the page.",
+      "expected_output": "A canvas-banner with variant info and the dismissible attribute. A dismiss event listener removes the banner element from the DOM when fired.",
+      "assertions": [
+        "HTML contains a canvas-banner element with variant set to info",
+        "canvas-banner has the dismissible attribute",
+        "A script tag registers a dismiss event listener",
+        "The dismiss event handler removes the banner from the DOM using e.target.remove() or equivalent",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
       ]
     }
   ]

@@ -4,26 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canvas Components Showcase</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
-
-  <script src="../assets/components/canvas-badge.js"></script>
-  <script src="../assets/components/canvas-button.js"></script>
-  <script src="../assets/components/canvas-chip.js"></script>
-  <script src="../assets/components/canvas-card.js"></script>
-  <script src="../assets/components/canvas-banner.js"></script>
-  <script src="../assets/components/canvas-input.js"></script>
-  <script src="../assets/components/canvas-checkbox.js"></script>
-  <script src="../assets/components/canvas-radio.js"></script>
-  <script src="../assets/components/canvas-toggle.js"></script>
-  <script src="../assets/components/canvas-dropdown.js"></script>
-  <script src="../assets/components/canvas-combobox.js"></script>
-  <script src="../assets/components/canvas-multi-select.js"></script>
-  <script src="../assets/components/canvas-tabs.js"></script>
-  <script src="../assets/components/canvas-accordion.js"></script>
-  <script src="../assets/components/canvas-modal.js"></script>
-  <script src="../assets/components/canvas-table.js"></script>
-  <script src="../assets/components/canvas-sortable-list.js"></script>
-  <script src="../assets/components/canvas-sidebar-layout.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
+  <link href="../assets/canvas-plugin-ui.css" rel="stylesheet">
+  <script src="../assets/canvas-plugin-ui.js"></script>
 
   <style>
     html { font-size: 16px; }
@@ -139,10 +122,12 @@
       <h3>Canvas Components</h3>
       <a href="#badge">Badge</a>
       <a href="#button">Button</a>
+      <a href="#button-group">Button Group</a>
       <a href="#chip">Chip</a>
       <a href="#card">Card</a>
       <a href="#banner">Banner</a>
       <a href="#input">Input</a>
+      <a href="#textarea">Textarea</a>
       <a href="#checkbox">Checkbox</a>
       <a href="#radio">Radio</a>
       <a href="#toggle">Toggle</a>
@@ -155,6 +140,10 @@
       <a href="#sortable-list">Sortable List</a>
       <a href="#modal">Modal</a>
       <a href="#sidebar-layout">Sidebar Layout</a>
+      <a href="#loader">Loader</a>
+      <a href="#progress">Progress</a>
+      <a href="#tooltip">Tooltip</a>
+      <a href="#divider">Divider</a>
       <a href="#form">Form</a>
     </nav>
   </canvas-sidebar>
@@ -464,6 +453,101 @@
     </div>
   </section>
 
+  <!-- Button Group -->
+  <section class="component-section" id="button-group">
+    <h2>Button Group</h2>
+    <hr class="section-divider">
+
+    <!-- All variants -->
+    <div class="sample-card">
+      <h3>All variants side by side</h3>
+      <canvas-button-group>
+        <canvas-button variant="primary">Sign</canvas-button>
+        <canvas-button>Save</canvas-button>
+        <canvas-button variant="danger">Delete</canvas-button>
+        <canvas-button variant="ghost">Cancel</canvas-button>
+      </canvas-button-group>
+    </div>
+
+    <!-- Same color group -->
+    <div class="sample-card">
+      <h3>Same color (most common pattern)</h3>
+      <canvas-button-group>
+        <canvas-button>Edit</canvas-button>
+        <canvas-button>Duplicate</canvas-button>
+        <canvas-button>Archive</canvas-button>
+      </canvas-button-group>
+      <div style="margin-top: 12px;">
+        <canvas-button-group>
+          <canvas-button variant="ghost">Back</canvas-button>
+          <canvas-button variant="ghost">Today</canvas-button>
+          <canvas-button variant="ghost">Next</canvas-button>
+        </canvas-button-group>
+      </div>
+    </div>
+
+    <!-- Action pair -->
+    <div class="sample-card">
+      <h3>Action pair (Done / Close)</h3>
+      <canvas-button-group>
+        <canvas-button>Done</canvas-button>
+        <canvas-button variant="ghost">Close</canvas-button>
+      </canvas-button-group>
+    </div>
+
+    <!-- Small size -->
+    <div class="sample-card">
+      <h3>Small size</h3>
+      <canvas-button-group>
+        <canvas-button size="sm">Update</canvas-button>
+        <canvas-button size="sm" variant="ghost">Cancel</canvas-button>
+      </canvas-button-group>
+    </div>
+
+    <!-- Extra small size -->
+    <div class="sample-card">
+      <h3>Extra small size (table row actions)</h3>
+      <canvas-button-group>
+        <canvas-button size="xs">Approve</canvas-button>
+        <canvas-button size="xs" variant="ghost">Deny</canvas-button>
+      </canvas-button-group>
+    </div>
+
+    <!-- Fluid -->
+    <div class="sample-card">
+      <h3>Fluid (full width, equal distribution)</h3>
+      <canvas-button-group fluid>
+        <canvas-button variant="ghost">Back</canvas-button>
+        <canvas-button>Today</canvas-button>
+        <canvas-button variant="ghost">Next</canvas-button>
+      </canvas-button-group>
+    </div>
+
+    <!-- Mixed variants -->
+    <div class="sample-card">
+      <h3>Mixed variants</h3>
+      <canvas-button-group>
+        <canvas-button variant="primary">Sign Note</canvas-button>
+        <canvas-button variant="ghost">Save Draft</canvas-button>
+      </canvas-button-group>
+      <div style="margin-top: 12px;">
+        <canvas-button-group>
+          <canvas-button variant="ghost">Reload Checks</canvas-button>
+          <canvas-button variant="ghost">Dismiss All</canvas-button>
+        </canvas-button-group>
+      </div>
+    </div>
+
+    <!-- Single button (edge case) -->
+    <div class="sample-card">
+      <h3>Single button (keeps full radius)</h3>
+      <canvas-button-group>
+        <canvas-button>Only Button</canvas-button>
+      </canvas-button-group>
+    </div>
+
+  </section>
+
   <!-- 3. Chip -->
   <section class="component-section" id="chip">
     <h2>Chip</h2>
@@ -656,6 +740,44 @@
         </canvas-card-body>
       </canvas-card>
     </div>
+
+    <!-- Full width in flex container -->
+    <div class="sample-card">
+      <h3>Full width in flex container</h3>
+      <div style="display: flex; gap: 16px;">
+        <canvas-card>
+          <canvas-card-body>
+            <h4>Left panel</h4>
+            <p style="margin-top: 8px">Card stretches to fill available flex space.</p>
+          </canvas-card-body>
+        </canvas-card>
+        <canvas-card>
+          <canvas-card-body>
+            <h4>Right panel</h4>
+            <p style="margin-top: 8px">Both cards share the row equally.</p>
+          </canvas-card-body>
+        </canvas-card>
+      </div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="sample-card">
+      <h3>Scrollable body (max-height constraint)</h3>
+      <canvas-card>
+        <canvas-card-body style="max-height: 150px;">
+          <h4>Medication History</h4>
+          <p style="margin-top: 8px">Metformin 500mg BID, started Jan 15, 2024. Titrated from 250mg.</p>
+          <p style="margin-top: 8px">Lisinopril 10mg daily, started Mar 3, 2024. Blood pressure well controlled.</p>
+          <p style="margin-top: 8px">Atorvastatin 20mg daily, started Jun 12, 2024. LDL target achieved.</p>
+          <p style="margin-top: 8px">Amlodipine 5mg daily, started Sep 8, 2024. Added for persistent elevated systolic.</p>
+          <p style="margin-top: 8px">Omeprazole 20mg daily, started Nov 20, 2024. GERD symptoms resolved.</p>
+          <p style="margin-top: 8px">Aspirin 81mg daily, started Jan 5, 2025. Primary prevention per cardiology consult.</p>
+        </canvas-card-body>
+        <canvas-card-footer>
+          <span style="font-size: .92857143em;">6 medications total</span>
+        </canvas-card-footer>
+      </canvas-card>
+    </div>
   </section>
 
   <!-- 5. Banner -->
@@ -747,26 +869,17 @@
       <div class="field-row"><canvas-input placeholder="No label, just placeholder"></canvas-input></div>
     </div>
 
-    <!-- Textarea -->
-    <div class="sample-card">
-      <h3>Textarea</h3>
-      <div class="field-row"><canvas-input label="Clinical Notes" multiline rows="4" placeholder="Enter clinical notes"></canvas-input></div>
-      <div class="field-row"><canvas-input label="Brief Comment" multiline rows="2" placeholder="Short note"></canvas-input></div>
-    </div>
-
     <!-- Error state -->
     <div class="sample-card">
       <h3>Error State</h3>
       <div class="field-row"><canvas-input label="First Name" error="Required" value=""></canvas-input></div>
       <div class="field-row"><canvas-input label="Email" type="email" error="Invalid email address" value="not-an-email"></canvas-input></div>
-      <div class="field-row"><canvas-input label="Notes" multiline rows="3" error="Notes are required for this visit type"></canvas-input></div>
     </div>
 
     <!-- Disabled -->
     <div class="sample-card">
       <h3>Disabled</h3>
       <div class="field-row"><canvas-input label="Patient ID" value="PAT-00421" disabled></canvas-input></div>
-      <div class="field-row"><canvas-input label="Locked Notes" multiline rows="2" value="This field is read-only." disabled></canvas-input></div>
     </div>
 
     <!-- Stacked form layout -->
@@ -776,7 +889,75 @@
         <canvas-input label="First Name" placeholder="Jane"></canvas-input>
         <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
         <canvas-input label="Date of Birth" type="date"></canvas-input>
-        <canvas-input label="Notes" multiline rows="3" placeholder="Additional notes"></canvas-input>
+      </div>
+    </div>
+  </section>
+
+  <!-- Textarea -->
+  <section class="component-section" id="textarea">
+    <h2>Textarea</h2>
+    <hr class="section-divider">
+
+    <!-- Basic -->
+    <div class="sample-card">
+      <h3>Basic</h3>
+      <div class="field-row"><canvas-textarea label="Clinical Notes" rows="4" placeholder="Enter clinical notes"></canvas-textarea></div>
+      <div class="field-row"><canvas-textarea label="Brief Comment" rows="1" placeholder="Short note"></canvas-textarea></div>
+    </div>
+
+    <!-- Auto-resize -->
+    <div class="sample-card">
+      <h3>Auto-resize (starts at 1 row, grows with content)</h3>
+      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" placeholder="Start typing and the field will grow ..."></canvas-textarea></div>
+    </div>
+
+    <!-- Auto-resize with max-rows -->
+    <div class="sample-card">
+      <h3>Auto-resize with max-rows (grows up to 6 rows then scrolls)</h3>
+      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" max-rows="6" placeholder="Grows up to 6 lines then scrolls ..."></canvas-textarea></div>
+    </div>
+
+    <!-- Chat input pattern -->
+    <div class="sample-card">
+      <h3>Chat input pattern</h3>
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; max-width: 500px;">
+        <canvas-textarea auto-resize rows="1" max-rows="4" placeholder="Type a message ..."></canvas-textarea>
+        <canvas-button>Send</canvas-button>
+      </div>
+    </div>
+
+    <!-- Character counter -->
+    <div class="sample-card">
+      <h3>Character counter (maxlength)</h3>
+      <div class="field-row"><canvas-textarea label="Override Reason" maxlength="200" placeholder="Explain why this override is needed ..."></canvas-textarea></div>
+    </div>
+
+    <!-- No resize -->
+    <div class="sample-card">
+      <h3>No resize handle</h3>
+      <div class="field-row"><canvas-textarea label="Fixed Area" no-resize rows="3" placeholder="Cannot be resized by the user"></canvas-textarea></div>
+    </div>
+
+    <!-- Error state -->
+    <div class="sample-card">
+      <h3>Error State</h3>
+      <div class="field-row"><canvas-textarea label="Notes" rows="3" error="Notes are required for this visit type"></canvas-textarea></div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="sample-card">
+      <h3>Disabled</h3>
+      <div class="field-row"><canvas-textarea label="Locked Notes" rows="2" value="This field is read-only." disabled></canvas-textarea></div>
+    </div>
+
+    <!-- Aligned with input -->
+    <div class="sample-card">
+      <h3>Mixed form (input + textarea)</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+        <canvas-input label="First Name" placeholder="Jane"></canvas-input>
+        <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
+        <canvas-textarea label="Notes" rows="3" placeholder="Additional notes"></canvas-textarea>
+        <canvas-button type="submit">Submit</canvas-button>
       </div>
     </div>
   </section>
@@ -2465,6 +2646,348 @@
           <canvas-card><canvas-card-body><strong>Prescriptions to renew:</strong> 4</canvas-card-body></canvas-card>
         </canvas-content>
       </canvas-sidebar-layout>
+    </div>
+  </section>
+
+  <!-- Loader -->
+  <section class="component-section" id="loader">
+    <h2>Loader</h2>
+    <hr class="section-divider">
+
+    <!-- Sizes (inline) -->
+    <div class="sample-card">
+      <h3>Sizes (inline mode, default)</h3>
+      <div style="display: flex; align-items: center; gap: 32px;">
+        <div style="text-align: center;">
+          <canvas-loader size="mini"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">mini</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader size="small"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">small</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">default</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader size="large"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">large</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Centered with text -->
+    <div class="sample-card">
+      <h3>Centered with text label</h3>
+      <canvas-loader size="large" centered text="Loading ..."></canvas-loader>
+    </div>
+
+    <!-- Centered empty state -->
+    <div class="sample-card">
+      <h3>Centered (waiting for first data)</h3>
+      <canvas-loader size="large" centered text="Loading patients ..."></canvas-loader>
+    </div>
+
+    <!-- Overlay light (default backdrop) -->
+    <div class="sample-card">
+      <h3>Overlay (light backdrop, default)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" size="large"></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay dark -->
+    <div class="sample-card">
+      <h3>Overlay (dark backdrop)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" backdrop="dark" size="large" text="Refreshing ..."></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay no backdrop -->
+    <div class="sample-card">
+      <h3>Overlay (no backdrop)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" backdrop="none" size="large"></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay inside a card -->
+    <div class="sample-card">
+      <h3>Overlay inside a card</h3>
+      <canvas-card>
+        <canvas-card-body style="position: relative; min-height: 120px;">
+          <p style="margin: 0;">Loading card content ...</p>
+          <canvas-loader mode="overlay" size="large"></canvas-loader>
+        </canvas-card-body>
+      </canvas-card>
+    </div>
+
+    <!-- Inverted on dark background -->
+    <div class="sample-card">
+      <h3>Inverted (dark background)</h3>
+      <div style="background: #1b1c1d; border-radius: .28571429rem; padding: 32px;">
+        <canvas-loader size="large" inverted centered text="Loading ..."></canvas-loader>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Progress -->
+  <section class="component-section" id="progress">
+    <h2>Progress</h2>
+    <hr class="section-divider">
+
+    <!-- Default (blue) -->
+    <div class="sample-card">
+      <h3>Default (blue, standard size)</h3>
+      <canvas-progress value="65" label></canvas-progress>
+    </div>
+
+    <!-- Colors -->
+    <div class="sample-card">
+      <h3>Color variants</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <div class="label">Blue (default, active campaigns)</div>
+          <canvas-progress value="72" color="blue" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Green (match scores, success)</div>
+          <canvas-progress value="88" color="green" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Grey (inactive, selected)</div>
+          <canvas-progress value="45" color="grey" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Red (error, low completion)</div>
+          <canvas-progress value="15" color="red" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Orange (warning)</div>
+          <canvas-progress value="50" color="orange" label></canvas-progress>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="sample-card">
+      <h3>Size variants</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <div class="label">Default (1.75em bar height, label visible)</div>
+          <canvas-progress value="60" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Small (1em bar height, label visible)</div>
+          <canvas-progress value="60" size="small" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Tiny (0.5em bar height, label hidden automatically)</div>
+          <canvas-progress value="60" size="tiny" label></canvas-progress>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active animation -->
+    <div class="sample-card">
+      <h3>Active (pulsing animation)</h3>
+      <canvas-progress value="40" active label></canvas-progress>
+    </div>
+
+    <!-- Without label -->
+    <div class="sample-card">
+      <h3>Without label</h3>
+      <canvas-progress value="75" color="green"></canvas-progress>
+    </div>
+
+    <!-- Campaign list pattern -->
+    <div class="sample-card">
+      <h3>Campaign list pattern (small, inline with text)</h3>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outreach</span>
+        <canvas-progress value="68" color="blue" size="small" style="flex: 1;"></canvas-progress>
+        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">68%</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outcome</span>
+        <canvas-progress value="42" color="grey" size="small" style="flex: 1;"></canvas-progress>
+        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">42%</span>
+      </div>
+    </div>
+
+    <!-- Match score pattern -->
+    <div class="sample-card">
+      <h3>Match score pattern (tiny, search results)</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Metformin 500mg</span>
+          <canvas-progress value="95" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Metoprolol 25mg</span>
+          <canvas-progress value="72" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Methylprednisolone 4mg</span>
+          <canvas-progress value="38" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tooltip -->
+  <section class="component-section" id="tooltip">
+    <h2>Tooltip</h2>
+    <hr class="section-divider">
+
+    <!-- Infrastructure element (placed once) -->
+    <canvas-tooltip></canvas-tooltip>
+
+    <!-- Basic positions -->
+    <div class="sample-card">
+      <h3>Positions</h3>
+      <div style="display: flex; gap: 24px; align-items: center; justify-content: center; padding: 40px 0;">
+        <canvas-button data-canvas-tooltip="Tooltip on top (default)" size="sm">Top</canvas-button>
+        <canvas-button data-canvas-tooltip="Tooltip on bottom" data-canvas-tooltip-position="bottom" size="sm">Bottom</canvas-button>
+        <canvas-button data-canvas-tooltip="Tooltip on left" data-canvas-tooltip-position="left" size="sm">Left</canvas-button>
+        <canvas-button data-canvas-tooltip="Tooltip on right" data-canvas-tooltip-position="right" size="sm">Right</canvas-button>
+      </div>
+    </div>
+
+    <!-- Inverted -->
+    <div class="sample-card">
+      <h3>Inverted (dark)</h3>
+      <div style="display: flex; gap: 24px; align-items: center; padding: 40px 0;">
+        <canvas-button data-canvas-tooltip="Dark tooltip" data-canvas-tooltip-inverted size="sm">Hover me</canvas-button>
+        <canvas-badge color="blue" data-canvas-tooltip="Coverage was verified on Mar 15, 2026" data-canvas-tooltip-inverted>Verified</canvas-badge>
+      </div>
+    </div>
+
+    <!-- With delay -->
+    <div class="sample-card">
+      <h3>Delayed (1 second)</h3>
+      <div style="padding: 40px 0;">
+        <canvas-button data-canvas-tooltip="This tooltip appears after 1 second" data-canvas-tooltip-delay="1000" size="sm" disabled>Disabled action</canvas-button>
+      </div>
+    </div>
+
+    <!-- On icons and badges -->
+    <div class="sample-card">
+      <h3>On badges and small elements</h3>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 20px 0;">
+        <canvas-badge color="green" size="mini" data-canvas-tooltip="Patient is currently active">Active</canvas-badge>
+        <canvas-badge color="red" size="mini" data-canvas-tooltip="Claim was denied on Mar 20, 2026">Denied</canvas-badge>
+        <canvas-badge color="blue" size="mini" data-canvas-tooltip="Submitted for review" data-canvas-tooltip-position="bottom">Pending</canvas-badge>
+      </div>
+    </div>
+
+    <!-- Truncated text -->
+    <div class="sample-card">
+      <h3>Truncated text in table</h3>
+      <canvas-table aria-label="Medications">
+        <canvas-table-head>
+          <canvas-table-row>
+            <canvas-table-cell>Medication</canvas-table-cell>
+            <canvas-table-cell>Dose</canvas-table-cell>
+          </canvas-table-row>
+        </canvas-table-head>
+        <canvas-table-body>
+          <canvas-table-row>
+            <canvas-table-cell style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+              data-canvas-tooltip="Metformin Hydrochloride Extended-Release 500mg">
+              Metformin Hydrochloride Extended-Release 500mg
+            </canvas-table-cell>
+            <canvas-table-cell>500mg</canvas-table-cell>
+          </canvas-table-row>
+          <canvas-table-row>
+            <canvas-table-cell style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+              data-canvas-tooltip="Lisinopril-Hydrochlorothiazide 20-12.5mg Tablet">
+              Lisinopril-Hydrochlorothiazide 20-12.5mg Tablet
+            </canvas-table-cell>
+            <canvas-table-cell>20mg</canvas-table-cell>
+          </canvas-table-row>
+        </canvas-table-body>
+      </canvas-table>
+    </div>
+
+  </section>
+
+  <!-- Divider -->
+  <section class="component-section" id="divider">
+    <h2>Divider</h2>
+    <hr class="section-divider">
+
+    <!-- Default -->
+    <div class="sample-card">
+      <h3>Default (plain horizontal rule)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above the divider</p>
+      <canvas-divider></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below the divider</p>
+    </div>
+
+    <!-- Fitted -->
+    <div class="sample-card">
+      <h3>Fitted (no vertical margin)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly above</p>
+      <canvas-divider fitted></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly below</p>
+    </div>
+
+    <!-- Hidden -->
+    <div class="sample-card">
+      <h3>Hidden (invisible spacer)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above</p>
+      <canvas-divider hidden></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below (separated by invisible divider)</p>
+    </div>
+
+    <!-- With text -->
+    <div class="sample-card">
+      <h3>Horizontal with text</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <div class="label">"Or" separator between options</div>
+          <canvas-divider>Or</canvas-divider>
+        </div>
+        <div>
+          <div class="label">Section label</div>
+          <canvas-divider>Additional Details</canvas-divider>
+        </div>
+        <div>
+          <div class="label">Toggle text (campaign list pattern)</div>
+          <canvas-divider>Hide closed campaigns</canvas-divider>
+        </div>
+      </div>
+    </div>
+
+    <!-- Between cards pattern -->
+    <div class="sample-card">
+      <h3>Between cards (section separator)</h3>
+      <canvas-card>
+        <canvas-card-body>
+          <div style="font-weight: 700;">Active Campaigns</div>
+          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">3 campaigns running</div>
+        </canvas-card-body>
+      </canvas-card>
+      <canvas-divider>View Details</canvas-divider>
+      <canvas-card>
+        <canvas-card-body>
+          <div style="font-weight: 700;">Closed Campaigns</div>
+          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">12 campaigns completed</div>
+        </canvas-card-body>
+      </canvas-card>
     </div>
   </section>
 

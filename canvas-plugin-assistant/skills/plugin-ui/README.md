@@ -6,15 +6,15 @@ The skill activates automatically when the task involves plugin HTML or CSS. You
 
 ## What You Get
 
-The skill produces complete HTML pages ready to serve from a Canvas plugin. The design system loads as three external files (tokens.css, typography.css, canvas-components.js) served through SimpleAPI routes, and all UI is built from native web components with Shadow DOM scoped styles. Plugin-specific CSS goes in a `<style>` tag using token references.
+The skill produces complete HTML pages ready to serve from a Canvas plugin. The design system loads as three tags in the HTML head. A Google Fonts `<link>` for Lato, a `<link rel="stylesheet">` for `canvas-plugin-ui.css`, and a `<script src="...">` for `canvas-plugin-ui.js`. These files are served through SimpleAPI routes, and all UI is built from native web components with Shadow DOM scoped styles. Plugin-specific CSS goes in a `<style>` tag using token references.
 
-18 components are available. Button, badge, chip, input, radio, checkbox, toggle, banner, card, dropdown, combobox, multi-select, tabs, accordion, modal, table, sortable-list, sidebar-layout.
+24 components (43 tag names) are available. Button, button-group, badge, chip, input, textarea, radio, checkbox, toggle, banner, card, dropdown, combobox, multi-select, tabs, accordion, modal, table, sortable-list, sidebar-layout, loader, progress, tooltip, divider.
 
 ## Getting Good Results
 
 ### New plugin views
 
-Describe what the view shows and what actions the user can take. Name the surface if you know it (right chart pane, left sidebar page, modal). List the components you expect (table, form, dropdown, tabs). The skill picks the rest.
+Describe what the view shows and what actions the user can take. Name the surface if you know it (right chart pane, full page, modal). See [surface-selection.md](references/surface-selection.md) for the full list of triggers and surfaces. List the components you expect (table, form, dropdown, tabs). The skill picks the rest.
 
 ```
 Build a right chart pane plugin that shows the patient's active medications
@@ -73,38 +73,9 @@ and make the filter bar more compact.
 
 Each follow-up invocation loads the same design system context, so the skill stays consistent across iterations.
 
-## Key Design Decisions
+## Design Rules
 
-These are the rules that matter most and that AI agents violate most often.
-
-**Buttons.** Green is rare, only for clinical state transitions (sign note, send message to patient). Blue is the default for all standard actions. Gray for cancel and neutral actions.
-
-**Toggles vs checkboxes.** Toggles mean instant effect with no save button in the same UI segment. If there is a save or submit action in the same form, card, or section, every boolean must be a checkbox.
-
-**Banners, not toasts.** Canvas uses inline banner components. No floating toasts, no snackbars, no auto-dismissing notifications anywhere. Error and warning banners are the primary feedback mechanism. Success banners are almost never used because Canvas communicates success through UI state changes (modal closes, form resets, row appears).
-
-**Refactoring preserves JavaScript.** When applying the design system to existing plugin HTML, the skill scans all script blocks and inline event handlers before changing markup. Elements referenced by JavaScript are structurally bound. The skill updates the JavaScript at the same time as the markup, or stops and asks the user when the migration path is unclear. Migrating from class-based patterns to web component elements is a structural change covered by the refactor safety protocol in workflow.md.
-
-**Font loading.** Typography.css handles Lato loading via `@import`. No manual Google Fonts link needed. Plugin iframes do not inherit the parent page's fonts.
-
-**Design system loads as linked files.** The design system ships as three files served through SimpleAPI routes. `tokens.css` and `typography.css` are linked in the `<head>`, and `canvas-components.js` is loaded via a `<script>` tag. Plugin-specific CSS goes in a `<style>` tag using `var(--token)` references. No inlined base classes.
-
-**Right chart pane clearance.** Plugins in the right chart pane need `padding-bottom: 120px` because the Pylon Chat widget overlaps the bottom-right corner.
-
-**Palette is closed.** No purple, teal, cyan, pink. AI models reach for these to add variety. The Canvas palette does not include them.
-
-**Escalation ladder.** The skill exhausts each level before moving to the next.
-
-1. Use existing `<canvas-*>` components.
-2. Customize through attributes and slots.
-3. Override through CSS custom properties when attributes are not enough.
-4. Build novel HTML/CSS with token references only as a last resort.
-
-See [web-components.md](references/web-components.md) for the full ladder.
-
-## Info
-
-*This skill was developed and contributed by [Vicert](https://vicert.com).*
+The skill enforces a closed color palette, button color discipline (green is rare, blue is default), a toggle-submit prohibition, token-only CSS values, and 44px minimum touch targets. For the complete set of rules and customization boundaries, see SKILL.md.
 
 ## Reference Files
 
@@ -114,12 +85,16 @@ Each reference file is self-contained and readable on its own. The agent loads t
 
 | File | Purpose |
 |---|---|
-| `assets/tokens.css` | CSS variables for colors, spacing, typography, borders, transitions |
-| `assets/typography.css` | Heading and paragraph styles, Lato font loading |
+| `assets/canvas-plugin-ui.css` | Combined CSS variables and typography styles for colors, spacing, borders, transitions |
+| `assets/canvas-plugin-ui.js` | All 24 web components bundled into a single script |
+| `assets/head.html` | Copy-paste snippet with the three tags needed in the plugin HTML head |
 | `references/web-components.md` | Component APIs, token system, escalation ladder, loading modes, orphan patterns |
 | `references/workflow.md` | Build process with decision points for new vs existing UI |
 | `references/component-usage.md` | When to use which component, banner and modal patterns, button color discipline |
-| `references/surface-selection.md` | Decision sequence for where a view renders |
-| `references/clinical-ux.md` | Touch targets, information density, date formatting, confirmation hierarchy |
-| `references/interaction-patterns.md` | Keyboard navigation, focus management, ARIA, toggle-submit prohibition |
+| `references/surface-selection.md` | Triggers, surfaces, and pairing guidance |
+| `references/interaction-patterns.md` | Keyboard navigation, focus management, ARIA, toggle-submit prohibition, clinical UX patterns |
 | `references/validation-checklist.md` | Six-phase post-generation validation protocol |
+
+## Info
+
+Author: Vicert
