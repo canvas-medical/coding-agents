@@ -5069,6 +5069,7 @@
           pointer-events: none;
           display: none;
           max-width: 250px;
+          filter: drop-shadow(0 2px 4px rgba(34, 36, 38, 0.12)) drop-shadow(0 2px 10px rgba(34, 36, 38, 0.15));
         }
 
         .canvas-tooltip-container.visible {
@@ -5076,6 +5077,8 @@
         }
 
         .canvas-tooltip-inner {
+          position: relative;
+          z-index: 1;
           background: #fff;
           border: 1px solid #d4d4d5;
           border-radius: .28571429rem;
@@ -5085,54 +5088,91 @@
           font-weight: 400;
           line-height: 1.4285em;
           color: rgba(0, 0, 0, 0.87);
-          box-shadow: 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
           word-wrap: break-word;
+        }
+
+        .canvas-tooltip-container.inverted {
+          filter: none;
         }
 
         .canvas-tooltip-container.inverted .canvas-tooltip-inner {
           background: #1b1c1d;
           color: #fff;
           border: none;
-          box-shadow: none;
         }
 
         .canvas-tooltip-arrow {
           position: absolute;
+          z-index: 0;
           line-height: 0;
         }
 
         .canvas-tooltip-arrow svg {
           display: block;
+          fill: #d4d4d5;
+          stroke: none;
+        }
+
+        .canvas-tooltip-arrow-cover {
+          position: absolute;
+          z-index: 2;
+          line-height: 0;
+        }
+
+        .canvas-tooltip-arrow-cover svg {
+          display: block;
           fill: #fff;
-          stroke: #d4d4d5;
-          stroke-width: 1;
+          stroke: none;
         }
 
         .canvas-tooltip-container.inverted .canvas-tooltip-arrow svg {
           fill: #1b1c1d;
-          stroke: #1b1c1d;
+        }
+
+        .canvas-tooltip-container.inverted .canvas-tooltip-arrow-cover svg {
+          fill: #1b1c1d;
         }
 
         .canvas-tooltip-container.pos-top .canvas-tooltip-arrow {
-          bottom: -6px;
+          bottom: -5px;
+          left: 50%;
+          margin-left: -7px;
+        }
+        .canvas-tooltip-container.pos-top .canvas-tooltip-arrow-cover {
+          bottom: -4px;
           left: 50%;
           margin-left: -7px;
         }
 
         .canvas-tooltip-container.pos-bottom .canvas-tooltip-arrow {
-          top: -6px;
+          top: -5px;
+          left: 50%;
+          margin-left: -7px;
+        }
+        .canvas-tooltip-container.pos-bottom .canvas-tooltip-arrow-cover {
+          top: -4px;
           left: 50%;
           margin-left: -7px;
         }
 
         .canvas-tooltip-container.pos-left .canvas-tooltip-arrow {
-          right: -6px;
+          right: -5px;
+          top: 50%;
+          margin-top: -7px;
+        }
+        .canvas-tooltip-container.pos-left .canvas-tooltip-arrow-cover {
+          right: -4px;
           top: 50%;
           margin-top: -7px;
         }
 
         .canvas-tooltip-container.pos-right .canvas-tooltip-arrow {
-          left: -6px;
+          left: -5px;
+          top: 50%;
+          margin-top: -7px;
+        }
+        .canvas-tooltip-container.pos-right .canvas-tooltip-arrow-cover {
+          left: -4px;
           top: 50%;
           margin-top: -7px;
         }
@@ -5149,14 +5189,19 @@
       var arrow = document.createElement('div');
       arrow.className = 'canvas-tooltip-arrow';
 
-      container.appendChild(inner);
+      var arrowCover = document.createElement('div');
+      arrowCover.className = 'canvas-tooltip-arrow-cover';
+
       container.appendChild(arrow);
+      container.appendChild(inner);
+      container.appendChild(arrowCover);
 
       document.head.appendChild(style);
       document.body.appendChild(container);
       this._tooltip = container;
       this._inner = inner;
       this._arrow = arrow;
+      this._arrowCover = arrowCover;
     }
 
     _onEnter(e) {
@@ -5243,6 +5288,7 @@
         right: '<svg width="7" height="14" viewBox="0 0 7 14"><path d="M7 0 L0 7 L7 14" vector-effect="non-scaling-stroke"/></svg>'
       };
       this._arrow.innerHTML = svgs[position] || svgs.top;
+      this._arrowCover.innerHTML = svgs[position] || svgs.top;
     }
 
     _hide() {

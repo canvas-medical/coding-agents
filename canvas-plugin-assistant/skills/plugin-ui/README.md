@@ -97,4 +97,5 @@ Each reference file is self-contained and readable on its own. The agent loads t
 
 ## Info
 
-Author: Vicert
+*This skill was developed and contributed by [Vicert](https://vicert.com).*
+*engineering@vicert.com*
