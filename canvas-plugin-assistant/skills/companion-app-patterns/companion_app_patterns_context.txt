@@ -400,6 +400,14 @@ Use `datetime.fromisoformat` + timezone-aware datetimes from the client.
 - Manifest still points at the PNG (`assets/icon.png`).
 - Use a distinct accent color per plugin so adjacent icons in the launcher
   don't visually blur together.
+- **Nice to carry the icon's accent color through the UI.** The launcher
+  icon is the user's first impression; when they open the modal, reusing
+  the icon's primary color as the plugin's primary UI accent (active filter
+  chips, primary buttons, link underlines, status pills for the default/
+  primary state, focus rings, native `accent-color`) makes the modal feel
+  like the same thing they tapped. It's a polish touch, not a hard
+  requirement — but shipping a blue icon with an amber UI (or vice versa)
+  reads as visually inconsistent.
 
 ---
 
