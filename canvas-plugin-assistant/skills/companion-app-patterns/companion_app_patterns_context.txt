@@ -137,12 +137,21 @@ that tries `self.event.context["patient"]["id"]` will raise `KeyError`.
 
 ### The `SimpleAPI` serves the shell + JSON
 
+Provider companion handlers MUST inherit from `StaffSessionAuthMixin`. Do NOT
+write a custom `authenticate` that only checks `credentials.logged_in_user is
+not None` — that predicate is true for both staff and patient sessions, so a
+patient with a valid Canvas session could call the endpoint directly. The
+mixin raises `InvalidCredentialsError` when the session isn't staff.
+
 ```python
-class MyThingAPI(SimpleAPI):
+from canvas_sdk.handlers.simple_api import (
+    SimpleAPI, StaffSessionAuthMixin, api,
+)
+
+class MyThingAPI(StaffSessionAuthMixin, SimpleAPI):
     PREFIX = "/app"
 
-    def authenticate(self, credentials: SessionCredentials) -> bool:
-        return credentials.logged_in_user is not None
+    # No authenticate() override — the mixin provides staff-only auth.
 
     @api.get("/")
     def index(self) -> list[Response | Effect]:
@@ -163,6 +172,28 @@ class MyThingAPI(SimpleAPI):
     def styles_css(self) -> list[Response | Effect]:
         return [Response(render_to_string("static/styles.css").encode(),
                          status_code=HTTPStatus.OK, content_type="text/css")]
+```
+
+`StaffSessionAuthMixin` comes first in the MRO so its `authenticate` wins over
+`SimpleAPI`'s default. Don't rely on a per-row `mine` filter as a substitute
+for auth — a filter that can be toggled off (for example `mine=0` to browse the
+practice-wide list) exposes every row in the table to whoever is logged in.
+
+For tests, assert both cases explicitly:
+
+```python
+from canvas_sdk.handlers.simple_api.exceptions import InvalidCredentialsError
+
+def test_staff_session_passes():
+    api = _make_api()
+    creds = MagicMock(logged_in_user={"id": STAFF_UUID, "type": "Staff"})
+    assert api.authenticate(creds) is True
+
+def test_patient_session_rejected():
+    api = _make_api()
+    creds = MagicMock(logged_in_user={"id": STAFF_UUID, "type": "Patient"})
+    with pytest.raises(InvalidCredentialsError):
+        api.authenticate(creds)
 ```
 
 The logged-in staff UUID is always in the `canvas-logged-in-user-id` header
