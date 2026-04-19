@@ -33,13 +33,15 @@ Reference `companion_app_patterns_context.txt` in this skill directory for the f
 9. **Mobile-first scroll isolation.** `body` is a full-height flex column with `overflow: hidden`; only the content region scrolls so header/filter chrome stays pinned.
 10. **Deep links break out of the iframe via `target="_top"`.** Navigating to another part of Canvas (e.g., a patient page) must replace the top frame; don't try to reproduce host chrome inside the modal.
 11. **One plugin = one surface, one purpose.** Ship them self-contained: own `README.md` leading with end-user usage, own `LICENSE`, own 256×256 icon (SVG source + PNG), own tests at 100% coverage. Don't cross-reference sibling companion plugins — fork, don't import.
+12. **Realtime push via WebSocket uses a deterministic channel name.** The URL path segment is the channel name — `/plugin-io/ws/<plugin_name>/<channel_name>/` (trailing slash required). Use a scheme like `staff-<uuid>` derived from the logged-in user so the browser can compute it and a separate `BaseHandler` subscribed to a model event (e.g. `MESSAGE_CREATED`) can emit `Broadcast(channel=f"staff-{uuid}", message={...})` without any registry. Unwrap the broadcast envelope client-side (the wire format is `{"message": {...}}`).
 
 ## Reference Implementations
 
-Three companion-scope plugins demonstrate this skill end-to-end in [Medical-Software-Foundation/canvas](https://github.com/Medical-Software-Foundation/canvas):
+Four companion-scope plugins demonstrate this skill end-to-end in [Medical-Software-Foundation/canvas](https://github.com/Medical-Software-Foundation/canvas):
 
 - `extensions/provider_schedule_companion/` — the logged-in provider's schedule with day/week/month views (`provider_companion_global`).
 - `extensions/provider_task_dashboard_companion/` — filterable task list with inline comment thread, assign-to-me, and mark-complete actions (`provider_companion_global`).
 - `extensions/provider_my_panel_companion/` — the logged-in provider's patient panel with last/next visit and open-task counts (`provider_companion_global`).
+- `extensions/provider_patient_messages_companion/` — live SMS-style messaging surface with WebSocket push on `MESSAGE_CREATED` (`provider_companion_global`).
 
-All three ship with detailed READMEs, 100% pytest coverage, and MIT licensing.
+All four ship with detailed READMEs, 100% pytest coverage, and MIT licensing. The messaging plugin is the canonical reference for realtime push (rule 12).

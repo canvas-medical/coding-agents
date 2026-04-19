@@ -438,7 +438,149 @@ verification). Companion-plugin specifics:
 
 ---
 
-## 7. Open Source / Packaging
+## 7. Realtime Push via WebSocket
+
+Companion apps often want the modal's view to update without a poll (new
+message, task assigned, appointment checked in, etc.). Canvas supports
+this through a pair of SDK primitives:
+
+- `canvas_sdk.handlers.simple_api.websocket.WebSocketAPI` — a `BaseHandler`
+  subclass your plugin registers; its `authenticate()` decides whether to
+  accept a client WebSocket connection.
+- `canvas_sdk.effects.simple_api.Broadcast(channel, message)` — an effect
+  any handler in the plugin can emit to deliver a JSON message to every
+  client connected on the given channel.
+
+### URL and channel naming
+
+The server's routing for plugin WebSocket connections is a strict
+regex:
+
+```
+plugin-io/ws/<plugin_name>/<channel_name>/$
+```
+
+- The trailing `/` is **required**. Without it the platform responds
+  `ValueError: No route found for path` and the connection never opens.
+- `plugin_name` matches `\w+` (letters, digits, underscore — no hyphens).
+- `channel_name` matches `[\w-]+` (word chars plus hyphens; no dots,
+  colons, slashes).
+
+The client picks the channel name via the URL path — the platform does
+not assign one. That makes the channel name deterministic and side-steps
+the need for a channel registry: pick a scheme like `staff-<uuid>` or
+`team-<id>` that both the client (building the URL) and the broadcasting
+handler (emitting `Broadcast(channel=...)`) can independently compute
+from data they already have.
+
+### Authentication
+
+`WebSocketAPI.authenticate()` returns `True` to accept (`AcceptConnection`)
+or `False` to reject (`DenyConnection`). Combine a staff-session check
+with a channel-name match so a client can only subscribe to their own
+channel:
+
+```python
+from canvas_sdk.handlers.simple_api.websocket import WebSocketAPI
+
+class MyWebSocket(WebSocketAPI):
+    def authenticate(self) -> bool:
+        user = self.websocket.logged_in_user
+        if not user or user.get("type") != "Staff":
+            return False
+        return self.websocket.channel == f"staff-{user.get('id', '')}"
+```
+
+The WebSocketAPI handler is registered in the manifest's `handlers` list
+like any other.
+
+### Broadcasting
+
+A separate handler — typically a `BaseHandler` subscribed to a data event
+(`MESSAGE_CREATED`, `TASK_COMPLETED`, `APPOINTMENT_CHECKED_IN`, …) — emits
+`Broadcast(channel, message)` effects:
+
+```python
+from canvas_sdk.effects.simple_api import Broadcast
+from canvas_sdk.events import EventType
+from canvas_sdk.handlers.base import BaseHandler
+
+class NewMessageNotifier(BaseHandler):
+    RESPONDS_TO = [EventType.Name(EventType.MESSAGE_CREATED)]
+
+    def compute(self) -> list[Effect]:
+        # load the created Message, figure out the staff recipient, then:
+        return [Broadcast(
+            channel=f"staff-{staff_uuid}",
+            message={"type": "new_message", "patient_id": "..."},
+        ).apply()]
+```
+
+### Client unwraps the envelope
+
+The `Broadcast` effect's `message` dict is NOT delivered to the browser
+as-is. The platform's `PluginWsConsumer` wraps it under a `"message"` key
+on the wire:
+
+```json
+{"message": {"type": "new_message", "patient_id": "..."}}
+```
+
+So the client's `onmessage` handler must unwrap before inspecting:
+
+```javascript
+socket.addEventListener("message", (e) => {
+    const envelope = JSON.parse(e.data);
+    const payload = envelope && envelope.message;
+    if (!payload || payload.type !== "new_message") return;
+    // now use payload.patient_id, etc.
+});
+```
+
+Symptom of forgetting to unwrap: the WebSocket connects, broadcasts
+arrive, but your `payload.type` check silently fails because
+`payload.type` is undefined (you were reading `envelope.type`).
+
+### Rendering the URL
+
+Build the WebSocket URL server-side when rendering the HTML shell so
+the client doesn't need to know its own UUID. Pass it into the template
+context:
+
+```python
+context = {
+    "ws_url": f"/plugin-io/ws/{PLUGIN_NAME}/staff-{staff_uuid}/",
+}
+```
+
+```html
+<meta name="ws-url" content="{{ws_url}}">
+```
+
+```javascript
+const path = document.querySelector('meta[name="ws-url"]').getAttribute("content");
+const scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
+const socket = new WebSocket(scheme + "//" + window.location.host + path);
+```
+
+### Reconnect
+
+Browsers eventually drop idle WebSockets. Reconnect on `close` with a
+short backoff so the modal survives network blips:
+
+```javascript
+socket.addEventListener("close", () => {
+    setStatus("Reconnecting…");
+    setTimeout(connectWebSocket, 4000);
+});
+```
+
+Surface the live state in the UI (a small pill is sufficient) so the
+user knows whether they're seeing live data or a stale snapshot.
+
+---
+
+## 8. Open Source / Packaging
 
 - Each plugin ships with its own `README.md` and `LICENSE`. Do not share
   READMEs or licenses across plugins in the same repo.
