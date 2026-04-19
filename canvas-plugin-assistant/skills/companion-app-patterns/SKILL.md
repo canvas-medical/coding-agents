@@ -34,14 +34,17 @@ Reference `companion_app_patterns_context.txt` in this skill directory for the f
 10. **Deep links break out of the iframe via `target="_top"`.** Navigating to another part of Canvas (e.g., a patient page) must replace the top frame; don't try to reproduce host chrome inside the modal.
 11. **One plugin = one surface, one purpose.** Ship them self-contained: own `README.md` leading with end-user usage, own `LICENSE`, own 256×256 icon (SVG source + PNG), own tests at 100% coverage. Don't cross-reference sibling companion plugins — fork, don't import.
 12. **Realtime push via WebSocket uses a deterministic channel name.** The URL path segment is the channel name — `/plugin-io/ws/<plugin_name>/<channel_name>/` (trailing slash required). Use a scheme like `staff-<uuid>` derived from the logged-in user so the browser can compute it and a separate `BaseHandler` subscribed to a model event (e.g. `MESSAGE_CREATED`) can emit `Broadcast(channel=f"staff-{uuid}", message={...})` without any registry. Unwrap the broadcast envelope client-side (the wire format is `{"message": {...}}`).
+13. **Originate commands on the launching note (note-scope only).** Note-scope companion apps receive `note.id` in `self.event.context` and should pass it through the launcher URL to the handler. The handler uses it as `note_uuid` when constructing an SDK command (e.g. `VitalsCommand(note_uuid=…, …)`) and calling `command.originate()`. Return the resulting effect alongside the JSON response — the platform materializes the command in the note.
+14. **Self-dismiss via the `INIT_CHANNEL` / `CLOSE_MODAL` contract.** The host transfers a `MessagePort` to the modal iframe via a `{type:'INIT_CHANNEL'}` postMessage with `event.ports[0]`. Store the port and, when done (e.g. after a successful submit), call `port.postMessage({type:'CLOSE_MODAL'})`. Fall back to `window.close()` if the port wasn't delivered. Don't invent alternate message shapes (`window.parent.postMessage`, lowercase `close`, etc.); stick to the documented contract.
 
 ## Reference Implementations
 
-Four companion-scope plugins demonstrate this skill end-to-end in [Medical-Software-Foundation/canvas](https://github.com/Medical-Software-Foundation/canvas):
+Five companion-scope plugins demonstrate this skill end-to-end in [Medical-Software-Foundation/canvas](https://github.com/Medical-Software-Foundation/canvas):
 
 - `extensions/provider_schedule_companion/` — the logged-in provider's schedule with day/week/month views (`provider_companion_global`).
 - `extensions/provider_task_dashboard_companion/` — filterable task list with inline comment thread, assign-to-me, and mark-complete actions (`provider_companion_global`).
 - `extensions/provider_my_panel_companion/` — the logged-in provider's patient panel with last/next visit and open-task counts (`provider_companion_global`).
 - `extensions/provider_patient_messages_companion/` — live SMS-style messaging surface with WebSocket push on `MESSAGE_CREATED` (`provider_companion_global`).
+- `extensions/provider_note_vitals_companion/` — mobile vitals entry form that originates a Vitals command on the current note (`provider_companion_note_specific`).
 
-All four ship with detailed READMEs, 100% pytest coverage, and MIT licensing. The messaging plugin is the canonical reference for realtime push (rule 12).
+All ship with detailed READMEs, 100% pytest coverage, and MIT licensing. The messaging plugin is the canonical reference for realtime push (rule 12); the vitals plugin is the canonical reference for note-scope command origination and the `INIT_CHANNEL` / `CLOSE_MODAL` dismiss contract (rules 13–14).
