@@ -93,32 +93,64 @@ USCDI V3 data classes (non-exhaustive — flag if a CustomModel looks like one o
 
 ### Step 4: Tenet 2 — Placement
 
-**Rule:** Placement communicates *for whom* and *when* a feature is used. Wrong placement trains users to look in the wrong place.
+**Rule:** Placement communicates *for whom* and *when* a feature is used. Wrong placement trains users to look in the wrong place — and one application should do one thing. A feature that mixes patient-specific work with settings/admin work belongs in two applications, not one.
 
-| Plugin purpose | Correct manifest scope | UX surface |
-|---|---|---|
-| Non-patient-specific configuration (e.g. organization-wide settings, admin UIs) | `provider_menu_item` | Provider menu |
-| Patient dashboards, global views, cross-patient rollups | `global` | Panel |
-| Patient-specific features (single-patient context) | `patient_specific` | Chart |
-| Patient-facing (portal) | `portal_menu_item` | Patient portal |
+**Scope → surface mapping:**
+
+| Plugin purpose | Correct manifest scope | UX surface | Examples |
+|---|---|---|---|
+| Settings / configuration / admin / user preferences — not centered on clinical data display | `provider_menu_item` | Provider menu | Catalog management, template CRUD, integration setup, org-wide defaults, user-preference editors, admin dashboards |
+| Cross-patient clinical panel activities — population / worklist / rollup views | `global` | Panel | Worklists, queues, population-health dashboards, cohort views, cross-patient reports |
+| Single-patient context — acting on *this* patient's record | `patient_specific` | Chart | Patient-chart widgets, per-patient actions, chart-side panels, per-patient data entry |
+| Patient-facing (portal) | `portal_menu_item` | Patient portal | Patient-side forms, patient-visible content, patient self-service |
+
+**`provider_menu_item` vs. `global` — the subtle one:**
+
+Both live outside a patient chart, but they are not the same surface.
+
+- `provider_menu_item` is for **settings-ish** work: configuring the plugin, managing templates/catalogs, editing user preferences, org-wide admin actions. The user goes here to *change how the system behaves*, not to look at clinical data.
+- `global` is for **panel-level clinical activities**: worklists, queues, rollups, population dashboards. The user goes here to *act on clinical data across many patients*.
+
+If the feature answers "how should the system behave?" → `provider_menu_item`. If it answers "what's happening across my patients?" → `global`. If in doubt, ask: does opening this UI show patient clinical data as its primary content? If yes → `global`. If no → `provider_menu_item`.
 
 **Detect:**
 
 ```bash
 grep -n "\"scope\"" "$INNER/CANVAS_MANIFEST.json"
 grep -rn "LaunchModalEffect\|TargetType\." --include="*.py" .
+grep -rn "class .*(Application)\|class .*(ActionButton)" --include="*.py" .
+grep -rn "@api\.\(get\|post\|put\|delete\|patch\)\|def \(get\|post\|put\|delete\|patch\)" --include="*.py" .
+grep -rn "patient_id\|patient\.id\|self\.event\.context" --include="*.py" .
 ```
 
 For each `application` / UI component:
-- Read its declared `scope` in the manifest
-- Read what it actually does in code (is it reading/writing a single patient? an org-wide list? staff-only config?)
-- Check any `LaunchModalEffect` targets (`RIGHT_CHART_PANE` implies patient chart context; `DEFAULT_MODAL` may be global)
+- Read its declared `scope` in the manifest.
+- Read what it actually does in code — is it reading/writing a single patient? org-wide config? cross-patient rollup?
+- Check `LaunchModalEffect` targets (`RIGHT_CHART_PANE` implies patient chart; `DEFAULT_MODAL` may be global or patient-modal).
+- **Enumerate every endpoint / handler the application exposes.** Classify each one individually as: patient-specific action, global/cross-patient action, or settings/config action.
 
-**Flag mismatches**, for example:
+**Flag — basic mismatches:**
 - Org-wide admin config surfaced as `patient_specific` (should be `provider_menu_item`)
 - A patient-chart feature declared `global` (should be `patient_specific`)
 - A cross-patient dashboard declared `patient_specific` (should be `global`)
 - A patient-facing feature declared `provider_menu_item` (should be `portal_menu_item`)
+- A settings-ish UI declared `global` (should be `provider_menu_item`) or vice versa — clinical panel mis-scoped as settings
+
+**Flag — mixed-scope apps (one application doing two jobs):**
+
+*Patient-scoped app mutating non-patient state (most common):*
+- App declared `patient_specific` but has endpoints that create, update, or delete records not tied to the current patient
+- Endpoint that mutates a shared catalog / template / default / user preference while living behind a chart button
+- Endpoint whose path params do not include a patient identifier, inside an application whose manifest scope is `patient_specific`
+- Symptom: CRUD handlers (POST/PUT/DELETE) on `/routes/favorites`, `/templates`, `/config`, `/settings`, `/catalog` inside a `patient_specific` application
+- **Fix:** Split into two applications — a `patient_specific` one for the per-patient action (read-only catalog + act on this patient), and a `provider_menu_item` one for the management/CRUD surface.
+
+*Global-scoped app acting on a single patient (less common):*
+- App declared `global` but every handler takes a `patient_id` from URL/body and operates only on that patient
+- The "panel" / "dashboard" framing is a fiction — the UI is really a one-patient tool surfaced from the wrong place
+- **Fix:** Move to `patient_specific`, or if the app legitimately spans patients, surface the single-patient drill-down as a distinct `patient_specific` application linked from the panel.
+
+**The "one app, one job" test:** For each application, list its endpoints in two columns: *patient-specific* vs. *non-patient-specific*. If both columns have entries, the application should probably be split. Mixed scopes teach users to find global settings only when they happen to have a patient chart open (or vice versa), which is a durable source of confusion.
 
 ---
 
