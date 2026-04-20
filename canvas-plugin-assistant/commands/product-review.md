@@ -293,7 +293,7 @@ Reference: https://www.canvasmedical.com/compliance/onc/mandatory-disclosures (C
 | §170.315(b)(2) | Clinical information reconciliation | Reconciles medications / allergies / problems |
 | §170.315(b)(3) | Electronic prescribing | Prescribes outside native Rx command |
 | §170.315(b)(10) | Electronic health information export | Implements bulk record export |
-| §170.315(b)(11) | Decision support interventions | Implements CDS that replaces/parallels native CDS |
+| §170.315(b)(11) | Decision support interventions | Implements CDS that replaces/parallels native CDS, **or ships plugin-authored clinical guidance (titration schedules, dosing defaults, decision rules, alert thresholds) baked into code or default content** |
 | §170.315(c)(1–3) | Clinical quality measures — record / import / report | Records, imports, or reports CQMs |
 | §170.315(e)(1) | Patient view / download / transmit | Exposes patient-facing record access |
 | §170.315(e)(3) | Patient health information capture | Captures patient-reported data in a custom store (should be Questionnaire) |
@@ -314,6 +314,25 @@ For each hit, cross-reference the plugin's stated purpose against the certified 
 - **If the plugin augments Canvas's path** (e.g. adds a decision-support nudge that sits next to the native Rx command): document it, note the interaction, and confirm it doesn't bypass Canvas's certified flow.
 - **If the plugin replaces Canvas's path** (e.g. a parallel prescribing UI that writes orders through a custom pipe): **flag as HIGH** — this is a compliance and re-certification risk. Recommend routing through native Commands / Effects.
 - **If the plugin exports or transmits certified content** (EHI export, immunization registry, case reporting, patient VDT): **flag as HIGH** — confirm with the product team before shipping.
+
+**Plugin-authored clinical content vs. plugin-surfaced fields (Tenet 9 + §170.315(b)(11)):**
+
+The CDS-lite concern is specifically about **clinical guidance the plugin ships** — not about the plugin exposing fields the user can type clinical content into.
+
+Flag as CDS-lite:
+- Hardcoded dosing schedules (e.g. "Starting / Titration / Maintenance" shipped as default medication labels)
+- Default clinical thresholds baked into code (e.g. `SYSTOLIC_ALERT = 140`)
+- Default code lists representing a clinical opinion (e.g. which ICD-10 codes count as "diabetes" for this plugin's logic)
+- Default screening intervals, default follow-up windows, default titration steps — anything where the plugin author encoded a clinical decision the customer will inherit
+
+Do **not** flag:
+- A plugin that offers a `label` / `notes` / `threshold` field the user populates with their own clinical content — that's user-authored, not plugin-authored
+- A plugin that surfaces Canvas's own CDS output (e.g. reads a `BannerAlert` effect and re-renders it) — Canvas owns the provenance
+- A plugin that wraps a native certified command (e.g. pre-fills `PrescribeCommand` with user-saved templates) as long as the defaults themselves are not plugin-shipped clinical guidance
+
+**The test:** "If I remove the plugin's shipped content/defaults, does any clinical opinion remain in the plugin?" If yes — the plugin is authoring clinical guidance and needs provenance (source, reviewer, review cadence) or needs to move to formal CDS. If no — the plugin is a mechanism and the clinical judgment sits with the customer.
+
+**Recommendation when CDS-lite is flagged:** move defaults to customer-owned content (aligns with Tenet 6), **or** document clinical source + review cadence in the README, **or** promote to a formal CDS intervention with provenance. Often the Tenet 6 fix (move defaults out of code) resolves the Tenet 9 concern as a side effect.
 
 ---
 
