@@ -21,6 +21,8 @@ example-plugin-name/              # Container folder (kebab-case)
 └── example_plugin_name/          # Inner folder (snake_case, same name converted)
     ├── CANVAS_MANIFEST.json      # MUST be inside inner folder
     ├── README.md                 # Plugin documentation
+    ├── screenshots/              # Images referenced from README.md
+    │   └── main.png
     └── protocols/
         ├── __init__.py
         └── my_protocol.py
@@ -34,6 +36,7 @@ example-plugin-name/              # Container folder (kebab-case)
 4. **tests/** MUST be at container level, parallel to inner folder
 5. **pyproject.toml** is at container level (for local dev/test only)
 6. **README.md** is inside the inner folder
+7. **`screenshots/`** is inside the inner folder, sibling to `README.md` — this is the canonical home for README images so relative paths like `![](screenshots/main.png)` render on GitHub and Notion without any rewriting. Screenshots are a requirement for open-source publishing; keeping them here keeps the plugin self-contained.
 
 ### Name Conversion
 
@@ -99,6 +102,7 @@ simple-plugin/
 ├── CANVAS_MANIFEST.json
 ├── protocols/
 │   └── handler.py
+├── screenshots/                # Screenshots referenced from README.md
 └── README.md
 ```
 
@@ -171,6 +175,7 @@ medium-plugin/
 ├── utils/
 │   ├── __init__.py
 │   └── helpers.py
+├── screenshots/                # Screenshots referenced from README.md
 └── README.md
 ```
 
@@ -221,6 +226,8 @@ complex-plugin/
 │   └── index.html
 ├── utils/
 │   └── helpers.py
+├── screenshots/                # Screenshots referenced from README.md
+│   └── main.png
 └── README.md
 ```
 
