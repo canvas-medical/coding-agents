@@ -377,6 +377,7 @@ uv run canvas validate-manifest .
 ### Step 5: Custom Data Check
 
 If the plugin defines **any CustomModel subclasses or uses AttributeHub**, invoke the **custom-data-patterns** skill to verify the models follow best practices before proceeding. Common mistakes to catch early:
+- CustomModels placed in a `models.py` file instead of a `models/` directory (migrations won't run)
 - Unnecessary `CustomModel` availability checks (try/except ImportError)
 - Manual `app_label` in `class Meta`
 - `UniqueConstraint` added to a table that may already have duplicate data
@@ -385,6 +386,7 @@ If the plugin defines **any CustomModel subclasses or uses AttributeHub**, invok
 - Copying data by value instead of using foreign key relationships
 - Filtered columns missing indexes, or indexes on columns never filtered
 - JSON stored in `TextField` instead of `JSONField`
+- Importing SDK classes from internal modules (e.g., `canvas_sdk.v1.data.custom_attribute`) instead of the public package (`canvas_sdk.v1.data`)
 - Using `null=True` or `blank=True` (ignored by the plugin runner)
 - Complex JSON parsing that should be typed columns instead
 - Business logic embedded in handlers instead of service classes

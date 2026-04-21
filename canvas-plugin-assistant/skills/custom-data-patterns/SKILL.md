@@ -14,6 +14,7 @@ Invoke this skill **proactively** as soon as Custom Data is involved — don't w
 - You are about to write or edit model definitions that subclass `CustomModel`
 - You are about to write or edit code that uses `AttributeHub`
 - You are adding relationships (ForeignKey, OneToOneField, ManyToManyField) to SDK models
+- You are setting up the plugin directory structure and it will include CustomModels
 - Reviewing existing plugin code that uses Custom Data
 
 ## Quick Reference

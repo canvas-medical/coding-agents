@@ -50,6 +50,9 @@ The skill will check for:
 - **Missing `prefetch_related()`**: Reverse relation or many-to-many access without prefetching
 - **Unbounded queries**: `.all()` or `.filter()` without limits
 - **Inefficient filtering**: Filtering in Python instead of database
+- **Large queryset materialization**: `list()` wrapping unbounded querysets loads everything into memory
+- **Missing `.iterator()`**: Large table scans without `.iterator(chunk_size=N)` cache all rows
+- **Missing `.only()`**: Fetching all columns when only a few fields are used
 
 ---
 
@@ -73,6 +76,23 @@ Cross-reference with queries to see if `select_related()` is used.
 ```bash
 grep -rn "_set\.\|\.all()\|related_name" --include="*.py" .
 ```
+
+**Large queryset materialization (list wrapping):**
+```bash
+grep -rn "list(.*\.objects\." --include="*.py" .
+```
+
+**Missing .iterator() on large table scans:**
+```bash
+grep -rn "\.objects\.all()" --include="*.py" . | grep -v "\.iterator("
+```
+
+**Missing .only() on broad queries:**
+```bash
+grep -rn "\.objects\.all()\|\.objects\.filter(" --include="*.py" . | grep -v "\.only("
+```
+
+Cross-reference `.only()` hits with actual field usage to confirm unnecessary columns are being fetched.
 
 ---
 
@@ -100,6 +120,9 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/db-performance-review-$TI
 | select_related Usage | ✅ Pass / ⚠️ X issues / N/A | ... |
 | prefetch_related Usage | ✅ Pass / ⚠️ X issues / N/A | ... |
 | Query Bounds | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Large Queryset Materialization | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Missing .iterator() | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Missing .only() | ✅ Pass / ⚠️ X issues / N/A | ... |
 
 ## Detailed Findings
 
@@ -118,6 +141,18 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/db-performance-review-$TI
 ### Unbounded Queries
 
 [List queries without limits that could return large result sets]
+
+### Large Queryset Materialization
+
+[List instances of list() wrapping large querysets that should use .iterator()]
+
+### Missing .iterator()
+
+[List large table iterations (Patient, Note, Appointment, etc.) without .iterator(chunk_size=N)]
+
+### Missing .only()
+
+[List broad queries fetching all columns where only a few fields are used]
 
 ## Recommendations
 
@@ -163,10 +198,13 @@ If issues were found, use AskUserQuestion:
 
 **If the user chooses to fix:**
 1. Fix N+1 patterns first (the highest impact)
-2. Add `select_related()` for foreign key access
-3. Add `prefetch_related()` for reverse relations
-4. Add query limits where appropriate
-5. Re-run the full analysis (steps 1-4) and save a new timestamped report showing resolved status
+2. Replace `list()` wrapping with `.iterator(chunk_size=100)` on large querysets
+3. Add `.iterator(chunk_size=100)` to unbounded `.all()` iterations on large tables
+4. Add `select_related()` for foreign key access
+5. Add `prefetch_related()` for reverse relations
+6. Add `.only()` to narrow column selection where few fields are used
+7. Add query limits where appropriate
+8. Re-run the full analysis (steps 1-4) and save a new timestamped report showing resolved status
 
 ---
 
