@@ -162,6 +162,23 @@
         "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
         "No hardcoded hex colors outside the :root block"
       ]
+    },
+    {
+      "id": 13,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML. It has a collapsible matched medications section built with <details class=\"section\" id=\"matchedSection\"><summary class=\"matched\">Matched</summary><div id=\"matchedContainer\"></div><details><summary style=\"padding:6px 14px;\">Active Meds</summary><div id=\"activeMedsContainer\"></div></details></details>. Preserve the ids so existing JavaScript that references matchedContainer and activeMedsContainer keeps working.",
+      "expected_output": "Native details and summary replaced with canvas-accordion, canvas-accordion-item, canvas-accordion-title, and canvas-accordion-content. The outer Matched section becomes a canvas-accordion-item and the nested Active Meds becomes a second canvas-accordion-item or a canvas-accordion nested inside the first content. Ids matchedContainer and activeMedsContainer stay on the inner div elements. Inline style blobs on the native summary are removed because the component handles styling.",
+      "assertions": [
+        "HTML contains a canvas-accordion element",
+        "HTML contains canvas-accordion-item elements",
+        "HTML contains canvas-accordion-title elements",
+        "HTML contains canvas-accordion-content elements",
+        "No native details elements on the page",
+        "No native summary elements on the page",
+        "The element with id matchedContainer is still present in the HTML",
+        "The element with id activeMedsContainer is still present in the HTML",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
     }
   ]
 }
