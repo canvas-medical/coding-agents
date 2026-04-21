@@ -284,11 +284,49 @@ These patterns do not have web components yet. Use them as raw HTML/CSS when nee
 
 ### Empty State
 
+Empty state is typed by cause. Four markup variants cover the full taxonomy. See Empty States in `references/component-usage.md` for the rules that pick which one to use.
+
+Placement. Center vertically and horizontally inside short containers (card bodies, sidebar panels under 400 pixels tall). Top align with `--space-huge` padding inside tall containers (full page regions, modal bodies) so the block sits where the eye lands rather than floating in the middle.
+
+First use. User has never added data here.
+
 ```html
-<div style="padding: var(--space-huge); text-align: center; color: var(--color-text-muted, #767676)">
-  <p>No medications found</p>
-  <canvas-button size="sm" style="margin-top: var(--space-small)">Add Medication</canvas-button>
+<div style="padding: var(--space-huge); text-align: center">
+  <h3 style="margin: 0 0 var(--space-small); font-weight: 700">No medications recorded</h3>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">Track this patient's active medications here.</p>
+  <canvas-button>Add first medication</canvas-button>
 </div>
+```
+
+User cleared. Data existed, the user removed it all.
+
+```html
+<div style="padding: var(--space-huge); text-align: center">
+  <h3 style="margin: 0 0 var(--space-small); font-weight: 700">Medication list cleared</h3>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">All medications were removed. Add a new entry or restore the previous list.</p>
+  <canvas-button style="margin-right: var(--space-small)">Add medication</canvas-button>
+  <canvas-button variant="ghost">Restore previous</canvas-button>
+</div>
+```
+
+Filter no results. Underlying data exists, the current filter excludes everything. Render inside the same container that holds the filtered list or table.
+
+```html
+<div style="padding: var(--space-huge); text-align: center">
+  <h3 style="margin: 0 0 var(--space-small); font-weight: 700">No results match your filters</h3>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">Try widening the date range or removing a tag.</p>
+  <canvas-button variant="ghost">Clear filters</canvas-button>
+</div>
+```
+
+Load error. Fetch failed. Do not reuse the centered empty pattern. Use `canvas-banner` so the user can tell a failed load from a true empty.
+
+```html
+<canvas-banner variant="error">
+  <span slot="title">Could not load medications</span>
+  <span slot="description">Check your connection and try again.</span>
+  <canvas-button slot="action" variant="ghost">Retry</canvas-button>
+</canvas-banner>
 ```
 
 ### Patient Context Header
