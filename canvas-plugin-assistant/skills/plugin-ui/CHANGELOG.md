@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.8.0
+
+### Added
+
+- Empty State taxonomy in `references/component-usage.md`. Four types cover every plugin surface, first use (never had data), user cleared (data removed), filter no results (filter excludes everything), and load error (fetch failed, use `canvas-banner variant="error"` not the centered empty pattern). Picks the right type by cause rather than treating empty as one pattern.
+- Content hierarchy rule. Heading plus one line of supporting text plus one primary action button, with the action omitted only when the user cannot act. Single line empty states are acceptable only inside containers narrower than 300 pixels.
+- Voice rules. Name the domain object, not "data" or "results". Button labels start with a verb tied to the task. Educational on first use, blunt on filter no results.
+- Clinical nuance rule. Distinguish recorded from not recorded. "No allergies recorded" passes, "No allergies" fails on an allergies surface because the blank state carries clinical weight that the copy must not erase.
+- Loading, empty, error state machine. Four states (loading, populated, empty, error) with strict ordering. `canvas-loader` covers fetch in flight, the typed empty pattern mounts only after fetch resolves with zero rows, `canvas-banner variant="error"` covers failure. Prevents the common bug of an empty state flashing during the loading window.
+- Accessibility guidance. Semantic heading inside the empty container so screen readers announce the state transition. `aria-live="polite"` wrap for filter empty regions that replace previously rendered rows.
+- Four snippet variants in `DESIGN.md` Empty State section, one per type. First use with a primary add action. User cleared with a restore secondary. Filter no results with a Clear filters ghost button. Load error as a `canvas-banner` to show by contrast what not to reuse for failures.
+- Placement rule in `DESIGN.md` Empty State. Center vertically and horizontally in short containers (card bodies, sidebar panels under 400 pixels). Top align with `--space-huge` padding in tall containers (full page regions, modal bodies) so the block sits where the eye lands.
+- Empty States check block in `references/validation-checklist.md` Phase 3. Eight checks covering handler presence, typed empty, filter escape, loading gate, error contrast, content hierarchy, clinical distinction, and accessibility.
+- Three Common Mistakes entries in `references/workflow.md`, empty state during loading, filter without escape, and generic empty copy. Each points at the state machine and the typed empty taxonomy.
+- Key Rules entry in `SKILL.md` naming the three state machine and the Clear filters requirement for filter bars.
+- Eval scenario 14 in `evals/evals.json` testing the filter no results escape. Exercises the typed empty copy, the Clear filters ghost button, and the heading element requirement for screen reader announcement.
+
 ## 4.7.0
 
 ### Added

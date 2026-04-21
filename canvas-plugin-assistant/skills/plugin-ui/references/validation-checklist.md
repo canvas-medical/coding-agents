@@ -103,9 +103,22 @@ Cross-component behavioral rules spanning the whole page.
 1. **Button color audit.** Every `variant="primary"` button has text matching a clinical state transition (sign, lock, send, submit referral, confirm fax, check in). If not, change to default (blue). Defined in SKILL.md Key Rules.
 2. **Form element height cohesion.** When canvas-input, canvas-dropdown, canvas-combobox, and canvas-button appear on the same row, they match sizes. Default pairs with default. `size="sm"` pairs with `size="sm"`.
 3. **Date formatting.** All visible date strings in clinical contexts use absolute format ("Mar 24, 2026"). No relative dates ("2 days ago"). Defined in DESIGN.md Date and Time Display.
-4. **Empty states.** Every canvas-table-body, list container, or data section has an empty state handler.
-5. **Loading states.** If the plugin fetches data, a loading indicator exists for the loading state.
-6. **Patient context.** If the plugin runs as a modal or standalone page and displays patient-specific data, the patient name and at least one identifier (DOB or MRN) must be visible near the top (see surface-selection.md Surfaces).
+
+### Empty States
+
+1. **Handler presence.** Every canvas-table-body, list container, or data section that can render zero rows has an empty state handler. Blank containers with no explanation fail this check.
+2. **Typed empty.** The empty copy makes the type identifiable. One of first use, user cleared, filter no results, or load error. Generic "No data" fails this check. See Empty States in component-usage.md.
+3. **Filter escape.** A filter bar or search input above a list or table that can produce zero results pairs with a Clear filters action inside the filter no results empty state. A filter with no reset affordance fails this check.
+4. **Loading gate.** The empty pattern does not render during the loading window. canvas-loader covers that case. An empty state that renders before fetch resolves fails this check.
+5. **Error contrast.** Fetch failure renders `canvas-banner variant="error"`, not the centered empty pattern. A failed load that reuses the empty pattern reads as a true empty and fails this check.
+6. **Content hierarchy.** Empty copy includes a heading plus one line of supporting text. Single line empty states are acceptable only inside containers narrower than 300 pixels.
+7. **Clinical distinction.** Clinical data empty states distinguish recorded from not recorded where the distinction is meaningful. "No allergies recorded" passes, "No allergies" fails on an allergies surface.
+8. **Accessibility.** The empty container uses a semantic heading element. Filter empty regions that replace previously rendered rows wrap their results region in `aria-live="polite"`.
+
+### Loading and Patient Context
+
+1. **Loading presence.** If the plugin fetches data, a `canvas-loader` exists for the loading state. Defined in component-usage.md Loading States.
+2. **Patient context.** If the plugin runs as a modal or standalone page and displays patient-specific data, the patient name and at least one identifier (DOB or MRN) must be visible near the top (see surface-selection.md Surfaces).
 
 ## Phase 4. Functional Preservation
 

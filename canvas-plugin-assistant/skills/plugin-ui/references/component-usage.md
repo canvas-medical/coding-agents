@@ -255,8 +255,56 @@ Not all consequential actions are destructive. Clinical workflows include action
 
 ## Empty States
 
-- When a list, table, or section has no data, show a short message explaining why and what the user can do next. Do not leave blank space with no explanation.
-- Use muted text (`#767676`) for empty state messages. Center them vertically and horizontally in the container.
+Empty is not one pattern. The cause of the emptiness drives both the copy and the available action, and picking the wrong type produces a dead end for the user. Every list, table, or data section that can render zero rows needs a typed empty state, never a blank container.
+
+### Types
+
+Four types cover every plugin surface. Agents pick one based on why the container is empty right now.
+
+- **First use.** The user has never added data here. The section will eventually fill through this plugin's own flows. Copy explains what lives here once populated. Primary action is the first add flow, for example "Add first medication".
+- **User cleared.** Data existed, the user removed it all (bulk delete, archive, dismiss). Copy confirms the cleared state. Primary action is the add flow, secondary ghost action may restore if the plugin keeps a restore affordance.
+- **Filter no results.** Underlying data exists, the current filter or search term excludes everything. Copy names that filters are active. Primary action is a ghost "Clear filters" button, secondary is guidance to adjust the filter.
+- **Load error.** A fetch failed. Do not reuse the centered empty pattern. Render a `canvas-banner` with `variant="error"` and a retry affordance so the user can tell a failed load from a true empty. See Error Banners for variant rules.
+
+### Content hierarchy
+
+Every empty state follows the same three part order. Omit the third part only when the user cannot take an action from this surface.
+
+1. A heading that names what is missing ("No medications recorded", "No results match your filters").
+2. One line of supporting text that explains why or what to expect next.
+3. One primary action button when the user can do something about it. A secondary ghost button is optional.
+
+One line only empty states are acceptable inside tight containers like card bodies narrower than 300 pixels. Everywhere else, use the full hierarchy.
+
+### Voice
+
+- **Be specific.** Name the domain object, not "data" or "results". "No medications recorded" reads as clinical. "No data found" reads as a bug.
+- **Be action oriented.** Button labels start with a verb tied to the task, "Add first medication", "Clear filters", "Invite team member". No "Click here", no "Learn more".
+- **Be educational on first use, blunt on filter no results.** First use is the one moment where explaining what lives here pays off. Filter no results needs the escape, not a lesson.
+
+### Clinical nuance
+
+- **Distinguish recorded from not recorded.** A blank list does not mean the patient has no allergies, it means nothing is recorded. Prefer "No allergies recorded" over "No allergies". The difference matters clinically.
+- **Do not assert clinical meaning the data does not support.** Copy stays factual about what the plugin knows. Leave clinical interpretation to the user.
+
+### Loading, empty, error state machine
+
+Every data region renders in one of four states. Pick the right one.
+
+- **Loading.** Fetch in flight. Render `canvas-loader`. Do not render the empty pattern during this window, an empty state that flashes before rows arrive reads as broken.
+- **Populated.** Fetch resolved with one or more rows. Render the list or table.
+- **Empty.** Fetch resolved with zero rows. Render the typed empty state from the four above.
+- **Error.** Fetch failed. Render a `canvas-banner variant="error"`, not the centered empty pattern.
+
+Gate the empty pattern behind fetch resolution. Mount it only after rows is known to be zero, never alongside the loader.
+
+### Accessibility
+
+- Use a semantic heading element inside the empty container (`<h3>` or the appropriate level for the surrounding page) so screen readers announce the state transition.
+- For filter no results that replaces previously rendered rows, wrap the results region in `aria-live="polite"` so the change is announced without stealing focus.
+- Keep the primary action reachable with one Tab from the surrounding filter bar or page header. Do not trap focus inside a decorative empty container.
+
+See [DESIGN.md](../DESIGN.md) Empty State for markup patterns per type, and [workflow.md](workflow.md) Common Mistakes for the filter without Clear filters and empty during loading pitfalls.
 
 ## Progress Indicators
 
