@@ -14,7 +14,7 @@ description: >
   Canvas does not use those patterns.
 compatibility: Designed for Claude Code. Targets Canvas plugin SDK with HTMLResponse delivery.
 metadata:
-  version: "4.7.0"
+  version: "4.8.0"
   author: Vicert
 allowed-tools: Read, Grep, Glob
 ---
@@ -64,6 +64,7 @@ When working inside a Canvas plugin directory that uses `<canvas-*>` web compone
 - Form elements sharing a visual row must render at the same height. The `size` attribute is not a universal height tier across components. Do not mix `size="sm"` and default in the same row. See Same Row Height Cohesion in [references/component-usage.md](references/component-usage.md).
 - When refactoring existing plugin HTML that contains JavaScript, scan all script blocks and inline event handlers before changing markup. If JavaScript references an element being changed (by id, class, data attribute, or tag type), that element is structurally bound. Update the JavaScript at the same time as the markup, or surface the migration to the user when the path is unclear. Read the refactor safety steps in [references/workflow.md](references/workflow.md) before modifying structurally bound elements.
 - Watch for global CSS resets in the plugin style tag. Universal selector rules (`* { margin: 0; padding: 0; box-sizing: border-box; }`), unscoped `html` or `body` rules that set typography, linked reset libraries (normalize.css, reset.css, sanitize.css, modern-normalize.css), and Tailwind Preflight all override canvas web component styles. Padding on the `canvas-accordion` family (which is light DOM) gets stripped directly. Typography inherits across the Shadow DOM boundary and replaces Lato inside every component. Host box sizing shifts on every `<canvas-*>` element. When a plugin ships with a reset, flag it and offer to remove or scope it before proceeding with component work. See Global CSS Resets in [references/workflow.md](references/workflow.md) Common Mistakes.
+- Empty, loading, and error are three states, not one. Render `canvas-loader` during fetch, the typed empty pattern only after fetch resolves with zero rows, and `canvas-banner variant="error"` on failure. Empty states are typed by cause (first use, user cleared, filter no results). A filter bar that can produce zero results must pair with a Clear filters action in the filter no results empty state. See Empty States in [references/component-usage.md](references/component-usage.md) and [DESIGN.md](DESIGN.md) Empty State.
 
 ## Visual Specification
 

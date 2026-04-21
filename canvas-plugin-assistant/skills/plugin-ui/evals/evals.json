@@ -179,6 +179,22 @@
         "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
         "No hardcoded hex colors outside the :root block"
       ]
+    },
+    {
+      "id": 14,
+      "prompt": "Build a medications list surface for a plugin. The page has a filter bar above the list with a status dropdown (All, Active, Discontinued) and a date range canvas-input pair. The list fetches from a JS endpoint on load and renders rows. Handle the full state machine, loading, populated, filter no results, and first use. Use the Canvas design system and render the correct typed empty state based on cause. Pay attention to what the user can do when filters produce zero results.",
+      "expected_output": "A page with canvas-loader shown during fetch, the populated list rendered on success with rows, and two distinct empty state branches. First use (no medications exist at all) renders a centered empty with a heading, supporting text, and a primary Add first medication button. Filter no results (medications exist but the current filter excludes all) renders a centered empty inside the list container with a heading, supporting text, and a Clear filters ghost button that resets the filter inputs. The empty pattern does not render during the loading window. Empty state copy names the domain object and uses a semantic heading element.",
+      "assertions": [
+        "HTML contains a canvas-loader element for the loading state",
+        "A script gates rendering of the empty state behind fetch resolution so the empty pattern does not mount during loading",
+        "Filter no results empty state contains a canvas-button with variant ghost labeled Clear filters or equivalent reset wording",
+        "The Clear filters button handler resets the filter inputs to their default values",
+        "First use empty state contains a canvas-button labeled with a verb tied to adding a medication (Add, Add medication, Add first medication, or similar) and not a generic Click here or Learn more",
+        "Each empty state uses a semantic heading element (h1 through h6) inside the empty container",
+        "Empty copy names the domain object (medications, medication, or meds) and not generic No data or No results found on its own",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
     }
   ]
 }
