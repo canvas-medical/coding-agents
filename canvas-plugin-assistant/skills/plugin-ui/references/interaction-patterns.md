@@ -95,3 +95,24 @@ For the confirmation hierarchy (no confirmation, soft undo, hard dialog, destruc
 
 - When a plugin displays patient-specific data, the patient's identity must be visible on the screen. In a right chart pane, the chart on the left provides this context. In a modal or standalone page, the plugin must show the patient's name and at least one identifier (date of birth or MRN) near the top. See [surface-selection.md](surface-selection.md) for which surfaces require a patient context header.
 - Never display clinical data from one patient in a context where the user might believe they are looking at a different patient.
+
+## Sortable List Keyboard
+
+Focus a `canvas-sortable-item` handle with Tab.
+
+- `ArrowUp` and `ArrowDown` reorder within the current list. Each keypress fires `reorder` and `change`, and announces position N of M in the list label.
+- `ArrowLeft` and `ArrowRight` move the item into the previous or next list in the same group. Only active when the list has a `group` attribute and a compatible sibling list exists. Each keypress fires `move` and `change`, and announces source and destination labels.
+
+Sibling resolution walks all compatible lists by screen position left to right, not by strict DOM sibling order. A list placed anywhere in the document that shares the group can be reached by ArrowRight.
+
+## Sortable List Cross List Cancel
+
+`beforemove`, `beforereorder`, and `beforechange` are cancelable. Calling `e.preventDefault()` in a handler snaps the item back to its source position and suppresses the success events. Always pair a cancel with visible user feedback, a toast or inline message. A silent cancel reads as a visual glitch to the user.
+
+## Sortable List ARIA
+
+A shared polite live region announces every move. Label lists explicitly so announcements read naturally.
+
+- Give each participating list an `aria-labelledby` pointing at its column heading, or an `aria-label` with the column name. Without a label, the announcer falls back to the list's `id`, then to the generic word "list".
+- Within list moves announce "Moved item to position N of M in <label>.".
+- Cross list moves announce "Moved item from <source label> to <destination label>, position N of M.".

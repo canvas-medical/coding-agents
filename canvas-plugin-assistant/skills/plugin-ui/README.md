@@ -8,7 +8,7 @@ The skill activates automatically when the task involves plugin HTML or CSS. You
 
 The skill produces complete HTML pages ready to serve from a Canvas plugin. The design system loads as three tags in the HTML head. A Google Fonts `<link>` for Lato, a `<link rel="stylesheet">` for `canvas-plugin-ui.css`, and a `<script src="...">` for `canvas-plugin-ui.js`. These files are served through SimpleAPI routes, and all UI is built from native web components with Shadow DOM scoped styles. Plugin-specific CSS goes in a `<style>` tag using token references.
 
-24 components (43 tag names) are available. Button, button-group, badge, chip, input, textarea, radio, checkbox, toggle, banner, card, dropdown, combobox, multi-select, tabs, accordion, modal, table, sortable-list, sidebar-layout, loader, progress, tooltip, divider.
+25 components (44 tag names) are available. Button, button-group, badge, chip, input, textarea, radio, checkbox, toggle, banner, card, inline-row, dropdown, combobox, multi-select, tabs, accordion, modal, table, sortable-list, sidebar-layout, loader, progress, tooltip, divider.
 
 ## Getting Good Results
 
@@ -86,7 +86,7 @@ Each reference file is self-contained and readable on its own. The agent loads t
 | File | Purpose |
 |---|---|
 | `assets/canvas-plugin-ui.css` | Combined CSS variables and typography styles for colors, spacing, borders, transitions |
-| `assets/canvas-plugin-ui.js` | All 24 web components bundled into a single script |
+| `assets/canvas-plugin-ui.js` | All 25 web components bundled into a single script |
 | `assets/head.html` | Copy-paste snippet with the three tags needed in the plugin HTML head |
 | `references/web-components.md` | Component APIs, token system, escalation ladder, loading modes, orphan patterns |
 | `references/workflow.md` | Build process with decision points for new vs existing UI |

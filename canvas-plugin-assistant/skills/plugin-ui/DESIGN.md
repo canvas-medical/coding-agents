@@ -61,10 +61,22 @@ All spacing follows a 4px grid. Use the token names in plugin CSS, not raw pixel
 |---|---|---|
 | `--space-mini` | `4px` | Tight inline gaps, button icon spacing |
 | `--space-tiny` | `8px` | Data display row spacing, compact layouts |
-| `--space-small` | `12px` | Form field gaps, accordion content padding |
+| `--space-small` | `12px` | Form field gaps, nested accordion indent step |
 | `--space-medium` | `16px` | Section padding, form section gaps |
 | `--space-large` | `20px` | Major section separations |
 | `--space-huge` | `24px` | Page padding, empty state containers |
+
+## Container Padding Responsibility
+
+Horizontal inset is a container concern, not a component concern. A plugin component must not carry intrinsic left or right padding that offsets its own box from its parent's inner edge. Every built in element and every canvas component follows this rule.
+
+- Headings and paragraphs. `h1` through `h5` and `<p>` ship with `padding: 0` in `canvas-plugin-ui.css`. Horizontal space around text comes from the parent that holds the text.
+- Buttons, inputs, and interactive controls. Intrinsic padding lives inside the control (between the border and the text), never outside it. Outer spacing from the container edge is the container's job.
+- Accordions, cards, tables, sortable lists, and every other structural component. Same rule. The component sits flush with its parent's content box.
+
+Containers supply the inset. A `canvas-card` has internal padding. A `canvas-sidebar-layout` content pane has internal padding. A plugin page shell applies its own padding at the top of the document tree. When a component looks like it is touching the viewport edge, the fix is to add padding to the container, never to the component.
+
+Nesting indent is a separate concern from container padding. When a component needs to show hierarchy at different depths, for example nested accordions, apply a left step via a scoped rule that only matches nested instances. The top level instance still carries no intrinsic padding. See the `canvas-accordion-content canvas-accordion-item` rule in `canvas-plugin-ui.css` for the canonical pattern, it uses `--canvas-accordion-nested-indent` with a `--space-small` fallback.
 
 ## Shape
 
@@ -292,6 +304,13 @@ Use in modals or standalone pages where the patient chart is not visible.
   <span style="color: var(--color-text-muted, #767676); font-size: .92857143em">MRN: 12345</span>
 </div>
 ```
+
+### Sortable List Minimum Height
+
+Empty receiving lists need a minimum drop target.
+
+- Token. `--canvas-sortable-min-height`. Default `calc(var(--space-medium) * 2)`.
+- Applied via `:host`. Ensures an empty column still catches a drop.
 
 ## Do's and Don'ts
 
