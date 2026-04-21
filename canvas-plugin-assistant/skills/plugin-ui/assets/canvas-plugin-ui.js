@@ -156,16 +156,35 @@
     _bindEvents() {
       var self = this;
       var title = this.shadowRoot.querySelector('.title');
+      var INTERACTIVE_SELECTOR = [
+        'button', 'a[href]', 'input', 'select', 'textarea',
+        '[role="button"]', '[role="switch"]', '[role="checkbox"]', '[role="radio"]',
+        '[role="link"]', '[role="menuitem"]', '[role="tab"]', '[role="option"]',
+        'canvas-button', 'canvas-toggle', 'canvas-checkbox', 'canvas-radio',
+        'canvas-dropdown', 'canvas-combobox', 'canvas-multi-select',
+        'canvas-input', 'canvas-date-input', 'canvas-textarea'
+      ].join(',');
 
-      title.addEventListener('click', function() {
+      function isFromInteractiveChild(e) {
+        var path = e.composedPath();
+        for (var i = 0; i < path.length; i++) {
+          var el = path[i];
+          if (el === title) return false;
+          if (el && el.nodeType === 1 && el.matches && el.matches(INTERACTIVE_SELECTOR)) return true;
+        }
+        return false;
+      }
+
+      title.addEventListener('click', function(e) {
+        if (isFromInteractiveChild(e)) return;
         self.toggle();
       });
 
       title.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          self.toggle();
-        }
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        if (isFromInteractiveChild(e)) return;
+        e.preventDefault();
+        self.toggle();
       });
     }
 
@@ -677,7 +696,6 @@
             background: var(--color-surface, #FFFFFF);
             font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
             color: var(--color-text, rgba(0, 0, 0, 0.87));
-            overflow: hidden;
           }
 
           :host([raised]) .card {
@@ -688,7 +706,6 @@
             display: block;
             padding: 1em;
             background: var(--color-surface, #FFFFFF);
-            overflow-y: auto;
           }
 
           ::slotted(canvas-card-body[no-padding]) {
@@ -697,6 +714,18 @@
 
           ::slotted(canvas-card-body + canvas-card-body) {
             border-top: 1px solid rgba(34, 36, 38, 0.15);
+          }
+
+          ::slotted(canvas-card-body:first-child),
+          ::slotted(canvas-card-footer:first-child) {
+            border-top-left-radius: calc(var(--radius, .28571429rem) - 1px);
+            border-top-right-radius: calc(var(--radius, .28571429rem) - 1px);
+          }
+
+          ::slotted(canvas-card-body:last-child),
+          ::slotted(canvas-card-footer:last-child) {
+            border-bottom-left-radius: calc(var(--radius, .28571429rem) - 1px);
+            border-bottom-right-radius: calc(var(--radius, .28571429rem) - 1px);
           }
 
           ::slotted(canvas-card-footer) {
@@ -733,6 +762,45 @@
   CanvasUI.register('canvas-card', CanvasCard);
   CanvasUI.register('canvas-card-body', CanvasCardBody);
   CanvasUI.register('canvas-card-footer', CanvasCardFooter);
+
+  /* ======== canvas-inline-row ======== */
+
+  class CanvasInlineRow extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: flex;
+            gap: var(--canvas-inline-row-gap, var(--space-small, 12px));
+            align-items: flex-end;
+            flex-wrap: wrap;
+          }
+
+          ::slotted([inline-role="grow"]),
+          ::slotted(canvas-input),
+          ::slotted(canvas-dropdown),
+          ::slotted(canvas-combobox),
+          ::slotted(canvas-multi-select),
+          ::slotted(canvas-textarea) {
+            flex: 1 0 var(--canvas-inline-row-item-min, 160px);
+          }
+
+          ::slotted([inline-role="natural"]),
+          ::slotted(canvas-button),
+          ::slotted(canvas-checkbox),
+          ::slotted(canvas-radio),
+          ::slotted(canvas-toggle) {
+            flex: 0 0 auto;
+          }
+        </style>
+        <slot></slot>
+      `;
+    }
+  }
+
+  CanvasUI.register('canvas-inline-row', CanvasInlineRow);
 
   /* ======== canvas-checkbox ======== */
 
@@ -1710,11 +1778,8 @@
             top: 50%;
             right: 1em;
             transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 5px solid rgba(0, 0, 0, 0.8);
+            width: 8px;
+            height: 5px;
             pointer-events: none;
           }
 
@@ -1785,7 +1850,7 @@
         ${label ? '<span class="label">' + label + '</span>' : ''}
         <div class="dropdown" tabindex="${disabled ? '-1' : '0'}" role="combobox" aria-expanded="false" aria-haspopup="listbox">
           <span class="text${isPlaceholder ? ' placeholder' : ''}">${isPlaceholder ? placeholder : displayText}</span>
-          <span class="arrow"></span>
+          <svg class="arrow" viewBox="0 0 10 6" fill="#575757"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
           <ul class="menu" role="listbox">${optionsHtml}</ul>
         </div>
         ${error ? '<span class="error-text">' + error + '</span>' : ''}
@@ -2022,6 +2087,22 @@
           input:disabled {
             background: var(--canvas-input-disabled-bg, var(--color-bg, #F5F5F5));
             cursor: not-allowed;
+          }
+
+          /* Neutralize WebKit date and time internal padding so type="date",
+             type="time", type="datetime-local", type="month", and type="week"
+             render at the same height as type="text". Without these resets
+             two internal pseudos push the content box taller.
+             ::-webkit-datetime-edit carries 1px top and 1px bottom padding.
+             ::-webkit-calendar-picker-indicator is 1em tall with 2px padding
+             on every side, so its 1em+4px outer box exceeds the declared
+             line-height by about half a pixel and grows the flex row. */
+          input::-webkit-datetime-edit,
+          input::-webkit-datetime-edit-fields-wrapper {
+            padding: 0;
+          }
+          input::-webkit-calendar-picker-indicator {
+            padding: 0;
           }
 
           /* Error state */
@@ -3412,6 +3493,44 @@
 
   CanvasUI.register('canvas-radio', CanvasRadio);
 
+  /* ======== canvas-scroll-area ======== */
+
+  class CanvasScrollArea extends HTMLElement {
+    static get observedAttributes() {
+      return ['vertical', 'horizontal'];
+    }
+
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host { display: block; }
+          :host([vertical])   { overflow-y: auto; }
+          :host([horizontal]) { overflow-x: auto; }
+        </style>
+        <slot></slot>
+      `;
+    }
+
+    connectedCallback() {
+      this._syncTabindex();
+    }
+
+    attributeChangedCallback() {
+      this._syncTabindex();
+    }
+
+    _syncTabindex() {
+      var hasDirection = this.hasAttribute('vertical') || this.hasAttribute('horizontal');
+      if (hasDirection && !this.hasAttribute('tabindex')) {
+        this.setAttribute('tabindex', '0');
+      }
+    }
+  }
+
+  CanvasUI.register('canvas-scroll-area', CanvasScrollArea);
+
   /* ======== canvas-sidebar-layout ======== */
 
   /* canvas-sidebar-layout: flex row container for sidebar + content split views */
@@ -3509,6 +3628,33 @@
 
   /* ======== canvas-sortable-list ======== */
 
+  /* Polite ARIA live region shared by every sortable list on the page.
+     Announces reorder and cross list move outcomes to screen readers. */
+  var CanvasSortableAnnouncer = {
+    el: null,
+    ensure: function () {
+      if (this.el) return this.el;
+      var el = document.createElement('div');
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'polite');
+      el.style.position = 'absolute';
+      el.style.width = '1px';
+      el.style.height = '1px';
+      el.style.overflow = 'hidden';
+      el.style.clip = 'rect(0 0 0 0)';
+      el.style.margin = '-1px';
+      el.style.padding = '0';
+      document.body.appendChild(el);
+      this.el = el;
+      return el;
+    },
+    say: function (msg) {
+      var el = this.ensure();
+      el.textContent = '';
+      window.setTimeout(function () { el.textContent = msg; }, 10);
+    }
+  };
+
   class CanvasSortableItem extends HTMLElement {
     constructor() {
       super();
@@ -3583,42 +3729,97 @@
       handle.setAttribute('aria-roledescription', 'sortable');
 
       var self = this;
-      handle.addEventListener('keydown', function(e) {
-        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-        e.preventDefault();
-
+      handle.addEventListener('keydown', function (e) {
         var list = self.closest('canvas-sortable-list');
         if (!list) return;
 
-        var items = Array.prototype.slice.call(
-          list.querySelectorAll('canvas-sortable-item')
-        );
-        var currentIndex = items.indexOf(self);
-        var newIndex;
-
-        if (e.key === 'ArrowUp' && currentIndex > 0) {
-          newIndex = currentIndex - 1;
-          list.insertBefore(self, items[newIndex]);
-        } else if (e.key === 'ArrowDown' && currentIndex < items.length - 1) {
-          newIndex = currentIndex + 1;
-          list.insertBefore(self, items[newIndex].nextSibling);
-        } else {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          self._keyboardReorder(list, e.key === 'ArrowUp' ? -1 : 1);
+          handle.focus();
           return;
         }
 
-        var event = new CustomEvent('reorder', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            oldIndex: currentIndex,
-            newIndex: newIndex,
-            item: self
-          }
-        });
-        list.dispatchEvent(event);
-
-        handle.focus();
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          if (!list._getGroup || !list._getGroup()) return;
+          e.preventDefault();
+          self._keyboardMoveAcross(list, e.key === 'ArrowLeft' ? -1 : 1);
+          handle.focus();
+        }
       });
+    }
+
+    _keyboardReorder(list, direction) {
+      var items = Array.prototype.slice.call(list.querySelectorAll('canvas-sortable-item'));
+      var currentIndex = items.indexOf(this);
+      var newIndex = currentIndex + direction;
+      if (newIndex < 0 || newIndex >= items.length) return;
+
+      if (direction < 0) {
+        list.insertBefore(this, items[newIndex]);
+      } else {
+        list.insertBefore(this, items[newIndex].nextSibling);
+      }
+
+      var detail = { oldIndex: currentIndex, newIndex: newIndex, item: this, list: list };
+      list.dispatchEvent(new CustomEvent('reorder', { bubbles: true, composed: true, detail: detail }));
+      list.dispatchEvent(new CustomEvent('change', {
+        bubbles: true, composed: true,
+        detail: Object.assign({ type: 'reorder' }, detail)
+      }));
+      list._announceMove('reorder', detail);
+    }
+
+    _keyboardMoveAcross(list, direction) {
+      var siblings = list._findSiblingLists();
+      if (!siblings.length) return;
+
+      var sourceLeft = list.getBoundingClientRect().left;
+      siblings.sort(function (a, b) {
+        return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+      });
+
+      var afterSource = siblings.filter(function (s) {
+        return s.getBoundingClientRect().left > sourceLeft;
+      });
+      var beforeSource = siblings.filter(function (s) {
+        return s.getBoundingClientRect().left < sourceLeft;
+      }).reverse();
+
+      var target = direction > 0 ? afterSource[0] : beforeSource[0];
+      if (!target) return;
+
+      var oldIndex = Array.prototype.slice.call(
+        list.querySelectorAll('canvas-sortable-item')
+      ).indexOf(this);
+
+      target.appendChild(this);
+
+      var targetItems = Array.prototype.slice.call(
+        target.querySelectorAll('canvas-sortable-item')
+      );
+      var newIndex = targetItems.indexOf(this);
+
+      var detail = {
+        item: this,
+        fromList: list,
+        toList: target,
+        oldIndex: oldIndex,
+        newIndex: newIndex
+      };
+
+      target.dispatchEvent(new CustomEvent('move', {
+        bubbles: true, composed: true, detail: detail
+      }));
+      target.dispatchEvent(new CustomEvent('change', {
+        bubbles: true, composed: true,
+        detail: Object.assign({ type: 'move' }, detail)
+      }));
+      target._announceMove('move', detail);
+
+      /* Refocus the handle in the new host so arrow keys keep working. */
+      var handle = this.shadowRoot && this.shadowRoot.querySelector('.handle');
+      if (handle) handle.focus();
     }
   }
 
@@ -3634,6 +3835,17 @@
           :host {
             display: block;
             position: relative;
+            min-height: var(--canvas-sortable-min-height, 0);
+          }
+
+          /* Eligible drop target during a cross list drag. Matches the
+             canvas-input focus border so the affordance reads as a form
+             like receptive field. Uses outline not border, so no layout
+             shift on any sibling when the drag starts. */
+          :host([data-drop-eligible]) {
+            outline: 1px solid var(--canvas-input-focus-border, #85b7d9);
+            outline-offset: 0;
+            border-radius: var(--canvas-input-radius, var(--radius, .28571429rem));
           }
 
           ::slotted(canvas-sortable-item) {
@@ -3649,11 +3861,29 @@
       this._placeholder = null;
       this._startY = 0;
       this._offsetY = 0;
+      this._offsetX = 0;
       this._itemHeight = 0;
+
+      /* Cross list state. sourceList is where the drag started, hostList is
+         where the placeholder currently lives. Equal for within list drags.
+         eligibleLists carries every sibling that can receive from the source
+         so the drop eligible outline can be applied at drag start and
+         cleared together at drag end. */
+      this._sourceList = null;
+      this._hostList = null;
+      this._eligibleLists = null;
+
+      /* Auto scroll state. Populated while a drag is active. */
+      this._scrollAncestor = null;
+      this._lastClientY = 0;
+      this._lastClientX = 0;
+      this._autoScrollRAF = null;
+      this._autoScrollSpeed = 0;
 
       this._onPointerDown = this._onPointerDown.bind(this);
       this._onPointerMove = this._onPointerMove.bind(this);
       this._onPointerUp = this._onPointerUp.bind(this);
+      this._autoScrollTick = this._autoScrollTick.bind(this);
     }
 
     connectedCallback() {
@@ -3665,8 +3895,58 @@
       this._cleanup();
     }
 
+    /* Public snapshot getter. Returns the live array of sortable items in
+       document order for consumers that prefer snapshot over delta events. */
+    get items() {
+      return this._getItems();
+    }
+
     _getItems() {
       return Array.prototype.slice.call(this.querySelectorAll('canvas-sortable-item:not([dragging])'));
+    }
+
+    /* ---- group / accept / pull / disabled readers ---- */
+
+    _getGroup() {
+      var g = this.getAttribute('group');
+      return g ? g.trim() : null;
+    }
+
+    _getAccepts() {
+      var attr = this.getAttribute('accept');
+      if (attr) {
+        return attr.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      }
+      var g = this._getGroup();
+      return g ? [g] : [];
+    }
+
+    _getPullMode() {
+      return this.getAttribute('pull') === 'clone' ? 'clone' : 'move';
+    }
+
+    _isDisabled() {
+      return this.hasAttribute('disabled');
+    }
+
+    _acceptsFrom(sourceList) {
+      if (this._isDisabled()) return false;
+      var sourceGroup = sourceList && sourceList._getGroup();
+      if (!sourceGroup) return false;
+      return this._getAccepts().indexOf(sourceGroup) !== -1;
+    }
+
+    _findSiblingLists() {
+      var self = this;
+      if (!this._getGroup()) return [];
+      var all = document.querySelectorAll('canvas-sortable-list');
+      var out = [];
+      for (var i = 0; i < all.length; i++) {
+        var other = all[i];
+        if (other === self) continue;
+        if (other._acceptsFrom(self)) out.push(other);
+      }
+      return out;
     }
 
     _getHandleFromEvent(e) {
@@ -3688,6 +3968,7 @@
     }
 
     _onPointerDown(e) {
+      if (this._isDisabled()) return;
       if (this._dragging) return;
 
       var handle = this._getHandleFromEvent(e);
@@ -3701,11 +3982,14 @@
       var items = this._getItems();
       this._dragSourceIndex = items.indexOf(item);
       this._dragItem = item;
+      this._sourceList = this;
+      this._hostList = this;
 
       var rect = item.getBoundingClientRect();
       this._itemHeight = rect.height;
       this._startY = e.clientY;
       this._offsetY = e.clientY - rect.top;
+      this._offsetX = e.clientX - rect.left;
 
       /* Measure all item positions before we start moving things */
       this._itemRects = [];
@@ -3713,11 +3997,11 @@
         this._itemRects.push(items[i].getBoundingClientRect());
       }
 
-      /* Create a plain div placeholder that holds the space */
+      /* Create a placeholder that holds space and renders an insertion bar */
       this._placeholder = document.createElement('div');
+      this._placeholder.className = 'canvas-sortable-placeholder';
       this._placeholder.style.height = rect.height + 'px';
       this._placeholder.style.transition = 'height 0.2s ease';
-      this._placeholder.style.pointerEvents = 'none';
       item.parentNode.insertBefore(this._placeholder, item);
 
       /* Position the dragged item as fixed overlay */
@@ -3728,7 +4012,22 @@
       item.style.width = rect.width + 'px';
       item.style.transition = 'none';
 
+      this._scrollAncestor = this._findScrollableAncestor();
+      this._lastClientY = e.clientY;
+      this._lastClientX = e.clientX;
+
       this._dragging = true;
+
+      /* Mark every eligible sibling so the user sees where the item can
+         land for the whole duration of the drag. Source list keeps the
+         data-drop-active marker for consumer custom styling. */
+      if (this._getGroup()) {
+        this.setAttribute('data-drop-active', '');
+        this._eligibleLists = this._findSiblingLists();
+        for (var s = 0; s < this._eligibleLists.length; s++) {
+          this._eligibleLists[s].setAttribute('data-drop-eligible', '');
+        }
+      }
 
       /* Force grabbing cursor everywhere and disable pointer events on list items
          so shadow DOM cursor rules cannot override the global cursor */
@@ -3744,19 +4043,123 @@
     _onPointerMove(e) {
       if (!this._dragging || !this._dragItem) return;
 
-      /* Move the dragged item to follow the cursor */
-      var newTop = e.clientY - this._offsetY;
-      this._dragItem.style.top = newTop + 'px';
+      this._lastClientY = e.clientY;
+      this._lastClientX = e.clientX;
 
-      /* Find where the placeholder should be based on cursor Y */
-      var centerY = e.clientY;
+      /* Route to a sibling list if the cursor has crossed into one. */
+      var nextHost = this._resolveHost(e.clientX, e.clientY);
+      if (nextHost !== this._hostList) {
+        this._migrateTo(nextHost);
+      }
+
+      this._hostList._updatePlaceholder(e.clientY, this);
+      this._evaluateAutoScroll(e.clientY);
+    }
+
+    /* Return a larger hit zone than the sortable list's own rect. Using the
+       nearest wrapping canvas-card or the immediate parent expands detection
+       to the full column the user visually perceives, so cross list drag
+       works even when the destination list holds only one or zero items
+       and its own rect is much shorter than the source list. */
+    _getHitRect() {
+      var card = this.closest('canvas-card');
+      if (card) return card.getBoundingClientRect();
+      var parent = this.parentElement;
+      if (parent) return parent.getBoundingClientRect();
+      return this.getBoundingClientRect();
+    }
+
+    /* Find which list the cursor is currently over, out of the source list
+       and any sibling lists in the same group. Three passes so kanban
+       layouts with different column heights still catch drops reliably.
+
+       Pass 1. Strict containment in the list's own rect. Works for any
+       drop that lands inside the actual list area.
+
+       Pass 2. Column wide rect from _getHitRect. Catches drops in the
+       card body padding or above an empty list's short rect.
+
+       Pass 3. Column x range plus the union y range of every candidate's
+       hit rect. Handles horizontal kanban rows where the tallest column
+       defines the effective drop zone for all columns. Without this,
+       dragging from a tall column into a short sibling column fails
+       because the cursor y is below the short column's own bottom. */
+    _resolveHost(clientX, clientY) {
+      if (!this._getGroup()) return this;
+      var candidates = [this].concat(this._findSiblingLists());
+
+      for (var i = 0; i < candidates.length; i++) {
+        var rect = candidates[i].getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom) {
+          return candidates[i];
+        }
+      }
+
+      for (var j = 0; j < candidates.length; j++) {
+        var hit = candidates[j]._getHitRect();
+        if (clientX >= hit.left && clientX <= hit.right &&
+            clientY >= hit.top && clientY <= hit.bottom) {
+          return candidates[j];
+        }
+      }
+
+      var rowTop = Infinity, rowBottom = -Infinity;
+      for (var m = 0; m < candidates.length; m++) {
+        var mh = candidates[m]._getHitRect();
+        if (mh.top < rowTop) rowTop = mh.top;
+        if (mh.bottom > rowBottom) rowBottom = mh.bottom;
+      }
+
+      if (clientY >= rowTop && clientY <= rowBottom) {
+        for (var k = 0; k < candidates.length; k++) {
+          var kh = candidates[k]._getHitRect();
+          if (clientX >= kh.left && clientX <= kh.right) {
+            return candidates[k];
+          }
+        }
+      }
+
+      return this._hostList || this;
+    }
+
+    /* Move the placeholder into a new host list and update the drop active
+       highlight. The source list stays authoritative for pointer events. */
+    _migrateTo(nextHost) {
+      var prev = this._hostList;
+      if (prev && prev !== nextHost) {
+        prev.removeAttribute('data-drop-active');
+      }
+      if (this._placeholder && this._placeholder.parentNode !== nextHost) {
+        nextHost.appendChild(this._placeholder);
+      }
+      nextHost.setAttribute('data-drop-active', '');
+      this._hostList = nextHost;
+      this._scrollAncestor = nextHost._findScrollableAncestor();
+    }
+
+    /* Optional driver arg keeps the auto scroll tick able to reach the real
+       source list when it recomputes the placeholder while the pointer is
+       stationary. */
+    _updatePlaceholder(clientY, driver) {
+      driver = driver || this;
+      if (!driver._dragging || !driver._dragItem || !driver._placeholder) return;
+
+      /* Move the dragged item to follow the cursor. Track x so the ghost
+         follows horizontal drags across kanban columns. */
+      var newTop = clientY - driver._offsetY;
+      driver._dragItem.style.top = newTop + 'px';
+      var newLeft = driver._lastClientX - driver._offsetX;
+      driver._dragItem.style.left = newLeft + 'px';
+
+      /* Find where the placeholder should be in this host based on cursor Y */
       var items = this._getItems();
       var targetIndex = -1;
 
       for (var i = 0; i < items.length; i++) {
         var rect = items[i].getBoundingClientRect();
         var midY = rect.top + rect.height / 2;
-        if (centerY < midY) {
+        if (clientY < midY) {
           targetIndex = i;
           break;
         }
@@ -3768,11 +4171,11 @@
       }
 
       /* Figure out which item the placeholder is currently next to */
-      var currentNext = this._placeholder.nextElementSibling;
+      var currentNext = driver._placeholder.nextElementSibling;
       var desiredNext = (targetIndex < items.length) ? items[targetIndex] : null;
 
       /* If placeholder is already in the right spot, nothing to do */
-      if (currentNext === desiredNext) return;
+      if (driver._placeholder.parentNode === this && currentNext === desiredNext) return;
 
       /* FLIP animation. Record positions before DOM change. */
       var rects = {};
@@ -3782,9 +4185,9 @@
 
       /* Move the placeholder in the DOM */
       if (desiredNext) {
-        this.insertBefore(this._placeholder, desiredNext);
+        this.insertBefore(driver._placeholder, desiredNext);
       } else {
-        this.appendChild(this._placeholder);
+        this.appendChild(driver._placeholder);
       }
 
       /* FLIP. Measure new positions and animate from old to new. */
@@ -3805,23 +4208,263 @@
       }
     }
 
+    /* Walk up from the list to find the nearest element that actually scrolls.
+       If no element qualifies, fall back to the document scroller so the page
+       itself will scroll when the list is directly inside body. Traverses
+       through shadow roots by jumping to host, so the list works when placed
+       inside a consumer's shadow DOM. */
+    _findScrollableAncestor() {
+      var node = this.parentNode;
+      while (node && node !== document) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          var styles = window.getComputedStyle(node);
+          var overflowY = styles.overflowY;
+          if ((overflowY === 'auto' || overflowY === 'scroll') &&
+              node.scrollHeight > node.clientHeight) {
+            return node;
+          }
+          node = node.parentNode;
+        } else if (node.host) {
+          node = node.host;
+        } else {
+          node = node.parentNode;
+        }
+      }
+      return document.scrollingElement || document.documentElement;
+    }
+
+    _isDocumentScroller(el) {
+      return el === document.scrollingElement ||
+             el === document.documentElement ||
+             el === document.body;
+    }
+
+    _getScrollEdges(ancestor) {
+      if (this._isDocumentScroller(ancestor)) {
+        return { top: 0, bottom: window.innerHeight };
+      }
+      var rect = ancestor.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom };
+    }
+
+    _getScrollTop(ancestor) {
+      if (this._isDocumentScroller(ancestor)) {
+        return window.scrollY || window.pageYOffset || 0;
+      }
+      return ancestor.scrollTop;
+    }
+
+    _getMaxScrollTop(ancestor) {
+      if (this._isDocumentScroller(ancestor)) {
+        var doc = document.documentElement;
+        return Math.max(0, doc.scrollHeight - window.innerHeight);
+      }
+      return Math.max(0, ancestor.scrollHeight - ancestor.clientHeight);
+    }
+
+    _setScrollTop(ancestor, value) {
+      if (this._isDocumentScroller(ancestor)) {
+        window.scrollTo(window.scrollX || 0, value);
+      } else {
+        ancestor.scrollTop = value;
+      }
+    }
+
+    /* Decide whether the cursor is inside a top or bottom hotspot and set
+       a signed speed for the rAF tick. Positive speed scrolls down, negative
+       scrolls up, zero stops. */
+    _evaluateAutoScroll(clientY) {
+      var ancestor = this._scrollAncestor;
+      if (!ancestor) return;
+
+      var edges = this._getScrollEdges(ancestor);
+      var height = edges.bottom - edges.top;
+      if (height <= 0) {
+        this._autoScrollSpeed = 0;
+        this._stopAutoScroll();
+        return;
+      }
+
+      var HOTSPOT_PX = 48;
+      var MAX_SPEED = 12;
+      var hotspot = Math.min(HOTSPOT_PX, height / 3);
+
+      var topDistance = (edges.top + hotspot) - clientY;
+      var bottomDistance = clientY - (edges.bottom - hotspot);
+      var speed = 0;
+
+      if (topDistance > 0) {
+        speed = -Math.min(topDistance / hotspot, 1) * MAX_SPEED;
+      } else if (bottomDistance > 0) {
+        speed = Math.min(bottomDistance / hotspot, 1) * MAX_SPEED;
+      }
+
+      this._autoScrollSpeed = speed;
+
+      if (speed === 0) {
+        this._stopAutoScroll();
+      } else {
+        this._startAutoScroll();
+      }
+    }
+
+    _startAutoScroll() {
+      if (this._autoScrollRAF !== null) return;
+      this._autoScrollRAF = window.requestAnimationFrame(this._autoScrollTick);
+    }
+
+    _stopAutoScroll() {
+      if (this._autoScrollRAF !== null) {
+        window.cancelAnimationFrame(this._autoScrollRAF);
+        this._autoScrollRAF = null;
+      }
+      this._autoScrollSpeed = 0;
+    }
+
+    _autoScrollTick() {
+      this._autoScrollRAF = null;
+
+      if (!this._dragging || !this._scrollAncestor) return;
+
+      var speed = this._autoScrollSpeed;
+      if (speed === 0) return;
+
+      var ancestor = this._scrollAncestor;
+      var current = this._getScrollTop(ancestor);
+      var max = this._getMaxScrollTop(ancestor);
+      var next = Math.max(0, Math.min(max, current + speed));
+
+      if (next !== current) {
+        this._setScrollTop(ancestor, next);
+        /* Items just slid under a stationary cursor. Recompute placeholder
+           and move the overlay so the ghost stays under the pointer. */
+        this._hostList._updatePlaceholder(this._lastClientY, this);
+      }
+
+      /* Keep the loop alive. If the cursor later leaves the hotspot, the next
+         pointermove will zero the speed and stopAutoScroll will cancel. */
+      this._autoScrollRAF = window.requestAnimationFrame(this._autoScrollTick);
+    }
+
     _onPointerUp(e) {
       if (!this._dragging || !this._dragItem) {
         this._cleanup();
         return;
       }
 
+      var source = this._sourceList;
+      var host = this._hostList;
       var item = this._dragItem;
+      var placeholder = this._placeholder;
+      var oldIndex = this._dragSourceIndex;
+      var isCrossList = host !== source;
+      var pullMode = source._getPullMode();
 
-      /* Insert the real item where the placeholder is */
-      this.insertBefore(item, this._placeholder);
+      /* Clone mode hands out copies of the item to other lists. The original
+         stays in the source list, a fresh clone is committed into the host. */
+      var commitItem = (isCrossList && pullMode === 'clone') ? item.cloneNode(true) : item;
 
-      /* Remove placeholder */
-      if (this._placeholder && this._placeholder.parentNode) {
-        this._placeholder.parentNode.removeChild(this._placeholder);
+      /* Where the placeholder currently sits in the host, measured by the
+         sibling right after it. This is the intended new index. */
+      var hostItems = Array.prototype.slice.call(
+        host.querySelectorAll('canvas-sortable-item:not([dragging])')
+      );
+      var after = placeholder ? placeholder.nextElementSibling : null;
+      var placeholderIndex = after ? hostItems.indexOf(after) : -1;
+      var newIndex = placeholderIndex === -1 ? hostItems.length : placeholderIndex;
+
+      var eventType = isCrossList ? 'move' : 'reorder';
+      var detail = isCrossList
+        ? { item: commitItem, fromList: source, toList: host, oldIndex: oldIndex, newIndex: newIndex }
+        : { item: commitItem, oldIndex: oldIndex, newIndex: newIndex, list: host };
+
+      /* Cancelable pre commit events. A handler can preventDefault to snap
+         the item back to the source position with no success event fired. */
+      var before = new CustomEvent('before' + eventType, {
+        bubbles: true, composed: true, cancelable: true, detail: detail
+      });
+      host.dispatchEvent(before);
+
+      var beforeChange = new CustomEvent('beforechange', {
+        bubbles: true, composed: true, cancelable: true,
+        detail: Object.assign({ type: eventType }, detail)
+      });
+      if (!before.defaultPrevented) host.dispatchEvent(beforeChange);
+
+      if (before.defaultPrevented || beforeChange.defaultPrevented) {
+        this._revertToSource();
+        this._cleanup();
+        return;
       }
 
-      /* Reset styles on the dragged item */
+      /* No op within list drag at the same index. Snap back, no event. */
+      if (!isCrossList && oldIndex === newIndex) {
+        this._revertToSource();
+        this._cleanup();
+        return;
+      }
+
+      /* Commit. Insert the committed item at the placeholder position. */
+      host.insertBefore(commitItem, placeholder);
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+      }
+      this._placeholder = null;
+
+      commitItem.removeAttribute('dragging');
+      commitItem.style.position = '';
+      commitItem.style.left = '';
+      commitItem.style.top = '';
+      commitItem.style.width = '';
+      commitItem.style.transition = '';
+      commitItem.style.transform = '';
+
+      /* Clone mode also resets styles on the original so it returns to its
+         resting state in the source list. */
+      if (isCrossList && pullMode === 'clone') {
+        item.removeAttribute('dragging');
+        item.style.position = '';
+        item.style.left = '';
+        item.style.top = '';
+        item.style.width = '';
+        item.style.transition = '';
+        item.style.transform = '';
+      }
+
+      host.dispatchEvent(new CustomEvent(eventType, {
+        bubbles: true, composed: true, detail: detail
+      }));
+      host.dispatchEvent(new CustomEvent('change', {
+        bubbles: true, composed: true,
+        detail: Object.assign({ type: eventType }, detail)
+      }));
+      host._announceMove(eventType, detail);
+
+      this._cleanup();
+    }
+
+    /* Put the dragged item back at its original index in the source list
+       without firing any success event. Used for cancel and no op paths. */
+    _revertToSource() {
+      var source = this._sourceList;
+      var item = this._dragItem;
+      var placeholder = this._placeholder;
+
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+      }
+      this._placeholder = null;
+
+      var siblings = Array.prototype.slice.call(
+        source.querySelectorAll('canvas-sortable-item:not([dragging])')
+      );
+      var anchor = siblings[this._dragSourceIndex] || null;
+      if (anchor) {
+        source.insertBefore(item, anchor);
+      } else {
+        source.appendChild(item);
+      }
+
       item.removeAttribute('dragging');
       item.style.position = '';
       item.style.left = '';
@@ -3829,45 +4472,84 @@
       item.style.width = '';
       item.style.transition = '';
       item.style.transform = '';
+    }
 
-      /* Calculate new index and fire event */
-      var items = this._getItems();
-      var newIndex = items.indexOf(item);
-
-      if (this._dragSourceIndex !== newIndex) {
-        this.dispatchEvent(new CustomEvent('reorder', {
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-          detail: {
-            oldIndex: this._dragSourceIndex,
-            newIndex: newIndex,
-            item: item
-          }
-        }));
+    /* Resolve a human readable label for a list for ARIA announcements. */
+    _labelFor(list) {
+      var labelled = list.getAttribute('aria-labelledby');
+      if (labelled) {
+        var el = document.getElementById(labelled);
+        if (el) return el.textContent.trim();
       }
+      var label = list.getAttribute('aria-label');
+      if (label) return label;
+      if (list.id) return list.id;
+      return 'list';
+    }
 
-      this._cleanup();
+    _announceMove(type, detail) {
+      var host = detail.toList || detail.list || this;
+      var size = Array.prototype.slice.call(
+        host.querySelectorAll('canvas-sortable-item')
+      ).length;
+      var position = detail.newIndex + 1;
+      if (type === 'move') {
+        CanvasSortableAnnouncer.say(
+          'Moved item from ' + this._labelFor(detail.fromList) +
+          ' to ' + this._labelFor(detail.toList) +
+          ', position ' + position + ' of ' + size + '.'
+        );
+      } else {
+        CanvasSortableAnnouncer.say(
+          'Moved item to position ' + position + ' of ' + size + ' in ' +
+          this._labelFor(detail.list || this) + '.'
+        );
+      }
     }
 
     _cleanup() {
+      this._stopAutoScroll();
+
       this.style.pointerEvents = '';
       if (this._cursorStyle && this._cursorStyle.parentNode) {
         this._cursorStyle.parentNode.removeChild(this._cursorStyle);
       }
       this._cursorStyle = null;
 
-      /* Clean up inline transition styles on all items */
-      var items = this._getItems();
-      for (var i = 0; i < items.length; i++) {
-        items[i].style.transition = '';
-        items[i].style.transform = '';
+      /* Clear drop active on both source and current host lists. */
+      if (this._hostList) this._hostList.removeAttribute('data-drop-active');
+      if (this._sourceList && this._sourceList !== this._hostList) {
+        this._sourceList.removeAttribute('data-drop-active');
+      }
+
+      /* Clear drop eligible on every sibling marked at drag start. */
+      if (this._eligibleLists) {
+        for (var e = 0; e < this._eligibleLists.length; e++) {
+          this._eligibleLists[e].removeAttribute('data-drop-eligible');
+        }
+        this._eligibleLists = null;
+      }
+
+      /* Clean up inline transition styles on items in both source and host. */
+      var lists = [];
+      if (this._sourceList) lists.push(this._sourceList);
+      if (this._hostList && this._hostList !== this._sourceList) lists.push(this._hostList);
+      for (var j = 0; j < lists.length; j++) {
+        var items = lists[j]._getItems();
+        for (var i = 0; i < items.length; i++) {
+          items[i].style.transition = '';
+          items[i].style.transform = '';
+        }
       }
 
       this._dragging = false;
       this._dragItem = null;
       this._dragSourceIndex = -1;
       this._itemRects = null;
+      this._scrollAncestor = null;
+      this._lastClientY = 0;
+      this._sourceList = null;
+      this._hostList = null;
 
       if (this._placeholder && this._placeholder.parentNode) {
         this._placeholder.parentNode.removeChild(this._placeholder);
@@ -5277,6 +5959,7 @@
 
         this._tooltip.style.left = coords.left + 'px';
         this._tooltip.style.top = coords.top + 'px';
+        this._applyArrowOffset(coords);
       });
     }
 
@@ -5291,6 +5974,31 @@
       this._arrowCover.innerHTML = svgs[position] || svgs.top;
     }
 
+    _applyArrowOffset(coords) {
+      // Clear prior inline positioning so the CSS defaults do not mix with a
+      // new decoupled offset when orientation changes across successive shows.
+      this._arrow.style.left = '';
+      this._arrow.style.top = '';
+      this._arrow.style.marginLeft = '';
+      this._arrow.style.marginTop = '';
+      this._arrowCover.style.left = '';
+      this._arrowCover.style.top = '';
+      this._arrowCover.style.marginLeft = '';
+      this._arrowCover.style.marginTop = '';
+
+      if (coords.arrowX != null) {
+        this._arrow.style.left = coords.arrowX + 'px';
+        this._arrow.style.marginLeft = '0';
+        this._arrowCover.style.left = coords.arrowX + 'px';
+        this._arrowCover.style.marginLeft = '0';
+      } else if (coords.arrowY != null) {
+        this._arrow.style.top = coords.arrowY + 'px';
+        this._arrow.style.marginTop = '0';
+        this._arrowCover.style.top = coords.arrowY + 'px';
+        this._arrowCover.style.marginTop = '0';
+      }
+    }
+
     _hide() {
       if (!this._tooltip) return;
       this._tooltip.classList.remove('visible');
@@ -5299,6 +6007,9 @@
 
     _calcPosition(position, triggerRect, tipRect) {
       var gap = 10;
+      var edge = 8;         // viewport edge margin, box never sits closer than this
+      var arrowHalf = 7;    // half of arrow width/height (arrow svg is 14x7 or 7x14)
+      var arrowInset = 6;   // min distance from tooltip corner to arrow edge
       var left, top;
       var flipped = false;
 
@@ -5325,10 +6036,53 @@
           break;
       }
 
-      if (left < 0) left = 4;
-      if (left + tipRect.width > window.innerWidth) left = window.innerWidth - tipRect.width - 4;
+      // Clamp tooltip box to viewport with an edge margin on all sides.
+      // Apply the far-edge clamp first, then the near-edge clamp, so that
+      // when the tooltip is wider or taller than the viewport allows, the
+      // box stays flush against the near edge instead of going negative.
+      if (left + tipRect.width > window.innerWidth - edge) {
+        left = window.innerWidth - tipRect.width - edge;
+      }
+      if (left < edge) left = edge;
+      if (top + tipRect.height > window.innerHeight - edge) {
+        top = window.innerHeight - tipRect.height - edge;
+      }
+      if (top < edge) top = edge;
 
-      return { left: left, top: top, position: position, flipped: flipped };
+      // Compute arrow offset so the tip of the arrow sits over the trigger's
+      // center, independent of where the clamped tooltip box ended up.
+      // Clamp the arrow inside the box so it never slides into the rounded
+      // corner. Horizontal arrow for top/bottom tooltips, vertical for left/right.
+      var arrowX = null;
+      var arrowY = null;
+      if (position === 'top' || position === 'bottom') {
+        var triggerCenterX = triggerRect.left + triggerRect.width / 2;
+        var idealX = triggerCenterX - left - arrowHalf;
+        var minX = arrowInset;
+        var maxX = tipRect.width - arrowInset - arrowHalf * 2;
+        if (maxX < minX) maxX = minX;
+        if (idealX < minX) idealX = minX;
+        if (idealX > maxX) idealX = maxX;
+        arrowX = idealX;
+      } else {
+        var triggerCenterY = triggerRect.top + triggerRect.height / 2;
+        var idealY = triggerCenterY - top - arrowHalf;
+        var minY = arrowInset;
+        var maxY = tipRect.height - arrowInset - arrowHalf * 2;
+        if (maxY < minY) maxY = minY;
+        if (idealY < minY) idealY = minY;
+        if (idealY > maxY) idealY = maxY;
+        arrowY = idealY;
+      }
+
+      return {
+        left: left,
+        top: top,
+        position: position,
+        flipped: flipped,
+        arrowX: arrowX,
+        arrowY: arrowY
+      };
     }
   }
 

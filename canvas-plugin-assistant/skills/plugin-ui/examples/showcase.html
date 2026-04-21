@@ -89,7 +89,7 @@
     .text-bold { font-weight: 700; }
 
     /* Form page styles */
-    .row { display: flex; gap: 12px; align-items: flex-end; }
+    .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
     .row > * { flex: 1; }
     .height-readout { margin-top: 8px; font-size: .85rem; color: #767676; }
 
@@ -120,37 +120,206 @@
   <canvas-sidebar variant="narrow" style="--canvas-sidebar-bg: #EBEBEB; --canvas-sidebar-padding: 20px 0; border-right: 1px solid rgba(34, 36, 38, 0.15);">
     <nav class="showcase-nav">
       <h3>Canvas Components</h3>
+      <a href="#accordion">Accordion</a>
       <a href="#badge">Badge</a>
+      <a href="#banner">Banner</a>
       <a href="#button">Button</a>
       <a href="#button-group">Button Group</a>
-      <a href="#chip">Chip</a>
       <a href="#card">Card</a>
-      <a href="#banner">Banner</a>
-      <a href="#input">Input</a>
-      <a href="#textarea">Textarea</a>
       <a href="#checkbox">Checkbox</a>
-      <a href="#radio">Radio</a>
-      <a href="#toggle">Toggle</a>
-      <a href="#dropdown">Dropdown</a>
+      <a href="#chip">Chip</a>
       <a href="#combobox">Combobox</a>
-      <a href="#multi-select">Multi-Select</a>
-      <a href="#tabs">Tabs</a>
-      <a href="#accordion">Accordion</a>
-      <a href="#table">Table</a>
-      <a href="#sortable-list">Sortable List</a>
-      <a href="#modal">Modal</a>
-      <a href="#sidebar-layout">Sidebar Layout</a>
-      <a href="#loader">Loader</a>
-      <a href="#progress">Progress</a>
-      <a href="#tooltip">Tooltip</a>
       <a href="#divider">Divider</a>
+      <a href="#dropdown">Dropdown</a>
       <a href="#form">Form</a>
+      <a href="#input">Input</a>
+      <a href="#loader">Loader</a>
+      <a href="#modal">Modal</a>
+      <a href="#multi-select">Multi-Select</a>
+      <a href="#progress">Progress</a>
+      <a href="#radio">Radio</a>
+      <a href="#scroll-area">Scroll Area</a>
+      <a href="#sidebar-layout">Sidebar Layout</a>
+      <a href="#sortable-list">Sortable List</a>
+      <a href="#table">Table</a>
+      <a href="#tabs">Tabs</a>
+      <a href="#textarea">Textarea</a>
+      <a href="#toggle">Toggle</a>
+      <a href="#tooltip">Tooltip</a>
     </nav>
   </canvas-sidebar>
   <canvas-content id="showcase-content">
     <div class="showcase-content">
 
-  <!-- 1. Badge -->
+  <!-- Accordion -->
+  <section class="component-section" id="accordion">
+    <h2>Accordion</h2>
+    <hr class="section-divider">
+
+    <!-- Basic -->
+    <div class="sample-card">
+      <h3>Basic accordion</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>Patient Demographics</canvas-accordion-title>
+          <canvas-accordion-content><p>Jane Smith, born Mar 15, 1985. Female. MRN 4821903.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>Insurance Information</canvas-accordion-title>
+          <canvas-accordion-content><p>Blue Cross Blue Shield PPO. Member ID BCB-9928341.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>Allergies</canvas-accordion-title>
+          <canvas-accordion-content><p>Penicillin (rash). Sulfa drugs (anaphylaxis).</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- Badges right-aligned -->
+    <div class="sample-card">
+      <h3>Badges right-aligned (canvas-badge)</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>
+            <span class="flex-grow">Active Medications</span>
+            <canvas-badge color="blue" size="tiny">4 active</canvas-badge>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>Metformin 500mg twice daily. Lisinopril 10mg once daily. Atorvastatin 20mg at bedtime. Amlodipine 5mg once daily.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>
+            <span class="flex-grow">Pending Orders</span>
+            <canvas-badge color="orange" size="tiny">2 pending</canvas-badge>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>CBC with differential, ordered Mar 20, 2026. Lipid panel, ordered Mar 20, 2026.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- With toggles -->
+    <div class="sample-card">
+      <h3>With toggles in title</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>
+            <span class="flex-grow">Email Notifications</span>
+            <canvas-toggle checked></canvas-toggle>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>Receive email notifications for appointment reminders, lab results, and prescription refills.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>
+            <span class="flex-grow">SMS Alerts</span>
+            <canvas-toggle checked></canvas-toggle>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>Text message alerts for urgent results and appointment changes.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>
+            <span class="flex-grow">Portal Messages</span>
+            <canvas-toggle></canvas-toggle>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>In-app messaging with your care team. Currently disabled.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- With buttons -->
+    <div class="sample-card">
+      <h3>With buttons in title</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>
+            <span class="flex-grow">Active Medications</span>
+            <canvas-button size="xs" variant="ghost">Edit</canvas-button>
+            <canvas-button size="xs" variant="primary">Add</canvas-button>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>Metformin 500mg twice daily. Lisinopril 10mg once daily.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>
+            <span class="flex-grow">Allergies</span>
+            <canvas-button size="xs" variant="ghost">Review</canvas-button>
+          </canvas-accordion-title>
+          <canvas-accordion-content><p>Penicillin (rash). Sulfa drugs (anaphylaxis).</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- Multiple open -->
+    <div class="sample-card">
+      <h3>Multiple sections open</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>Chief Complaint</canvas-accordion-title>
+          <canvas-accordion-content><p>Patient reports persistent headaches for the past two weeks.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>History of Present Illness</canvas-accordion-title>
+          <canvas-accordion-content><p>Headaches began approximately 14 days ago without clear precipitant.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>Review of Systems</canvas-accordion-title>
+          <canvas-accordion-content><p>General: no fever, no weight change. All other systems negative.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- Nested -->
+    <div class="sample-card">
+      <h3>Nested accordions (automatic indent)</h3>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>Problem List</canvas-accordion-title>
+          <canvas-accordion-content>
+            <canvas-accordion>
+              <canvas-accordion-item open>
+                <canvas-accordion-title>Type 2 Diabetes</canvas-accordion-title>
+                <canvas-accordion-content>
+                  <canvas-accordion>
+                    <canvas-accordion-item open>
+                      <canvas-accordion-title>Current Medications</canvas-accordion-title>
+                      <canvas-accordion-content><p>Metformin 500mg twice daily. Empagliflozin 10mg once daily.</p></canvas-accordion-content>
+                    </canvas-accordion-item>
+                    <canvas-accordion-item>
+                      <canvas-accordion-title>Recent Labs</canvas-accordion-title>
+                      <canvas-accordion-content><p>HbA1c 6.8 percent, measured Mar 15, 2026. Fasting glucose 124 mg/dL.</p></canvas-accordion-content>
+                    </canvas-accordion-item>
+                  </canvas-accordion>
+                </canvas-accordion-content>
+              </canvas-accordion-item>
+              <canvas-accordion-item>
+                <canvas-accordion-title>Hyperlipidemia</canvas-accordion-title>
+                <canvas-accordion-content><p>Above target LDL, on atorvastatin 20mg at bedtime.</p></canvas-accordion-content>
+              </canvas-accordion-item>
+            </canvas-accordion>
+          </canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- Toggle event -->
+    <div class="sample-card">
+      <h3>Toggle event</h3>
+      <canvas-accordion>
+        <canvas-accordion-item id="accordion-ev-vitals">
+          <canvas-accordion-title>Vitals</canvas-accordion-title>
+          <canvas-accordion-content><p>BP 128/82 mmHg. HR 72 bpm. Temp 98.4 F. Weight 172 lbs.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item id="accordion-ev-assessment">
+          <canvas-accordion-title>Assessment</canvas-accordion-title>
+          <canvas-accordion-content><p>Type 2 diabetes, well controlled. Hyperlipidemia, above target.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item id="accordion-ev-plan">
+          <canvas-accordion-title>Plan</canvas-accordion-title>
+          <canvas-accordion-content><p>Continue current medications. Recheck lipid panel in 3 months.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+      <div id="accordion-event-log"></div>
+    </div>
+  </section>
+
+  <!-- Badge -->
   <section class="component-section" id="badge">
     <h2>Badge</h2>
     <hr class="section-divider">
@@ -324,7 +493,82 @@
     </div>
   </section>
 
-  <!-- 2. Button -->
+  <!-- Banner -->
+  <section class="component-section" id="banner">
+    <h2>Banner</h2>
+    <hr class="section-divider">
+
+    <!-- Default -->
+    <div class="sample-card">
+      <h3>Default (no variant)</h3>
+      <canvas-banner>This is a default message with no color variant.</canvas-banner>
+    </div>
+
+    <!-- Semantic variants -->
+    <div class="sample-card">
+      <h3>Semantic variants (header + body)</h3>
+      <canvas-banner variant="warning" header="Potential duplicate patient">
+        <p>It looks like this patient might already exist in Canvas.</p>
+      </canvas-banner>
+      <canvas-banner variant="error" header="Failed to save">
+        <p>The server returned an error while saving the patient record. Please try again.</p>
+      </canvas-banner>
+      <canvas-banner variant="success" header="Remittance submitted">
+        <p>Your remittance has been successfully submitted.</p>
+      </canvas-banner>
+      <canvas-banner variant="info" header="New lab results available">
+        <p>Lab results from Mar 20, 2026 are ready for review.</p>
+      </canvas-banner>
+    </div>
+
+    <!-- Header only -->
+    <div class="sample-card">
+      <h3>Header only (no body text)</h3>
+      <canvas-banner variant="warning" header="This patient has an active drug interaction alert."></canvas-banner>
+      <canvas-banner variant="error" header="Invalid credentials."></canvas-banner>
+      <canvas-banner variant="success" header="Changes saved successfully."></canvas-banner>
+      <canvas-banner variant="info" header="No total balance is due now."></canvas-banner>
+    </div>
+
+    <!-- Body only -->
+    <div class="sample-card">
+      <h3>Body only (no header)</h3>
+      <canvas-banner variant="warning">This patient has not completed intake forms.</canvas-banner>
+      <canvas-banner variant="error">Wrong code. Please try again.</canvas-banner>
+      <canvas-banner variant="success">MFA device successfully added.</canvas-banner>
+      <canvas-banner variant="info">Lab results are pending review.</canvas-banner>
+    </div>
+
+    <!-- Dismissible -->
+    <div class="sample-card">
+      <h3>Dismissible</h3>
+      <canvas-banner variant="info" dismissible header="New lab results available">
+        <p>Lab results from Mar 20, 2026 are ready for review.</p>
+      </canvas-banner>
+      <canvas-banner variant="error" dismissible header="Coverage verification failed."></canvas-banner>
+      <canvas-banner variant="warning" dismissible>This patient has not completed intake forms.</canvas-banner>
+      <canvas-banner variant="success" dismissible>Your remittance has been successfully submitted.</canvas-banner>
+      <div id="banner-event-log"></div>
+    </div>
+
+    <!-- Interactive content -->
+    <div class="sample-card">
+      <h3>Interactive content (slotted components)</h3>
+      <canvas-banner variant="warning" header="Potential duplicate patient">
+        <p>A patient with this name already exists.</p>
+        <div style="margin-top: 8px; display: flex; gap: .25em">
+          <canvas-button size="sm" variant="ghost">Review match</canvas-button>
+          <canvas-button size="sm">Continue anyway</canvas-button>
+        </div>
+      </canvas-banner>
+      <canvas-banner variant="error" header="Session expired">
+        <p>Your session has timed out.</p>
+        <div style="margin-top: 8px"><canvas-button size="sm">Sign in</canvas-button></div>
+      </canvas-banner>
+    </div>
+  </section>
+
+  <!-- Button -->
   <section class="component-section" id="button">
     <h2>Button</h2>
     <hr class="section-divider">
@@ -548,92 +792,7 @@
 
   </section>
 
-  <!-- 3. Chip -->
-  <section class="component-section" id="chip">
-    <h2>Chip</h2>
-    <hr class="section-divider">
-
-    <!-- Colors -->
-    <div class="sample-card">
-      <h3>Solid Colors</h3>
-      <div class="label">All 13 variants (dismissible)</div>
-      <div class="sample-row">
-        <canvas-chip color="red">Red</canvas-chip>
-        <canvas-chip color="orange">Orange</canvas-chip>
-        <canvas-chip color="yellow">Yellow</canvas-chip>
-        <canvas-chip color="olive">Olive</canvas-chip>
-        <canvas-chip color="green">Green</canvas-chip>
-        <canvas-chip color="teal">Teal</canvas-chip>
-        <canvas-chip color="blue">Blue</canvas-chip>
-        <canvas-chip color="violet">Violet</canvas-chip>
-        <canvas-chip color="purple">Purple</canvas-chip>
-        <canvas-chip color="pink">Pink</canvas-chip>
-        <canvas-chip color="brown">Brown</canvas-chip>
-        <canvas-chip color="grey">Grey</canvas-chip>
-        <canvas-chip color="black">Black</canvas-chip>
-      </div>
-      <div class="label">No color (default gray)</div>
-      <div class="sample-row"><canvas-chip>Default</canvas-chip></div>
-    </div>
-
-    <!-- Sizes -->
-    <div class="sample-card">
-      <h3>Sizes</h3>
-      <div class="sample-row">
-        <canvas-chip color="blue" size="mini">Mini</canvas-chip>
-        <canvas-chip color="blue" size="tiny">Tiny</canvas-chip>
-        <canvas-chip color="blue" size="small">Small</canvas-chip>
-        <canvas-chip color="blue">Base</canvas-chip>
-      </div>
-    </div>
-
-    <!-- Basic variant -->
-    <div class="sample-card">
-      <h3>Basic Variant</h3>
-      <div class="sample-row">
-        <canvas-chip basic color="red">Red</canvas-chip>
-        <canvas-chip basic color="blue">Blue</canvas-chip>
-        <canvas-chip basic color="green">Green</canvas-chip>
-        <canvas-chip basic color="grey">Grey</canvas-chip>
-        <canvas-chip basic>Default</canvas-chip>
-      </div>
-    </div>
-
-    <!-- Filter bar pattern -->
-    <div class="sample-card">
-      <h3>Filter Bar</h3>
-      <div id="chip-filter-bar" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-        <canvas-chip color="blue" size="small">Status: Active</canvas-chip>
-        <canvas-chip color="blue" size="small">Provider: Dr. Magee</canvas-chip>
-        <canvas-chip color="blue" size="small">Date: Last 30 days</canvas-chip>
-      </div>
-    </div>
-
-    <!-- Tag input pattern -->
-    <div class="sample-card">
-      <h3>Tag Input</h3>
-      <div id="chip-tag-container" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-        <canvas-chip size="small">E11.9 Type 2 diabetes</canvas-chip>
-        <canvas-chip size="small">I10 Essential hypertension</canvas-chip>
-        <canvas-chip size="small">J45.20 Mild intermittent asthma</canvas-chip>
-      </div>
-    </div>
-
-    <!-- Dismiss event -->
-    <div class="sample-card">
-      <h3>Dismiss Event</h3>
-      <p style="color: #767676; margin-bottom: 12px;">Click X to dismiss. The chip removes itself via the event listener.</p>
-      <div id="chip-dismiss-demo" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-        <canvas-chip color="blue">Cardiology</canvas-chip>
-        <canvas-chip color="green">Active</canvas-chip>
-        <canvas-chip color="orange">Expiring</canvas-chip>
-        <canvas-chip color="red">Urgent</canvas-chip>
-      </div>
-      <div id="chip-dismiss-log"></div>
-    </div>
-  </section>
-
-  <!-- 4. Card -->
+  <!-- Card -->
   <section class="component-section" id="card">
     <h2>Card</h2>
     <hr class="section-divider">
@@ -760,209 +919,9 @@
       </div>
     </div>
 
-    <!-- Scrollable body -->
-    <div class="sample-card">
-      <h3>Scrollable body (max-height constraint)</h3>
-      <canvas-card>
-        <canvas-card-body style="max-height: 150px;">
-          <h4>Medication History</h4>
-          <p style="margin-top: 8px">Metformin 500mg BID, started Jan 15, 2024. Titrated from 250mg.</p>
-          <p style="margin-top: 8px">Lisinopril 10mg daily, started Mar 3, 2024. Blood pressure well controlled.</p>
-          <p style="margin-top: 8px">Atorvastatin 20mg daily, started Jun 12, 2024. LDL target achieved.</p>
-          <p style="margin-top: 8px">Amlodipine 5mg daily, started Sep 8, 2024. Added for persistent elevated systolic.</p>
-          <p style="margin-top: 8px">Omeprazole 20mg daily, started Nov 20, 2024. GERD symptoms resolved.</p>
-          <p style="margin-top: 8px">Aspirin 81mg daily, started Jan 5, 2025. Primary prevention per cardiology consult.</p>
-        </canvas-card-body>
-        <canvas-card-footer>
-          <span style="font-size: .92857143em;">6 medications total</span>
-        </canvas-card-footer>
-      </canvas-card>
-    </div>
   </section>
 
-  <!-- 5. Banner -->
-  <section class="component-section" id="banner">
-    <h2>Banner</h2>
-    <hr class="section-divider">
-
-    <!-- Default -->
-    <div class="sample-card">
-      <h3>Default (no variant)</h3>
-      <canvas-banner>This is a default message with no color variant.</canvas-banner>
-    </div>
-
-    <!-- Semantic variants -->
-    <div class="sample-card">
-      <h3>Semantic variants (header + body)</h3>
-      <canvas-banner variant="warning" header="Potential duplicate patient">
-        <p>It looks like this patient might already exist in Canvas.</p>
-      </canvas-banner>
-      <canvas-banner variant="error" header="Failed to save">
-        <p>The server returned an error while saving the patient record. Please try again.</p>
-      </canvas-banner>
-      <canvas-banner variant="success" header="Remittance submitted">
-        <p>Your remittance has been successfully submitted.</p>
-      </canvas-banner>
-      <canvas-banner variant="info" header="New lab results available">
-        <p>Lab results from Mar 20, 2026 are ready for review.</p>
-      </canvas-banner>
-    </div>
-
-    <!-- Header only -->
-    <div class="sample-card">
-      <h3>Header only (no body text)</h3>
-      <canvas-banner variant="warning" header="This patient has an active drug interaction alert."></canvas-banner>
-      <canvas-banner variant="error" header="Invalid credentials."></canvas-banner>
-      <canvas-banner variant="success" header="Changes saved successfully."></canvas-banner>
-      <canvas-banner variant="info" header="No total balance is due now."></canvas-banner>
-    </div>
-
-    <!-- Body only -->
-    <div class="sample-card">
-      <h3>Body only (no header)</h3>
-      <canvas-banner variant="warning">This patient has not completed intake forms.</canvas-banner>
-      <canvas-banner variant="error">Wrong code. Please try again.</canvas-banner>
-      <canvas-banner variant="success">MFA device successfully added.</canvas-banner>
-      <canvas-banner variant="info">Lab results are pending review.</canvas-banner>
-    </div>
-
-    <!-- Dismissible -->
-    <div class="sample-card">
-      <h3>Dismissible</h3>
-      <canvas-banner variant="info" dismissible header="New lab results available">
-        <p>Lab results from Mar 20, 2026 are ready for review.</p>
-      </canvas-banner>
-      <canvas-banner variant="error" dismissible header="Coverage verification failed."></canvas-banner>
-      <canvas-banner variant="warning" dismissible>This patient has not completed intake forms.</canvas-banner>
-      <canvas-banner variant="success" dismissible>Your remittance has been successfully submitted.</canvas-banner>
-      <div id="banner-event-log"></div>
-    </div>
-
-    <!-- Interactive content -->
-    <div class="sample-card">
-      <h3>Interactive content (slotted components)</h3>
-      <canvas-banner variant="warning" header="Potential duplicate patient">
-        <p>A patient with this name already exists.</p>
-        <div style="margin-top: 8px; display: flex; gap: .25em">
-          <canvas-button size="sm" variant="ghost">Review match</canvas-button>
-          <canvas-button size="sm">Continue anyway</canvas-button>
-        </div>
-      </canvas-banner>
-      <canvas-banner variant="error" header="Session expired">
-        <p>Your session has timed out.</p>
-        <div style="margin-top: 8px"><canvas-button size="sm">Sign in</canvas-button></div>
-      </canvas-banner>
-    </div>
-  </section>
-
-  <!-- 6. Input -->
-  <section class="component-section" id="input">
-    <h2>Input</h2>
-    <hr class="section-divider">
-
-    <!-- Basic text inputs -->
-    <div class="sample-card">
-      <h3>Text Input</h3>
-      <div class="field-row"><canvas-input label="Patient Name" placeholder="e.g. Jane Smith"></canvas-input></div>
-      <div class="field-row"><canvas-input label="Email" type="email" placeholder="patient@example.com"></canvas-input></div>
-      <div class="field-row"><canvas-input label="Date of Birth" type="date"></canvas-input></div>
-      <div class="field-row"><canvas-input placeholder="No label, just placeholder"></canvas-input></div>
-    </div>
-
-    <!-- Error state -->
-    <div class="sample-card">
-      <h3>Error State</h3>
-      <div class="field-row"><canvas-input label="First Name" error="Required" value=""></canvas-input></div>
-      <div class="field-row"><canvas-input label="Email" type="email" error="Invalid email address" value="not-an-email"></canvas-input></div>
-    </div>
-
-    <!-- Disabled -->
-    <div class="sample-card">
-      <h3>Disabled</h3>
-      <div class="field-row"><canvas-input label="Patient ID" value="PAT-00421" disabled></canvas-input></div>
-    </div>
-
-    <!-- Stacked form layout -->
-    <div class="sample-card">
-      <h3>Stacked Form</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
-        <canvas-input label="First Name" placeholder="Jane"></canvas-input>
-        <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
-        <canvas-input label="Date of Birth" type="date"></canvas-input>
-      </div>
-    </div>
-  </section>
-
-  <!-- Textarea -->
-  <section class="component-section" id="textarea">
-    <h2>Textarea</h2>
-    <hr class="section-divider">
-
-    <!-- Basic -->
-    <div class="sample-card">
-      <h3>Basic</h3>
-      <div class="field-row"><canvas-textarea label="Clinical Notes" rows="4" placeholder="Enter clinical notes"></canvas-textarea></div>
-      <div class="field-row"><canvas-textarea label="Brief Comment" rows="1" placeholder="Short note"></canvas-textarea></div>
-    </div>
-
-    <!-- Auto-resize -->
-    <div class="sample-card">
-      <h3>Auto-resize (starts at 1 row, grows with content)</h3>
-      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" placeholder="Start typing and the field will grow ..."></canvas-textarea></div>
-    </div>
-
-    <!-- Auto-resize with max-rows -->
-    <div class="sample-card">
-      <h3>Auto-resize with max-rows (grows up to 6 rows then scrolls)</h3>
-      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" max-rows="6" placeholder="Grows up to 6 lines then scrolls ..."></canvas-textarea></div>
-    </div>
-
-    <!-- Chat input pattern -->
-    <div class="sample-card">
-      <h3>Chat input pattern</h3>
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; max-width: 500px;">
-        <canvas-textarea auto-resize rows="1" max-rows="4" placeholder="Type a message ..."></canvas-textarea>
-        <canvas-button>Send</canvas-button>
-      </div>
-    </div>
-
-    <!-- Character counter -->
-    <div class="sample-card">
-      <h3>Character counter (maxlength)</h3>
-      <div class="field-row"><canvas-textarea label="Override Reason" maxlength="200" placeholder="Explain why this override is needed ..."></canvas-textarea></div>
-    </div>
-
-    <!-- No resize -->
-    <div class="sample-card">
-      <h3>No resize handle</h3>
-      <div class="field-row"><canvas-textarea label="Fixed Area" no-resize rows="3" placeholder="Cannot be resized by the user"></canvas-textarea></div>
-    </div>
-
-    <!-- Error state -->
-    <div class="sample-card">
-      <h3>Error State</h3>
-      <div class="field-row"><canvas-textarea label="Notes" rows="3" error="Notes are required for this visit type"></canvas-textarea></div>
-    </div>
-
-    <!-- Disabled -->
-    <div class="sample-card">
-      <h3>Disabled</h3>
-      <div class="field-row"><canvas-textarea label="Locked Notes" rows="2" value="This field is read-only." disabled></canvas-textarea></div>
-    </div>
-
-    <!-- Aligned with input -->
-    <div class="sample-card">
-      <h3>Mixed form (input + textarea)</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
-        <canvas-input label="First Name" placeholder="Jane"></canvas-input>
-        <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
-        <canvas-textarea label="Notes" rows="3" placeholder="Additional notes"></canvas-textarea>
-        <canvas-button type="submit">Submit</canvas-button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 7. Checkbox -->
+  <!-- Checkbox -->
   <section class="component-section" id="checkbox">
     <h2>Checkbox</h2>
     <hr class="section-divider">
@@ -1023,268 +982,92 @@
     </div>
   </section>
 
-  <!-- 8. Radio -->
-  <section class="component-section" id="radio">
-    <h2>Radio</h2>
+  <!-- Chip -->
+  <section class="component-section" id="chip">
+    <h2>Chip</h2>
     <hr class="section-divider">
 
-    <!-- Vertical group -->
+    <!-- Colors -->
     <div class="sample-card">
-      <h3>Vertical Group</h3>
-      <div class="label">Duration</div>
-      <div style="display: flex; flex-direction: column; align-items: flex-start;">
-        <canvas-radio name="radio-duration" label="15 min" value="15"></canvas-radio>
-        <canvas-radio name="radio-duration" label="30 min" value="30"></canvas-radio>
-        <canvas-radio name="radio-duration" label="60 min" value="60" checked></canvas-radio>
+      <h3>Solid Colors</h3>
+      <div class="label">All 13 variants (dismissible)</div>
+      <div class="sample-row">
+        <canvas-chip color="red">Red</canvas-chip>
+        <canvas-chip color="orange">Orange</canvas-chip>
+        <canvas-chip color="yellow">Yellow</canvas-chip>
+        <canvas-chip color="olive">Olive</canvas-chip>
+        <canvas-chip color="green">Green</canvas-chip>
+        <canvas-chip color="teal">Teal</canvas-chip>
+        <canvas-chip color="blue">Blue</canvas-chip>
+        <canvas-chip color="violet">Violet</canvas-chip>
+        <canvas-chip color="purple">Purple</canvas-chip>
+        <canvas-chip color="pink">Pink</canvas-chip>
+        <canvas-chip color="brown">Brown</canvas-chip>
+        <canvas-chip color="grey">Grey</canvas-chip>
+        <canvas-chip color="black">Black</canvas-chip>
+      </div>
+      <div class="label">No color (default gray)</div>
+      <div class="sample-row"><canvas-chip>Default</canvas-chip></div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="sample-card">
+      <h3>Sizes</h3>
+      <div class="sample-row">
+        <canvas-chip color="blue" size="mini">Mini</canvas-chip>
+        <canvas-chip color="blue" size="tiny">Tiny</canvas-chip>
+        <canvas-chip color="blue" size="small">Small</canvas-chip>
+        <canvas-chip color="blue">Base</canvas-chip>
       </div>
     </div>
 
-    <!-- Full width -->
+    <!-- Basic variant -->
     <div class="sample-card">
-      <h3>Vertical Group (Full Width)</h3>
-      <p style="color: #767676; margin-bottom: 12px;">Each radio stretches to fill the container width. The entire row is clickable.</p>
-      <div class="label">Note type</div>
-      <div style="display: flex; flex-direction: column;">
-        <canvas-radio name="radio-note-fw" label="Appointment" value="appointment" style="width: 100%"></canvas-radio>
-        <canvas-radio name="radio-note-fw" label="Home visit" value="home-visit" style="width: 100%"></canvas-radio>
-        <canvas-radio name="radio-note-fw" label="Phone call" value="phone-call" style="width: 100%"></canvas-radio>
-        <canvas-radio name="radio-note-fw" label="Message" value="message" style="width: 100%"></canvas-radio>
+      <h3>Basic Variant</h3>
+      <div class="sample-row">
+        <canvas-chip basic color="red">Red</canvas-chip>
+        <canvas-chip basic color="blue">Blue</canvas-chip>
+        <canvas-chip basic color="green">Green</canvas-chip>
+        <canvas-chip basic color="grey">Grey</canvas-chip>
+        <canvas-chip basic>Default</canvas-chip>
       </div>
     </div>
 
-    <!-- Change event -->
+    <!-- Filter bar pattern -->
     <div class="sample-card">
-      <h3>Change Event</h3>
-      <p style="color: #767676; margin-bottom: 12px;">Select a note type. The change event reports the value.</p>
-      <div id="radio-note-type-group" style="display: flex; flex-direction: column; align-items: flex-start;">
-        <canvas-radio name="radio-note-type" label="Appointment" value="appointment"></canvas-radio>
-        <canvas-radio name="radio-note-type" label="Home visit" value="home-visit"></canvas-radio>
-        <canvas-radio name="radio-note-type" label="Phone call" value="phone-call"></canvas-radio>
-        <canvas-radio name="radio-note-type" label="Message" value="message"></canvas-radio>
-      </div>
-      <div id="radio-change-log">Selected: none</div>
-    </div>
-
-    <!-- Horizontal group -->
-    <div class="sample-card">
-      <h3>Horizontal Group</h3>
-      <div class="label">Priority</div>
-      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-        <canvas-radio name="radio-priority" label="Low" value="low"></canvas-radio>
-        <canvas-radio name="radio-priority" label="Medium" value="medium" checked></canvas-radio>
-        <canvas-radio name="radio-priority" label="High" value="high"></canvas-radio>
-        <canvas-radio name="radio-priority" label="Urgent" value="urgent"></canvas-radio>
+      <h3>Filter Bar</h3>
+      <div id="chip-filter-bar" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+        <canvas-chip color="blue" size="small">Status: Active</canvas-chip>
+        <canvas-chip color="blue" size="small">Provider: Dr. Magee</canvas-chip>
+        <canvas-chip color="blue" size="small">Date: Last 30 days</canvas-chip>
       </div>
     </div>
 
-    <!-- Disabled -->
+    <!-- Tag input pattern -->
     <div class="sample-card">
-      <h3>Disabled</h3>
-      <div style="display: flex; flex-direction: column; align-items: flex-start;">
-        <canvas-radio name="radio-locked" label="Option A" value="a" checked disabled></canvas-radio>
-        <canvas-radio name="radio-locked" label="Option B" value="b" disabled></canvas-radio>
+      <h3>Tag Input</h3>
+      <div id="chip-tag-container" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+        <canvas-chip size="small">E11.9 Type 2 diabetes</canvas-chip>
+        <canvas-chip size="small">I10 Essential hypertension</canvas-chip>
+        <canvas-chip size="small">J45.20 Mild intermittent asthma</canvas-chip>
       </div>
     </div>
 
-    <!-- Two independent groups -->
+    <!-- Dismiss event -->
     <div class="sample-card">
-      <h3>Two Independent Groups</h3>
-      <div style="display: flex; gap: 40px;">
-        <div>
-          <div class="label">Visit Type</div>
-          <div style="display: flex; flex-direction: column; align-items: flex-start;">
-            <canvas-radio name="radio-visit" label="In-person" value="in-person" checked></canvas-radio>
-            <canvas-radio name="radio-visit" label="Telehealth" value="telehealth"></canvas-radio>
-          </div>
-        </div>
-        <div>
-          <div class="label">Duration</div>
-          <div style="display: flex; flex-direction: column; align-items: flex-start;">
-            <canvas-radio name="radio-dur2" label="15 min" value="15"></canvas-radio>
-            <canvas-radio name="radio-dur2" label="30 min" value="30" checked></canvas-radio>
-            <canvas-radio name="radio-dur2" label="60 min" value="60"></canvas-radio>
-          </div>
-        </div>
+      <h3>Dismiss Event</h3>
+      <p style="color: #767676; margin-bottom: 12px;">Click X to dismiss. The chip removes itself via the event listener.</p>
+      <div id="chip-dismiss-demo" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+        <canvas-chip color="blue">Cardiology</canvas-chip>
+        <canvas-chip color="green">Active</canvas-chip>
+        <canvas-chip color="orange">Expiring</canvas-chip>
+        <canvas-chip color="red">Urgent</canvas-chip>
       </div>
+      <div id="chip-dismiss-log"></div>
     </div>
   </section>
 
-  <!-- 9. Toggle -->
-  <section class="component-section" id="toggle">
-    <h2>Toggle</h2>
-    <hr class="section-divider">
-
-    <!-- Basic -->
-    <div class="sample-card">
-      <h3>Basic</h3>
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-        <canvas-toggle label="Enable dark mode"></canvas-toggle>
-        <canvas-toggle label="Enable notifications" checked></canvas-toggle>
-      </div>
-    </div>
-
-    <!-- Label position -->
-    <div class="sample-card">
-      <h3>Label Position</h3>
-      <div class="label">Label after toggle (default)</div>
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 16px;">
-        <canvas-toggle label="Dark mode"></canvas-toggle>
-        <canvas-toggle label="Notifications" checked></canvas-toggle>
-      </div>
-      <div class="label">Label before toggle</div>
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-        <canvas-toggle label="This phone can receive text messages" label-position="start" checked></canvas-toggle>
-        <canvas-toggle label="Send reminders via SMS" label-position="start"></canvas-toggle>
-      </div>
-    </div>
-
-    <!-- Standalone -->
-    <div class="sample-card">
-      <h3>Standalone (aria-label only)</h3>
-      <div style="display: flex; gap: 16px;">
-        <canvas-toggle aria-label="Toggle feature A"></canvas-toggle>
-        <canvas-toggle aria-label="Toggle feature B" checked></canvas-toggle>
-      </div>
-    </div>
-
-    <!-- Disabled -->
-    <div class="sample-card">
-      <h3>Disabled</h3>
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-        <canvas-toggle label="Checked and disabled" checked disabled></canvas-toggle>
-        <canvas-toggle label="Unchecked and disabled" disabled></canvas-toggle>
-      </div>
-    </div>
-
-    <!-- Change event -->
-    <div class="sample-card">
-      <h3>Change Event</h3>
-      <p style="color: #767676; margin-bottom: 12px;">Toggle the switch. The event reports checked state.</p>
-      <canvas-toggle id="toggle-demo" label="Enable feature"></canvas-toggle>
-      <div id="toggle-change-log">State: off</div>
-    </div>
-
-    <!-- Full width settings -->
-    <div class="sample-card">
-      <h3>Full Width</h3>
-      <p style="color: #767676; margin-bottom: 12px;">Settings list pattern. Label before toggle, full width rows.</p>
-      <div style="display: flex; flex-direction: column; --canvas-toggle-min-height: 44px;">
-        <canvas-toggle label="Email notifications" label-position="start" style="width: 100%; justify-content: space-between;" checked></canvas-toggle>
-        <canvas-toggle label="Push notifications" label-position="start" style="width: 100%; justify-content: space-between;"></canvas-toggle>
-        <canvas-toggle label="SMS alerts" label-position="start" style="width: 100%; justify-content: space-between;" checked></canvas-toggle>
-      </div>
-    </div>
-  </section>
-
-  <!-- 10. Dropdown -->
-  <section class="component-section" id="dropdown">
-    <h2>Dropdown</h2>
-    <hr class="section-divider">
-
-    <div style="max-width: 400px;">
-      <!-- Basic -->
-      <div class="sample-card">
-        <h3>Basic dropdown (plain text options)</h3>
-        <canvas-dropdown label="Status" placeholder="Select status">
-          <canvas-option value="active">Active</canvas-option>
-          <canvas-option value="inactive">Inactive</canvas-option>
-          <canvas-option value="pending">Pending Review</canvas-option>
-          <canvas-option value="archived">Archived</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Rich content -->
-      <div class="sample-card">
-        <h3>Rich content options (badges, styled text)</h3>
-        <canvas-dropdown label="Coverage" placeholder="Select coverage">
-          <canvas-option value="bcbs" label="Blue Cross Blue Shield PPO">
-            <span style="display: flex; justify-content: space-between; align-items: center">
-              <span>Blue Cross Blue Shield PPO</span>
-              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
-            </span>
-          </canvas-option>
-          <canvas-option value="aetna" label="Aetna HMO">
-            <span style="display: flex; justify-content: space-between; align-items: center">
-              <span>Aetna HMO</span>
-              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
-            </span>
-          </canvas-option>
-          <canvas-option value="medicare" label="Medicare Part B">
-            <span style="display: flex; justify-content: space-between; align-items: center">
-              <span>Medicare Part B</span>
-              <canvas-badge color="red" size="mini" style="margin-left: 8px; flex-shrink: 0">Expired</canvas-badge>
-            </span>
-          </canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Pre-selected -->
-      <div class="sample-card">
-        <h3>Pre-selected value</h3>
-        <canvas-dropdown label="Coverage Type" placeholder="Select type">
-          <canvas-option value="commercial">Commercial</canvas-option>
-          <canvas-option value="medicare" selected>Medicare</canvas-option>
-          <canvas-option value="medicaid">Medicaid</canvas-option>
-          <canvas-option value="self-pay">Self-pay</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Small size -->
-      <div class="sample-card">
-        <h3>Small size</h3>
-        <canvas-dropdown label="Location" size="sm" placeholder="Select location">
-          <canvas-option value="sf">Canvas Clinic San Francisco</canvas-option>
-          <canvas-option value="oak">Canvas Clinic Oakland</canvas-option>
-          <canvas-option value="sj">Canvas Clinic San Jose</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Disabled options -->
-      <div class="sample-card">
-        <h3>Disabled options</h3>
-        <canvas-dropdown label="Appointment Type" placeholder="Choose type">
-          <canvas-option value="office">Office Visit</canvas-option>
-          <canvas-option value="telehealth">Telehealth</canvas-option>
-          <canvas-option value="home" disabled>Home Visit (unavailable)</canvas-option>
-          <canvas-option value="lab">Lab Visit</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Disabled dropdown -->
-      <div class="sample-card">
-        <h3>Disabled dropdown</h3>
-        <canvas-dropdown label="Plan" placeholder="Select plan" disabled>
-          <canvas-option value="basic">Basic</canvas-option>
-          <canvas-option value="premium">Premium</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Error state -->
-      <div class="sample-card">
-        <h3>Error state</h3>
-        <canvas-dropdown label="Priority" placeholder="Select priority" error="Priority is required">
-          <canvas-option value="low">Low</canvas-option>
-          <canvas-option value="normal">Normal</canvas-option>
-          <canvas-option value="high">High</canvas-option>
-          <canvas-option value="urgent">Urgent</canvas-option>
-        </canvas-dropdown>
-      </div>
-
-      <!-- Change event -->
-      <div class="sample-card">
-        <h3>Change event</h3>
-        <canvas-dropdown label="Duration" placeholder="Select duration" id="dropdown-duration">
-          <canvas-option value="15">15 min</canvas-option>
-          <canvas-option value="30">30 min</canvas-option>
-          <canvas-option value="45">45 min</canvas-option>
-          <canvas-option value="60">60 min</canvas-option>
-        </canvas-dropdown>
-        <div id="dropdown-change-log"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 11. Combobox -->
+  <!-- Combobox -->
   <section class="component-section" id="combobox">
     <h2>Combobox</h2>
     <hr class="section-divider">
@@ -1416,7 +1199,606 @@
     </div>
   </section>
 
-  <!-- 12. Multi-Select -->
+  <!-- Divider -->
+  <section class="component-section" id="divider">
+    <h2>Divider</h2>
+    <hr class="section-divider">
+
+    <!-- Default -->
+    <div class="sample-card">
+      <h3>Default (plain horizontal rule)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above the divider</p>
+      <canvas-divider></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below the divider</p>
+    </div>
+
+    <!-- Fitted -->
+    <div class="sample-card">
+      <h3>Fitted (no vertical margin)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly above</p>
+      <canvas-divider fitted></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly below</p>
+    </div>
+
+    <!-- Hidden -->
+    <div class="sample-card">
+      <h3>Hidden (invisible spacer)</h3>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above</p>
+      <canvas-divider hidden></canvas-divider>
+      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below (separated by invisible divider)</p>
+    </div>
+
+    <!-- With text -->
+    <div class="sample-card">
+      <h3>Horizontal with text</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <div class="label">"Or" separator between options</div>
+          <canvas-divider>Or</canvas-divider>
+        </div>
+        <div>
+          <div class="label">Section label</div>
+          <canvas-divider>Additional Details</canvas-divider>
+        </div>
+        <div>
+          <div class="label">Toggle text (campaign list pattern)</div>
+          <canvas-divider>Hide closed campaigns</canvas-divider>
+        </div>
+      </div>
+    </div>
+
+    <!-- Between cards pattern -->
+    <div class="sample-card">
+      <h3>Between cards (section separator)</h3>
+      <canvas-card>
+        <canvas-card-body>
+          <div style="font-weight: 700;">Active Campaigns</div>
+          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">3 campaigns running</div>
+        </canvas-card-body>
+      </canvas-card>
+      <canvas-divider>View Details</canvas-divider>
+      <canvas-card>
+        <canvas-card-body>
+          <div style="font-weight: 700;">Closed Campaigns</div>
+          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">12 campaigns completed</div>
+        </canvas-card-body>
+      </canvas-card>
+    </div>
+  </section>
+
+  <!-- Dropdown -->
+  <section class="component-section" id="dropdown">
+    <h2>Dropdown</h2>
+    <hr class="section-divider">
+
+    <div style="max-width: 400px;">
+      <!-- Basic -->
+      <div class="sample-card">
+        <h3>Basic dropdown (plain text options)</h3>
+        <canvas-dropdown label="Status" placeholder="Select status">
+          <canvas-option value="active">Active</canvas-option>
+          <canvas-option value="inactive">Inactive</canvas-option>
+          <canvas-option value="pending">Pending Review</canvas-option>
+          <canvas-option value="archived">Archived</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Rich content -->
+      <div class="sample-card">
+        <h3>Rich content options (badges, styled text)</h3>
+        <canvas-dropdown label="Coverage" placeholder="Select coverage">
+          <canvas-option value="bcbs" label="Blue Cross Blue Shield PPO">
+            <span style="display: flex; justify-content: space-between; align-items: center">
+              <span>Blue Cross Blue Shield PPO</span>
+              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
+            </span>
+          </canvas-option>
+          <canvas-option value="aetna" label="Aetna HMO">
+            <span style="display: flex; justify-content: space-between; align-items: center">
+              <span>Aetna HMO</span>
+              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
+            </span>
+          </canvas-option>
+          <canvas-option value="medicare" label="Medicare Part B">
+            <span style="display: flex; justify-content: space-between; align-items: center">
+              <span>Medicare Part B</span>
+              <canvas-badge color="red" size="mini" style="margin-left: 8px; flex-shrink: 0">Expired</canvas-badge>
+            </span>
+          </canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Pre-selected -->
+      <div class="sample-card">
+        <h3>Pre-selected value</h3>
+        <canvas-dropdown label="Coverage Type" placeholder="Select type">
+          <canvas-option value="commercial">Commercial</canvas-option>
+          <canvas-option value="medicare" selected>Medicare</canvas-option>
+          <canvas-option value="medicaid">Medicaid</canvas-option>
+          <canvas-option value="self-pay">Self-pay</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Small size -->
+      <div class="sample-card">
+        <h3>Small size</h3>
+        <canvas-dropdown label="Location" size="sm" placeholder="Select location">
+          <canvas-option value="sf">Canvas Clinic San Francisco</canvas-option>
+          <canvas-option value="oak">Canvas Clinic Oakland</canvas-option>
+          <canvas-option value="sj">Canvas Clinic San Jose</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Disabled options -->
+      <div class="sample-card">
+        <h3>Disabled options</h3>
+        <canvas-dropdown label="Appointment Type" placeholder="Choose type">
+          <canvas-option value="office">Office Visit</canvas-option>
+          <canvas-option value="telehealth">Telehealth</canvas-option>
+          <canvas-option value="home" disabled>Home Visit (unavailable)</canvas-option>
+          <canvas-option value="lab">Lab Visit</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Disabled dropdown -->
+      <div class="sample-card">
+        <h3>Disabled dropdown</h3>
+        <canvas-dropdown label="Plan" placeholder="Select plan" disabled>
+          <canvas-option value="basic">Basic</canvas-option>
+          <canvas-option value="premium">Premium</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Error state -->
+      <div class="sample-card">
+        <h3>Error state</h3>
+        <canvas-dropdown label="Priority" placeholder="Select priority" error="Priority is required">
+          <canvas-option value="low">Low</canvas-option>
+          <canvas-option value="normal">Normal</canvas-option>
+          <canvas-option value="high">High</canvas-option>
+          <canvas-option value="urgent">Urgent</canvas-option>
+        </canvas-dropdown>
+      </div>
+
+      <!-- Change event -->
+      <div class="sample-card">
+        <h3>Change event</h3>
+        <canvas-dropdown label="Duration" placeholder="Select duration" id="dropdown-duration">
+          <canvas-option value="15">15 min</canvas-option>
+          <canvas-option value="30">30 min</canvas-option>
+          <canvas-option value="45">45 min</canvas-option>
+          <canvas-option value="60">60 min</canvas-option>
+        </canvas-dropdown>
+        <div id="dropdown-change-log"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="component-section" id="form">
+    <h2>Form</h2>
+    <hr class="section-divider">
+
+    <div style="max-width: 700px;">
+      <!-- Height comparison -->
+      <div class="sample-card">
+        <h3>Inline row (no labels)</h3>
+        <div class="row">
+          <canvas-input placeholder="Text input"></canvas-input>
+          <canvas-combobox placeholder="Combobox">
+            <canvas-option value="a">Option A</canvas-option>
+            <canvas-option value="b">Option B</canvas-option>
+          </canvas-combobox>
+          <canvas-dropdown placeholder="Dropdown">
+            <canvas-option value="a">Option A</canvas-option>
+            <canvas-option value="b">Option B</canvas-option>
+          </canvas-dropdown>
+          <canvas-button>Button</canvas-button>
+        </div>
+        <div class="height-readout" id="form-readout-no-label"></div>
+      </div>
+
+      <!-- With labels -->
+      <div class="sample-card">
+        <h3>Inline row (with labels)</h3>
+        <div class="row">
+          <canvas-input label="Patient" placeholder="Text input"></canvas-input>
+          <canvas-combobox label="Provider" placeholder="Combobox">
+            <canvas-option value="magee">Steven Magee MD</canvas-option>
+            <canvas-option value="chen">Lisa Chen DO</canvas-option>
+          </canvas-combobox>
+          <canvas-dropdown label="Status" placeholder="Dropdown">
+            <canvas-option value="active">Active</canvas-option>
+            <canvas-option value="inactive">Inactive</canvas-option>
+          </canvas-dropdown>
+          <canvas-button>Submit</canvas-button>
+        </div>
+      </div>
+
+      <!-- canvas-inline-row primitive -->
+      <div class="sample-card">
+        <h3>canvas-inline-row (primitive)</h3>
+        <p style="margin: 0 0 12px; color: #767676; font-size: .92857143em;">Encapsulates the inline form row pattern. Inputs, dropdowns, and textareas grow to share available space. Buttons keep natural width. Wraps onto a second line in narrow widths. Replaces the raw <code>div class="row"</code> pattern above.</p>
+        <canvas-inline-row>
+          <canvas-input label="Patient" placeholder="Text input"></canvas-input>
+          <canvas-combobox label="Provider" placeholder="Combobox">
+            <canvas-option value="magee">Steven Magee MD</canvas-option>
+            <canvas-option value="chen">Lisa Chen DO</canvas-option>
+          </canvas-combobox>
+          <canvas-dropdown label="Status" placeholder="Dropdown">
+            <canvas-option value="active">Active</canvas-option>
+            <canvas-option value="inactive">Inactive</canvas-option>
+          </canvas-dropdown>
+          <canvas-button>Submit</canvas-button>
+        </canvas-inline-row>
+
+        <p style="margin: 16px 0 8px; color: #767676; font-size: .92857143em;">Wrap test in a 360 px host. Row stacks, every element stretches to full width.</p>
+        <div style="max-width: 360px; border: 1px dashed rgba(34, 36, 38, 0.15); padding: 12px; background: #fafafa;">
+          <canvas-inline-row>
+            <canvas-input label="From" type="date" value="2026-04-20"></canvas-input>
+            <canvas-input label="To" type="date" value="2026-04-27"></canvas-input>
+            <canvas-dropdown label="Provider">
+              <canvas-option value="" selected>All Providers</canvas-option>
+              <canvas-option value="1">Dr. Alvarez</canvas-option>
+            </canvas-dropdown>
+            <canvas-button>Load</canvas-button>
+          </canvas-inline-row>
+        </div>
+      </div>
+
+      <!-- Realistic form -->
+      <div class="sample-card">
+        <h3>Realistic form (inside canvas-card)</h3>
+        <canvas-card>
+          <canvas-card-body>
+            <form id="form-test-form" onsubmit="event.preventDefault(); var fd = new FormData(this); var parts = []; fd.forEach(function(v, k) { parts.push(k + '=' + v); }); document.getElementById('form-log').textContent = parts.join(', ');">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div class="row">
+              <canvas-input label="Patient Name" name="patient" placeholder="Jane Smith"></canvas-input>
+              <canvas-input label="DOB" name="dob" type="date"></canvas-input>
+            </div>
+            <div class="row">
+              <canvas-combobox label="Provider" name="provider" placeholder="Search providers">
+                <canvas-option value="magee">Steven Magee MD</canvas-option>
+                <canvas-option value="chen">Lisa Chen DO</canvas-option>
+                <canvas-option value="patel">Raj Patel MD</canvas-option>
+              </canvas-combobox>
+              <canvas-dropdown label="Visit Type" name="visit_type" placeholder="Select type">
+                <canvas-option value="office">Office Visit</canvas-option>
+                <canvas-option value="telehealth">Telehealth</canvas-option>
+                <canvas-option value="lab">Lab Visit</canvas-option>
+              </canvas-dropdown>
+            </div>
+            <div class="row">
+              <canvas-input label="Notes" name="notes" placeholder="Optional notes"></canvas-input>
+              <canvas-button type="submit">Schedule</canvas-button>
+            </div>
+          </div>
+        </form>
+        <div id="form-log"></div>
+          </canvas-card-body>
+        </canvas-card>
+      </div>
+
+      <!-- Filter Bar with table and action footer -->
+      <div class="sample-card">
+        <h3>Filter Bar (with table and action footer)</h3>
+        <p style="margin: 0 0 12px; color: #767676; font-size: .92857143em;">Named pattern from <code>component-usage.md</code> Inline Form Rows. Default size on every form element in the filter row, <code>canvas-input type="date"</code> for date fields, one <code>canvas-card</code> holding filter body, table body, and action footer.</p>
+        <canvas-card>
+          <canvas-card-body>
+            <canvas-inline-row>
+              <canvas-input label="From" type="date" value="2026-04-20"></canvas-input>
+              <canvas-input label="To" type="date" value="2026-04-27"></canvas-input>
+              <canvas-dropdown label="Provider">
+                <canvas-option value="" selected>All Providers</canvas-option>
+                <canvas-option value="alvarez">Dr. Alvarez</canvas-option>
+                <canvas-option value="brennan">Dr. Brennan</canvas-option>
+                <canvas-option value="chen">Dr. Chen</canvas-option>
+              </canvas-dropdown>
+              <canvas-button>Load Appointments</canvas-button>
+            </canvas-inline-row>
+          </canvas-card-body>
+          <canvas-card-body no-padding>
+            <canvas-table selectable striped aria-label="Upcoming appointments">
+              <canvas-table-head>
+                <canvas-table-row>
+                  <canvas-table-cell width="44px"><canvas-checkbox id="filter-bar-select-all"></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell>Patient</canvas-table-cell>
+                  <canvas-table-cell>Provider</canvas-table-cell>
+                  <canvas-table-cell>Date</canvas-table-cell>
+                </canvas-table-row>
+              </canvas-table-head>
+              <canvas-table-body>
+                <canvas-table-row>
+                  <canvas-table-cell width="44px"><canvas-checkbox checked></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell>Maria Gomez</canvas-table-cell>
+                  <canvas-table-cell>Dr. Alvarez</canvas-table-cell>
+                  <canvas-table-cell>Apr 22, 2026</canvas-table-cell>
+                </canvas-table-row>
+                <canvas-table-row>
+                  <canvas-table-cell width="44px"><canvas-checkbox></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell>James Patel</canvas-table-cell>
+                  <canvas-table-cell>Dr. Brennan</canvas-table-cell>
+                  <canvas-table-cell>Apr 23, 2026</canvas-table-cell>
+                </canvas-table-row>
+                <canvas-table-row>
+                  <canvas-table-cell width="44px"><canvas-checkbox checked></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell>Anita Rao</canvas-table-cell>
+                  <canvas-table-cell>Dr. Chen</canvas-table-cell>
+                  <canvas-table-cell>Apr 24, 2026</canvas-table-cell>
+                </canvas-table-row>
+              </canvas-table-body>
+            </canvas-table>
+          </canvas-card-body>
+          <canvas-card-footer>
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <div style="font-size: .92857143em;">2 of 3 selected</div>
+              <div style="display: flex; gap: 8px;">
+                <canvas-button variant="ghost">Request Eligibility (2)</canvas-button>
+                <canvas-button>Request Med History (2)</canvas-button>
+              </div>
+            </div>
+          </canvas-card-footer>
+        </canvas-card>
+      </div>
+    </div>
+  </section>
+
+  <!-- Input -->
+  <section class="component-section" id="input">
+    <h2>Input</h2>
+    <hr class="section-divider">
+
+    <!-- Basic text inputs -->
+    <div class="sample-card">
+      <h3>Text Input</h3>
+      <div class="field-row"><canvas-input label="Patient Name" placeholder="e.g. Jane Smith"></canvas-input></div>
+      <div class="field-row"><canvas-input label="Email" type="email" placeholder="patient@example.com"></canvas-input></div>
+      <div class="field-row"><canvas-input label="Date of Birth" type="date"></canvas-input></div>
+      <div class="field-row"><canvas-input placeholder="No label, just placeholder"></canvas-input></div>
+    </div>
+
+    <!-- Error state -->
+    <div class="sample-card">
+      <h3>Error State</h3>
+      <div class="field-row"><canvas-input label="First Name" error="Required" value=""></canvas-input></div>
+      <div class="field-row"><canvas-input label="Email" type="email" error="Invalid email address" value="not-an-email"></canvas-input></div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="sample-card">
+      <h3>Disabled</h3>
+      <div class="field-row"><canvas-input label="Patient ID" value="PAT-00421" disabled></canvas-input></div>
+    </div>
+
+    <!-- Stacked form layout -->
+    <div class="sample-card">
+      <h3>Stacked Form</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+        <canvas-input label="First Name" placeholder="Jane"></canvas-input>
+        <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
+        <canvas-input label="Date of Birth" type="date"></canvas-input>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loader -->
+  <section class="component-section" id="loader">
+    <h2>Loader</h2>
+    <hr class="section-divider">
+
+    <!-- Sizes (inline) -->
+    <div class="sample-card">
+      <h3>Sizes (inline mode, default)</h3>
+      <div style="display: flex; align-items: center; gap: 32px;">
+        <div style="text-align: center;">
+          <canvas-loader size="mini"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">mini</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader size="small"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">small</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">default</div>
+        </div>
+        <div style="text-align: center;">
+          <canvas-loader size="large"></canvas-loader>
+          <div style="margin-top: 8px; color: #767676; font-size: .85em;">large</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Centered with text -->
+    <div class="sample-card">
+      <h3>Centered with text label</h3>
+      <canvas-loader size="large" centered text="Loading ..."></canvas-loader>
+    </div>
+
+    <!-- Centered empty state -->
+    <div class="sample-card">
+      <h3>Centered (waiting for first data)</h3>
+      <canvas-loader size="large" centered text="Loading patients ..."></canvas-loader>
+    </div>
+
+    <!-- Overlay light (default backdrop) -->
+    <div class="sample-card">
+      <h3>Overlay (light backdrop, default)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" size="large"></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay dark -->
+    <div class="sample-card">
+      <h3>Overlay (dark backdrop)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" backdrop="dark" size="large" text="Refreshing ..."></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay no backdrop -->
+    <div class="sample-card">
+      <h3>Overlay (no backdrop)</h3>
+      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
+        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
+        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
+        <p style="margin: 0;">MRN: 12345</p>
+        <canvas-loader mode="overlay" backdrop="none" size="large"></canvas-loader>
+      </div>
+    </div>
+
+    <!-- Overlay inside a card -->
+    <div class="sample-card">
+      <h3>Overlay inside a card</h3>
+      <canvas-card>
+        <canvas-card-body style="position: relative; min-height: 120px;">
+          <p style="margin: 0;">Loading card content ...</p>
+          <canvas-loader mode="overlay" size="large"></canvas-loader>
+        </canvas-card-body>
+      </canvas-card>
+    </div>
+
+    <!-- Inverted on dark background -->
+    <div class="sample-card">
+      <h3>Inverted (dark background)</h3>
+      <div style="background: #1b1c1d; border-radius: .28571429rem; padding: 32px;">
+        <canvas-loader size="large" inverted centered text="Loading ..."></canvas-loader>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Modal -->
+  <section class="component-section" id="modal">
+    <h2>Modal</h2>
+    <hr class="section-divider">
+
+    <!-- Small confirmation -->
+    <div class="sample-card">
+      <h3>Small, confirmation</h3>
+      <canvas-button id="modal-open-confirm">Open confirmation</canvas-button>
+      <canvas-modal id="modal-confirm" size="small">
+        <canvas-modal-header>Confirm Action</canvas-modal-header>
+        <canvas-modal-content><p>Are you sure you want to proceed? This cannot be undone.</p></canvas-modal-content>
+        <canvas-modal-footer>
+          <canvas-button variant="ghost" id="modal-confirm-cancel">Cancel</canvas-button>
+          <canvas-button variant="primary" id="modal-confirm-ok">Confirm</canvas-button>
+        </canvas-modal-footer>
+      </canvas-modal>
+    </div>
+
+    <!-- Medium form -->
+    <div class="sample-card">
+      <h3>Medium, form</h3>
+      <canvas-button id="modal-open-form">Open form modal</canvas-button>
+      <canvas-modal id="modal-form" size="medium">
+        <canvas-modal-header>Add Coverage</canvas-modal-header>
+        <canvas-modal-content>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <canvas-input label="Plan Name" placeholder="e.g. Blue Cross Blue Shield"></canvas-input>
+            <canvas-input label="Member ID" placeholder="e.g. BCB-2847191"></canvas-input>
+            <canvas-input label="Group Number" placeholder="e.g. EMP-44821"></canvas-input>
+            <div style="display: flex; gap: 12px">
+              <canvas-input label="Effective Date" type="date" style="flex:1"></canvas-input>
+              <canvas-input label="Termination Date" type="date" style="flex:1"></canvas-input>
+            </div>
+          </div>
+        </canvas-modal-content>
+        <canvas-modal-footer>
+          <canvas-button variant="ghost" id="modal-form-cancel">Cancel</canvas-button>
+          <canvas-button variant="primary" id="modal-form-save">Save Coverage</canvas-button>
+        </canvas-modal-footer>
+      </canvas-modal>
+    </div>
+
+    <!-- Full configuration -->
+    <div class="sample-card">
+      <h3>Full, configuration panel</h3>
+      <canvas-button id="modal-open-config">Open configuration</canvas-button>
+      <canvas-modal id="modal-config" size="full">
+        <canvas-modal-header>Schedule Configuration</canvas-modal-header>
+        <canvas-modal-content>
+          <p style="margin-bottom: 16px">Configure provider schedules and availability windows for each clinic location.</p>
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px">
+            <div style="border-right: 1px solid rgba(34, 36, 38, 0.15); padding-right: 16px">
+              <p style="font-weight: 700; margin-bottom: 8px">Locations</p>
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <canvas-chip color="blue" size="small">San Francisco</canvas-chip>
+                <canvas-chip size="small">Oakland</canvas-chip>
+                <canvas-chip size="small">San Jose</canvas-chip>
+              </div>
+            </div>
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px">San Francisco Schedule</p>
+              <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px">
+                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Mon</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
+                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Tue</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
+                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Wed</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">12 PM</p></div>
+                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Thu</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
+                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Fri</p><p style="font-size: .85em; color: #767676">9 AM</p><p style="font-size: .85em; color: #767676">3 PM</p></div>
+              </div>
+            </div>
+          </div>
+        </canvas-modal-content>
+        <canvas-modal-footer>
+          <canvas-button variant="ghost" id="modal-config-cancel">Cancel</canvas-button>
+          <canvas-button id="modal-config-apply">Apply Changes</canvas-button>
+        </canvas-modal-footer>
+      </canvas-modal>
+    </div>
+
+    <!-- Persistent -->
+    <div class="sample-card">
+      <h3>Small, persistent, mandatory confirmation</h3>
+      <canvas-button id="modal-open-delete">Open delete confirmation</canvas-button>
+      <canvas-modal id="modal-delete" size="small" persistent>
+        <canvas-modal-header>Delete Patient Record</canvas-modal-header>
+        <canvas-modal-content>
+          <p>You are about to permanently delete the patient record for <strong>Jane Smith (MRN-00482917)</strong>.</p>
+          <p style="color: #db2828; font-weight: 700">All associated encounters, lab results, and documents will be permanently removed.</p>
+        </canvas-modal-content>
+        <canvas-modal-footer>
+          <canvas-button variant="ghost" id="modal-delete-cancel">Cancel</canvas-button>
+          <canvas-button style="--color-secondary: #db2828" id="modal-delete-confirm">Delete Permanently</canvas-button>
+        </canvas-modal-footer>
+      </canvas-modal>
+    </div>
+
+    <!-- Info no footer -->
+    <div class="sample-card">
+      <h3>Small, informational, no footer</h3>
+      <canvas-button id="modal-open-info">Open info modal</canvas-button>
+      <canvas-modal id="modal-info" size="small">
+        <canvas-modal-header dismissable>Patient Information</canvas-modal-header>
+        <canvas-modal-content>
+          <p><strong>Name:</strong> Jane Smith</p>
+          <p><strong>DOB:</strong> March 15, 1985</p>
+          <p><strong>MRN:</strong> MRN-00482917</p>
+        </canvas-modal-content>
+      </canvas-modal>
+    </div>
+
+    <!-- Events -->
+    <div class="sample-card">
+      <h3>Small, events</h3>
+      <canvas-button id="modal-open-events">Open modal</canvas-button>
+      <div id="modal-event-log"></div>
+      <canvas-modal id="modal-events" size="small">
+        <canvas-modal-header dismissable>Event Demo</canvas-modal-header>
+        <canvas-modal-content><p>Open and dismiss this modal to see events logged below.</p></canvas-modal-content>
+      </canvas-modal>
+    </div>
+  </section>
+
+  <!-- Multi-Select -->
   <section class="component-section" id="multi-select">
     <h2>Multi-Select</h2>
     <hr class="section-divider">
@@ -1522,305 +1904,814 @@
     </div>
   </section>
 
-  <!-- 13. Tabs -->
-  <section class="component-section" id="tabs">
-    <h2>Tabs</h2>
+  <!-- Progress -->
+  <section class="component-section" id="progress">
+    <h2>Progress</h2>
     <hr class="section-divider">
 
-    <!-- Basic tabs -->
+    <!-- Default (blue) -->
     <div class="sample-card">
-      <h3>Basic tabs</h3>
-      <canvas-tabs>
-        <canvas-tab for="showcase-overview" active><canvas-tab-label>Overview</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-meds" badge="4"><canvas-tab-label>Medications</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-labs"><canvas-tab-label>Lab Results</canvas-tab-label></canvas-tab>
-
-        <canvas-tab-panel id="showcase-overview">
-          <canvas-card>
-            <canvas-card-body>
-              <h4 style="margin-bottom: .5em">Patient Overview</h4>
-              <p>Jane Smith, DOB Mar 15, 1985. Primary care with Dr. Steven Magee.</p>
-              <div style="margin-top: 1em; display: flex; gap: .25em">
-                <canvas-badge color="green" size="mini">Active</canvas-badge>
-                <canvas-badge color="blue" size="mini">Insured</canvas-badge>
-              </div>
-            </canvas-card-body>
-          </canvas-card>
-        </canvas-tab-panel>
-        <canvas-tab-panel id="showcase-meds">
-          <canvas-table aria-label="Active medications">
-            <canvas-table-head>
-              <canvas-table-row>
-                <canvas-table-cell>Medication</canvas-table-cell>
-                <canvas-table-cell>Dose</canvas-table-cell>
-                <canvas-table-cell>Frequency</canvas-table-cell>
-                <canvas-table-cell>Status</canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-head>
-            <canvas-table-body>
-              <canvas-table-row>
-                <canvas-table-cell bold>Metformin</canvas-table-cell>
-                <canvas-table-cell>500 mg</canvas-table-cell>
-                <canvas-table-cell>Twice daily</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row>
-                <canvas-table-cell bold>Lisinopril</canvas-table-cell>
-                <canvas-table-cell>10 mg</canvas-table-cell>
-                <canvas-table-cell>Once daily</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row>
-                <canvas-table-cell bold>Atorvastatin</canvas-table-cell>
-                <canvas-table-cell>20 mg</canvas-table-cell>
-                <canvas-table-cell>Once daily at bedtime</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row>
-                <canvas-table-cell bold>Amlodipine</canvas-table-cell>
-                <canvas-table-cell>5 mg</canvas-table-cell>
-                <canvas-table-cell>Once daily</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="orange" size="mini">Refill needed</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-body>
-          </canvas-table>
-        </canvas-tab-panel>
-        <canvas-tab-panel id="showcase-labs">
-          <canvas-table compact aria-label="Recent lab results">
-            <canvas-table-head>
-              <canvas-table-row>
-                <canvas-table-cell>Test</canvas-table-cell>
-                <canvas-table-cell>Value</canvas-table-cell>
-                <canvas-table-cell>Reference</canvas-table-cell>
-                <canvas-table-cell>Date</canvas-table-cell>
-                <canvas-table-cell>Status</canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-head>
-            <canvas-table-body>
-              <canvas-table-row positive>
-                <canvas-table-cell bold>Glucose</canvas-table-cell>
-                <canvas-table-cell>95 mg/dL</canvas-table-cell>
-                <canvas-table-cell>70-100 mg/dL</canvas-table-cell>
-                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Normal</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row warning>
-                <canvas-table-cell bold>HbA1c</canvas-table-cell>
-                <canvas-table-cell>6.8%</canvas-table-cell>
-                <canvas-table-cell>Below 5.7%</canvas-table-cell>
-                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="orange" size="mini">Elevated</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row negative>
-                <canvas-table-cell bold>LDL Cholesterol</canvas-table-cell>
-                <canvas-table-cell>185 mg/dL</canvas-table-cell>
-                <canvas-table-cell>Below 100 mg/dL</canvas-table-cell>
-                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="red" size="mini">High</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-body>
-          </canvas-table>
-        </canvas-tab-panel>
-      </canvas-tabs>
+      <h3>Default (blue, standard size)</h3>
+      <canvas-progress value="65" label></canvas-progress>
     </div>
 
-    <!-- Two tabs minimal -->
+    <!-- Colors -->
     <div class="sample-card">
-      <h3>Two tabs (minimal)</h3>
-      <canvas-tabs>
-        <canvas-tab for="showcase-active-rx" active><canvas-tab-label>Active</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-inactive-rx"><canvas-tab-label>Inactive</canvas-tab-label></canvas-tab>
-
-        <canvas-tab-panel id="showcase-active-rx">
-          <canvas-table compact aria-label="Active prescriptions">
-            <canvas-table-head>
-              <canvas-table-row>
-                <canvas-table-cell>Medication</canvas-table-cell>
-                <canvas-table-cell>Dose</canvas-table-cell>
-                <canvas-table-cell>Status</canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-head>
-            <canvas-table-body>
-              <canvas-table-row>
-                <canvas-table-cell bold>Metformin</canvas-table-cell>
-                <canvas-table-cell>500 mg</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-              <canvas-table-row>
-                <canvas-table-cell bold>Lisinopril</canvas-table-cell>
-                <canvas-table-cell>10 mg</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-body>
-          </canvas-table>
-        </canvas-tab-panel>
-        <canvas-tab-panel id="showcase-inactive-rx">
-          <canvas-table compact aria-label="Inactive prescriptions">
-            <canvas-table-head>
-              <canvas-table-row>
-                <canvas-table-cell>Medication</canvas-table-cell>
-                <canvas-table-cell>Dose</canvas-table-cell>
-                <canvas-table-cell>Reason</canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-head>
-            <canvas-table-body>
-              <canvas-table-row>
-                <canvas-table-cell bold>Hydrochlorothiazide</canvas-table-cell>
-                <canvas-table-cell>25 mg</canvas-table-cell>
-                <canvas-table-cell style="color: #767676">Switched to Amlodipine</canvas-table-cell>
-              </canvas-table-row>
-            </canvas-table-body>
-          </canvas-table>
-        </canvas-tab-panel>
-      </canvas-tabs>
+      <h3>Color variants</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <div class="label">Blue (default, active campaigns)</div>
+          <canvas-progress value="72" color="blue" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Green (match scores, success)</div>
+          <canvas-progress value="88" color="green" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Grey (inactive, selected)</div>
+          <canvas-progress value="45" color="grey" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Red (error, low completion)</div>
+          <canvas-progress value="15" color="red" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Orange (warning)</div>
+          <canvas-progress value="50" color="orange" label></canvas-progress>
+        </div>
+      </div>
     </div>
 
-    <!-- Long labels -->
+    <!-- Sizes -->
     <div class="sample-card">
-      <h3>Long labels (truncation with tooltip)</h3>
-      <canvas-tabs>
-        <canvas-tab for="showcase-long-meds" active badge="4"><canvas-tab-label>Medications and Supplements</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-long-allergies" badge="2"><canvas-tab-label>Allergies and Adverse Reactions</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-long-immunizations"><canvas-tab-label>Immunization Records</canvas-tab-label></canvas-tab>
-        <canvas-tab for="showcase-long-family"><canvas-tab-label>Family Medical History</canvas-tab-label></canvas-tab>
+      <h3>Size variants</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <div class="label">Default (1.75em bar height, label visible)</div>
+          <canvas-progress value="60" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Small (1em bar height, label visible)</div>
+          <canvas-progress value="60" size="small" label></canvas-progress>
+        </div>
+        <div>
+          <div class="label">Tiny (0.5em bar height, label hidden automatically)</div>
+          <canvas-progress value="60" size="tiny" label></canvas-progress>
+        </div>
+      </div>
+    </div>
 
-        <canvas-tab-panel id="showcase-long-meds"><p>This tab label exceeds the default 160px max-width and gets truncated with an ellipsis.</p></canvas-tab-panel>
-        <canvas-tab-panel id="showcase-long-allergies"><p>Another long label that truncates. The badge stays visible.</p></canvas-tab-panel>
-        <canvas-tab-panel id="showcase-long-immunizations"><p>Fits comfortably within the default max-width.</p></canvas-tab-panel>
-        <canvas-tab-panel id="showcase-long-family"><p>Right at the edge of the default limit.</p></canvas-tab-panel>
-      </canvas-tabs>
+    <!-- Active animation -->
+    <div class="sample-card">
+      <h3>Active (pulsing animation)</h3>
+      <canvas-progress value="40" active label></canvas-progress>
+    </div>
+
+    <!-- Without label -->
+    <div class="sample-card">
+      <h3>Without label</h3>
+      <canvas-progress value="75" color="green"></canvas-progress>
+    </div>
+
+    <!-- Campaign list pattern -->
+    <div class="sample-card">
+      <h3>Campaign list pattern (small, inline with text)</h3>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outreach</span>
+        <canvas-progress value="68" color="blue" size="small" style="flex: 1;"></canvas-progress>
+        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">68%</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outcome</span>
+        <canvas-progress value="42" color="grey" size="small" style="flex: 1;"></canvas-progress>
+        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">42%</span>
+      </div>
+    </div>
+
+    <!-- Match score pattern -->
+    <div class="sample-card">
+      <h3>Match score pattern (tiny, search results)</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Metformin 500mg</span>
+          <canvas-progress value="95" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Metoprolol 25mg</span>
+          <canvas-progress value="72" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex: 1; font-size: .92857143em;">Methylprednisolone 4mg</span>
+          <canvas-progress value="38" color="green" size="tiny" style="width: 80px;"></canvas-progress>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Radio -->
+  <section class="component-section" id="radio">
+    <h2>Radio</h2>
+    <hr class="section-divider">
+
+    <!-- Vertical group -->
+    <div class="sample-card">
+      <h3>Vertical Group</h3>
+      <div class="label">Duration</div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start;">
+        <canvas-radio name="radio-duration" label="15 min" value="15"></canvas-radio>
+        <canvas-radio name="radio-duration" label="30 min" value="30"></canvas-radio>
+        <canvas-radio name="radio-duration" label="60 min" value="60" checked></canvas-radio>
+      </div>
+    </div>
+
+    <!-- Full width -->
+    <div class="sample-card">
+      <h3>Vertical Group (Full Width)</h3>
+      <p style="color: #767676; margin-bottom: 12px;">Each radio stretches to fill the container width. The entire row is clickable.</p>
+      <div class="label">Note type</div>
+      <div style="display: flex; flex-direction: column;">
+        <canvas-radio name="radio-note-fw" label="Appointment" value="appointment" style="width: 100%"></canvas-radio>
+        <canvas-radio name="radio-note-fw" label="Home visit" value="home-visit" style="width: 100%"></canvas-radio>
+        <canvas-radio name="radio-note-fw" label="Phone call" value="phone-call" style="width: 100%"></canvas-radio>
+        <canvas-radio name="radio-note-fw" label="Message" value="message" style="width: 100%"></canvas-radio>
+      </div>
     </div>
 
     <!-- Change event -->
     <div class="sample-card">
-      <h3>Change event</h3>
-      <canvas-tabs id="tabs-event-tabs">
-        <canvas-tab for="tabs-ev-one" active><canvas-tab-label>First</canvas-tab-label></canvas-tab>
-        <canvas-tab for="tabs-ev-two"><canvas-tab-label>Second</canvas-tab-label></canvas-tab>
-        <canvas-tab for="tabs-ev-three"><canvas-tab-label>Third</canvas-tab-label></canvas-tab>
+      <h3>Change Event</h3>
+      <p style="color: #767676; margin-bottom: 12px;">Select a note type. The change event reports the value.</p>
+      <div id="radio-note-type-group" style="display: flex; flex-direction: column; align-items: flex-start;">
+        <canvas-radio name="radio-note-type" label="Appointment" value="appointment"></canvas-radio>
+        <canvas-radio name="radio-note-type" label="Home visit" value="home-visit"></canvas-radio>
+        <canvas-radio name="radio-note-type" label="Phone call" value="phone-call"></canvas-radio>
+        <canvas-radio name="radio-note-type" label="Message" value="message"></canvas-radio>
+      </div>
+      <div id="radio-change-log">Selected: none</div>
+    </div>
 
-        <canvas-tab-panel id="tabs-ev-one"><p>Click any tab to fire a tab-change event.</p></canvas-tab-panel>
-        <canvas-tab-panel id="tabs-ev-two"><p>You switched to the second tab.</p></canvas-tab-panel>
-        <canvas-tab-panel id="tabs-ev-three"><p>Third tab is now active.</p></canvas-tab-panel>
-      </canvas-tabs>
-      <div id="tabs-change-log"></div>
+    <!-- Horizontal group -->
+    <div class="sample-card">
+      <h3>Horizontal Group</h3>
+      <div class="label">Priority</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <canvas-radio name="radio-priority" label="Low" value="low"></canvas-radio>
+        <canvas-radio name="radio-priority" label="Medium" value="medium" checked></canvas-radio>
+        <canvas-radio name="radio-priority" label="High" value="high"></canvas-radio>
+        <canvas-radio name="radio-priority" label="Urgent" value="urgent"></canvas-radio>
+      </div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="sample-card">
+      <h3>Disabled</h3>
+      <div style="display: flex; flex-direction: column; align-items: flex-start;">
+        <canvas-radio name="radio-locked" label="Option A" value="a" checked disabled></canvas-radio>
+        <canvas-radio name="radio-locked" label="Option B" value="b" disabled></canvas-radio>
+      </div>
+    </div>
+
+    <!-- Two independent groups -->
+    <div class="sample-card">
+      <h3>Two Independent Groups</h3>
+      <div style="display: flex; gap: 40px;">
+        <div>
+          <div class="label">Visit Type</div>
+          <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <canvas-radio name="radio-visit" label="In-person" value="in-person" checked></canvas-radio>
+            <canvas-radio name="radio-visit" label="Telehealth" value="telehealth"></canvas-radio>
+          </div>
+        </div>
+        <div>
+          <div class="label">Duration</div>
+          <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <canvas-radio name="radio-dur2" label="15 min" value="15"></canvas-radio>
+            <canvas-radio name="radio-dur2" label="30 min" value="30" checked></canvas-radio>
+            <canvas-radio name="radio-dur2" label="60 min" value="60"></canvas-radio>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- 14. Accordion -->
-  <section class="component-section" id="accordion">
-    <h2>Accordion</h2>
+  <!-- Scroll Area -->
+  <section class="component-section" id="scroll-area">
+    <h2>Scroll Area</h2>
     <hr class="section-divider">
 
-    <!-- Basic -->
+    <!-- Vertical only -->
     <div class="sample-card">
-      <h3>Basic accordion</h3>
-      <canvas-accordion>
-        <canvas-accordion-item open>
-          <canvas-accordion-title>Patient Demographics</canvas-accordion-title>
-          <canvas-accordion-content><p>Jane Smith, born Mar 15, 1985. Female. MRN 4821903.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>Insurance Information</canvas-accordion-title>
-          <canvas-accordion-content><p>Blue Cross Blue Shield PPO. Member ID BCB-9928341.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>Allergies</canvas-accordion-title>
-          <canvas-accordion-content><p>Penicillin (rash). Sulfa drugs (anaphylaxis).</p></canvas-accordion-content>
-        </canvas-accordion-item>
-      </canvas-accordion>
+      <h3>Vertical only</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Use for long lists, activity logs, and constrained content columns. Set <code>max-height</code> via inline style. The component auto-applies <code>tabindex="0"</code> so keyboard users can focus the region and arrow-scroll.</p>
+      <canvas-scroll-area vertical aria-label="Activity log" style="max-height: 180px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 24, 2026 &middot; Prior authorization approved for Humira</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 22, 2026 &middot; Lab order sent to Quest</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 20, 2026 &middot; Visit note signed</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 18, 2026 &middot; Coverage updated</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 15, 2026 &middot; Referral to Cardiology sent</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 12, 2026 &middot; Follow up scheduled</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 10, 2026 &middot; Medication list reconciled</div>
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(34, 36, 38, 0.1);">Mar 06, 2026 &middot; Immunization recorded</div>
+        <div style="padding: 10px 14px;">Mar 02, 2026 &middot; Patient portal invitation sent</div>
+      </canvas-scroll-area>
     </div>
 
-    <!-- Badges right-aligned -->
+    <!-- Horizontal only -->
     <div class="sample-card">
-      <h3>Badges right-aligned (canvas-badge)</h3>
-      <canvas-accordion>
-        <canvas-accordion-item open>
-          <canvas-accordion-title>
-            <span class="flex-grow">Active Medications</span>
-            <canvas-badge color="blue" size="tiny">4 active</canvas-badge>
-          </canvas-accordion-title>
-          <canvas-accordion-content><p>Metformin 500mg twice daily. Lisinopril 10mg once daily. Atorvastatin 20mg at bedtime. Amlodipine 5mg once daily.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">Pending Orders</span>
-            <canvas-badge color="orange" size="tiny">2 pending</canvas-badge>
-          </canvas-accordion-title>
-          <canvas-accordion-content><p>CBC with differential, ordered Mar 20, 2026. Lipid panel, ordered Mar 20, 2026.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-      </canvas-accordion>
+      <h3>Horizontal only</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Use for wide tables that should scroll sideways without scrolling the page. Set <code>min-width</code> on the inner content so the container has something to scroll to. Replaces the legacy <code>.table-scroll</code> wrapper.</p>
+      <canvas-scroll-area horizontal aria-label="Claims ledger" style="max-width: 100%; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <table class="table table-compact" style="min-width: 1200px">
+          <thead>
+            <tr>
+              <th>Date</th><th>Claim ID</th><th>Patient</th><th>Provider</th>
+              <th>Service</th><th>Diagnosis</th><th>Billed</th><th>Allowed</th><th>Paid</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mar 24, 2026</td><td>CL-9821</td><td>Jane Doe</td><td>Dr. Smith</td>
+              <td>99213</td><td>J44.1</td><td>$180.00</td><td>$120.00</td><td>$96.00</td><td>Paid</td>
+            </tr>
+            <tr>
+              <td>Mar 18, 2026</td><td>CL-9807</td><td>John Roe</td><td>Dr. Patel</td>
+              <td>99214</td><td>I10</td><td>$220.00</td><td>$150.00</td><td>$120.00</td><td>Paid</td>
+            </tr>
+            <tr>
+              <td>Mar 12, 2026</td><td>CL-9791</td><td>Alice Johnson</td><td>Dr. Patel</td>
+              <td>99213</td><td>E11.9</td><td>$180.00</td><td>$120.00</td><td>$0.00</td><td>Denied</td>
+            </tr>
+          </tbody>
+        </table>
+      </canvas-scroll-area>
+    </div>
+
+    <!-- Both directions -->
+    <div class="sample-card">
+      <h3>Both directions</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Use when content is wide and tall at the same time. Dense data grids, cross referenced tables. Set both <code>max-height</code> and <code>max-width</code>.</p>
+      <canvas-scroll-area vertical horizontal aria-label="Wide and tall data grid" style="max-height: 220px; max-width: 100%; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <table class="table table-compact" style="min-width: 1300px">
+          <thead>
+            <tr>
+              <th>Date</th><th>Claim ID</th><th>Patient</th><th>Provider</th>
+              <th>Service</th><th>Diagnosis</th><th>Billed</th><th>Allowed</th><th>Paid</th><th>Adj</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Mar 24, 2026</td><td>CL-9821</td><td>Jane Doe</td><td>Dr. Smith</td><td>99213</td><td>J44.1</td><td>$180.00</td><td>$120.00</td><td>$96.00</td><td>$24.00</td><td>Paid</td></tr>
+            <tr><td>Mar 22, 2026</td><td>CL-9815</td><td>Jane Doe</td><td>Dr. Smith</td><td>90471</td><td>Z23</td><td>$45.00</td><td>$25.00</td><td>$20.00</td><td>$5.00</td><td>Paid</td></tr>
+            <tr><td>Mar 18, 2026</td><td>CL-9807</td><td>John Roe</td><td>Dr. Patel</td><td>99214</td><td>I10</td><td>$220.00</td><td>$150.00</td><td>$120.00</td><td>$30.00</td><td>Paid</td></tr>
+            <tr><td>Mar 12, 2026</td><td>CL-9791</td><td>Alice Johnson</td><td>Dr. Patel</td><td>99213</td><td>E11.9</td><td>$180.00</td><td>$120.00</td><td>$0.00</td><td>$0.00</td><td>Denied</td></tr>
+            <tr><td>Mar 09, 2026</td><td>CL-9783</td><td>Bob Martin</td><td>Dr. Smith</td><td>99213</td><td>M54.5</td><td>$180.00</td><td>$120.00</td><td>$96.00</td><td>$24.00</td><td>Paid</td></tr>
+            <tr><td>Mar 05, 2026</td><td>CL-9774</td><td>Eve Lopez</td><td>Dr. Nguyen</td><td>99396</td><td>Z00.00</td><td>$320.00</td><td>$200.00</td><td>$0.00</td><td>$0.00</td><td>Pending</td></tr>
+            <tr><td>Mar 02, 2026</td><td>CL-9766</td><td>Chen Wei</td><td>Dr. Patel</td><td>99213</td><td>E78.5</td><td>$180.00</td><td>$120.00</td><td>$96.00</td><td>$24.00</td><td>Paid</td></tr>
+            <tr><td>Feb 27, 2026</td><td>CL-9751</td><td>Maria Silva</td><td>Dr. Smith</td><td>99214</td><td>K21.9</td><td>$220.00</td><td>$150.00</td><td>$120.00</td><td>$30.00</td><td>Paid</td></tr>
+          </tbody>
+        </table>
+      </canvas-scroll-area>
+    </div>
+
+    <!-- With sortable list -->
+    <div class="sample-card">
+      <h3>With canvas-sortable-list</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Constrain a long reorderable list to a fixed height. The scroll area scrolls, items stay draggable inside.</p>
+      <canvas-scroll-area vertical aria-label="Care plan order" style="max-height: 200px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sortable-list>
+          <canvas-sortable-item>Review medications</canvas-sortable-item>
+          <canvas-sortable-item>Verify insurance coverage</canvas-sortable-item>
+          <canvas-sortable-item>Order metabolic panel</canvas-sortable-item>
+          <canvas-sortable-item>Schedule Cardiology referral</canvas-sortable-item>
+          <canvas-sortable-item>Discuss lifestyle goals</canvas-sortable-item>
+          <canvas-sortable-item>Document patient education</canvas-sortable-item>
+          <canvas-sortable-item>Send portal invitation</canvas-sortable-item>
+          <canvas-sortable-item>Confirm pharmacy on file</canvas-sortable-item>
+          <canvas-sortable-item>Print after-visit summary</canvas-sortable-item>
+        </canvas-sortable-list>
+      </canvas-scroll-area>
+    </div>
+
+    <!-- Inside a card body -->
+    <div class="sample-card">
+      <h3>Inside a canvas-card body</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Migration pattern for the pre 4.0.0 <code>canvas-card-body[max-height]</code> behavior. The card body no longer scrolls on its own. Wrap the content in a <code>canvas-scroll-area vertical</code> with a <code>max-height</code>. The card stays compact, the scroll area handles overflow.</p>
+      <canvas-card>
+        <canvas-card-body>
+          <h4>Medication History</h4>
+          <canvas-scroll-area vertical aria-label="Medication history" style="max-height: 130px; margin-top: 8px">
+            <p>Metformin 500mg BID, started Jan 15, 2024. Titrated from 250mg.</p>
+            <p style="margin-top: 8px">Lisinopril 10mg daily, started Mar 3, 2024. Blood pressure well controlled.</p>
+            <p style="margin-top: 8px">Atorvastatin 20mg daily, started Jun 12, 2024. LDL target achieved.</p>
+            <p style="margin-top: 8px">Amlodipine 5mg daily, started Sep 8, 2024. Added for persistent elevated systolic.</p>
+            <p style="margin-top: 8px">Omeprazole 20mg daily, started Nov 20, 2024. GERD symptoms resolved.</p>
+            <p style="margin-top: 8px">Aspirin 81mg daily, started Jan 5, 2025. Primary prevention per cardiology consult.</p>
+          </canvas-scroll-area>
+        </canvas-card-body>
+        <canvas-card-footer>
+          <span style="font-size: .92857143em;">6 medications total</span>
+        </canvas-card-footer>
+      </canvas-card>
+    </div>
+
+    <!-- Wrapping a stack of cards -->
+    <div class="sample-card">
+      <h3>Wrapping a stack of cards</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Scroll a list of cards as a single region. The scroll area contains multiple <code>canvas-card</code> elements, each with its own body and optional footer. Use when the list itself should scroll rather than each card being independently scrollable.</p>
+      <canvas-scroll-area vertical aria-label="Open encounters" style="max-height: 280px; background: #F5F5F5; padding: 12px; border-radius: .28571429rem;">
+        <canvas-card style="margin-bottom: 12px">
+          <canvas-card-body>
+            <h4 style="margin: 0">Office Visit, Mar 24, 2026</h4>
+            <p style="margin-top: 8px">Reviewed medications and updated care plan. Patient reports adherence.</p>
+          </canvas-card-body>
+          <canvas-card-footer>
+            <canvas-button variant="primary" size="sm">Sign</canvas-button>
+            <canvas-button variant="ghost" size="sm">View</canvas-button>
+          </canvas-card-footer>
+        </canvas-card>
+        <canvas-card style="margin-bottom: 12px">
+          <canvas-card-body>
+            <h4 style="margin: 0">Telehealth, Mar 18, 2026</h4>
+            <p style="margin-top: 8px">Blood pressure well controlled on current regimen.</p>
+          </canvas-card-body>
+          <canvas-card-footer>
+            <canvas-button variant="primary" size="sm">Sign</canvas-button>
+            <canvas-button variant="ghost" size="sm">View</canvas-button>
+          </canvas-card-footer>
+        </canvas-card>
+        <canvas-card style="margin-bottom: 12px">
+          <canvas-card-body>
+            <h4 style="margin: 0">Follow Up, Mar 12, 2026</h4>
+            <p style="margin-top: 8px">A1c trending down. Continue metformin titration.</p>
+          </canvas-card-body>
+          <canvas-card-footer>
+            <canvas-button variant="primary" size="sm">Sign</canvas-button>
+            <canvas-button variant="ghost" size="sm">View</canvas-button>
+          </canvas-card-footer>
+        </canvas-card>
+        <canvas-card>
+          <canvas-card-body>
+            <h4 style="margin: 0">Annual Physical, Mar 05, 2026</h4>
+            <p style="margin-top: 8px">All screenings current. Immunizations up to date.</p>
+          </canvas-card-body>
+          <canvas-card-footer>
+            <canvas-button variant="primary" size="sm">Sign</canvas-button>
+            <canvas-button variant="ghost" size="sm">View</canvas-button>
+          </canvas-card-footer>
+        </canvas-card>
+      </canvas-scroll-area>
+    </div>
+
+    <!-- No direction -->
+    <div class="sample-card">
+      <h3>No direction attribute</h3>
+      <p class="text-sm text-muted" style="margin: 0 0 12px">Without <code>vertical</code> or <code>horizontal</code>, the component is a transparent block that grows to content. No scrollbars. No tab stop. Useful as a no-op wrapper when the scroll direction is applied conditionally.</p>
+      <canvas-scroll-area style="border: 1px dashed rgba(34, 36, 38, 0.15); padding: 12px; background: #fff; border-radius: .28571429rem;">
+        Content renders naturally. Neither axis scrolls.
+      </canvas-scroll-area>
+    </div>
+
+  </section>
+
+  <!-- Sidebar Layout -->
+  <section class="component-section" id="sidebar-layout">
+    <h2>Sidebar Layout</h2>
+    <hr class="section-divider">
+
+    <!-- Default (260px) -->
+    <div class="sample-card">
+      <h3>Default sidebar (260px, schedule pattern)</h3>
+      <canvas-sidebar-layout style="height: 320px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sidebar style="--canvas-sidebar-padding: 16px;">
+          <div style="margin-bottom: 16px;">
+            <canvas-button variant="basic" size="sm" style="width: 100%">Today</canvas-button>
+          </div>
+          <div style="font-weight: 700; margin-bottom: 12px;">March 2026</div>
+          <div style="font-size: .85em; color: rgba(0,0,0,0.6); margin-bottom: 16px;">Mon 24 &middot; Tue 25 &middot; Wed 26 &middot; Thu 27 &middot; Fri 28</div>
+          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 12px; margin-bottom: 8px; font-weight: 700; font-size: .92857143em;">Providers</div>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: .92857143em;">
+            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox checked></canvas-checkbox> Dr. Sarah Chen</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox checked></canvas-checkbox> Dr. James Park</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox></canvas-checkbox> Dr. Maria Lopez</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox></canvas-checkbox> Dr. Alex Kim</label>
+          </div>
+          <div style="margin-top: 12px; font-size: .85em; color: rgba(0,0,0,0.4);">4 clinicians total</div>
+        </canvas-sidebar>
+        <canvas-content style="--canvas-content-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 12px;">Week of March 24, 2026</div>
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Mon</div>
+            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Tue</div>
+            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Wed</div>
+            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Thu</div>
+            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Fri</div>
+            <div style="padding: 4px; font-size: .8em;">
+              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px; margin-bottom: 4px;">9:00 AM Appt</div>
+              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">10:30 AM Appt</div>
+            </div>
+            <div style="padding: 4px; font-size: .8em;">
+              <div style="background: #fef3e0; border-left: 3px solid #f2711c; padding: 4px 6px; border-radius: 2px;">8:30 AM Urgent</div>
+            </div>
+            <div style="padding: 4px; font-size: .8em;">
+              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">2:00 PM Appt</div>
+            </div>
+            <div style="padding: 4px; font-size: .8em;"></div>
+            <div style="padding: 4px; font-size: .8em;">
+              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">11:00 AM Appt</div>
+            </div>
+          </div>
+        </canvas-content>
+      </canvas-sidebar-layout>
+    </div>
+
+    <!-- Narrow (210px) -->
+    <div class="sample-card">
+      <h3>Narrow sidebar (210px, revenue pattern)</h3>
+      <canvas-sidebar-layout style="height: 300px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sidebar variant="narrow" style="--canvas-sidebar-padding: 12px;">
+          <div style="margin-bottom: 12px;">
+            <canvas-button variant="primary" size="sm" style="width: 100%">Post a remit</canvas-button>
+          </div>
+          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 8px;">
+            <div style="padding: 8px 0; font-weight: 700; font-size: .92857143em; color: rgba(0,0,0,0.87);">All claims</div>
+            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
+              <span>Needs review</span>
+              <canvas-badge color="red" size="mini">12</canvas-badge>
+            </div>
+            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
+              <span>Ready to submit</span>
+              <canvas-badge color="blue" size="mini">8</canvas-badge>
+            </div>
+            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
+              <span>Submitted</span>
+              <canvas-badge color="grey" size="mini">43</canvas-badge>
+            </div>
+            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
+              <span>Denied</span>
+              <canvas-badge color="red" size="mini">3</canvas-badge>
+            </div>
+          </div>
+        </canvas-sidebar>
+        <canvas-content style="--canvas-content-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 12px;">Claims Queue</div>
+          <canvas-table aria-label="Claims">
+            <canvas-table-head>
+              <canvas-table-row>
+                <canvas-table-cell>Patient</canvas-table-cell>
+                <canvas-table-cell>Date</canvas-table-cell>
+                <canvas-table-cell>Amount</canvas-table-cell>
+                <canvas-table-cell>Status</canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-head>
+            <canvas-table-body>
+              <canvas-table-row>
+                <canvas-table-cell bold>Jane Smith</canvas-table-cell>
+                <canvas-table-cell>03/20/26</canvas-table-cell>
+                <canvas-table-cell>$245.00</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="red" size="mini">Denied</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row>
+                <canvas-table-cell bold>Robert Johnson</canvas-table-cell>
+                <canvas-table-cell>03/19/26</canvas-table-cell>
+                <canvas-table-cell>$180.00</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="blue" size="mini">Submitted</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row>
+                <canvas-table-cell bold>Emily Davis</canvas-table-cell>
+                <canvas-table-cell>03/18/26</canvas-table-cell>
+                <canvas-table-cell>$320.00</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Paid</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-body>
+          </canvas-table>
+        </canvas-content>
+      </canvas-sidebar-layout>
+    </div>
+
+    <!-- Wide (400px) -->
+    <div class="sample-card">
+      <h3>Wide sidebar (400px, patient detail pattern)</h3>
+      <canvas-sidebar-layout style="height: 280px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sidebar variant="wide" style="--canvas-sidebar-padding: 16px;">
+          <div style="font-weight: 700; font-size: 1.125em; margin-bottom: 4px;">Margaret Thompson</div>
+          <div style="font-size: .85em; color: rgba(0,0,0,0.5); margin-bottom: 16px;">DOB: 04/15/1958 &middot; Female &middot; MRN: 00482916</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;">
+            <canvas-badge color="blue" size="mini">Medicare</canvas-badge>
+            <canvas-badge color="green" size="mini">Active</canvas-badge>
+          </div>
+          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 12px; font-size: .92857143em;">
+            <div style="font-weight: 700; margin-bottom: 8px;">Active conditions</div>
+            <div style="color: rgba(0,0,0,0.7); line-height: 1.6;">
+              Type 2 diabetes mellitus<br>
+              Essential hypertension<br>
+              Hyperlipidemia<br>
+              Osteoarthritis, right knee
+            </div>
+          </div>
+        </canvas-sidebar>
+        <canvas-content style="--canvas-content-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 12px;">Clinical Notes</div>
+          <canvas-card style="margin-bottom: 12px;">
+            <canvas-card-body>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="margin: 0;">Office Visit</h4>
+                <canvas-badge color="green" size="mini">Signed</canvas-badge>
+              </div>
+              <p class="text-sm text-muted" style="margin: 0;">03/22/26 with Dr. Sarah Chen</p>
+            </canvas-card-body>
+          </canvas-card>
+          <canvas-card>
+            <canvas-card-body>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="margin: 0;">Lab Results</h4>
+                <canvas-badge color="orange" size="mini">Pending review</canvas-badge>
+              </div>
+              <p class="text-sm text-muted" style="margin: 0;">03/20/26 Comprehensive Metabolic Panel</p>
+            </canvas-card-body>
+          </canvas-card>
+        </canvas-content>
+      </canvas-sidebar-layout>
+    </div>
+
+    <!-- Custom width override -->
+    <div class="sample-card">
+      <h3>Custom width override (320px via CSS custom property)</h3>
+      <canvas-sidebar-layout style="height: 200px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sidebar style="--canvas-sidebar-width: 320px; --canvas-sidebar-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 8px;">Custom 320px sidebar</div>
+          <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">The <code style="background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px;">--canvas-sidebar-width</code> CSS custom property overrides any variant value for one-off sizing needs.</p>
+        </canvas-sidebar>
+        <canvas-content style="--canvas-content-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 8px;">Content area</div>
+          <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">Takes up the remaining space with flex: 1.</p>
+        </canvas-content>
+      </canvas-sidebar-layout>
+    </div>
+
+    <!-- Scrollable panels -->
+    <div class="sample-card">
+      <h3>Independent scrolling (both panels scroll separately)</h3>
+      <canvas-sidebar-layout style="height: 220px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <canvas-sidebar style="--canvas-sidebar-padding: 12px;">
+          <div style="font-weight: 700; margin-bottom: 8px; font-size: .92857143em;">Navigation</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; font-size: .92857143em;">
+            <div style="padding: 6px 8px; background: rgba(0,0,0,0.06); border-radius: 3px; font-weight: 700;">Dashboard</div>
+            <div style="padding: 6px 8px;">Schedule</div>
+            <div style="padding: 6px 8px;">Messages</div>
+            <div style="padding: 6px 8px;">Patient List</div>
+            <div style="padding: 6px 8px;">Revenue</div>
+            <div style="padding: 6px 8px;">Reports</div>
+            <div style="padding: 6px 8px;">Settings</div>
+            <div style="padding: 6px 8px;">Integrations</div>
+            <div style="padding: 6px 8px;">Audit Log</div>
+            <div style="padding: 6px 8px;">Help Center</div>
+          </div>
+        </canvas-sidebar>
+        <canvas-content style="--canvas-content-padding: 16px;">
+          <div style="font-weight: 700; margin-bottom: 12px;">Dashboard</div>
+          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Appointments today:</strong> 12</canvas-card-body></canvas-card>
+          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Pending tasks:</strong> 5</canvas-card-body></canvas-card>
+          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Unread messages:</strong> 3</canvas-card-body></canvas-card>
+          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Claims to review:</strong> 8</canvas-card-body></canvas-card>
+          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Lab results pending:</strong> 2</canvas-card-body></canvas-card>
+          <canvas-card><canvas-card-body><strong>Prescriptions to renew:</strong> 4</canvas-card-body></canvas-card>
+        </canvas-content>
+      </canvas-sidebar-layout>
+    </div>
+  </section>
+
+  <!-- Sortable List -->
+  <section class="component-section" id="sortable-list">
+    <h2>Sortable List</h2>
+    <hr class="section-divider">
+
+    <!-- Basic reorderable list -->
+    <div class="sample-card">
+      <h3>Basic reorderable list</h3>
+      <canvas-sortable-list id="sortable-basic">
+        <canvas-sortable-item>First item</canvas-sortable-item>
+        <canvas-sortable-item>Second item</canvas-sortable-item>
+        <canvas-sortable-item>Third item</canvas-sortable-item>
+        <canvas-sortable-item>Fourth item</canvas-sortable-item>
+      </canvas-sortable-list>
+      <div id="sortable-basic-log" style="margin-top: 8px; font-size: .85rem; color: #767676; min-height: 1.4em;"></div>
+    </div>
+
+    <!-- Auto scroll during drag inside scrollable container -->
+    <div class="sample-card">
+      <h3>Auto scroll in a scrollable container</h3>
+      <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">Drag an item toward the top or bottom edge of the bordered pane. The pane auto scrolls while the pointer sits in the edge hotspot, stops when the pointer leaves the hotspot, and pins at the content boundary.</p>
+      <div style="border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem; padding: 8px; max-height: 220px; overflow-y: auto;">
+        <canvas-sortable-list>
+          <canvas-sortable-item>Review medications</canvas-sortable-item>
+          <canvas-sortable-item>Verify insurance coverage</canvas-sortable-item>
+          <canvas-sortable-item>Order metabolic panel</canvas-sortable-item>
+          <canvas-sortable-item>Schedule Cardiology referral</canvas-sortable-item>
+          <canvas-sortable-item>Discuss lifestyle goals</canvas-sortable-item>
+          <canvas-sortable-item>Document patient education</canvas-sortable-item>
+          <canvas-sortable-item>Send portal invitation</canvas-sortable-item>
+          <canvas-sortable-item>Confirm pharmacy on file</canvas-sortable-item>
+          <canvas-sortable-item>Print after-visit summary</canvas-sortable-item>
+          <canvas-sortable-item>Update problem list</canvas-sortable-item>
+          <canvas-sortable-item>Reconcile allergies</canvas-sortable-item>
+          <canvas-sortable-item>Review immunization schedule</canvas-sortable-item>
+        </canvas-sortable-list>
+      </div>
+    </div>
+
+    <!-- With checkboxes (Configure Schedule pattern) -->
+    <div class="sample-card">
+      <h3>With checkboxes (Configure Schedule pattern)</h3>
+      <div style="margin-bottom: 8px">
+        <canvas-checkbox label="Clinicians (7 visible)" checked></canvas-checkbox>
+      </div>
+      <div style="border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem; padding: 8px; max-height: 300px; overflow-y: auto;">
+        <canvas-sortable-list>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Steven Magee, MD" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Ninad Athale, MD" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Annalies Hines, NP" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Erik McDonald, MD" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Michael Zimmerman, MD" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Andrea Franchett, MD" checked></canvas-checkbox>
+          </canvas-sortable-item>
+          <canvas-sortable-item>
+            <canvas-checkbox label="Sam Tregar, DO" checked></canvas-checkbox>
+          </canvas-sortable-item>
+        </canvas-sortable-list>
+      </div>
+    </div>
+
+    <!-- With badges -->
+    <div class="sample-card">
+      <h3>With badges (priority ordering)</h3>
+      <canvas-sortable-list>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <canvas-badge color="red" size="mini">P1</canvas-badge>
+            <span>Server outage in production</span>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <canvas-badge color="orange" size="mini">P2</canvas-badge>
+            <span>Login timeout for SSO users</span>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <canvas-badge color="blue" size="mini">P3</canvas-badge>
+            <span>Update patient demographics form</span>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <canvas-badge color="grey" size="mini">P4</canvas-badge>
+            <span>Fix tooltip alignment on hover cards</span>
+          </div>
+        </canvas-sortable-item>
+      </canvas-sortable-list>
     </div>
 
     <!-- With toggles -->
     <div class="sample-card">
-      <h3>With toggles in title</h3>
-      <canvas-accordion>
-        <canvas-accordion-item open>
-          <canvas-accordion-title>
-            <span class="flex-grow">Email Notifications</span>
+      <h3>With toggles (notification preferences)</h3>
+      <canvas-sortable-list>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+            <span>Email notifications</span>
             <canvas-toggle checked></canvas-toggle>
-          </canvas-accordion-title>
-          <canvas-accordion-content><p>Receive email notifications for appointment reminders, lab results, and prescription refills.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">SMS Alerts</span>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+            <span>SMS alerts</span>
             <canvas-toggle checked></canvas-toggle>
-          </canvas-accordion-title>
-          <canvas-accordion-content><p>Text message alerts for urgent results and appointment changes.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">Portal Messages</span>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+            <span>Push notifications</span>
             <canvas-toggle></canvas-toggle>
-          </canvas-accordion-title>
-          <canvas-accordion-content><p>In-app messaging with your care team. Currently disabled.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-      </canvas-accordion>
+          </div>
+        </canvas-sortable-item>
+        <canvas-sortable-item>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+            <span>In-app messages</span>
+            <canvas-toggle checked></canvas-toggle>
+          </div>
+        </canvas-sortable-item>
+      </canvas-sortable-list>
     </div>
 
-    <!-- Multiple open -->
+    <!-- Cross list kanban -->
     <div class="sample-card">
-      <h3>Multiple sections open</h3>
-      <canvas-accordion>
-        <canvas-accordion-item open>
-          <canvas-accordion-title>Chief Complaint</canvas-accordion-title>
-          <canvas-accordion-content><p>Patient reports persistent headaches for the past two weeks.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item open>
-          <canvas-accordion-title>History of Present Illness</canvas-accordion-title>
-          <canvas-accordion-content><p>Headaches began approximately 14 days ago without clear precipitant.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item>
-          <canvas-accordion-title>Review of Systems</canvas-accordion-title>
-          <canvas-accordion-content><p>General: no fever, no weight change. All other systems negative.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-      </canvas-accordion>
+      <h3>Cross list kanban with shared group</h3>
+      <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">Lists with the same <code>group</code> value exchange items. Drag a card across columns, use <kbd>ArrowLeft</kbd> and <kbd>ArrowRight</kbd> on the handle to move it with the keyboard. The active drop target gets a dashed outline and the insertion bar shows where the item will land.</p>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+        <div>
+          <div id="kanban-h-backlog" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Backlog</div>
+          <canvas-sortable-list group="tickets" id="kanban-backlog" aria-labelledby="kanban-h-backlog">
+            <canvas-sortable-item data-id="t-1">Update coverage form</canvas-sortable-item>
+            <canvas-sortable-item data-id="t-2">Fix date picker</canvas-sortable-item>
+            <canvas-sortable-item data-id="t-5">Audit keyboard focus</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+        <div>
+          <div id="kanban-h-wip" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">In progress</div>
+          <canvas-sortable-list group="tickets" id="kanban-wip" aria-labelledby="kanban-h-wip">
+            <canvas-sortable-item data-id="t-3">Add autoscroll</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+        <div>
+          <div id="kanban-h-done" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Done</div>
+          <canvas-sortable-list group="tickets" id="kanban-done" aria-labelledby="kanban-h-done">
+            <canvas-sortable-item data-id="t-4">Ship accordion nesting</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+      </div>
+      <div id="kanban-log" style="margin-top: 8px; font-size: .8rem; color: #767676; font-family: ui-monospace, Menlo, Consolas, monospace; min-height: 1.4em;"></div>
     </div>
 
-    <!-- Toggle event -->
+    <!-- Palette with pull clone -->
     <div class="sample-card">
-      <h3>Toggle event</h3>
-      <canvas-accordion>
-        <canvas-accordion-item id="accordion-ev-vitals">
-          <canvas-accordion-title>Vitals</canvas-accordion-title>
-          <canvas-accordion-content><p>BP 128/82 mmHg. HR 72 bpm. Temp 98.4 F. Weight 172 lbs.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item id="accordion-ev-assessment">
-          <canvas-accordion-title>Assessment</canvas-accordion-title>
-          <canvas-accordion-content><p>Type 2 diabetes, well controlled. Hyperlipidemia, above target.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-        <canvas-accordion-item id="accordion-ev-plan">
-          <canvas-accordion-title>Plan</canvas-accordion-title>
-          <canvas-accordion-content><p>Continue current medications. Recheck lipid panel in 3 months.</p></canvas-accordion-content>
-        </canvas-accordion-item>
-      </canvas-accordion>
-      <div id="accordion-event-log"></div>
+      <h3>Template palette with pull clone</h3>
+      <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">The left column uses <code>pull="clone"</code>. Dragging an item from Templates drops a copy into the Form builder, the original stays in Templates.</p>
+      <div style="display: grid; grid-template-columns: 220px 1fr; gap: 12px;">
+        <div>
+          <div id="palette-h-src" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Templates</div>
+          <canvas-sortable-list group="widgets" pull="clone" id="palette-src" aria-labelledby="palette-h-src">
+            <canvas-sortable-item data-id="w-date">Date picker</canvas-sortable-item>
+            <canvas-sortable-item data-id="w-text">Text input</canvas-sortable-item>
+            <canvas-sortable-item data-id="w-select">Dropdown</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+        <div>
+          <div id="palette-h-form" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Form builder</div>
+          <canvas-sortable-list group="widgets" id="palette-form" aria-labelledby="palette-h-form"></canvas-sortable-list>
+        </div>
+      </div>
+      <div id="palette-log" style="margin-top: 8px; font-size: .8rem; color: #767676; font-family: ui-monospace, Menlo, Consolas, monospace; min-height: 1.4em;"></div>
+    </div>
+
+    <!-- Bulk flow with Save button -->
+    <div class="sample-card">
+      <h3>Bulk flow with accumulator and Save button</h3>
+      <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">Collect every <code>change</code> event into a Map keyed by id. Repeated moves of the same card collapse to a single latest position. Save flushes as one payload.</p>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+        <div>
+          <div id="bulk-h-a" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Assigned</div>
+          <canvas-sortable-list group="bulk" id="bulk-a" aria-labelledby="bulk-h-a">
+            <canvas-sortable-item data-id="b-1">Morning review</canvas-sortable-item>
+            <canvas-sortable-item data-id="b-2">Refill queue</canvas-sortable-item>
+            <canvas-sortable-item data-id="b-3">Labs triage</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+        <div>
+          <div id="bulk-h-b" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Delegated</div>
+          <canvas-sortable-list group="bulk" id="bulk-b" aria-labelledby="bulk-h-b">
+            <canvas-sortable-item data-id="b-4">Portal invites</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+        <canvas-button id="bulk-save" disabled>Save</canvas-button>
+        <span id="bulk-count" style="font-size: .85rem; color: #767676;">No pending changes.</span>
+      </div>
+      <div id="bulk-log" style="margin-top: 8px; font-size: .8rem; color: #767676; font-family: ui-monospace, Menlo, Consolas, monospace; min-height: 1.4em;"></div>
+    </div>
+
+    <!-- beforemove gate -->
+    <div class="sample-card">
+      <h3>Permission gate with <code>beforemove</code></h3>
+      <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">Dropping into the locked column fires <code>beforemove</code>. Calling <code>preventDefault</code> snaps the card back and suppresses the success event. Always pair a cancel with visible feedback.</p>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+        <div>
+          <div id="gated-h-todo" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">To do</div>
+          <canvas-sortable-list group="gated" id="gated-todo" aria-labelledby="gated-h-todo">
+            <canvas-sortable-item data-id="g-1">Task A</canvas-sortable-item>
+            <canvas-sortable-item data-id="g-2">Task B</canvas-sortable-item>
+          </canvas-sortable-list>
+        </div>
+        <div>
+          <div id="gated-h-locked" style="font-weight: 700; font-size: .85rem; margin-bottom: 4px;">Done (locked)</div>
+          <canvas-sortable-list group="gated" id="gated-locked" aria-labelledby="gated-h-locked"></canvas-sortable-list>
+        </div>
+      </div>
+      <div id="gated-log" style="margin-top: 8px; font-size: .8rem; color: #767676; font-family: ui-monospace, Menlo, Consolas, monospace; min-height: 1.4em;"></div>
     </div>
   </section>
 
-  <!-- 16. Table -->
+  <!-- Table -->
   <section class="component-section" id="table">
     <h2>Table</h2>
     <hr class="section-divider">
@@ -2207,642 +3098,323 @@
     </div>
   </section>
 
-  <!-- 15. Modal -->
-  <!-- 18. Sortable List -->
-  <section class="component-section" id="sortable-list">
-    <h2>Sortable List</h2>
+  <!-- Tabs -->
+  <section class="component-section" id="tabs">
+    <h2>Tabs</h2>
     <hr class="section-divider">
 
-    <!-- Basic reorderable list -->
+    <!-- Basic tabs -->
     <div class="sample-card">
-      <h3>Basic reorderable list</h3>
-      <canvas-sortable-list id="sortable-basic">
-        <canvas-sortable-item>First item</canvas-sortable-item>
-        <canvas-sortable-item>Second item</canvas-sortable-item>
-        <canvas-sortable-item>Third item</canvas-sortable-item>
-        <canvas-sortable-item>Fourth item</canvas-sortable-item>
-      </canvas-sortable-list>
-      <div id="sortable-basic-log" style="margin-top: 8px; font-size: .85rem; color: #767676; min-height: 1.4em;"></div>
-    </div>
+      <h3>Basic tabs</h3>
+      <canvas-tabs>
+        <canvas-tab for="showcase-overview" active><canvas-tab-label>Overview</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-meds" badge="4"><canvas-tab-label>Medications</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-labs"><canvas-tab-label>Lab Results</canvas-tab-label></canvas-tab>
 
-    <!-- With checkboxes (Configure Schedule pattern) -->
-    <div class="sample-card">
-      <h3>With checkboxes (Configure Schedule pattern)</h3>
-      <div style="margin-bottom: 8px">
-        <canvas-checkbox label="Clinicians (7 visible)" checked></canvas-checkbox>
-      </div>
-      <div style="border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem; padding: 8px; max-height: 300px; overflow-y: auto;">
-        <canvas-sortable-list>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Steven Magee, MD" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Ninad Athale, MD" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Annalies Hines, NP" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Erik McDonald, MD" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Michael Zimmerman, MD" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Andrea Franchett, MD" checked></canvas-checkbox>
-          </canvas-sortable-item>
-          <canvas-sortable-item>
-            <canvas-checkbox label="Sam Tregar, DO" checked></canvas-checkbox>
-          </canvas-sortable-item>
-        </canvas-sortable-list>
-      </div>
-    </div>
-
-    <!-- With badges -->
-    <div class="sample-card">
-      <h3>With badges (priority ordering)</h3>
-      <canvas-sortable-list>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; gap: 8px">
-            <canvas-badge color="red" size="mini">P1</canvas-badge>
-            <span>Server outage in production</span>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; gap: 8px">
-            <canvas-badge color="orange" size="mini">P2</canvas-badge>
-            <span>Login timeout for SSO users</span>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; gap: 8px">
-            <canvas-badge color="blue" size="mini">P3</canvas-badge>
-            <span>Update patient demographics form</span>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; gap: 8px">
-            <canvas-badge color="grey" size="mini">P4</canvas-badge>
-            <span>Fix tooltip alignment on hover cards</span>
-          </div>
-        </canvas-sortable-item>
-      </canvas-sortable-list>
-    </div>
-
-    <!-- With toggles -->
-    <div class="sample-card">
-      <h3>With toggles (notification preferences)</h3>
-      <canvas-sortable-list>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
-            <span>Email notifications</span>
-            <canvas-toggle checked></canvas-toggle>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
-            <span>SMS alerts</span>
-            <canvas-toggle checked></canvas-toggle>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
-            <span>Push notifications</span>
-            <canvas-toggle></canvas-toggle>
-          </div>
-        </canvas-sortable-item>
-        <canvas-sortable-item>
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
-            <span>In-app messages</span>
-            <canvas-toggle checked></canvas-toggle>
-          </div>
-        </canvas-sortable-item>
-      </canvas-sortable-list>
-    </div>
-  </section>
-
-  <section class="component-section" id="modal">
-    <h2>Modal</h2>
-    <hr class="section-divider">
-
-    <!-- Small confirmation -->
-    <div class="sample-card">
-      <h3>Small, confirmation</h3>
-      <canvas-button id="modal-open-confirm">Open confirmation</canvas-button>
-      <canvas-modal id="modal-confirm" size="small">
-        <canvas-modal-header>Confirm Action</canvas-modal-header>
-        <canvas-modal-content><p>Are you sure you want to proceed? This cannot be undone.</p></canvas-modal-content>
-        <canvas-modal-footer>
-          <canvas-button variant="ghost" id="modal-confirm-cancel">Cancel</canvas-button>
-          <canvas-button variant="primary" id="modal-confirm-ok">Confirm</canvas-button>
-        </canvas-modal-footer>
-      </canvas-modal>
-    </div>
-
-    <!-- Medium form -->
-    <div class="sample-card">
-      <h3>Medium, form</h3>
-      <canvas-button id="modal-open-form">Open form modal</canvas-button>
-      <canvas-modal id="modal-form" size="medium">
-        <canvas-modal-header>Add Coverage</canvas-modal-header>
-        <canvas-modal-content>
-          <div style="display: flex; flex-direction: column; gap: 12px">
-            <canvas-input label="Plan Name" placeholder="e.g. Blue Cross Blue Shield"></canvas-input>
-            <canvas-input label="Member ID" placeholder="e.g. BCB-2847191"></canvas-input>
-            <canvas-input label="Group Number" placeholder="e.g. EMP-44821"></canvas-input>
-            <div style="display: flex; gap: 12px">
-              <canvas-input label="Effective Date" type="date" style="flex:1"></canvas-input>
-              <canvas-input label="Termination Date" type="date" style="flex:1"></canvas-input>
-            </div>
-          </div>
-        </canvas-modal-content>
-        <canvas-modal-footer>
-          <canvas-button variant="ghost" id="modal-form-cancel">Cancel</canvas-button>
-          <canvas-button variant="primary" id="modal-form-save">Save Coverage</canvas-button>
-        </canvas-modal-footer>
-      </canvas-modal>
-    </div>
-
-    <!-- Full configuration -->
-    <div class="sample-card">
-      <h3>Full, configuration panel</h3>
-      <canvas-button id="modal-open-config">Open configuration</canvas-button>
-      <canvas-modal id="modal-config" size="full">
-        <canvas-modal-header>Schedule Configuration</canvas-modal-header>
-        <canvas-modal-content>
-          <p style="margin-bottom: 16px">Configure provider schedules and availability windows for each clinic location.</p>
-          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px">
-            <div style="border-right: 1px solid rgba(34, 36, 38, 0.15); padding-right: 16px">
-              <p style="font-weight: 700; margin-bottom: 8px">Locations</p>
-              <div style="display: flex; flex-direction: column; gap: 4px">
-                <canvas-chip color="blue" size="small">San Francisco</canvas-chip>
-                <canvas-chip size="small">Oakland</canvas-chip>
-                <canvas-chip size="small">San Jose</canvas-chip>
+        <canvas-tab-panel id="showcase-overview">
+          <canvas-card>
+            <canvas-card-body>
+              <h4 style="margin-bottom: .5em">Patient Overview</h4>
+              <p>Jane Smith, DOB Mar 15, 1985. Primary care with Dr. Steven Magee.</p>
+              <div style="margin-top: 1em; display: flex; gap: .25em">
+                <canvas-badge color="green" size="mini">Active</canvas-badge>
+                <canvas-badge color="blue" size="mini">Insured</canvas-badge>
               </div>
-            </div>
-            <div>
-              <p style="font-weight: 700; margin-bottom: 8px">San Francisco Schedule</p>
-              <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px">
-                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Mon</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
-                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Tue</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
-                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Wed</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">12 PM</p></div>
-                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Thu</p><p style="font-size: .85em; color: #767676">8 AM</p><p style="font-size: .85em; color: #767676">5 PM</p></div>
-                <div style="text-align: center; padding: 12px 8px; background: #f5f5f5; border-radius: .28571429rem"><p style="font-weight: 700; font-size: .85em">Fri</p><p style="font-size: .85em; color: #767676">9 AM</p><p style="font-size: .85em; color: #767676">3 PM</p></div>
-              </div>
-            </div>
-          </div>
-        </canvas-modal-content>
-        <canvas-modal-footer>
-          <canvas-button variant="ghost" id="modal-config-cancel">Cancel</canvas-button>
-          <canvas-button id="modal-config-apply">Apply Changes</canvas-button>
-        </canvas-modal-footer>
-      </canvas-modal>
-    </div>
-
-    <!-- Persistent -->
-    <div class="sample-card">
-      <h3>Small, persistent, mandatory confirmation</h3>
-      <canvas-button id="modal-open-delete">Open delete confirmation</canvas-button>
-      <canvas-modal id="modal-delete" size="small" persistent>
-        <canvas-modal-header>Delete Patient Record</canvas-modal-header>
-        <canvas-modal-content>
-          <p>You are about to permanently delete the patient record for <strong>Jane Smith (MRN-00482917)</strong>.</p>
-          <p style="color: #db2828; font-weight: 700">All associated encounters, lab results, and documents will be permanently removed.</p>
-        </canvas-modal-content>
-        <canvas-modal-footer>
-          <canvas-button variant="ghost" id="modal-delete-cancel">Cancel</canvas-button>
-          <canvas-button style="--color-secondary: #db2828" id="modal-delete-confirm">Delete Permanently</canvas-button>
-        </canvas-modal-footer>
-      </canvas-modal>
-    </div>
-
-    <!-- Info no footer -->
-    <div class="sample-card">
-      <h3>Small, informational, no footer</h3>
-      <canvas-button id="modal-open-info">Open info modal</canvas-button>
-      <canvas-modal id="modal-info" size="small">
-        <canvas-modal-header dismissable>Patient Information</canvas-modal-header>
-        <canvas-modal-content>
-          <p><strong>Name:</strong> Jane Smith</p>
-          <p><strong>DOB:</strong> March 15, 1985</p>
-          <p><strong>MRN:</strong> MRN-00482917</p>
-        </canvas-modal-content>
-      </canvas-modal>
-    </div>
-
-    <!-- Events -->
-    <div class="sample-card">
-      <h3>Small, events</h3>
-      <canvas-button id="modal-open-events">Open modal</canvas-button>
-      <div id="modal-event-log"></div>
-      <canvas-modal id="modal-events" size="small">
-        <canvas-modal-header dismissable>Event Demo</canvas-modal-header>
-        <canvas-modal-content><p>Open and dismiss this modal to see events logged below.</p></canvas-modal-content>
-      </canvas-modal>
-    </div>
-  </section>
-
-  <!-- Sidebar Layout -->
-  <section class="component-section" id="sidebar-layout">
-    <h2>Sidebar Layout</h2>
-    <hr class="section-divider">
-
-    <!-- Default (260px) -->
-    <div class="sample-card">
-      <h3>Default sidebar (260px, schedule pattern)</h3>
-      <canvas-sidebar-layout style="height: 320px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sidebar style="--canvas-sidebar-padding: 16px;">
-          <div style="margin-bottom: 16px;">
-            <canvas-button variant="basic" size="sm" style="width: 100%">Today</canvas-button>
-          </div>
-          <div style="font-weight: 700; margin-bottom: 12px;">March 2026</div>
-          <div style="font-size: .85em; color: rgba(0,0,0,0.6); margin-bottom: 16px;">Mon 24 &middot; Tue 25 &middot; Wed 26 &middot; Thu 27 &middot; Fri 28</div>
-          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 12px; margin-bottom: 8px; font-weight: 700; font-size: .92857143em;">Providers</div>
-          <div style="display: flex; flex-direction: column; gap: 6px; font-size: .92857143em;">
-            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox checked></canvas-checkbox> Dr. Sarah Chen</label>
-            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox checked></canvas-checkbox> Dr. James Park</label>
-            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox></canvas-checkbox> Dr. Maria Lopez</label>
-            <label style="display: flex; align-items: center; gap: 8px;"><canvas-checkbox></canvas-checkbox> Dr. Alex Kim</label>
-          </div>
-          <div style="margin-top: 12px; font-size: .85em; color: rgba(0,0,0,0.4);">4 clinicians total</div>
-        </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 12px;">Week of March 24, 2026</div>
-          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
-            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Mon</div>
-            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Tue</div>
-            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Wed</div>
-            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Thu</div>
-            <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Fri</div>
-            <div style="padding: 4px; font-size: .8em;">
-              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px; margin-bottom: 4px;">9:00 AM Appt</div>
-              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">10:30 AM Appt</div>
-            </div>
-            <div style="padding: 4px; font-size: .8em;">
-              <div style="background: #fef3e0; border-left: 3px solid #f2711c; padding: 4px 6px; border-radius: 2px;">8:30 AM Urgent</div>
-            </div>
-            <div style="padding: 4px; font-size: .8em;">
-              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">2:00 PM Appt</div>
-            </div>
-            <div style="padding: 4px; font-size: .8em;"></div>
-            <div style="padding: 4px; font-size: .8em;">
-              <div style="background: #e8f4fd; border-left: 3px solid #2185d0; padding: 4px 6px; border-radius: 2px;">11:00 AM Appt</div>
-            </div>
-          </div>
-        </canvas-content>
-      </canvas-sidebar-layout>
-    </div>
-
-    <!-- Narrow (210px) -->
-    <div class="sample-card">
-      <h3>Narrow sidebar (210px, revenue pattern)</h3>
-      <canvas-sidebar-layout style="height: 300px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sidebar variant="narrow" style="--canvas-sidebar-padding: 12px;">
-          <div style="margin-bottom: 12px;">
-            <canvas-button variant="primary" size="sm" style="width: 100%">Post a remit</canvas-button>
-          </div>
-          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 8px;">
-            <div style="padding: 8px 0; font-weight: 700; font-size: .92857143em; color: rgba(0,0,0,0.87);">All claims</div>
-            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
-              <span>Needs review</span>
-              <canvas-badge color="red" size="mini">12</canvas-badge>
-            </div>
-            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
-              <span>Ready to submit</span>
-              <canvas-badge color="blue" size="mini">8</canvas-badge>
-            </div>
-            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
-              <span>Submitted</span>
-              <canvas-badge color="grey" size="mini">43</canvas-badge>
-            </div>
-            <div style="padding: 8px 0; font-size: .92857143em; display: flex; justify-content: space-between;">
-              <span>Denied</span>
-              <canvas-badge color="red" size="mini">3</canvas-badge>
-            </div>
-          </div>
-        </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 12px;">Claims Queue</div>
-          <canvas-table aria-label="Claims">
+            </canvas-card-body>
+          </canvas-card>
+        </canvas-tab-panel>
+        <canvas-tab-panel id="showcase-meds">
+          <canvas-table aria-label="Active medications">
             <canvas-table-head>
               <canvas-table-row>
-                <canvas-table-cell>Patient</canvas-table-cell>
-                <canvas-table-cell>Date</canvas-table-cell>
-                <canvas-table-cell>Amount</canvas-table-cell>
+                <canvas-table-cell>Medication</canvas-table-cell>
+                <canvas-table-cell>Dose</canvas-table-cell>
+                <canvas-table-cell>Frequency</canvas-table-cell>
                 <canvas-table-cell>Status</canvas-table-cell>
               </canvas-table-row>
             </canvas-table-head>
             <canvas-table-body>
               <canvas-table-row>
-                <canvas-table-cell bold>Jane Smith</canvas-table-cell>
-                <canvas-table-cell>03/20/26</canvas-table-cell>
-                <canvas-table-cell>$245.00</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="red" size="mini">Denied</canvas-badge></canvas-table-cell>
+                <canvas-table-cell bold>Metformin</canvas-table-cell>
+                <canvas-table-cell>500 mg</canvas-table-cell>
+                <canvas-table-cell>Twice daily</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
               </canvas-table-row>
               <canvas-table-row>
-                <canvas-table-cell bold>Robert Johnson</canvas-table-cell>
-                <canvas-table-cell>03/19/26</canvas-table-cell>
-                <canvas-table-cell>$180.00</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="blue" size="mini">Submitted</canvas-badge></canvas-table-cell>
+                <canvas-table-cell bold>Lisinopril</canvas-table-cell>
+                <canvas-table-cell>10 mg</canvas-table-cell>
+                <canvas-table-cell>Once daily</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
               </canvas-table-row>
               <canvas-table-row>
-                <canvas-table-cell bold>Emily Davis</canvas-table-cell>
-                <canvas-table-cell>03/18/26</canvas-table-cell>
-                <canvas-table-cell>$320.00</canvas-table-cell>
-                <canvas-table-cell><canvas-badge color="green" size="mini">Paid</canvas-badge></canvas-table-cell>
+                <canvas-table-cell bold>Atorvastatin</canvas-table-cell>
+                <canvas-table-cell>20 mg</canvas-table-cell>
+                <canvas-table-cell>Once daily at bedtime</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row>
+                <canvas-table-cell bold>Amlodipine</canvas-table-cell>
+                <canvas-table-cell>5 mg</canvas-table-cell>
+                <canvas-table-cell>Once daily</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="orange" size="mini">Refill needed</canvas-badge></canvas-table-cell>
               </canvas-table-row>
             </canvas-table-body>
           </canvas-table>
-        </canvas-content>
-      </canvas-sidebar-layout>
+        </canvas-tab-panel>
+        <canvas-tab-panel id="showcase-labs">
+          <canvas-table compact aria-label="Recent lab results">
+            <canvas-table-head>
+              <canvas-table-row>
+                <canvas-table-cell>Test</canvas-table-cell>
+                <canvas-table-cell>Value</canvas-table-cell>
+                <canvas-table-cell>Reference</canvas-table-cell>
+                <canvas-table-cell>Date</canvas-table-cell>
+                <canvas-table-cell>Status</canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-head>
+            <canvas-table-body>
+              <canvas-table-row positive>
+                <canvas-table-cell bold>Glucose</canvas-table-cell>
+                <canvas-table-cell>95 mg/dL</canvas-table-cell>
+                <canvas-table-cell>70-100 mg/dL</canvas-table-cell>
+                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Normal</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row warning>
+                <canvas-table-cell bold>HbA1c</canvas-table-cell>
+                <canvas-table-cell>6.8%</canvas-table-cell>
+                <canvas-table-cell>Below 5.7%</canvas-table-cell>
+                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="orange" size="mini">Elevated</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row negative>
+                <canvas-table-cell bold>LDL Cholesterol</canvas-table-cell>
+                <canvas-table-cell>185 mg/dL</canvas-table-cell>
+                <canvas-table-cell>Below 100 mg/dL</canvas-table-cell>
+                <canvas-table-cell>Mar 20, 2026</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="red" size="mini">High</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-body>
+          </canvas-table>
+        </canvas-tab-panel>
+      </canvas-tabs>
     </div>
 
-    <!-- Wide (400px) -->
+    <!-- Two tabs minimal -->
     <div class="sample-card">
-      <h3>Wide sidebar (400px, patient detail pattern)</h3>
-      <canvas-sidebar-layout style="height: 280px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sidebar variant="wide" style="--canvas-sidebar-padding: 16px;">
-          <div style="font-weight: 700; font-size: 1.125em; margin-bottom: 4px;">Margaret Thompson</div>
-          <div style="font-size: .85em; color: rgba(0,0,0,0.5); margin-bottom: 16px;">DOB: 04/15/1958 &middot; Female &middot; MRN: 00482916</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;">
-            <canvas-badge color="blue" size="mini">Medicare</canvas-badge>
-            <canvas-badge color="green" size="mini">Active</canvas-badge>
-          </div>
-          <div style="border-top: 1px solid rgba(34,36,38,0.1); padding-top: 12px; font-size: .92857143em;">
-            <div style="font-weight: 700; margin-bottom: 8px;">Active conditions</div>
-            <div style="color: rgba(0,0,0,0.7); line-height: 1.6;">
-              Type 2 diabetes mellitus<br>
-              Essential hypertension<br>
-              Hyperlipidemia<br>
-              Osteoarthritis, right knee
-            </div>
-          </div>
-        </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 12px;">Clinical Notes</div>
-          <canvas-card style="margin-bottom: 12px;">
-            <canvas-card-body>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h4 style="margin: 0;">Office Visit</h4>
-                <canvas-badge color="green" size="mini">Signed</canvas-badge>
-              </div>
-              <p class="text-sm text-muted" style="margin: 0;">03/22/26 with Dr. Sarah Chen</p>
-            </canvas-card-body>
-          </canvas-card>
-          <canvas-card>
-            <canvas-card-body>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h4 style="margin: 0;">Lab Results</h4>
-                <canvas-badge color="orange" size="mini">Pending review</canvas-badge>
-              </div>
-              <p class="text-sm text-muted" style="margin: 0;">03/20/26 Comprehensive Metabolic Panel</p>
-            </canvas-card-body>
-          </canvas-card>
-        </canvas-content>
-      </canvas-sidebar-layout>
+      <h3>Two tabs (minimal)</h3>
+      <canvas-tabs>
+        <canvas-tab for="showcase-active-rx" active><canvas-tab-label>Active</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-inactive-rx"><canvas-tab-label>Inactive</canvas-tab-label></canvas-tab>
+
+        <canvas-tab-panel id="showcase-active-rx">
+          <canvas-table compact aria-label="Active prescriptions">
+            <canvas-table-head>
+              <canvas-table-row>
+                <canvas-table-cell>Medication</canvas-table-cell>
+                <canvas-table-cell>Dose</canvas-table-cell>
+                <canvas-table-cell>Status</canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-head>
+            <canvas-table-body>
+              <canvas-table-row>
+                <canvas-table-cell bold>Metformin</canvas-table-cell>
+                <canvas-table-cell>500 mg</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+              <canvas-table-row>
+                <canvas-table-cell bold>Lisinopril</canvas-table-cell>
+                <canvas-table-cell>10 mg</canvas-table-cell>
+                <canvas-table-cell><canvas-badge color="green" size="mini">Active</canvas-badge></canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-body>
+          </canvas-table>
+        </canvas-tab-panel>
+        <canvas-tab-panel id="showcase-inactive-rx">
+          <canvas-table compact aria-label="Inactive prescriptions">
+            <canvas-table-head>
+              <canvas-table-row>
+                <canvas-table-cell>Medication</canvas-table-cell>
+                <canvas-table-cell>Dose</canvas-table-cell>
+                <canvas-table-cell>Reason</canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-head>
+            <canvas-table-body>
+              <canvas-table-row>
+                <canvas-table-cell bold>Hydrochlorothiazide</canvas-table-cell>
+                <canvas-table-cell>25 mg</canvas-table-cell>
+                <canvas-table-cell style="color: #767676">Switched to Amlodipine</canvas-table-cell>
+              </canvas-table-row>
+            </canvas-table-body>
+          </canvas-table>
+        </canvas-tab-panel>
+      </canvas-tabs>
     </div>
 
-    <!-- Custom width override -->
+    <!-- Long labels -->
     <div class="sample-card">
-      <h3>Custom width override (320px via CSS custom property)</h3>
-      <canvas-sidebar-layout style="height: 200px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sidebar style="--canvas-sidebar-width: 320px; --canvas-sidebar-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 8px;">Custom 320px sidebar</div>
-          <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">The <code style="background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px;">--canvas-sidebar-width</code> CSS custom property overrides any variant value for one-off sizing needs.</p>
-        </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 8px;">Content area</div>
-          <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">Takes up the remaining space with flex: 1.</p>
-        </canvas-content>
-      </canvas-sidebar-layout>
+      <h3>Long labels (truncation with tooltip)</h3>
+      <canvas-tabs>
+        <canvas-tab for="showcase-long-meds" active badge="4"><canvas-tab-label>Medications and Supplements</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-long-allergies" badge="2"><canvas-tab-label>Allergies and Adverse Reactions</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-long-immunizations"><canvas-tab-label>Immunization Records</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-long-family"><canvas-tab-label>Family Medical History</canvas-tab-label></canvas-tab>
+
+        <canvas-tab-panel id="showcase-long-meds"><p>This tab label exceeds the default 160px max-width and gets truncated with an ellipsis.</p></canvas-tab-panel>
+        <canvas-tab-panel id="showcase-long-allergies"><p>Another long label that truncates. The badge stays visible.</p></canvas-tab-panel>
+        <canvas-tab-panel id="showcase-long-immunizations"><p>Fits comfortably within the default max-width.</p></canvas-tab-panel>
+        <canvas-tab-panel id="showcase-long-family"><p>Right at the edge of the default limit.</p></canvas-tab-panel>
+      </canvas-tabs>
     </div>
 
-    <!-- Scrollable panels -->
+    <!-- Change event -->
     <div class="sample-card">
-      <h3>Independent scrolling (both panels scroll separately)</h3>
-      <canvas-sidebar-layout style="height: 220px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sidebar style="--canvas-sidebar-padding: 12px;">
-          <div style="font-weight: 700; margin-bottom: 8px; font-size: .92857143em;">Navigation</div>
-          <div style="display: flex; flex-direction: column; gap: 2px; font-size: .92857143em;">
-            <div style="padding: 6px 8px; background: rgba(0,0,0,0.06); border-radius: 3px; font-weight: 700;">Dashboard</div>
-            <div style="padding: 6px 8px;">Schedule</div>
-            <div style="padding: 6px 8px;">Messages</div>
-            <div style="padding: 6px 8px;">Patient List</div>
-            <div style="padding: 6px 8px;">Revenue</div>
-            <div style="padding: 6px 8px;">Reports</div>
-            <div style="padding: 6px 8px;">Settings</div>
-            <div style="padding: 6px 8px;">Integrations</div>
-            <div style="padding: 6px 8px;">Audit Log</div>
-            <div style="padding: 6px 8px;">Help Center</div>
-          </div>
-        </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
-          <div style="font-weight: 700; margin-bottom: 12px;">Dashboard</div>
-          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Appointments today:</strong> 12</canvas-card-body></canvas-card>
-          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Pending tasks:</strong> 5</canvas-card-body></canvas-card>
-          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Unread messages:</strong> 3</canvas-card-body></canvas-card>
-          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Claims to review:</strong> 8</canvas-card-body></canvas-card>
-          <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Lab results pending:</strong> 2</canvas-card-body></canvas-card>
-          <canvas-card><canvas-card-body><strong>Prescriptions to renew:</strong> 4</canvas-card-body></canvas-card>
-        </canvas-content>
-      </canvas-sidebar-layout>
+      <h3>Change event</h3>
+      <canvas-tabs id="tabs-event-tabs">
+        <canvas-tab for="tabs-ev-one" active><canvas-tab-label>First</canvas-tab-label></canvas-tab>
+        <canvas-tab for="tabs-ev-two"><canvas-tab-label>Second</canvas-tab-label></canvas-tab>
+        <canvas-tab for="tabs-ev-three"><canvas-tab-label>Third</canvas-tab-label></canvas-tab>
+
+        <canvas-tab-panel id="tabs-ev-one"><p>Click any tab to fire a tab-change event.</p></canvas-tab-panel>
+        <canvas-tab-panel id="tabs-ev-two"><p>You switched to the second tab.</p></canvas-tab-panel>
+        <canvas-tab-panel id="tabs-ev-three"><p>Third tab is now active.</p></canvas-tab-panel>
+      </canvas-tabs>
+      <div id="tabs-change-log"></div>
     </div>
   </section>
 
-  <!-- Loader -->
-  <section class="component-section" id="loader">
-    <h2>Loader</h2>
+  <!-- Textarea -->
+  <section class="component-section" id="textarea">
+    <h2>Textarea</h2>
     <hr class="section-divider">
 
-    <!-- Sizes (inline) -->
+    <!-- Basic -->
     <div class="sample-card">
-      <h3>Sizes (inline mode, default)</h3>
-      <div style="display: flex; align-items: center; gap: 32px;">
-        <div style="text-align: center;">
-          <canvas-loader size="mini"></canvas-loader>
-          <div style="margin-top: 8px; color: #767676; font-size: .85em;">mini</div>
-        </div>
-        <div style="text-align: center;">
-          <canvas-loader size="small"></canvas-loader>
-          <div style="margin-top: 8px; color: #767676; font-size: .85em;">small</div>
-        </div>
-        <div style="text-align: center;">
-          <canvas-loader></canvas-loader>
-          <div style="margin-top: 8px; color: #767676; font-size: .85em;">default</div>
-        </div>
-        <div style="text-align: center;">
-          <canvas-loader size="large"></canvas-loader>
-          <div style="margin-top: 8px; color: #767676; font-size: .85em;">large</div>
-        </div>
+      <h3>Basic</h3>
+      <div class="field-row"><canvas-textarea label="Clinical Notes" rows="4" placeholder="Enter clinical notes"></canvas-textarea></div>
+      <div class="field-row"><canvas-textarea label="Brief Comment" rows="1" placeholder="Short note"></canvas-textarea></div>
+    </div>
+
+    <!-- Auto-resize -->
+    <div class="sample-card">
+      <h3>Auto-resize (starts at 1 row, grows with content)</h3>
+      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" placeholder="Start typing and the field will grow ..."></canvas-textarea></div>
+    </div>
+
+    <!-- Auto-resize with max-rows -->
+    <div class="sample-card">
+      <h3>Auto-resize with max-rows (grows up to 6 rows then scrolls)</h3>
+      <div class="field-row"><canvas-textarea label="Comment" auto-resize rows="1" max-rows="6" placeholder="Grows up to 6 lines then scrolls ..."></canvas-textarea></div>
+    </div>
+
+    <!-- Chat input pattern -->
+    <div class="sample-card">
+      <h3>Chat input pattern</h3>
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; max-width: 500px;">
+        <canvas-textarea auto-resize rows="1" max-rows="4" placeholder="Type a message ..."></canvas-textarea>
+        <canvas-button>Send</canvas-button>
       </div>
     </div>
 
-    <!-- Centered with text -->
+    <!-- Character counter -->
     <div class="sample-card">
-      <h3>Centered with text label</h3>
-      <canvas-loader size="large" centered text="Loading ..."></canvas-loader>
+      <h3>Character counter (maxlength)</h3>
+      <div class="field-row"><canvas-textarea label="Override Reason" maxlength="200" placeholder="Explain why this override is needed ..."></canvas-textarea></div>
     </div>
 
-    <!-- Centered empty state -->
+    <!-- No resize -->
     <div class="sample-card">
-      <h3>Centered (waiting for first data)</h3>
-      <canvas-loader size="large" centered text="Loading patients ..."></canvas-loader>
+      <h3>No resize handle</h3>
+      <div class="field-row"><canvas-textarea label="Fixed Area" no-resize rows="3" placeholder="Cannot be resized by the user"></canvas-textarea></div>
     </div>
 
-    <!-- Overlay light (default backdrop) -->
+    <!-- Error state -->
     <div class="sample-card">
-      <h3>Overlay (light backdrop, default)</h3>
-      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
-        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
-        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
-        <p style="margin: 0;">MRN: 12345</p>
-        <canvas-loader mode="overlay" size="large"></canvas-loader>
+      <h3>Error State</h3>
+      <div class="field-row"><canvas-textarea label="Notes" rows="3" error="Notes are required for this visit type"></canvas-textarea></div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="sample-card">
+      <h3>Disabled</h3>
+      <div class="field-row"><canvas-textarea label="Locked Notes" rows="2" value="This field is read-only." disabled></canvas-textarea></div>
+    </div>
+
+    <!-- Aligned with input -->
+    <div class="sample-card">
+      <h3>Mixed form (input + textarea)</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+        <canvas-input label="First Name" placeholder="Jane"></canvas-input>
+        <canvas-input label="Last Name" placeholder="Smith"></canvas-input>
+        <canvas-textarea label="Notes" rows="3" placeholder="Additional notes"></canvas-textarea>
+        <canvas-button type="submit">Submit</canvas-button>
       </div>
     </div>
-
-    <!-- Overlay dark -->
-    <div class="sample-card">
-      <h3>Overlay (dark backdrop)</h3>
-      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
-        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
-        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
-        <p style="margin: 0;">MRN: 12345</p>
-        <canvas-loader mode="overlay" backdrop="dark" size="large" text="Refreshing ..."></canvas-loader>
-      </div>
-    </div>
-
-    <!-- Overlay no backdrop -->
-    <div class="sample-card">
-      <h3>Overlay (no backdrop)</h3>
-      <div style="position: relative; min-height: 160px; border: 1px solid #E9E9E9; border-radius: .28571429rem; padding: 16px;">
-        <p style="margin: 0 0 8px;">Patient: Jane Smith</p>
-        <p style="margin: 0 0 8px;">DOB: Mar 15, 1985</p>
-        <p style="margin: 0;">MRN: 12345</p>
-        <canvas-loader mode="overlay" backdrop="none" size="large"></canvas-loader>
-      </div>
-    </div>
-
-    <!-- Overlay inside a card -->
-    <div class="sample-card">
-      <h3>Overlay inside a card</h3>
-      <canvas-card>
-        <canvas-card-body style="position: relative; min-height: 120px;">
-          <p style="margin: 0;">Loading card content ...</p>
-          <canvas-loader mode="overlay" size="large"></canvas-loader>
-        </canvas-card-body>
-      </canvas-card>
-    </div>
-
-    <!-- Inverted on dark background -->
-    <div class="sample-card">
-      <h3>Inverted (dark background)</h3>
-      <div style="background: #1b1c1d; border-radius: .28571429rem; padding: 32px;">
-        <canvas-loader size="large" inverted centered text="Loading ..."></canvas-loader>
-      </div>
-    </div>
-
   </section>
 
-  <!-- Progress -->
-  <section class="component-section" id="progress">
-    <h2>Progress</h2>
+  <!-- Toggle -->
+  <section class="component-section" id="toggle">
+    <h2>Toggle</h2>
     <hr class="section-divider">
 
-    <!-- Default (blue) -->
+    <!-- Basic -->
     <div class="sample-card">
-      <h3>Default (blue, standard size)</h3>
-      <canvas-progress value="65" label></canvas-progress>
-    </div>
-
-    <!-- Colors -->
-    <div class="sample-card">
-      <h3>Color variants</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div>
-          <div class="label">Blue (default, active campaigns)</div>
-          <canvas-progress value="72" color="blue" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Green (match scores, success)</div>
-          <canvas-progress value="88" color="green" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Grey (inactive, selected)</div>
-          <canvas-progress value="45" color="grey" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Red (error, low completion)</div>
-          <canvas-progress value="15" color="red" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Orange (warning)</div>
-          <canvas-progress value="50" color="orange" label></canvas-progress>
-        </div>
+      <h3>Basic</h3>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+        <canvas-toggle label="Enable dark mode"></canvas-toggle>
+        <canvas-toggle label="Enable notifications" checked></canvas-toggle>
       </div>
     </div>
 
-    <!-- Sizes -->
+    <!-- Label position -->
     <div class="sample-card">
-      <h3>Size variants</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div>
-          <div class="label">Default (1.75em bar height, label visible)</div>
-          <canvas-progress value="60" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Small (1em bar height, label visible)</div>
-          <canvas-progress value="60" size="small" label></canvas-progress>
-        </div>
-        <div>
-          <div class="label">Tiny (0.5em bar height, label hidden automatically)</div>
-          <canvas-progress value="60" size="tiny" label></canvas-progress>
-        </div>
+      <h3>Label Position</h3>
+      <div class="label">Label after toggle (default)</div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 16px;">
+        <canvas-toggle label="Dark mode"></canvas-toggle>
+        <canvas-toggle label="Notifications" checked></canvas-toggle>
+      </div>
+      <div class="label">Label before toggle</div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+        <canvas-toggle label="This phone can receive text messages" label-position="start" checked></canvas-toggle>
+        <canvas-toggle label="Send reminders via SMS" label-position="start"></canvas-toggle>
       </div>
     </div>
 
-    <!-- Active animation -->
+    <!-- Standalone -->
     <div class="sample-card">
-      <h3>Active (pulsing animation)</h3>
-      <canvas-progress value="40" active label></canvas-progress>
-    </div>
-
-    <!-- Without label -->
-    <div class="sample-card">
-      <h3>Without label</h3>
-      <canvas-progress value="75" color="green"></canvas-progress>
-    </div>
-
-    <!-- Campaign list pattern -->
-    <div class="sample-card">
-      <h3>Campaign list pattern (small, inline with text)</h3>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outreach</span>
-        <canvas-progress value="68" color="blue" size="small" style="flex: 1;"></canvas-progress>
-        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">68%</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-        <span style="flex-shrink: 0; font-size: .92857143em; color: rgba(0, 0, 0, 0.6);">Outcome</span>
-        <canvas-progress value="42" color="grey" size="small" style="flex: 1;"></canvas-progress>
-        <span style="flex-shrink: 0; font-size: .92857143em; font-weight: 700;">42%</span>
+      <h3>Standalone (aria-label only)</h3>
+      <div style="display: flex; gap: 16px;">
+        <canvas-toggle aria-label="Toggle feature A"></canvas-toggle>
+        <canvas-toggle aria-label="Toggle feature B" checked></canvas-toggle>
       </div>
     </div>
 
-    <!-- Match score pattern -->
+    <!-- Disabled -->
     <div class="sample-card">
-      <h3>Match score pattern (tiny, search results)</h3>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="flex: 1; font-size: .92857143em;">Metformin 500mg</span>
-          <canvas-progress value="95" color="green" size="tiny" style="width: 80px;"></canvas-progress>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="flex: 1; font-size: .92857143em;">Metoprolol 25mg</span>
-          <canvas-progress value="72" color="green" size="tiny" style="width: 80px;"></canvas-progress>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="flex: 1; font-size: .92857143em;">Methylprednisolone 4mg</span>
-          <canvas-progress value="38" color="green" size="tiny" style="width: 80px;"></canvas-progress>
-        </div>
+      <h3>Disabled</h3>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+        <canvas-toggle label="Checked and disabled" checked disabled></canvas-toggle>
+        <canvas-toggle label="Unchecked and disabled" disabled></canvas-toggle>
+      </div>
+    </div>
+
+    <!-- Change event -->
+    <div class="sample-card">
+      <h3>Change Event</h3>
+      <p style="color: #767676; margin-bottom: 12px;">Toggle the switch. The event reports checked state.</p>
+      <canvas-toggle id="toggle-demo" label="Enable feature"></canvas-toggle>
+      <div id="toggle-change-log">State: off</div>
+    </div>
+
+    <!-- Full width settings -->
+    <div class="sample-card">
+      <h3>Full Width</h3>
+      <p style="color: #767676; margin-bottom: 12px;">Settings list pattern. Label before toggle, full width rows.</p>
+      <div style="display: flex; flex-direction: column; --canvas-toggle-min-height: 44px;">
+        <canvas-toggle label="Email notifications" label-position="start" style="width: 100%; justify-content: space-between;" checked></canvas-toggle>
+        <canvas-toggle label="Push notifications" label-position="start" style="width: 100%; justify-content: space-between;"></canvas-toggle>
+        <canvas-toggle label="SMS alerts" label-position="start" style="width: 100%; justify-content: space-between;" checked></canvas-toggle>
       </div>
     </div>
   </section>
@@ -2922,150 +3494,6 @@
       </canvas-table>
     </div>
 
-  </section>
-
-  <!-- Divider -->
-  <section class="component-section" id="divider">
-    <h2>Divider</h2>
-    <hr class="section-divider">
-
-    <!-- Default -->
-    <div class="sample-card">
-      <h3>Default (plain horizontal rule)</h3>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above the divider</p>
-      <canvas-divider></canvas-divider>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below the divider</p>
-    </div>
-
-    <!-- Fitted -->
-    <div class="sample-card">
-      <h3>Fitted (no vertical margin)</h3>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly above</p>
-      <canvas-divider fitted></canvas-divider>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content directly below</p>
-    </div>
-
-    <!-- Hidden -->
-    <div class="sample-card">
-      <h3>Hidden (invisible spacer)</h3>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content above</p>
-      <canvas-divider hidden></canvas-divider>
-      <p style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">Content below (separated by invisible divider)</p>
-    </div>
-
-    <!-- With text -->
-    <div class="sample-card">
-      <h3>Horizontal with text</h3>
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div>
-          <div class="label">"Or" separator between options</div>
-          <canvas-divider>Or</canvas-divider>
-        </div>
-        <div>
-          <div class="label">Section label</div>
-          <canvas-divider>Additional Details</canvas-divider>
-        </div>
-        <div>
-          <div class="label">Toggle text (campaign list pattern)</div>
-          <canvas-divider>Hide closed campaigns</canvas-divider>
-        </div>
-      </div>
-    </div>
-
-    <!-- Between cards pattern -->
-    <div class="sample-card">
-      <h3>Between cards (section separator)</h3>
-      <canvas-card>
-        <canvas-card-body>
-          <div style="font-weight: 700;">Active Campaigns</div>
-          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">3 campaigns running</div>
-        </canvas-card-body>
-      </canvas-card>
-      <canvas-divider>View Details</canvas-divider>
-      <canvas-card>
-        <canvas-card-body>
-          <div style="font-weight: 700;">Closed Campaigns</div>
-          <div style="color: rgba(0, 0, 0, 0.6); font-size: .92857143em;">12 campaigns completed</div>
-        </canvas-card-body>
-      </canvas-card>
-    </div>
-  </section>
-
-  <!-- 16. Form (combined demo) -->
-  <section class="component-section" id="form">
-    <h2>Form</h2>
-    <hr class="section-divider">
-
-    <div style="max-width: 700px;">
-      <!-- Height comparison -->
-      <div class="sample-card">
-        <h3>Inline row (no labels)</h3>
-        <div class="row">
-          <canvas-input placeholder="Text input"></canvas-input>
-          <canvas-combobox placeholder="Combobox">
-            <canvas-option value="a">Option A</canvas-option>
-            <canvas-option value="b">Option B</canvas-option>
-          </canvas-combobox>
-          <canvas-dropdown placeholder="Dropdown">
-            <canvas-option value="a">Option A</canvas-option>
-            <canvas-option value="b">Option B</canvas-option>
-          </canvas-dropdown>
-          <canvas-button>Button</canvas-button>
-        </div>
-        <div class="height-readout" id="form-readout-no-label"></div>
-      </div>
-
-      <!-- With labels -->
-      <div class="sample-card">
-        <h3>Inline row (with labels)</h3>
-        <div class="row">
-          <canvas-input label="Patient" placeholder="Text input"></canvas-input>
-          <canvas-combobox label="Provider" placeholder="Combobox">
-            <canvas-option value="magee">Steven Magee MD</canvas-option>
-            <canvas-option value="chen">Lisa Chen DO</canvas-option>
-          </canvas-combobox>
-          <canvas-dropdown label="Status" placeholder="Dropdown">
-            <canvas-option value="active">Active</canvas-option>
-            <canvas-option value="inactive">Inactive</canvas-option>
-          </canvas-dropdown>
-          <canvas-button>Submit</canvas-button>
-        </div>
-      </div>
-
-      <!-- Realistic form -->
-      <div class="sample-card">
-        <h3>Realistic form (inside canvas-card)</h3>
-        <canvas-card>
-          <canvas-card-body>
-            <form id="form-test-form" onsubmit="event.preventDefault(); var fd = new FormData(this); var parts = []; fd.forEach(function(v, k) { parts.push(k + '=' + v); }); document.getElementById('form-log').textContent = parts.join(', ');">
-          <div style="display: flex; flex-direction: column; gap: 12px">
-            <div class="row">
-              <canvas-input label="Patient Name" name="patient" placeholder="Jane Smith"></canvas-input>
-              <canvas-input label="DOB" name="dob" type="date"></canvas-input>
-            </div>
-            <div class="row">
-              <canvas-combobox label="Provider" name="provider" placeholder="Search providers">
-                <canvas-option value="magee">Steven Magee MD</canvas-option>
-                <canvas-option value="chen">Lisa Chen DO</canvas-option>
-                <canvas-option value="patel">Raj Patel MD</canvas-option>
-              </canvas-combobox>
-              <canvas-dropdown label="Visit Type" name="visit_type" placeholder="Select type">
-                <canvas-option value="office">Office Visit</canvas-option>
-                <canvas-option value="telehealth">Telehealth</canvas-option>
-                <canvas-option value="lab">Lab Visit</canvas-option>
-              </canvas-dropdown>
-            </div>
-            <div class="row">
-              <canvas-input label="Notes" name="notes" placeholder="Optional notes"></canvas-input>
-              <canvas-button type="submit">Schedule</canvas-button>
-            </div>
-          </div>
-        </form>
-        <div id="form-log"></div>
-          </canvas-card-body>
-        </canvas-card>
-      </div>
-    </div>
   </section>
 
     </div>
@@ -3193,6 +3621,69 @@ setTimeout(function() {
 // Sortable list reorder
 document.getElementById('sortable-basic').addEventListener('reorder', function(e) {
   document.getElementById('sortable-basic-log').textContent = 'Moved from index ' + e.detail.oldIndex + ' to index ' + e.detail.newIndex;
+});
+
+// Cross list kanban. Log every change event with the destination list id.
+['kanban-backlog', 'kanban-wip', 'kanban-done'].forEach(function (id) {
+  var list = document.getElementById(id);
+  list.addEventListener('change', function (e) {
+    var host = e.detail.toList || e.detail.list || list;
+    var name = host.id.replace('kanban-', '');
+    document.getElementById('kanban-log').textContent =
+      e.detail.type + ' ' + e.detail.item.dataset.id + ' to ' + name + ' at index ' + e.detail.newIndex;
+  });
+});
+
+// Palette clone. Only the form builder logs drops, the palette itself does not.
+document.getElementById('palette-form').addEventListener('change', function (e) {
+  var host = e.detail.toList || e.detail.list;
+  document.getElementById('palette-log').textContent =
+    e.detail.type + ' ' + e.detail.item.dataset.id + ' to ' + host.id.replace('palette-', '') + ' at index ' + e.detail.newIndex;
+});
+
+// Bulk flow. Accumulate into a Map keyed by id, show pending count, flush on save.
+(function () {
+  var pending = new Map();
+  var saveBtn = document.getElementById('bulk-save');
+  var countEl = document.getElementById('bulk-count');
+  var logEl = document.getElementById('bulk-log');
+
+  function refresh() {
+    var n = pending.size;
+    countEl.textContent = n === 0 ? 'No pending changes.' : n + ' pending ' + (n === 1 ? 'change.' : 'changes.');
+    if (n === 0) {
+      saveBtn.setAttribute('disabled', '');
+    } else {
+      saveBtn.removeAttribute('disabled');
+    }
+  }
+
+  ['bulk-a', 'bulk-b'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function (e) {
+      var host = e.detail.toList || e.detail.list;
+      pending.set(e.detail.item.dataset.id, {
+        id: e.detail.item.dataset.id,
+        list: host.id,
+        index: e.detail.newIndex
+      });
+      refresh();
+    });
+  });
+
+  saveBtn.addEventListener('click', function () {
+    var payload = Array.from(pending.values());
+    logEl.textContent = 'Saved ' + payload.length + ' change(s): ' +
+      payload.map(function (c) { return c.id + '→' + c.list + '@' + c.index; }).join(', ');
+    pending.clear();
+    refresh();
+  });
+})();
+
+// Permission gate. Reject drops into the locked column, surface the rejection.
+document.getElementById('gated-locked').addEventListener('beforemove', function (e) {
+  e.preventDefault();
+  document.getElementById('gated-log').textContent =
+    'blocked move of ' + e.detail.item.dataset.id + ' to locked';
 });
 
 // Scroll spy and localStorage scroll restore

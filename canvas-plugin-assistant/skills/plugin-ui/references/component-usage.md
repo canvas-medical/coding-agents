@@ -20,7 +20,12 @@ These rules describe when to use each component and how interactions should beha
 - Use the **basic accordion** (transparent, borderless) as a bare content divider on a page. It sits directly in the content area without a card wrapper, matching the Canvas patient profile edit page. Do not wrap the basic accordion inside a card.
 - Use the **styled accordion** (white background, shadow, borders between items) when the accordion needs to be a standalone elevated container on a gray background.
 - The accordion title row has a fixed layout. The caret arrow is always first and never moves. To the left of the row (between the caret and any right-aligned content) you may place text, badges, or custom elements. Never a toggle or checkbox on the left side. To the right of the row (inside `.accordion-actions` with `margin-left: auto`) you may place badges, text, toggles, or checkboxes. When a toggle or checkbox is present on the right, it is always the outermost right element. Badges and text sit to its left. Badges can also be placed next to the title text on the left (omit `flex-grow` on the title span) for a tighter grouping.
+- Buttons, toggles, checkboxes, radios, dropdowns, inputs, and other interactive elements can be placed directly inside `canvas-accordion-title`. Clicks and keyboard activations on those children run the child's own handler and do not toggle the surrounding accordion item. Authors do not need to add `event.stopPropagation` on buttons or other interactive descendants of the title slot.
 - The default title height is ~34.58px. Do not add `min-height` or extra padding to accordion titles. If a larger trigger height is needed, the user must explicitly request it. When toggles or checkboxes sit in the actions area, they naturally expand the row through their own height.
+- **Do not use native `<details>` or `<summary>` elements.** Use `canvas-accordion` with `canvas-accordion-item`, `canvas-accordion-title`, and `canvas-accordion-content`. The component renders its own chevron, handles ARIA and keyboard, and respects Canvas visual tokens. Any native `<details>` or `<summary>` in an existing template is a migration target. This rule is parallel to the native `<select>` prohibition in Dropdown vs Combobox vs Native Select and the native `<input>` prohibition in Text Inputs vs Textareas.
+- A custom accordion pattern is acceptable only when the trigger needs a multi column layout that cannot fit the `canvas-accordion-title` slot, for example a medication group row with a drug name, sig line, code badges, fill count badge, and add button. In that narrow case, keep the custom header but match the Canvas visual tokens. Do not use native `<details>` even as the outer container for a custom header.
+- Accordions carry no horizontal padding of their own. A top level `canvas-accordion` sits flush with the edges of its container the same way a raw `<h2>`, `<p>`, or `canvas-button` would. The container is responsible for horizontal inset. Wrap the accordion in a `canvas-card`, place it inside a section that already pads its children, or apply padding at the page shell level. Do not add inline padding on the accordion itself.
+- Nested accordions indent automatically. A `canvas-accordion-item` placed inside another accordion's `canvas-accordion-content` picks up left padding of `--space-small` via a global rule in `canvas-plugin-ui.css`. Depth compounds through the cascade, each deeper level adds one `--space-small` step on the left. Do not hand roll per depth `padding-left` rules. To change the step size globally set `--canvas-accordion-nested-indent` on an ancestor, to remove the nested indent on one accordion set `--canvas-accordion-nested-indent: 0` on that element.
 
 ## Checkboxes vs Toggle Switches
 
@@ -34,6 +39,7 @@ These rules describe when to use each component and how interactions should beha
 - Use `canvas-textarea` for multi-line content like notes, descriptions, comments, and free-form text.
 - Always include a visible label above the input. Do not rely on placeholder text as the only label. Placeholders disappear once the user starts typing, leaving a filled form with no visible field names.
 - Use placeholder text to show an example value or format hint, not to describe the field's purpose.
+- **Do not use native `<input>` elements.** Use `canvas-input` for every input type including text, email, password, number, tel, url, date, datetime-local, month, week, and time. The `canvas-input` component styles the native date and time pickers through the same border, radius, padding, and font as other inputs. Using a raw `<input>` produces output that does not match Canvas even when CSS tokens are applied by hand. This rule is parallel to the native `<select>` prohibition in Dropdown vs Combobox vs Native Select.
 
 ## Textarea Variants
 
@@ -68,15 +74,83 @@ When the user needs to pick multiple values from a set.
 - Use a card list when each item has variable content, needs its own actions, or benefits from visual grouping (summary cards, task cards, protocol overviews).
 - If a table would have only one meaningful column, use a simple list instead.
 
+## Cards and Content Containers
+
+- Use `canvas-card` as the default elevated content container on a gray page background. White surface, soft border, standard shadow. Good for summary panels, detail views, note blocks, and any grouping that needs visual separation from the page.
+- **The four property signature is the primary card imitation detector.** Any element combining background, border, border-radius, and box-shadow on itself is a `canvas-card` imitation, regardless of class name. When a CSS rule or inline style puts those four properties on one element, stop and use `canvas-card` instead. The component handles all four automatically and stays aligned with Canvas visual updates.
+- **Class names are secondary signals.** Names historically used for card styling include `card`, `panel`, `box`, `tile`, `container`, `filters`, `filter-bar`, `toolbar`, `section`, `wrapper`, `wrap`, `header`. Flag these when they appear with the four property signature. Do not restrict the detector to a fixed class name list. Exception, class names where a word refers to something unrelated, for example `card-number-input` is a payment input, not a card container.
+- **Adjacent region pattern.** Two adjacent containers where one has `border-top: none` and visually connects to another through a shared `border-radius` are always a multi region card. Replace the pair with `canvas-card` containing `canvas-card-body` for the upper region and `canvas-card-footer` for the lower region, or stacked `canvas-card-body` elements when the second region is still content.
+- Use `canvas-card-body` for padded content regions inside the card. Stack multiple `canvas-card-body` elements for sections that need internal dividers (history, assessment, plan). Adjacent bodies get a border between them automatically.
+- Use `canvas-card-footer` for gray action rows at the bottom of a card. Place primary and ghost buttons here. Do not create a raw div with a gray background under the card body.
+- Add the `raised` attribute when a card needs to pop against similar surfaces, such as a selected card in a list or the card hosting the primary action on the page.
+- Use `no-padding` on `canvas-card-body` only when content needs edge to edge treatment, such as a full width table or image.
+- For unstyled flat grouping with no border or shadow, do not use `canvas-card`. Use a plain div with spacing tokens. The card is for elevated surfaces, not semantic grouping.
+- `canvas-card-body` is not a scroll container. Setting `max-height` on the body does not activate scrolling in 4.0.0 and later. Wrap scrollable content in a `canvas-scroll-area`. See the Scroll Areas section below.
+
 ## Table Behavior in Narrow Containers
 
 Plugins render in different surface widths. A full page plugin has room for wide tables. A right chart pane plugin is roughly 25% to 40% of the viewport. Tables need to handle both cases.
 
 - **Prefer fewer columns in narrow surfaces.** Before reaching for horizontal scroll, ask whether every column is necessary. Drop low-value columns (IDs, secondary dates, metadata) and show them in a detail view or tooltip instead.
-- **Use horizontal scroll when columns cannot be reduced.** Wrap the table in `.table-scroll` and set `min-width` on the table. The container scrolls horizontally while the page stays fixed. This is better than squishing columns into unreadable widths.
+- **Use horizontal scroll when columns cannot be reduced.** Wrap the table in `<canvas-scroll-area horizontal>` and set `min-width` on the table. The container scrolls horizontally while the page stays fixed. This is better than squishing columns into unreadable widths.
 - **Use compact padding in narrow surfaces.** The `.table-compact` modifier tightens padding without changing font size, giving each column more room.
-- **Combine compact and scroll for dense data.** A claims table with 6 columns in a sidebar can use `.table-compact` inside `.table-scroll` with a `min-width` that ensures each column has enough room.
+- **Combine compact and scroll for dense data.** A claims table with 6 columns in a sidebar can use `.table-compact` inside `<canvas-scroll-area horizontal>` with a `min-width` that ensures each column has enough room.
 - **Do not hide columns with CSS media queries.** The plugin iframe width does not correspond to viewport breakpoints. A right chart pane can be 400px wide on a 1920px monitor. Media queries based on viewport width will not trigger correctly. Instead, design the table for the surface it will render in.
+
+## Inline Form Rows
+
+A horizontal row of form elements sharing a visual row. The primitive for filter bars, inline edits, search bars, and toolbar forms. Use `canvas-inline-row` as the container. The component encapsulates the flex layout, gap, bottom alignment, wrap behavior, and per child flex sizing so the erroneous state (elements overflowing the card, truncation, mismatched heights) is unreachable.
+
+Rules that apply to every inline form row.
+
+- Wrap the row in `canvas-inline-row`. The component handles `display: flex`, `gap`, `align-items: flex-end`, `flex-wrap: wrap`, and the per child flex rules that let inputs grow while buttons keep natural width.
+- Use default size on every form element in the row. No `size="sm"` anywhere. See Same Row Height Cohesion for why mixing sizes breaks alignment.
+- Label every form element through the component `label` prop. Do not mix component labels with external `<label for>` tags. The component label ships with the correct spacing and semantics.
+- Use `canvas-input` for every input including `type="date"`, `type="time"`, and `type="number"`. Never use native `<input>` tags. See the native input prohibition in Text Inputs vs Textareas.
+- Use `canvas-dropdown` for fixed option lists, `canvas-combobox` for searchable long lists, `canvas-multi-select` for multi pick rows.
+
+Use cases. Each extends the primitive with ingredients specific to that pattern.
+
+- **Filter bar above a table.** Wrap the `canvas-inline-row` inside a `canvas-card-body`. If the table has bulk actions, add a second `canvas-card-body no-padding` for the table and a `canvas-card-footer` for the selection count on the left and action buttons on the right. Use `canvas-input type="date"` for date range fields.
+- **Inline edit form.** Sits inside an existing `canvas-card-body` on a detail view. The row ends with a primary Save button and a ghost Cancel button. No card wrapper around the row itself.
+- **Search bar.** Row with a text input plus a search button, optionally with filter dropdowns. No card wrapper. Lives in a page header region or toolbar area.
+- **Action bar.** Context text or selection count on the left, one or two action buttons on the right. Use a plain div with flex when the action bar stands alone. When the action bar is attached to a card below a table, use `canvas-card-footer` instead.
+
+Minimal filter bar example.
+
+```html
+<canvas-card>
+  <canvas-card-body>
+    <canvas-inline-row>
+      <canvas-input label="From" type="date"></canvas-input>
+      <canvas-input label="To" type="date"></canvas-input>
+      <canvas-dropdown label="Provider">
+        <canvas-option value="" selected>All Providers</canvas-option>
+        <canvas-option value="1">Dr. Alvarez</canvas-option>
+      </canvas-dropdown>
+      <canvas-button>Load Appointments</canvas-button>
+    </canvas-inline-row>
+  </canvas-card-body>
+</canvas-card>
+```
+
+Narrow surfaces. `canvas-inline-row` wraps automatically when the row cannot fit. Every growing child (input, dropdown, combobox, multi-select, textarea) keeps at least 160 px width before wrapping. Override the minimum with `style="--canvas-inline-row-item-min: 140px"` on the row for compact contexts that must stay on one line.
+
+When not to use `canvas-inline-row`. Horizontal scrollers such as chip strips (use `canvas-scroll-area horizontal`), tab bars (use `canvas-tabs`), vertical stacks (use a plain flex column or block flow), right aligned action clusters inside a card footer (use `canvas-card-footer` directly with a plain div using `justify-content: space-between`), or single element rows (render the element directly). See `web-components.md` canvas-inline-row for the full reference.
+
+For the full filter bar pattern with table and action footer, see the Filter Bar (with table and action footer) card in `examples/showcase.html` under the Form section.
+
+## Scroll Areas
+
+Use `canvas-scroll-area` whenever content needs to scroll inside a bounded region. The component is direction agnostic and opts into scrolling through the `vertical` and `horizontal` attributes. Without either attribute the component is a transparent block that grows to content.
+
+- Use `vertical` for long lists, activity logs, and constrained content columns. Set `max-height` via inline style.
+- Use `horizontal` for wide tables that should scroll sideways without scrolling the page. Set `min-width` on the inner content so the container has something to scroll to.
+- Use both attributes together when content is wide and tall (for example a dense data grid). Set `max-height` and `max-width` on the scroll area.
+- Always provide `aria-label` or `aria-labelledby` that names what is scrolling. The component auto applies `tabindex="0"` when a direction is set so keyboard users can focus the region, and the label is what a screen reader announces.
+- Do not add `overflow-y: auto` or `overflow-x: auto` on plugin level divs. If a raw div needs to scroll, replace it with a `canvas-scroll-area`. The component is the single canonical way to opt into scrolling.
+- Do not place `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` inside a `canvas-scroll-area[vertical]`. The menu surface of these components gets clipped by the scroll area's overflow. Place them outside the scroll area, or restructure the layout so the scroll is further out. Tooltips are exempt because they hide on scroll. This restriction is lifted in a later release when popup components move to the browser top layer.
+- For scrolling inside a `canvas-card-body`, put the scroll area inside the body. The body no longer scrolls on its own. See the canvas-scroll-area section in [web-components.md](web-components.md) for the migration pattern.
 
 ## Buttons
 
@@ -91,9 +165,23 @@ Follow the button color rules in SKILL.md. A screen should have at most one gree
 - Destructive actions always require a confirmation step. Never put a `variant="danger"` button directly next to the main action button. Either move it to a separate section, use `variant="ghost"` to visually downplay it, or add a confirmation dialog.
 - If the action navigates the user away from the current screen, make that clear. Use a link or indicate the destination. Never silently redirect after a button click.
 
+## Same Row Height Cohesion
+
+Form elements sharing a visual row must render at the same height. This covers `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, and `canvas-button` when placed side by side in a filter bar, inline form, or action cluster.
+
+- The `size` attribute is not a universal height tier across components. `canvas-button[size="sm"]` renders at 36 px min-height. `canvas-dropdown[size="sm"]` only reduces the trigger font size and inherits default padding, so it renders shorter than the button. Matching the `size` attribute does not guarantee matching rendered height.
+- Do not mix `size="sm"` and default in the same row. Pick one tier for the whole row.
+- The safe baseline for filter bars and inline forms is default size on every element in the row. This produces matching heights by construction.
+- Reserve `size="sm"` for rows where every element is a button, for example a table action cluster with two or three ghost buttons in a cell.
+- If a row must use `sm` and includes a dropdown, combobox, or input, verify rendered heights in a browser and align them through the component `min-height` CSS custom property. Do not ship untested size mixes.
+
+See Form Element Height Cohesion below for the custom height case where the user has asked for a non default size on any element in the row.
+
 ## Form Element Height Cohesion
 
 When the user requests a custom height on any form element (text input, `canvas-dropdown`, `canvas-combobox`, button) in a specific context (a card, a sidebar section, a modal form, a toolbar row), match the height of all sibling form elements in that same group. If a text input is made shorter to fit a compact sidebar, the dropdown next to it and the button beside it should shrink to the same height. This applies to elements that are visually grouped, on the same row or in the same form section. It does not mean changing the default dimensions globally across the whole plugin. The default sizes stay the same everywhere else. Only the local group of elements should be cohesive.
+
+See Same Row Height Cohesion above for the baseline rule that applies to every row regardless of custom height.
 
 ## Feedback and Status
 
@@ -225,6 +313,22 @@ Not all consequential actions are destructive. Clinical workflows include action
 - Use the inverted (dark) variant for disabled state explanations and secondary hints. Use the default (light) variant for primary content like truncated text expansion.
 - Add `data-canvas-tooltip-delay="1000"` for disabled state explanations so the tooltip does not flash when the user moves past the element quickly.
 - When a table row has multiple icon-only action buttons (edit, delete, view), each needs its own tooltip. Place them with enough gap that tooltips do not overlap when hovering adjacent buttons quickly.
+
+## Sortable List and Cross List Drag and Drop
+
+- Use `canvas-sortable-list` for any list the user can reorder. Do not hand roll drag and drop or use a third party library. The component owns pointer handling, FLIP animation, auto scroll during drag, keyboard reorder, and ARIA announcements.
+- Give two or more lists the same `group` value when items need to move between them. Kanban columns, archive flows, inbox and done buckets, and template palettes are the main fits. Same string on every participating list, case sensitive.
+- Leave items as plain `canvas-sortable-item`. Content goes in the default slot. No extra attributes per item are required for cross list to work.
+- When a list must stay stationary and only receive from another source, set `accept` with the source group name and omit `group` on the receiver.
+- When the source is a palette of reusable templates, set `pull="clone"` on the palette. Items drop as copies into the target and the original stays in the palette.
+- Prefer a plain Move to X button in a menu when there are only two lists and moves are rare. Cross list drag is heavier visually than a button. Reserve it for flows where spatial arrangement of columns carries meaning, such as a kanban board or a schedule editor.
+- Do not wrap a sortable list in anything that intercepts pointer events. The handle must receive `pointerdown` through to the component.
+
+## Single Drop vs Bulk Changes
+
+- **Single drop.** Fire an API call on every `move` or `reorder` event. Use when lists are short and the backend is fast. Revert the last move from a catch block if the request fails.
+- **Bulk.** Accumulate `change` events in a `Map` keyed by item id. Save flushes as one payload, either on a Save button or after a debounced timer. Use when lists are long, the backend exposes a bulk endpoint, or the user wants to arrange several cards before committing. The Map collapses repeated moves of the same item so only the latest position ships.
+- Validation that cannot be expressed on the client but must not let the user visually commit belongs in a `beforemove` or `beforereorder` handler that calls `preventDefault()`. Always pair a cancel with a toast or inline message explaining why the move was refused.
 
 ## Anti-Patterns
 

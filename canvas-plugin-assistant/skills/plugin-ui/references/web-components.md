@@ -1,6 +1,6 @@
 # Web Components
 
-Reference for the Canvas plugin web component system. The system includes 24 components (43 tag names). This file covers how components load and the API for each component. For the token system, fallback chain, button spacing rules, and patterns without components, see [DESIGN.md](../DESIGN.md). Read this before writing any plugin that uses `<canvas-*>` elements.
+Reference for the Canvas plugin web component system. The system includes 25 components (44 tag names). This file covers how components load and the API for each component. For the token system, fallback chain, button spacing rules, and patterns without components, see [DESIGN.md](../DESIGN.md). Read this before writing any plugin that uses `<canvas-*>` elements.
 
 ## Contents
 
@@ -172,7 +172,7 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 **Size rules.**
 
 - **base** for primary page actions (save, submit, confirm).
-- **sm** for card headers, toolbars, and table row actions.
+- **sm** for card headers and table row actions where every element in the row is a button. For toolbars and inline form rows that include dropdowns, comboboxes, or inputs, use default size on every element in the row. See Inline Form Rows and Same Row Height Cohesion in component-usage.md.
 - **xs** for floating utility actions not paired with an input. Normal weight (400), no min-height.
 
 **Form submission.** A button with `type="submit"` finds the closest `<form>` ancestor and calls `requestSubmit()` on click. The component crosses the shadow DOM boundary to find the form.
@@ -410,6 +410,8 @@ container.appendChild(chip);
 ### canvas-input
 
 A single-line text input with integrated label, error state, and native form participation via `ElementInternals`. Renders an `<input>` inside Shadow DOM. For multi-line text, use `canvas-textarea`.
+
+**Do not use native `<input>` elements.** `canvas-input` supports every input type including `text`, `email`, `password`, `number`, `tel`, `url`, `date`, `datetime-local`, `month`, `week`, and `time`. For date and time types the component styles the native picker through the same border, radius, padding, and font as other inputs. A raw `<input>` produces output that does not match Canvas even when CSS tokens are applied by hand. See the native input prohibition in `component-usage.md` Text Inputs vs Textareas.
 
 **Usage**
 
@@ -885,11 +887,13 @@ Body only (simple inline messages).
 
 ### canvas-card
 
-A segment card matching the Canvas Semantic UI segments pattern. White surface with border, border-radius, and box-shadow. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels.
+A segment card matching the Canvas Semantic UI segments pattern. White surface with border, border-radius, and box-shadow. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels. For the decision rule on when to reach for this component rather than a raw div, see [component-usage.md](component-usage.md) Cards and Content Containers.
 
 Three custom elements are registered from a single file: `canvas-card` (outer container), `canvas-card-body` (body sections), and `canvas-card-footer` (gray footer area).
 
-**Scrollable body.** Each `canvas-card-body` has `overflow-y: auto`. To activate scrolling, set a `max-height` on the body element. Without a height constraint the body grows to fit its content as before.
+**Rendering.** The card does not apply `overflow: hidden`. Corner clipping of slotted body and footer backgrounds is handled by applying the card's border-radius (minus 1px for the border width) to the first and last slotted child via `::slotted(...:first-child)` and `::slotted(...:last-child)` rules. Because the card is not a clipping boundary, a popup child (for example a `canvas-dropdown` menu) can extend past the card's edge without being cut off. The body also does not apply `overflow-y: auto`, so content grows to fit naturally.
+
+**Scrolling.** For a card body that should scroll, wrap the content in a `canvas-scroll-area` and set a `max-height` on the scroll area. Setting `max-height` on `canvas-card-body` directly has no effect because the body is not a scroll container. See the canvas-scroll-area section below for the migration pattern.
 
 **Usage**
 
@@ -979,6 +983,134 @@ The shadow token can be used for hover effects or to remove the shadow entirely.
 
 **File.** `assets/canvas-plugin-ui.js`
 
+### canvas-inline-row
+
+A layout primitive for a horizontal row of form elements. Defaults to a flex container with `gap` between children, bottom alignment of children, and automatic wrap onto a new line when the row cannot fit. Growing children (inputs, dropdowns, comboboxes, multi selects, textareas) share available space with a minimum basis of 160 px. Natural width children (buttons, checkboxes, radios, toggles) keep their content width.
+
+Use for filter bars, inline edit forms, search bars, toolbar forms, and any row of form elements sharing a visual line. See [component-usage.md](component-usage.md) Inline Form Rows for the full pattern description and use cases.
+
+**Usage**
+
+```html
+<canvas-inline-row>
+  <canvas-input label="From" type="date"></canvas-input>
+  <canvas-input label="To" type="date"></canvas-input>
+  <canvas-dropdown label="Provider">
+    <canvas-option value="" selected>All Providers</canvas-option>
+    <canvas-option value="1">Dr. Alvarez</canvas-option>
+  </canvas-dropdown>
+  <canvas-button>Load Appointments</canvas-button>
+</canvas-inline-row>
+```
+
+**Attributes.** None.
+
+**Children and flex behavior.** The component applies flex sizing rules to its slotted children based on component type.
+
+| Behavior | Canvas components | Flex rule |
+|---|---|---|
+| Grow | `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, `canvas-textarea` | `flex: 1 0 var(--canvas-inline-row-item-min, 160px)`. Items share available space, respect a 160 px minimum, wrap instead of shrinking below the minimum. |
+| Natural | `canvas-button`, `canvas-checkbox`, `canvas-radio`, `canvas-toggle` | `flex: 0 0 auto`. Items take content width, never grow, never shrink. |
+| Opt in | Any child with `inline-role="grow"` or `inline-role="natural"` | Overrides the default based on the attribute value. Useful for per instance tweaks or for external components that are not in the Canvas bundle. |
+
+**Per instance override.** Set `inline-role` on any child to override its default sizing.
+
+```html
+<!-- Force a fixed width input, e.g. a zip code field -->
+<canvas-inline-row>
+  <canvas-input label="Street" placeholder="Address"></canvas-input>
+  <canvas-input label="Zip" inline-role="natural" style="width: 120px"></canvas-input>
+</canvas-inline-row>
+
+<!-- Force a stretched button -->
+<canvas-inline-row>
+  <canvas-input label="Search" placeholder="Patient name"></canvas-input>
+  <canvas-button inline-role="grow">Search</canvas-button>
+</canvas-inline-row>
+```
+
+**Narrow surfaces.** The component wraps automatically via `flex-wrap: wrap`. In a 360 px container, a four element row wraps onto two or three lines. Every element keeps at least 160 px width.
+
+**Component tokens**
+
+| Token | What it controls | Fallback chain |
+|---|---|---|
+| `--canvas-inline-row-gap` | Gap between children | `--space-small` then `12px` |
+| `--canvas-inline-row-item-min` | Minimum width for growing children | `160px` |
+
+```html
+<!-- Wider gap, e.g. in a page header toolbar -->
+<canvas-inline-row style="--canvas-inline-row-gap: 20px">
+  ...
+</canvas-inline-row>
+
+<!-- Tighter minimum for a compact filter bar that must stay on one line -->
+<canvas-inline-row style="--canvas-inline-row-item-min: 140px">
+  ...
+</canvas-inline-row>
+```
+
+**When not to use.** Do not use `canvas-inline-row` for horizontal scrollers like chip strips (use `canvas-scroll-area horizontal`), tab bars (use `canvas-tabs`), vertical stacks (use a plain flex column or block flow), right aligned action clusters inside a card footer (use `canvas-card-footer` directly with `justify-content: space-between` on a plain div inside), or single element rows (render the element directly). Full guidance in [component-usage.md](component-usage.md) Inline Form Rows.
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-scroll-area
+
+A declarative, opt in scroll container. Use it anywhere content needs to scroll. Common cases include replacing raw wide table wrappers, adding a scroll region inside a card body, and constraining long lists or log panels to a fixed height. The component has no visual styling of its own, it is a structural wrapper.
+
+**Opt in direction.** Scrolling is off by default. Add the `vertical` attribute for vertical scroll, the `horizontal` attribute for horizontal scroll, or both for a two axis scroll area. Without either attribute, the component is a transparent block that grows to content.
+
+**Usage**
+
+```html
+<canvas-scroll-area vertical aria-label="Activity log" style="max-height: 320px">
+  long list or log content
+</canvas-scroll-area>
+
+<canvas-scroll-area horizontal aria-label="Wide data table" style="max-width: 100%">
+  <table style="min-width: 1200px">...</table>
+</canvas-scroll-area>
+
+<canvas-scroll-area vertical horizontal aria-label="Wide and tall grid" style="max-height: 400px; max-width: 100%">
+  <table style="min-width: 1400px">...</table>
+</canvas-scroll-area>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `vertical` | boolean | off. When set, the component enables `overflow-y: auto`. |
+| `horizontal` | boolean | off. When set, the component enables `overflow-x: auto`. |
+
+**Dimensions.** Consumers set `max-height`, `max-width`, or any other CSS length via `style=` or an external stylesheet. The component does not accept size attributes. This keeps the API minimal and lets consumers use any CSS length.
+
+**Accessibility.** When either `vertical` or `horizontal` is present and the element has no consumer supplied `tabindex`, the component sets `tabindex="0"` so keyboard users can focus the region and scroll with arrow keys. Always provide `aria-label` or `aria-labelledby` describing what is scrolling. Consumer supplied `tabindex` is never overridden.
+
+**Clipping caveat.** A scroll area is itself a clipping boundary. Popups placed inside a vertical scroll area (such as a `canvas-dropdown` or `canvas-combobox` menu) get clipped by the scroll area even when the outer card or modal does not clip. Current usage rule, do not place `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` inside a `canvas-scroll-area[vertical]`. Tooltips are exempt because they hide on scroll. The restriction is lifted in a later release when popup components move to the browser top layer.
+
+**Migration from canvas-card-body scrolling.** Before 4.0.0, setting `max-height` on `canvas-card-body` activated body scrolling. That pattern is removed. Wrap the content in a scroll area instead.
+
+```html
+<!-- before 4.0.0 -->
+<canvas-card-body style="max-height: 360px">
+  long content
+</canvas-card-body>
+
+<!-- 4.0.0 and later -->
+<canvas-card-body>
+  <canvas-scroll-area vertical style="max-height: 336px">
+    long content
+  </canvas-scroll-area>
+</canvas-card-body>
+```
+
+The scroll area `max-height` is smaller than the old body `max-height` to account for the body's 1em top and bottom padding. If the card body does not need its own padding around the scroll region, add `no-padding` on the body and move padding to the scroll area.
+
+**Replaces the table-scroll helper.** The pre 4.0.0 `.table-scroll` div wrapper for wide tables is replaced by `<canvas-scroll-area horizontal>` wrapping the table.
+
+**File.** `assets/canvas-plugin-ui.js`
+
 ### canvas-dropdown
 
 A non-searchable select dropdown matching the Canvas Semantic UI selection dropdown. Click to open a menu, arrow keys to navigate, Enter to select. For searchable dropdowns, use `canvas-combobox` instead.
@@ -1047,10 +1179,10 @@ A non-searchable select dropdown matching the Canvas Semantic UI selection dropd
 
 **Size rules.**
 
-- **default** (no size attribute) for forms, modals, and any standalone data entry. This is the standard dropdown seen in patient forms, coverage modals, appointment creation, and anywhere the dropdown is the primary interaction on screen. Trigger text renders at 16px.
-- **sm** for compact contexts where the dropdown is secondary to the main content. Sidebars, toolbars, filter bars, card headers, and settings panels where space is tight and the dropdown sits alongside other compact controls. Trigger text renders at 12px. The menu items always stay at 16px regardless of trigger size.
+- **default** (no size attribute) for forms, modals, filter bars, search bars, inline edit rows, and any standalone data entry. This is the standard dropdown seen in patient forms, coverage modals, appointment creation, and anywhere the dropdown is the primary interaction on screen. Trigger text renders at 16px.
+- **sm** for compact contexts where the dropdown is secondary to the main content and every other element in the row is also `sm`. Narrow sidebars and settings panels where the dropdown sits alongside `sm` buttons. Trigger text renders at 12px. The menu items always stay at 16px regardless of trigger size.
 
-When a dropdown appears next to buttons, match the button size. If the buttons are `size="sm"`, the dropdown should also be `size="sm"`. When a dropdown appears inside a card footer or toolbar alongside small buttons, use `sm`. When it is the main form element on a page or modal, use default.
+When a dropdown shares a row with inputs, buttons, or other dropdowns, follow the Same Row Height Cohesion rule in component-usage.md. Matching the `size` attribute across components does not produce matching rendered heights. `canvas-button[size="sm"]` has a 36 px `min-height` while `canvas-dropdown[size="sm"]` only reduces the trigger font size. The safe baseline is default size on every element in the row. For the full filter bar pattern see Inline Form Rows in component-usage.md.
 
 ```html
 <!-- default for forms and modals -->
@@ -1059,7 +1191,7 @@ When a dropdown appears next to buttons, match the button size. If the buttons a
   <canvas-option value="medicare">Medicare</canvas-option>
 </canvas-dropdown>
 
-<!-- sm for sidebars, toolbars, filter bars -->
+<!-- sm only in rows where every element is also sm. See component-usage.md Same Row Height Cohesion. -->
 <canvas-dropdown label="Location" size="sm" placeholder="Select location">
   <canvas-option value="sf">Canvas Clinic SF</canvas-option>
   <canvas-option value="oak">Canvas Clinic Oakland</canvas-option>
@@ -1307,7 +1439,7 @@ A collapsible section container with chevron animation, ARIA, and keyboard suppo
 
 **Title content.** The default slot on `canvas-accordion-title` accepts any content. Text, badges, buttons, toggles, and checkboxes can all be placed inside. The chevron icon is rendered automatically by the component and always appears first.
 
-**Actions in title.** Place interactive elements (toggles, checkboxes, badges) directly inside `canvas-accordion-title`. The component handles click propagation so that clicking a toggle or checkbox does not trigger expand/collapse. When mixing text and interactive elements, use flex utilities on the title content.
+**Actions in title.** Place interactive elements directly inside `canvas-accordion-title`. The accordion inspects the event path on its trigger handlers and skips expand or collapse when a click or keyboard activation originates from an interactive descendant. The filter covers `canvas-button`, `canvas-toggle`, `canvas-checkbox`, `canvas-radio`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, `canvas-input`, `canvas-date-input`, `canvas-textarea`, plain HTML `button`, `a[href]`, `input`, `select`, `textarea`, and any element carrying an ARIA role of button, switch, checkbox, radio, link, menuitem, tab, or option. Plugin authors do not need to add `event.stopPropagation` on interactive children. When mixing text and interactive elements, use flex utilities on the title content.
 
 ```html
 <canvas-accordion-title>
@@ -1322,7 +1454,16 @@ A collapsible section container with chevron animation, ARIA, and keyboard suppo
 
 **Accessibility.** Title has `role="button"` and `aria-expanded`. Content has `role="region"`.
 
-**Locked component.** No visual customization tokens beyond `--font-family`.
+**Container padding.** `canvas-accordion` and `canvas-accordion-item` carry no horizontal padding of their own. Top level accordions sit flush with the edges of their container and rely on the container to supply horizontal inset, the same way `h1` through `h5`, `<p>`, and `canvas-button` rely on their parent. This matches the `padding: 0` rule applied to heading elements in `canvas-plugin-ui.css` and keeps the accordion from double padding when it lives inside a `canvas-card`, a `sample-card`, or any shell that already pads its children. See DESIGN.md Container Padding Responsibility for the full rule.
+
+**Nested indent.** When a `canvas-accordion-item` sits inside another accordion's `canvas-accordion-content`, a global CSS rule in `canvas-plugin-ui.css` applies left padding of `--canvas-accordion-nested-indent` so the hierarchy is visible. The rule only matches nested items, not top level ones. Depth compounds naturally because each nested content holds its own nested items, so level two steps in by one `--space-small` from level one, level three by two `--space-small` from level one, and so on.
+
+**Tokens**
+
+| Token | What it controls | Default |
+|---|---|---|
+| `--canvas-accordion-nested-indent` | Left padding applied to any `canvas-accordion-item` placed inside another accordion's content. Has no effect on top level items. | `var(--space-small, 12px)` |
+| `--font-family` | Title font family. | Inherits from the global font stack. |
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1508,45 +1649,86 @@ Combine modifier attributes on the same `canvas-table` element as needed.
 
 ### canvas-sortable-list
 
-A drag-to-reorder list with FLIP animation and keyboard support. Registers two elements from one file. `canvas-sortable-list` is the container and `canvas-sortable-item` wraps each draggable item.
+A drag to reorder list with FLIP animation, keyboard support, auto scroll during drag, and optional cross list moves. Registers two elements from one file. `canvas-sortable-list` is the container and `canvas-sortable-item` wraps each draggable item.
 
-Each item renders a drag handle (grip icon) automatically. Drag the handle to reorder. The list uses pointer events for drag and FLIP animation for smooth transitions.
+Each item renders a drag handle automatically. Drag the handle to reorder within the list, or to move the item into another list in the same group.
 
 **Usage**
 
 ```html
 <canvas-sortable-list>
-  <canvas-sortable-item>
-    <span>First item</span>
-  </canvas-sortable-item>
-  <canvas-sortable-item>
-    <span>Second item</span>
-  </canvas-sortable-item>
-  <canvas-sortable-item>
-    <span>Third item</span>
-  </canvas-sortable-item>
+  <canvas-sortable-item>First item</canvas-sortable-item>
+  <canvas-sortable-item>Second item</canvas-sortable-item>
+  <canvas-sortable-item>Third item</canvas-sortable-item>
 </canvas-sortable-list>
 ```
 
+**Cross list usage.** Give two or more lists the same `group` value. Items can be dragged between them and the matching keyboard bindings become active.
+
+```html
+<canvas-sortable-list group="tickets" id="backlog">
+  <canvas-sortable-item data-id="t-1">Update coverage form</canvas-sortable-item>
+  <canvas-sortable-item data-id="t-2">Fix date picker</canvas-sortable-item>
+</canvas-sortable-list>
+
+<canvas-sortable-list group="tickets" id="done">
+  <canvas-sortable-item data-id="t-3">Chart note signed</canvas-sortable-item>
+</canvas-sortable-list>
+```
+
+**Attributes on `canvas-sortable-list`**
+
+| Attribute | Values | Default | Purpose |
+|---|---|---|---|
+| `group` | string | none | Lists sharing a group value exchange items. Omitted means the list is isolated, identical to single list behavior. |
+| `accept` | comma separated group names | the list's own group | Extra groups this list will receive from without being a member. Useful for one way flows like an archive bucket. |
+| `pull` | `move`, `clone` | `move` | `clone` leaves the original in place and drops a copy into the target list. Enables template palettes. |
+| `disabled` | boolean | false | Items cannot be dragged out, list cannot receive drops. |
+
 **Events**
 
-| Event | When | Detail |
-|---|---|---|
-| `reorder` | When an item is moved to a new position (drag or keyboard). Bubbles and composes. | `{ oldIndex: number, newIndex: number, item: HTMLElement }` |
+All events bubble and compose, so one listener at a common ancestor catches every change on the page.
+
+| Event | When | Detail | Cancelable |
+|---|---|---|---|
+| `reorder` | After a within list move commits | `{ item, oldIndex, newIndex, list }` | no |
+| `move` | After a cross list move commits | `{ item, fromList, toList, oldIndex, newIndex }` | no |
+| `change` | After any move commits | same as the one that fired, plus `type` equal to `reorder` or `move` | no |
+| `beforereorder`, `beforemove`, `beforechange` | Before the drop lands | same as their twin | yes, `preventDefault()` snaps the item back |
+
+The `change` event is a single listener path when you do not care to distinguish within list from cross list. Use `beforemove` and `beforereorder` for permission gates and column capacity rules. Always pair a cancel with visible user feedback.
+
+**Property getter**
+
+`list.items` returns the live array of `canvas-sortable-item` children in current DOM order. Rebuilds from the DOM on each read, no cached state.
 
 **Slot.** `canvas-sortable-item` has a default slot for content. The drag handle is rendered inside Shadow DOM and cannot be replaced.
 
-**Drag behavior.** Pointer down on the handle starts a drag. The dragged item becomes a fixed overlay following the cursor. A placeholder holds space at the original position. As the cursor moves past item midpoints, the placeholder shifts and other items animate into place via FLIP transforms (200ms ease). On pointer up, the item is inserted at the placeholder position. A `reorder` event fires only if the position actually changed.
+**Drag behavior.** Pointer down on the handle starts a drag. The dragged item becomes a fixed overlay following the cursor. A placeholder holds space at the current target position. As the cursor moves past item midpoints, the placeholder shifts and other items animate into place via FLIP transforms (200ms ease). On pointer up, the item is inserted at the placeholder position and the matching `reorder` or `move` event fires, followed by `change`.
 
-**Keyboard reorder.** Focus the drag handle with Tab, then press ArrowUp or ArrowDown to move the item. Each keypress moves the item one position and fires a `reorder` event.
+**Cross list drop indication.** The placeholder holds an empty gap at the insertion point and items animate into place via FLIP. No color indicator is applied by default. The list currently under the cursor carries a `data-drop-active` attribute that consumers can style on their own for a column highlight or insertion bar if desired.
 
-**FLIP animation.** Items animate from old to new position using `transform: translateY()` with a 200ms ease transition. The animation is smooth and prevents visual jumping during reorder.
+**Auto scroll during drag.** When the list is inside a scrollable ancestor, dragging an item toward the top or bottom edge of that ancestor makes the ancestor auto scroll. The component resolves the nearest element with `overflow-y` of `auto` or `scroll` at drag start, falling back to the document scroller. A 48 pixel edge hotspot drives a `requestAnimationFrame` loop at up to 12 pixels per frame, ramped by cursor proximity. Stops on pointer up, when the cursor leaves the hotspot, or when the scroller hits its boundary.
+
+**Keyboard.** Focus the drag handle with Tab.
+
+- `ArrowUp` and `ArrowDown` reorder within the current list, firing `reorder` and `change`.
+- `ArrowLeft` and `ArrowRight` move the item into the previous or next list in the same group, firing `move` and `change`. Active only when the list has a `group` attribute and a compatible sibling list exists. Sibling resolution goes by screen position left to right.
+
+**ARIA.** A shared polite live region announces every move. Within list announcements read "Moved item to position N of M in <list label>.". Cross list announcements read "Moved item from <source> to <destination>, position N of M.". List labels come from `aria-labelledby`, then `aria-label`, then `id`, then "list". Label kanban columns explicitly so announcements read well.
+
+**Single drop vs bulk changes.** For small lists and fast backends, fire an API call on every `move` or `reorder`. For larger boards, accumulate `change` events in a `Map` keyed by id and flush on Save or after a debounced timer. The Map collapses repeated moves of the same item so only the final position ships in one payload.
+
+**FLIP animation.** Items animate from old to new position using `transform: translateY()` with a 200ms ease transition.
+
+**Empty list drop target.** An empty list in a cross list group still accepts drops. A default `min-height` via `--canvas-sortable-min-height` keeps the target reachable.
 
 **Component tokens**
 
 | Token | What it controls | Default |
 |---|---|---|
 | `--radius` | Border radius on drag overlay and handle hover | `.28571429rem` |
+| `--canvas-sortable-min-height` | Minimum height so empty lists stay reachable as drop targets | `calc(var(--space-medium) * 2)` |
 
 **File.** `assets/canvas-plugin-ui.js`
 

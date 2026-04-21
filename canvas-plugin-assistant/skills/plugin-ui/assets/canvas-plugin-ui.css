@@ -103,3 +103,27 @@ p {
 
 p:first-child { margin-top: 0; }
 p:last-child { margin-bottom: 0; }
+
+/* Nested accordion indent.
+   canvas-accordion-item carries no horizontal padding of its own, the
+   container supplies outer inset the same way it does for headings and
+   paragraphs. When an item appears inside another accordion's content,
+   apply a left step so the hierarchy is visible. Applies to any depth
+   because the selector matches every descendant item inside a content. */
+
+canvas-accordion-content canvas-accordion-item {
+  padding-left: var(--canvas-accordion-nested-indent, var(--space-small, 12px));
+}
+
+/* Sortable list tokens and placeholder.
+   The placeholder element is created in light DOM by the list component, so
+   its rules live here rather than inside the shadow root. */
+
+canvas-sortable-list {
+  --canvas-sortable-min-height: calc(var(--space-medium, 16px) * 2);
+}
+
+.canvas-sortable-placeholder {
+  pointer-events: none;
+  box-sizing: border-box;
+}

@@ -22,9 +22,9 @@ Verify the plugin loads the design system correctly and bundled assets exist.
 
 Verify all web components are used correctly.
 
-1. **Tag name check.** Every `<canvas-*>` element in the HTML matches one of the registered component names. Misspelled tags render as empty unknown elements. The valid names are: canvas-button, canvas-badge, canvas-chip, canvas-input, canvas-radio, canvas-checkbox, canvas-toggle, canvas-banner, canvas-card, canvas-card-body, canvas-card-footer, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-option, canvas-tabs, canvas-tab, canvas-tab-label, canvas-tab-panel, canvas-accordion, canvas-accordion-item, canvas-accordion-title, canvas-accordion-content, canvas-modal, canvas-modal-header, canvas-modal-content, canvas-modal-footer, canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell, canvas-sortable-list, canvas-sortable-item, canvas-sidebar-layout, canvas-sidebar, canvas-content, canvas-loader, canvas-button-group, canvas-textarea, canvas-tooltip, canvas-progress, canvas-divider.
+1. **Tag name check.** Every `<canvas-*>` element in the HTML matches one of the registered component names. Misspelled tags render as empty unknown elements. The valid names are: canvas-button, canvas-badge, canvas-chip, canvas-input, canvas-radio, canvas-checkbox, canvas-toggle, canvas-banner, canvas-card, canvas-card-body, canvas-card-footer, canvas-inline-row, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-option, canvas-tabs, canvas-tab, canvas-tab-label, canvas-tab-panel, canvas-accordion, canvas-accordion-item, canvas-accordion-title, canvas-accordion-content, canvas-modal, canvas-modal-header, canvas-modal-content, canvas-modal-footer, canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell, canvas-sortable-list, canvas-sortable-item, canvas-sidebar-layout, canvas-sidebar, canvas-content, canvas-loader, canvas-button-group, canvas-textarea, canvas-tooltip, canvas-progress, canvas-divider, canvas-scroll-area.
 2. **Attribute check.** Every attribute set on a `<canvas-*>` element is documented in web-components.md for that component. Unknown attributes are silently ignored.
-3. **No native replacements.** No `<select>` elements anywhere. No `<input type="checkbox">` or `<input type="radio">` outside of a web component. Use canvas-dropdown, canvas-checkbox, canvas-radio.
+3. **No native replacements.** No `<select>` elements anywhere. No `<input type="checkbox">` or `<input type="radio">` outside of a web component. No `<details>` or `<summary>` elements anywhere. Use canvas-dropdown, canvas-checkbox, canvas-radio, canvas-accordion.
 4. **Plugin-specific CSS uses tokens.** Scan the `<style>` tag for any CSS rules. All color, spacing, radius, font-family, and transition values must use `var(--token)` references. The only allowed raw values are `0`, `none`, `auto`, `100%`, position values, and `z-index` integers.
 
 ## Phase 2. Component Usage Audit
@@ -61,6 +61,40 @@ Inventory which component types are present. Run only the checks relevant to com
 ### Accordions (canvas-accordion)
 
 1. Each canvas-accordion-item contains exactly one canvas-accordion-title and one canvas-accordion-content.
+2. No native `<details>` or `<summary>` elements remain in the markup. Every collapsible section uses `canvas-accordion` with `canvas-accordion-item`, `canvas-accordion-title`, and `canvas-accordion-content`. The only accepted exception is a custom header row whose trigger content does not fit the accordion title slot (for example a medication group row with name, sig, badges, and actions). That exception still does not permit native `<details>` as the outer container.
+
+### Inline Form Rows (canvas-inline-row)
+
+1. No raw flex rows of form elements. Scan the markup for a `div` or other plain element with inline style or class CSS that includes `display: flex` and contains two or more `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, `canvas-textarea`, or `canvas-button` children. Replace the container with `<canvas-inline-row>`. Remove any `flex-wrap`, `align-items`, `gap`, or per child flex rules, the component handles them.
+2. No mixed size tier in one row. Scan `<canvas-inline-row>` children for `size="sm"` attributes. Either every element in the row is a button at `sm`, or no element uses `size="sm"`. Mixed tiers produce visibly mismatched heights. See Same Row Height Cohesion in `component-usage.md`.
+3. No native input inside an inline row. A `<canvas-inline-row>` containing a raw `<input>` or `<select>` fails this check. Replace with `canvas-input` or `canvas-dropdown`.
+4. Filter bar pattern uses canvas-card plus canvas-inline-row. A filter row sitting above a table that is not wrapped in a `<canvas-card><canvas-card-body><canvas-inline-row>...</canvas-inline-row></canvas-card-body></canvas-card>` structure is a migration target. Bulk action rows under the table use `<canvas-card-footer>`.
+
+### Cards and Content Containers (canvas-card)
+
+1. No raw card wrappers. Scan the markup for any element with a class name matching `card`, `panel`, `box`, or `tile` that is used as a content container. Replace with `<canvas-card>` and `<canvas-card-body>`. Remove any local CSS rule targeting that class. Exception, class names where the word `card` refers to something unrelated such as `card-number-input`.
+2. No style signature imitations. Scan the plugin `<style>` tag and inline `style=` attributes for any rule that combines a light background, a border, a border-radius, and a box-shadow on a single element. Replace with `<canvas-card>` unless the element is a modal body or popover which share some of these properties by design.
+3. Footers use the component. Any gray action strip at the bottom of a card that contains buttons must be a `<canvas-card-footer>`. No raw div with a gray background for this role.
+4. Card padding is component owned. No `padding` rule on elements that are direct children of `<canvas-card-body>` other than layout spacing between child elements. The body applies `1em` padding unless `no-padding` is set.
+5. Multiple titled sections use stacked bodies. If a card shows two or more titled sections with internal dividers, use adjacent `<canvas-card-body>` elements rather than custom dividers or horizontal rules.
+6. No `max-height` on `canvas-card-body` expecting scrolling. The body is not a scroll container in 4.0.0 and later. Use `<canvas-scroll-area vertical>` inside the body instead.
+
+### Scroll Areas (canvas-scroll-area)
+
+1. No raw overflow on plugin level divs. Scan the plugin `<style>` tag and inline `style=` attributes for `overflow-y: auto`, `overflow-x: auto`, or `overflow: auto` on any element that is not a web component. Each match is replaced with a `<canvas-scroll-area>` wrapper using the appropriate direction attribute.
+2. Direction is explicit. Every `<canvas-scroll-area>` has at least one of `vertical` or `horizontal`. A scroll area without a direction is either a mistake or should be replaced with a plain div.
+3. Every scrolling region is labeled. Every `<canvas-scroll-area>` with a direction attribute has either `aria-label` or `aria-labelledby`. Screen readers announce the region name when keyboard focus enters it.
+4. No forbidden popup nesting. Scan for `<canvas-dropdown>`, `<canvas-combobox>`, or `<canvas-multi-select>` nested inside a `<canvas-scroll-area vertical>`. Each occurrence is a violation until the 4.1.0 Popover API migration. `<canvas-tooltip>` is allowed inside because it hides on scroll.
+5. No legacy `.table-scroll` class. The pre 4.0.0 `.table-scroll` wrapper is replaced by `<canvas-scroll-area horizontal>`. Any remaining usage is a migration target.
+
+### Sortable Lists (canvas-sortable-list)
+
+1. **Component, not hand roll.** No plain `<div>` structures with `draggable` attributes, `HTML5 Drag and Drop API` event listeners, or third party drag libraries. Every reorderable list is a `canvas-sortable-list` with `canvas-sortable-item` children.
+2. **Cross list group consistency.** When two or more lists need to exchange items, every participating list has a `group` attribute with the same value. Case sensitive. Mismatched groups silently prevent cross list moves.
+3. **Receiver only semantics.** A list that should only receive (never send) uses `accept` with the source group name and omits `group`. A list that should hand out copies uses `pull="clone"` on the source.
+4. **Event handler presence.** Where cross list is enabled, a `move` handler or a `change` handler exists on the receiving list, the source list, or a common ancestor. A `reorder` only handler misses cross list commits.
+5. **Cancel pairing.** Any `beforemove` or `beforereorder` handler that calls `preventDefault()` also surfaces a visible message (toast, banner, inline text). A silent cancel reads as a broken drop.
+6. **Labels for ARIA.** Each cross list participant has `aria-labelledby` pointing at its column heading, or `aria-label` with the column name. Without a label, the live region falls back to the list id.
 
 ## Phase 3. UX Patterns
 
@@ -96,7 +130,7 @@ Only runs when refactoring existing HTML that contained JavaScript. Skip for new
 
 1. **Palette compliance.** No purple, teal, pink, cyan, or other colors outside the closed palette. Search all plugin-specific CSS and inline styles for off-palette colors. Defined in DESIGN.md Color Palette and Roles.
 2. **Text-background pairing.** On white backgrounds, dark and muted text allowed. On gray backgrounds, only dark text. On colored backgrounds, white bold text. Defined in DESIGN.md Text and Background Pairing.
-3. **Token usage.** All spacing, color, radius, and font values in plugin-specific CSS use `var(--token)` references. Defined in DESIGN.md Token System.
+3. **Token usage.** All spacing, color, radius, and font values in plugin-specific CSS use `var(--token)` references. Defined in DESIGN.md Token System. Additionally, if any plugin CSS rule combines background, border, border-radius, and box-shadow on one element, verify that element is not a card imitation. Cards must use the `canvas-card` component, not inline card styling with tokens.
 
 ---
 

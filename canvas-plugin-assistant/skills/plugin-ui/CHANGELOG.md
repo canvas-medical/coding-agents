@@ -1,5 +1,150 @@
 # Changelog
 
+## 4.7.0
+
+### Added
+
+- `data-drop-eligible` attribute on `canvas-sortable-list`. Every sibling list that can receive from the active drag source carries the attribute for the full duration of the drag. The source list itself does not. Styled by default with a thin outline matching `canvas-input`'s focus border via `var(--canvas-input-focus-border, #85b7d9)` and the input's `border-radius` via `var(--canvas-input-radius, var(--radius, .28571429rem))`. Uses `outline` rather than `border` so no layout shift occurs when the attribute flips on. Gives the user an immediate visual map of where the item can land before they commit, without coloring the source column or tinting any list.
+
+## 4.6.0
+
+### Added
+
+- Cross list drag and drop on `canvas-sortable-list`. Lists that share a `group` value exchange items via pointer drag or keyboard. No new custom element, existing markup keeps working unchanged. When the attribute is omitted the component behaves exactly as it did in 4.5.x.
+- `group` attribute on `canvas-sortable-list`. Same string value on two or more lists makes them compatible peers. Case sensitive string comparison.
+- `accept` attribute on `canvas-sortable-list`. Comma separated group names the list will receive from. Defaults to the list's own group. Enables one way flows like an archive bucket that pulls from several sources without sending.
+- `pull` attribute on `canvas-sortable-list`. Values `move` (default) or `clone`. A `clone` source leaves the original in place and drops a copy into the target, which supports template palettes and widget pickers.
+- `disabled` attribute on `canvas-sortable-list`. Freezes the list so items cannot be dragged out and drops are refused. Applied statically or toggled at runtime.
+- New events on `canvas-sortable-list`. `move` fires after a cross list commit with `{ item, fromList, toList, oldIndex, newIndex }`. `change` fires for every committed move with the same detail plus `type` equal to `reorder` or `move`. Cancelable pre commit twins `beforereorder`, `beforemove`, and `beforechange` snap the item back when `preventDefault()` is called, which enables permission gates and column capacity rules without visually accepting an unacceptable drop.
+- `list.items` property getter. Returns the live array of `canvas-sortable-item` children in current DOM order. Rebuilds from the DOM on each read, no cached state. Consumers who prefer a snapshot to a delta stream read this in a Save handler.
+- Keyboard cross list navigation on `canvas-sortable-item`. `ArrowLeft` and `ArrowRight` on a focused handle move the item into the previous or next list in the same group. Active only when the list has a `group` attribute and a compatible sibling exists. Sibling resolution goes by on screen position left to right.
+- Shared ARIA live region. Within list reorders announce "Moved item to position N of M in <list label>." and cross list moves announce "Moved item from <source label> to <destination label>, position N of M." List labels resolve from `aria-labelledby`, then `aria-label`, then the list `id`, then the generic word "list".
+- `data-drop-active` attribute on `canvas-sortable-list`. Toggled by the component while a cross list drag hovers this list. No default visual is applied. Consumers who want a column highlight can write their own `canvas-sortable-list[data-drop-active]` rule. The default cross list affordance is the placeholder insertion bar alone.
+- `--canvas-sortable-min-height` CSS custom property. Default `calc(var(--space-medium) * 2)`. Ensures empty receiving lists remain reachable as drop targets.
+- `.canvas-sortable-placeholder` class on the placeholder element created during a drag. Holds the insertion gap so items can animate into place via FLIP. No default color indicator, consumers can add one via their own rule on the class if desired.
+- Four sample cards in `examples/showcase.html` under Sortable List. `Cross list kanban with shared group` shows three columns sharing `group="tickets"`. `Template palette with pull clone` shows a palette feeding a form builder without losing source items. `Bulk flow with accumulator and Save button` shows a Map keyed by item id collecting `change` events and flushing on Save. `Permission gate with beforemove` shows a locked column rejecting drops with a logged explanation.
+- Cross List Drag and Drop and Single Drop vs Bulk Changes decision rules in `references/component-usage.md`. Spells out when to reach for cross list vs a plain Move to X button, and when to choose single drop writes vs bulk accumulation.
+- Sortable List Keyboard, Sortable List Cross List Cancel, and Sortable List ARIA sections in `references/interaction-patterns.md`.
+- Sortable Lists check block in `references/validation-checklist.md` Phase 2.
+- Sortable List Dropzone, Sortable List Placeholder Bar, and Sortable List Minimum Height specs in `DESIGN.md`.
+
+## 4.5.1
+
+### Fixed
+
+- `canvas-accordion-item` no longer toggles when the user clicks or keyboard activates an interactive descendant of `canvas-accordion-title`. The trigger handler now inspects `e.composedPath` and skips `toggle()` when any element along the path up to the shadow DOM `.title` node matches a native interactive element (`button`, `a[href]`, `input`, `select`, `textarea`), an ARIA role of button, switch, checkbox, radio, link, menuitem, tab, or option, or a canvas interactive component (`canvas-button`, `canvas-toggle`, `canvas-checkbox`, `canvas-radio`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, `canvas-input`, `canvas-date-input`, `canvas-textarea`). The same filter runs on the keydown handler, so Enter and Space on a focused child button or toggle no longer trip the accordion. Plugin authors no longer need to add `event.stopPropagation` on interactive children of the title slot. Added a `With buttons in title` sample card in `examples/showcase.html` between the existing `With toggles in title` and `Multiple sections open` cards to exercise the behavior.
+
+## 4.5.0
+
+### Added
+
+- `--canvas-accordion-nested-indent` CSS custom property. Controls the left padding applied to any `canvas-accordion-item` that sits inside another accordion's `canvas-accordion-content`. Default resolves through `var(--canvas-accordion-nested-indent, var(--space-small, 12px))` so the component inherits `--space-small` and falls back to 12 pixels when both layers are stripped. Has no effect on top level items. Set to `0` on an ancestor to disable the nested indent under that subtree, set to a larger value to deepen the hierarchy step.
+- Global CSS rule `canvas-accordion-content canvas-accordion-item` in `canvas-plugin-ui.css` that applies the nested indent. Depth compounds automatically because every nested content holds its own nested items, level two steps in by one `--space-small` from level one, level three by two, and so on, without any per depth authoring.
+- `Nested accordions (automatic indent)` sample card in `examples/showcase.html` between `Multiple sections open` and `Toggle event`. Demonstrates the three level cascade with no inline padding rules in the markup.
+- `Container Padding Responsibility` section in `DESIGN.md`. Codifies the design system rule that horizontal inset is a container concern, not a component concern. Headings, paragraphs, buttons, accordions, and every other top level element sit flush with their parent's content box and rely on the container to supply outer padding. Nesting indent is documented as the separate concern with the nested accordion rule as the canonical example.
+- Nested accordion guidance in `references/component-usage.md` Accordion vs Tabs section. Two bullets, one on container padding responsibility (wrap in a `canvas-card` or place inside a section that pads its children), one on the automatic nested indent and how to tune it with `--canvas-accordion-nested-indent`.
+- Nesting documentation and Tokens table in `references/web-components.md` canvas-accordion entry. Replaces the prior "Locked component" line and adds explicit coverage of the container padding assumption.
+
+## 4.4.0
+
+### Added
+
+- `canvas-sortable-list` auto scrolls its nearest scrollable ancestor while an item is being dragged toward the top or bottom edge. On `pointerdown` the component walks up from the list to find the first ancestor with `overflow-y` equal to `auto` or `scroll` whose `scrollHeight` exceeds its `clientHeight`, falling back to the document scroller when none qualify. While a drag is active, a 48 pixel edge hotspot (clamped to one third of the ancestor height for short panes) drives a `requestAnimationFrame` loop that increments `scrollTop` by up to 12 pixels per frame, ramped linearly by how deep the cursor sits inside the hotspot. The loop also re runs the placeholder and ghost position logic each tick so the list responds to items sliding under a stationary cursor. Scrolling stops on `pointerup`, when the cursor leaves the hotspot, or when the scroller hits its min or max. Hovering near an edge without an active drag has no effect. Vertical only. No new attributes, events, or slots. Added a dedicated `Auto scroll in a scrollable container` sample card in `examples/showcase.html` with 12 items in a 220 pixel pane so the behavior is exercisable.
+
+## 4.3.4
+
+### Fixed
+
+- `canvas-input` date and datetime height parity with `canvas-dropdown`. The 4.3.1 reset on `::-webkit-datetime-edit` eliminated the 2 pixel gap but left a 0.57 pixel residual because Chromium's `::-webkit-calendar-picker-indicator` has `padding: 2px` on every side, giving the icon a `1em + 4px` outer box that slightly exceeds the declared `line-height: 1.21428571em`. The taller indicator dragged the flex row up by the difference. Added a shadow CSS reset that zeroes the padding on `::-webkit-calendar-picker-indicator` so the indicator sits within the text line box. Date, datetime-local, week, and month inputs now match the dropdown height to the pixel.
+
+## 4.3.3
+
+### Fixed
+
+- `canvas-tooltip` arrow decoupling and viewport edge margin. The tooltip box now reserves an 8 pixel margin from every viewport edge, up from 4 pixels. When the box shifts inward to honor that margin, the arrow no longer follows the box center. Instead the arrow slides inside the tooltip box to keep its tip over the trigger's center axis (horizontal axis for top and bottom tooltips, vertical axis for left and right tooltips). The arrow is clamped to stay at least 6 pixels inside each tooltip corner so it never bleeds into the rounded border. Applies to all four orientations.
+
+## 4.3.2
+
+### Fixed
+
+- `canvas-dropdown` arrow indicator now matches `canvas-combobox` and `canvas-multi-select`. Dropdown previously rendered a sharp CSS triangle using border tricks with fill `rgba(0, 0, 0, 0.8)`. Combobox and multi-select render a rounded chevron SVG with fill `#575757`. The three components sit side by side in the same rows and the inconsistent indicator was visible at a glance. Replaced the dropdown's CSS triangle with the combobox SVG and matched the `.arrow` CSS to the 8 by 5 pixel box the other two use.
+
+## 4.3.1
+
+### Fixed
+
+- `canvas-input` height consistency across `type` values. Added a shadow CSS reset that zeroes `padding` on `::-webkit-datetime-edit` and `::-webkit-datetime-edit-fields-wrapper` inside the internal `input`. Without the reset, Chromium and WebKit render `type="date"`, `type="time"`, `type="datetime-local"`, `type="month"`, and `type="week"` 2px taller than `type="text"` because the datetime edit pseudo carries a 1px top and 1px bottom padding inside the content box. Date and time inputs now match the height of text inputs, `canvas-dropdown`, and `canvas-combobox` in the same row. Firefox ignores the WebKit pseudos and is unaffected.
+
+## 4.3.0
+
+### Added
+
+- Warning about global CSS resets overriding canvas web component styles. Added one line in `SKILL.md` Key Rules. Added one bullet in `references/workflow.md` Common Mistakes covering universal selector rules, bare `html`/`body`/form element type selectors, linked reset libraries (normalize.css, reset.css, sanitize.css, modern-normalize.css), and Tailwind Preflight. Three failure modes are named, light DOM components losing their padding and margins, typography inheritance crossing the Shadow DOM boundary, and host box sizing shifts on every `<canvas-*>` element. Scope is advisory, flag and offer to fix, not a blocking prohibition. No validation check, no eval case.
+
+## 4.2.0
+
+### Added
+
+- Native `<details>` and `<summary>` prohibition. Added in `SKILL.md` Key Rules alongside the existing `<input>` and `<select>` rule. Added as a two bullet block in `references/component-usage.md` Accordion vs Tabs section, one bullet for the prohibition and one bullet for the narrow exception when a custom trigger needs a multi column layout that cannot fit the `canvas-accordion-title` slot. Extended `references/validation-checklist.md` Phase 1 check 3 `No native replacements` to include `<details>` and `<summary>`. Added a second check under Phase 2 Accordions section that scans for any remaining native `<details>` or `<summary>` after refactor. Added a new `Native details and summary use` bullet in `references/workflow.md` Common Mistakes parallel to `Native input use`. Added one eval case covering the refactor scenario.
+
+## 4.1.0
+
+### New component
+
+- `canvas-inline-row`. Layout primitive for a horizontal row of form elements. Encapsulates `display: flex`, `gap`, `align-items: flex-end`, `flex-wrap: wrap`, and per child flex sizing so the row contains itself inside `canvas-card-body` without overflow and wraps cleanly in narrow surfaces. Growing children (canvas-input, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-textarea) share available space with a 160 px minimum before wrapping. Natural width children (canvas-button, canvas-checkbox, canvas-radio, canvas-toggle) keep their content width. Consumers override per instance with `inline-role="grow"` or `inline-role="natural"`. Component tokens, `--canvas-inline-row-gap` (default `--space-small` then `12px`) and `--canvas-inline-row-item-min` (default `160px`). Component count is now 25.
+
+### Added
+
+- `Same Row Height Cohesion` section in `references/component-usage.md`. Form elements sharing a visual row must render at the same height. The `size` attribute is not a universal height tier across components. `canvas-button[size="sm"]` has a 36 px `min-height`, `canvas-dropdown[size="sm"]` only reduces the trigger font size and inherits default padding. The safe baseline for filter bars and inline forms is default size on every element in the row. Reserve `sm` for rows where every element is a button.
+- `Inline Form Rows` section in `references/component-usage.md`. Centers on `canvas-inline-row` as the container. Lists use cases that extend the primitive, filter bar above a table, inline edit form, search bar, action bar. Filter bar use case covers the `canvas-card` wrapper, the optional `canvas-card-footer` for bulk action rows, and `canvas-input type="date"` for date range fields.
+- Native `<input>` prohibition in `references/component-usage.md` Text Inputs vs Textareas section. Parallel to the existing native `<select>` prohibition. Covers all input types including text, email, password, number, tel, url, date, datetime-local, month, week, and time. Use `canvas-input` with the appropriate `type` attribute.
+- Adjacent region card pattern in `references/component-usage.md` Cards and Content Containers. Two adjacent containers where one has `border-top: none` and connects visually to another through a shared `border-radius` are a multi region card. Replace the pair with `canvas-card` plus `canvas-card-body` plus `canvas-card-footer`.
+- `Native input use`, `Mixed size tier in one row`, and `Missed inline row swaps` entries in `references/workflow.md` Common Mistakes. Feeds Refactor Safety Part D risk summary so the user sees the full swap plan before work begins.
+- `Inline Form Rows (canvas-inline-row)` subsection in `references/validation-checklist.md` Phase 2. Four checks cover raw flex rows of form elements, mixed size tiers in one row, native inputs inside an inline row, and the filter bar card plus inline row plus footer structure.
+- `canvas-inline-row` added to the Phase 1 tag allowlist in `references/validation-checklist.md`.
+- `canvas-inline-row` section in `references/web-components.md` with API reference, child flex behavior table, per instance override recipe, component tokens, and when not to use.
+- Filter Bar (with table and action footer) sample card in `examples/showcase.html` under the Form section, updated to use `canvas-inline-row`. Demonstrates filter row in `canvas-card-body`, table in `canvas-card-body no-padding`, selection count plus bulk action buttons in `canvas-card-footer`.
+- `canvas-inline-row (primitive)` sample card in `examples/showcase.html` under the Form section. Demonstrates the component at standard width and in a 360 px wrap test container.
+- Two entries in SKILL.md Key Rules to Never Forget. One extends the no raw HTML for components rule to explicitly name `<input>` and `<select>`. One names the same row height cohesion rule with a pointer to component-usage.md.
+
+### Changed
+
+- `Cards and Content Containers` section in `references/component-usage.md` rewritten. Promotes the four property signature (background, border, border-radius, box-shadow on one element) to the primary card imitation detector. Class names become secondary signals with an expanded list covering `container`, `filters`, `filter-bar`, `toolbar`, `section`, `wrapper`, `wrap`, `header`. Adds the adjacent region pattern as a new bullet.
+- `Missed card imitations` bullet in `references/workflow.md` Common Mistakes rewritten to match the new detector model.
+- `canvas-button` size rules in `references/web-components.md` updated. `sm` is reserved for card headers and table row actions where every element in the row is a button. For toolbars and inline form rows that include dropdowns, comboboxes, or inputs, use default size on every element in the row.
+- `canvas-dropdown` size rules in `references/web-components.md` updated. Default is the baseline for forms, modals, filter bars, search bars, and inline edit rows. `sm` is only for compact contexts where every other element in the row is also `sm`. Removed the previous guidance to match button size attribute, which did not produce matching rendered heights.
+- `canvas-input` section in `references/web-components.md` opens with an explicit native input prohibition above the Usage block. Lists every supported type.
+- `Form Element Height Cohesion` section in `references/component-usage.md` cross links to Same Row Height Cohesion.
+- Component count updated from 24 to 25 in `SKILL.md`, `README.md`, and `references/web-components.md`. Tag count updated from 43 to 44.
+- `examples/showcase.html` `.row` helper class gains `flex-wrap: wrap`. Reference inline row samples using the raw flex pattern continue to work correctly in narrow viewports.
+
+## 4.0.0
+
+### Breaking
+
+- `canvas-card-body` no longer applies `overflow-y: auto`. Cards that set `max-height` on the body to activate scrolling stop scrolling in 4.0.0. Wrap the body content in the new `canvas-scroll-area` component to restore scrolling. Migration recipe in `references/web-components.md` canvas-scroll-area section.
+- `canvas-card` outer container no longer applies `overflow: hidden`. Corner clipping of slotted body and footer backgrounds is now handled by applying the card border-radius (minus 1px for the border) to the first and last slotted child via `::slotted(...:first-child)` and `::slotted(...:last-child)`. This makes the card transparent to popup children, so a `canvas-dropdown` or `canvas-combobox` menu inside a card can extend past the card edge without being clipped.
+- The `.table-scroll` helper pattern for wide tables is replaced by `<canvas-scroll-area horizontal>`. Plugins that used a raw `.table-scroll` div migrate to the component.
+
+### Added
+
+- New `canvas-scroll-area` component. Declarative, opt in scroll container with `vertical` and `horizontal` boolean attributes. Auto applies `tabindex="0"` when a direction attribute is present and no consumer `tabindex` is already set. Shadow DOM wrapper around a single slot. Consumers set dimensions via `style=` or external CSS.
+- `Cards and Content Containers` section in `references/component-usage.md` with the decision rule for when to use `canvas-card` versus a flat div. Flags raw card wrappers with class names `card`, `panel`, `box`, `tile` as refactor targets. Flags raw divs combining background, border, border-radius, and box-shadow as refactor targets.
+- `Scroll Areas` section in `references/component-usage.md` covering direction selection, the accessibility label requirement, and the restriction on placing `canvas-dropdown`, `canvas-combobox`, and `canvas-multi-select` inside a vertical scroll area (lifted in 4.1.0 after the Popover API migration). Tooltip is exempt because it hides on scroll.
+- `Cards and Content Containers (canvas-card)` subsection in `references/validation-checklist.md` Phase 2. Six checks cover raw card wrappers, style signature imitations, footer component usage, component owned padding, stacked body usage for multi section cards, and the removed card body scroll reliance.
+- `Scroll Areas (canvas-scroll-area)` subsection in `references/validation-checklist.md` Phase 2. Five checks cover raw overflow on plugin level divs, explicit direction attribute, accessibility label, forbidden popup nesting, and the legacy `.table-scroll` migration.
+- `Common Mistakes` section in `references/workflow.md`. Covers missed card imitations, missed scroll area swaps, silent card body overflow reliance, and forbidden popup nesting. Feeds the Refactor Safety Part D risk summary so the user sees the full swap plan.
+- `canvas-scroll-area` section in `references/web-components.md` with full API reference, usage examples, accessibility notes, clipping caveat, and the card body migration pattern.
+- `canvas-scroll-area` added to the Phase 1 tag allowlist in `references/validation-checklist.md`.
+- Cross reference from the `canvas-card` section in `references/web-components.md` back to the new `Cards and Content Containers` section in `component-usage.md`.
+
+### Changed
+
+- `canvas-card` section in `references/web-components.md` updated. The old `Scrollable body` paragraph is gone. New `Rendering` and `Scrolling` paragraphs describe the 4.0.0 behavior.
+- `Table Behavior in Narrow Containers` in `references/component-usage.md` replaces the `.table-scroll` wrapper pattern with `<canvas-scroll-area horizontal>`.
+- `Phase 6 check 3 Token usage` in `references/validation-checklist.md` extended to flag combined background, border, border-radius, and shadow on one element as a possible card imitation.
+- `examples/showcase.html` Scrollable body demo updated to use the `canvas-scroll-area` wrapper pattern.
+
 ## 3.2.0
 
 ### Changed
