@@ -31,6 +31,47 @@ Keyboard navigation, focus management, ARIA attributes, and behavioral rules for
 - Long option lists should scroll within the dropdown rather than growing the dropdown beyond the viewport.
 - Menu items that perform actions use `role="menuitem"`. Menu items that toggle state use `role="menuitemcheckbox"` or `role="menuitemradio"`.
 
+### Menu Button Keyboard Navigation
+
+`canvas-menu-button` implements the WAI ARIA Menu Button pattern. The keyboard model is deliberately different from `canvas-dropdown` because the menu carries actions, not a selectable value.
+
+- **On the trigger.** Enter or Space activates the trigger through the native button contract and opens the menu without a pre highlighted item. ArrowDown opens the menu and moves highlight to the first option. ArrowUp opens the menu and moves highlight to the last option.
+- **Inside the menu.** ArrowUp and ArrowDown move the highlight with wrap. Home and End jump to first and last. Enter or Space activate the highlighted option, dispatch the `select` event with `detail.value` and `detail.label`, close the menu, and return focus to the trigger. Escape closes the menu and returns focus to the trigger without firing a select. Tab closes the menu and lets focus move to the next tab stop in the document.
+- **Disabled options** (`disabled` on `canvas-option`) are skipped during highlight navigation and cannot be activated.
+- **Section dividers** (`<hr>` children) are not in the focus cycle.
+- **Outside click** closes the menu without firing select, same as Escape.
+
+### Menu Button Focus Return
+
+After a select event fires, the component calls `focus()` on the trigger. For the default trigger, this puts focus on the internal Actions button. For a slotted `canvas-button` trigger, focus lands on the slotted element's host, which forwards to the inner button via `delegatesFocus`. This focus return matches the Menu Button pattern and prevents focus from becoming orphaned on the closed menu. Code that listens for `select` should not call `focus()` on unrelated elements during that handler, the return is automatic.
+
+### Menu Button ARIA
+
+- Trigger, `aria-haspopup="menu"` and `aria-expanded="true"` or `aria-expanded="false"` are set automatically on the default trigger. Slotted triggers inherit this through the component, authors only supply `aria-label` when the trigger is icon only.
+- Menu container, `role="menu"` and `tabindex="-1"` so it is reachable by programmatic focus but not part of the tab order.
+- Option, `role="menuitem"` and `aria-disabled="true"` when the `disabled` attribute is set on the `canvas-option`.
+- Divider, `role="separator"` on the `<li>` rendered for each `<hr>` child.
+
+### Popover Keyboard and Focus
+
+`canvas-popover` implements a non modal dialog anchored to a trigger. The keyboard contract differs from the menu button pattern because the body is arbitrary content, not a focus ring of options.
+
+- **On the trigger.** Enter or Space activates the trigger through the native button contract and opens the popover. Focus moves into the body on open, to the first focusable element if one exists, otherwise to the surface itself so Escape and screen reader announcements still work.
+- **Inside the popover.** Tab escapes to the next tab stop in the document. The popover does not trap focus. Escape closes the popover, returns focus to the trigger, and dispatches a `cancel` event before the `close` event.
+- **Outside click** closes the popover and dispatches `cancel`. Popover is non blocking by contract, use `canvas-modal` for content that needs true modality.
+
+### Popover Placement and Scroll
+
+- Auto placement picks direction based on content fit, not just space. If content fits below the trigger, the popover opens down. If it does not fit below, it picks the side with more room and caps `max-height` at that side's available space, making the surface scrollable when needed.
+- The popover follows its trigger continuously on scroll and resize. When the trigger leaves the viewport, the surface visually hides while preserving the `open` state. When the trigger scrolls back, the surface reappears.
+- `dismiss-on-scroll` opts into closing on any scroll instead of tracking. Use only when the popover content would become stale if the underlying view scrolls, for example a filter panel tied to a visible table region.
+- `pointer` adds a 14 px speech balloon arrow on the side of the surface that faces the trigger. The arrow tracks the trigger center even when the surface clamps against a viewport edge, and flips side with the surface when direction flips from `down` to `up`. Pointer is visual only, it does not affect keyboard, ARIA, or dismissal. When `pointer` is set the surface sits 10 px from the trigger with an 8 px viewport margin, matching `canvas-tooltip`. Without `pointer` the surface uses a tighter 6 px gap and 4 px viewport margin.
+
+### Popover ARIA
+
+- Trigger, `aria-haspopup="dialog"` and `aria-expanded="true"` or `aria-expanded="false"` are wired automatically on the slotted trigger element when open state changes. Icon only triggers must supply `aria-label` themselves.
+- Surface, `role="dialog"`, `aria-modal="false"`, `aria-label` set from the component's `label` attribute. Without `label` the dialog has no accessible name, which is why the attribute is required.
+
 ### Focus Management
 
 - When a modal opens, move focus to the first focusable element inside (usually the close button or the first form input).
