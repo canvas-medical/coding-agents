@@ -1,0 +1,298 @@
+# Product Review — Tenet Rules for Inline Application
+
+This document states each of the nine product-review tenets as rules a Canvas plugin must pass. Use it while planning and writing plugin code. The `/cpa:product-review` command is the workflow wrapper that runs these as a formal review; this context is for inline application.
+
+---
+
+## Tenet 1 — Designated Record Set / Clinical Data Model
+
+**Rule:** Custom data must not extend the record for concepts that belong in the Designated Record Set (DRS). Canvas's native models are the DRS; USCDI V3 is a subset of it.
+
+**The DRS test:** *If the information is used to make a decision about the patient — clinical, billing, coverage, or care coordination — it belongs in the DRS.* If yes, flow into a Canvas native model. If no (purely workflow mechanics, ephemeral state, plugin config), custom data is fine.
+
+**USCDI V3 (required subset) — use Canvas native models, not custom data:**
+- Patient demographics → `Patient`
+- Problems / conditions → `Condition` (Diagnose / Assess)
+- Medications → `Medication` + `MedicationStatement` (Prescribe / Medication Statement)
+- Allergies → `AllergyIntolerance` (Allergy)
+- Immunizations → `Immunization` (Immunize)
+- Vital signs → `Observation` (Vitals)
+- Laboratory → `Observation` / `DiagnosticReport` / `ServiceRequest`
+- Smoking / social history → `Observation` (social history)
+- Procedures → `Procedure`
+- Care team members → `CareTeam` / `CareTeamMembership` + `Staff` / `ServiceProvider`
+- Goals → `Goal`
+- Assessment and plan → `Assessment` / `Plan` command + `Note`
+- Encounters → `Note`
+- Provenance → Canvas-managed
+- Implanted devices → `Device`
+- Clinical notes → `Note`
+- Health concerns → `Condition`
+- Care plan → `CarePlan` / Goal
+- Health insurance → `Coverage`
+
+**Broader DRS (beyond USCDI) — also Canvas native models, not custom data:**
+- Additional clinical documentation (progress, consult, operative, discharge, therapy, referral notes) → `Note` + appropriate `Command` / `Document`
+- Diagnostic artifacts (pathology, imaging reports, ECGs, cardiac tracings) → `DiagnosticReport` / `Observation` / `Document`
+- Orders and administration records → Order commands (Prescribe, LabOrder, ImagingOrder)
+- Care coordination communications (referrals, inter-provider messages) → `Refer` command / `Note` / `Document`
+- Authorizations & consents (releases, prior auth files) → `Consent` / `Document`
+- Billing & encounter records (encounter forms, bills, remittance, claims, EOBs, billing correspondence) → `Claim` / `Coverage` / native billing models
+- Utilization / case management notes → `Note` + `Task` + appropriate Command
+- Imported external data once used for decisions → the corresponding native clinical model
+- Patient-generated health data once incorporated into care → `Observation` / `Questionnaire` response
+
+**Excluded from DRS — custom data is appropriate here:**
+- **Psychotherapy notes** — HIPAA-special; do NOT put them in `Note` either. Escalate to Product/Compliance if the plugin handles them.
+- Quality assurance / peer review / internal audits (unless used for individual decisions)
+- Business planning, forecasting, underwriting workpapers
+- De-identified / limited datasets for research
+- Personal notes / memory aids not shared (sticky-note pattern)
+- Litigation holds (escalate to Compliance)
+
+**Acceptable custom data (mechanical / non-decisional):**
+- Workflow state: queues, rollups, reminder acknowledgments, dismissals
+- Integration bookkeeping: external system IDs, sync timestamps, webhook cursors
+- Plugin configuration: settings, user preferences, catalog/template definitions
+- Ephemeral session state: cache keys, QR session IDs, WebSocket bindings
+- Per-user UI preferences: hidden items, sort orders
+
+**Flag behavior:**
+- MEDIUM — any `CustomModel` / `AttributeHub` whose fields restate a USCDI or DRS category
+- HIGH — plugin handles psychotherapy notes (escalate before storage decision)
+- HIGH — plugin creates/modifies/transmits billing, claims, or EOB content outside native billing primitives
+
+**The simple test:** *if removing this custom data would change what the record says about the patient, or what a covered entity would use to make a decision about them, it belongs in a Canvas native model.*
+
+---
+
+## Tenet 2 — Placement
+
+**Rule:** Placement communicates *for whom* and *when* a feature is used. One application should do one thing.
+
+**Scope → surface mapping:**
+
+| Purpose | `scope` | Surface |
+|---|---|---|
+| Settings / configuration / admin / user preferences | `provider_menu_item` | Provider menu |
+| Cross-patient clinical panel activities (worklists, rollups, population dashboards) | `global` | Panel |
+| Single-patient context (acting on *this* patient's record) | `patient_specific` | Chart |
+| Patient-facing (portal) | `portal_menu_item` | Patient portal |
+
+**`provider_menu_item` vs. `global`:** both live outside a patient chart. Test: *does opening this UI show patient clinical data as its primary content?* Yes → `global`. No → `provider_menu_item`.
+
+**Mixed-scope flag (apply this every time):**
+- App declared `patient_specific` but has endpoints that CRUD a shared catalog / template / user preference → **split** into a `patient_specific` action app and a `provider_menu_item` manager app.
+- App declared `global` but every handler takes `patient_id` and operates on one patient → move to `patient_specific`, or split into panel + drill-down apps.
+
+**The "one app, one job" test:** list each application's endpoints in two columns (patient-specific vs. non-patient-specific). Both columns populated → probably split.
+
+---
+
+## Tenet 3 — Coded Data Capture & Code-Based Matching
+
+**Rule:** Clinical concepts must be captured and matched by standard codes, not display strings.
+
+Code systems by concept:
+- Conditions / problems → SNOMED CT or ICD-10-CM
+- Medications → RxNorm (and FDB within Canvas's stack)
+- Labs / observations → LOINC
+- Immunizations → CVX
+- Procedures → CPT or SNOMED CT
+- Allergies → SNOMED CT + RxNorm
+- Provider specialty → NUCC Healthcare Provider Taxonomy
+- Pharmacy → NCPDP
+- Drug product / dispensable → NDC
+
+**Anti-patterns to flag:**
+- `.name == "..."` / `.name.lower() == "..."` / `name__icontains=...` on clinical concepts
+- `.display == "..."` / `.display.icontains(...)`
+- Parsing structured clinical data out of a free-text string (regex over "Name, Practice | Ph: ... | Fax: ..." etc.)
+- Free-text capture of a concept that has a code system (typed diagnosis, typed drug name, typed allergy reaction)
+- Field names like `dx_code`, `med_code`, `lab_code` without naming the code system
+
+**Recommend:** Store `{code, system, display}` triples. Match on `code + system`. Display strings are for humans; codes are for matching, storage, and interoperability.
+
+---
+
+## Tenet 4 — Native Canvas Primitives
+
+**Rule:** If Canvas has a primitive for it, use the primitive. Parallel systems fragment the record.
+
+Common duplications and the correct primitive:
+
+| Plugin pattern | Use instead |
+|---|---|
+| Custom survey / screening / assessment UI + CustomModel → Q&A | `Questionnaire` + `QuestionnaireResponse` |
+| Custom task / to-do list | `Task` / `AddTask` effect |
+| Custom note / journal / free-text clinical documentation | `Note` + appropriate Command |
+| Custom scheduling / appointment slots | Canvas scheduling primitives |
+| Custom reminders surfaced as banners | `AddTask`, `AddBannerAlert`, native reminders |
+| Custom "intake form" storing structured clinical data | `Questionnaire` + coded mappings |
+| Custom goal tracking | `Goal` command |
+| Custom allergy / medication / condition capture | Allergy / Prescribe / Diagnose commands |
+| Custom external provider / facility directory | `ServiceProvider` / `CareTeamMembership` / `Organization` / `Location` |
+| Custom prescribing catalog writing orders | Wrap `PrescribeCommand` (augment, don't replace) |
+| Custom vitals capture | `Observation` with LOINC codes |
+
+**Positive patterns (reference-quality):**
+- Wrapping `PrescribeCommand` with pre-filled templates (as long as defaults aren't plugin-shipped clinical guidance — see Tenet 9)
+- Writing `Observation` with `CodingData` + LOINC for device-captured vitals
+- Using `CustomCommand` with a declared `schema_key` in the manifest for a note-embedded structured block
+- Using `Effect` types (`AddTask`, `AddBannerAlert`, `NoteEffect`) for anything that mutates the record
+
+---
+
+## Tenet 5 — Alert Fatigue & Workflow Interruption
+
+**Rule:** Every interruption (banner, popup, modal, required-field hook) must be justified, contextual, and dismissible.
+
+For each `AddBannerAlert`, `LaunchModalEffect`, `ShowPatientChartSummarySection`, pre-commit / required-field hook, evaluate:
+
+1. **Trigger scope** — unconditional (every chart open) = fatigue risk; conditional on a clinically meaningful state = justified
+2. **Dismissibility / debouncing** — can the clinician dismiss? Suppressed after acknowledgment or for a sensible interval?
+3. **Criticality vs. presentation** — blocking modal for informational content = wrong. Prefer passive surfacing (banner, chart section, task) unless truly critical and requires acknowledgment
+4. **Required fields** — forcing input without a strong clinical rationale = fatigue
+
+**Flag:**
+- Alerts that fire unconditionally on every chart open / event
+- Blocking modals for informational content
+- Multiple banners stacking on the same event
+- Required-field enforcement without clinical justification
+
+---
+
+## Tenet 6 — Configurability of Clinical Logic
+
+**Rule:** Clinical thresholds, code lists, target ranges, and default catalogs vary by specialty, population, and customer. They must be customer-configurable, not hardcoded in Python.
+
+**Flag when hardcoded in code:**
+- Clinical thresholds (e.g. `if systolic > 140`, `if a1c >= 9`, `if bmi < 18.5`)
+- Code lists representing a clinical opinion (which ICD-10 codes count as "diabetes" for this plugin)
+- Default medication catalogs, dosing schedules, titration steps
+- Reference ranges, target ranges, alert cutoffs
+- Specialty lists, facility type lists, default note types
+- Default pharmacy IDs, default providers
+- Timezone defaults (especially `"America/New_York"` — plugin-wide defaults should come from Organization / PracticeLocation or fall back to UTC)
+
+**Acceptable to hardcode:**
+- Canonical codes (LOINC, SNOMED, RxNorm) — these are version-stable references
+- Protocol constants required by external vendors (e.g. the NCPDP quantity qualifier for a known formulation)
+- Plugin-internal framework constants (cache key prefixes, schema enums)
+
+**Recommend:** Ship defaults as `content/` JSON with a plugin-setting override, or read from org-level configuration. "Defaults are fine; hardcoded assumptions are not."
+
+---
+
+## Tenet 7 — Audit Trail & Attribution
+
+**Rule:** Any write that affects the patient record must be attributable (who / what / when). Silent or un-attributed mutations break the legal record.
+
+**Verify on every write path:**
+- SDK data writes go through `Effect` types (which carry Canvas attribution)
+- Custom data writes representing clinical workflow state capture the actor (either via `created_by` / `modified_by` FK, or via documented system-attribution for automated actions)
+- Webhook / external-triggered writes log the source
+
+**Flag:**
+- Any `CustomModel.save()` / `.create()` / `.update()` mutating clinically relevant state without capturing the actor
+- **Client-supplied `staff_id` in POST bodies** — always derive server-side from session (`canvas-logged-in-user-id` header or `self.event.actor.instance.person_subclass.id`)
+- Shared API-key auth on endpoints that mutate per-patient records (any key holder can write as anyone)
+- Shadow-override patterns: editing *displayed* data via a side-channel metadata key while leaving the underlying record untouched ("two versions of reality")
+- Missing Canvas-side audit records for high-impact operations (print, export, transmission)
+
+**Golden pattern:** `StaffSessionAuthMixin` on the route + `staff_id = self.request.headers["canvas-logged-in-user-id"]` + `Effect` types for all mutations.
+
+---
+
+## Tenet 8 — Terminology Consistency
+
+**Canvas vocabulary (code/model/variable names):**
+
+| Canvas term | Flag alternatives |
+|---|---|
+| Patient | Client, Member, Subject, User |
+| Staff | Provider, Clinician, User, Doctor (in code — display strings are fine) |
+| Note | Visit, Encounter Record (when referring to the record) |
+| Command | Form, Widget, Entry |
+| Effect | Action, Output |
+| Protocol | Trigger, Rule Engine |
+| Questionnaire | Survey, Form, Intake |
+| Task | To-Do, Reminder, Action Item |
+
+**External providers:** Canvas SDK uses `ServiceProvider` for externals, `Staff` for internals. "Provider" alone is ambiguous — rename endpoints/handlers (`/add-service-provider`, not `/add-provider`) if the plugin handles externals.
+
+**Clinical vocabulary in field names:** name the code system. Prefer `snomed_code`, `loinc_code`, `rxnorm_code`, `icd10_code`, `cvx_code`, `nucc_code` over unspecified `dx_code`, `med_code`, `lab_code`.
+
+---
+
+## Tenet 9 — ONC Certified-Criteria Overlap
+
+**Rule:** Canvas holds ONC certification for specific §170.315 criteria. Replace-class overlaps put customers out of compliance; augment-class overlaps are fine with documentation.
+
+**Certification reference:** Certificate #15.04.04.3112.Canv.01.00.1.220523 — https://www.canvasmedical.com/compliance/onc/mandatory-disclosures
+
+**Criteria Canvas holds — classify plugin behavior against each:**
+
+| Criterion | Functionality | Replace-class flag (HIGH) |
+|---|---|---|
+| §170.315(a)(1) | CPOE — medications | Creates/modifies/routes medication orders outside native Rx command |
+| §170.315(a)(2) | CPOE — labs | Creates/routes lab orders outside native Order command |
+| §170.315(a)(3) | CPOE — diagnostic imaging | Creates/routes imaging orders outside native Order command |
+| §170.315(a)(4) | DDI/DAI in CPOE | Implements its own DDI/DAI in the order path |
+| §170.315(a)(5) | Demographics | Captures/mutates demographic fields in a custom store |
+| §170.315(a)(12) | Family health history | Stores family health history outside native model |
+| §170.315(a)(14) | Implantable device list | Tracks implanted devices outside `Device` |
+| §170.315(b)(1) | Transitions of care | Generates/consumes TOC documents outside certified path |
+| §170.315(b)(2) | Clinical info reconciliation | Reconciles meds / allergies / problems outside certified path |
+| §170.315(b)(3) | Electronic prescribing | Prescribes outside native Rx command |
+| §170.315(b)(10) | Electronic health information export | Implements bulk or targeted record export to external systems |
+| §170.315(b)(11) | Decision support interventions | Implements CDS that replaces/parallels native CDS, **or ships plugin-authored clinical guidance (titration schedules, dosing defaults, decision rules, alert thresholds) baked into code or default content** |
+| §170.315(c)(1–3) | Clinical quality measures | Records / imports / reports CQMs outside certified path |
+| §170.315(e)(1) | Patient VDT | Exposes patient-facing record access |
+| §170.315(e)(3) | Patient health info capture | Captures patient-reported data in a custom store (should be Questionnaire) |
+| §170.315(f)(1) | Immunization registry | Transmits immunizations to a registry |
+| §170.315(f)(5) | Public health case reporting | Transmits case reports |
+| §170.315(g)(10) | Standardized API (FHIR) | Exposes its own FHIR-shaped API in place of Canvas's |
+
+**Classification rubric:**
+- **Augment** — plugin pre-fills, surfaces, or complements a certified path, with clinical writes still flowing through the native command/effect. Document the interaction; confirm no bypass. Example: wrapping `PrescribeCommand` with a favorites catalog.
+- **Replace** — plugin has its own pipe for a certified concept (parallel Rx UI, parallel TOC transmission, parallel CDS store, parallel EHI export). **HIGH** — compliance and re-certification risk.
+- **Transmission of certified content outside certified channels** — EHI export to external storage, registry transmission, case reports, patient VDT via non-certified path. **HIGH** — confirm with Compliance.
+
+**Plugin-authored clinical content vs. plugin-surfaced fields (the §170.315(b)(11) distinction):**
+
+The CDS-lite concern is specifically about clinical guidance the plugin *ships* — not about the plugin exposing fields the user can type clinical content into.
+
+Flag as CDS-lite:
+- Hardcoded dosing schedules (e.g. "Starting / Titration / Maintenance" shipped as default medication labels)
+- Default clinical thresholds baked into code (e.g. `SYSTOLIC_ALERT = 140`)
+- Default code lists representing a clinical opinion (which ICD-10s count as "diabetes" for this plugin's logic)
+- Default screening intervals, follow-up windows, titration steps — anything where the plugin author encoded a clinical decision the customer will inherit
+
+Do *not* flag:
+- A plugin that offers a `label` / `notes` / `threshold` field the user populates with their own clinical content (user-authored, not plugin-authored)
+- A plugin that surfaces Canvas's own CDS output (e.g. reads a `BannerAlert` and re-renders it) — Canvas owns the provenance
+- A plugin that wraps a native certified command (e.g. pre-fills `PrescribeCommand` with user-saved templates) as long as the defaults themselves are not plugin-shipped clinical guidance
+
+**The test:** *"If I remove the plugin's shipped content/defaults, does any clinical opinion remain in the plugin?"* Yes → the plugin is authoring clinical guidance and needs provenance (source, reviewer, review cadence) or needs to move to formal CDS. No → the plugin is a mechanism; clinical judgment sits with the customer.
+
+**Recommendation when CDS-lite is flagged:** move defaults to customer-owned content (aligns with Tenet 6), **or** document clinical source + review cadence in the README, **or** promote to a formal CDS intervention with provenance. Often the Tenet 6 fix resolves the Tenet 9 concern as a side effect.
+
+---
+
+## Applying the Tenets — Priority Order
+
+When applying inline during coding, walk the tenets in this order. The higher-priority tenets catch the highest-impact issues and often resolve lower-priority ones as a side effect:
+
+1. **Tenet 1 (DRS) + Tenet 9 (ONC)** — these determine whether the plugin is safe to build *at all* in its proposed shape. If a plugin restates DRS content or replaces a certified path, fix the foundation before writing code.
+2. **Tenet 4 (native primitives)** — often the fix for Tenet 1 (move from CustomModel to native model).
+3. **Tenet 2 (placement)** — make sure each surface does one job; split mixed-scope apps.
+4. **Tenet 3 (coded data)** and **Tenet 6 (configurability)** — make sure clinical concepts are coded and customer thresholds are configurable.
+5. **Tenet 7 (attribution)** — verify every write path has server-derived identity.
+6. **Tenet 8 (terminology)** and **Tenet 5 (alert fatigue)** — the polish pass. Catch them before ship, but they rarely block.
+
+## Do-Not-Auto-Fix Boundary
+
+**Do not silently refactor for Tenets 1 or 9.** Always confirm with the user. DRS migrations and ONC-overlap changes affect compliance posture and often require product/compliance sign-off.
+
+**Tenets 2, 3, 6, 7, 8** — fixes are usually mechanical and can be applied with light confirmation (renames, moving defaults to content, switching to session-derived staff, splitting applications).

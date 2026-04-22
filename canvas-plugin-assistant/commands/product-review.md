@@ -6,6 +6,8 @@ name: product-review
 
 Evaluate a Canvas plugin from a product perspective: alignment with core tenets, regulatory risk (ONC-certified criteria overlap), and placement/norms. This is complementary to `/cpa:security-review` (engineering concerns) — this command surfaces product judgments a human needs to make.
 
+The underlying tenets are also available as the `product-review` skill for inline application during plugin development (not only at review time). This command is the end-to-end workflow (environment validation, report generation, next-step routing); the skill is the rule set you apply while planning and writing code.
+
 ## Instructions
 
 **Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
@@ -46,11 +48,15 @@ Note for later use:
 
 ---
 
-### Step 3: Tenet 1 — Clinical Data Model / USCDI V3
+### Step 3: Tenet 1 — Designated Record Set / Clinical Data Model
 
-**Rule:** Custom data must not extend the clinical data model for concepts already represented and required in Canvas. Canvas has implemented USCDI V3. Customer data must flow into Canvas's canonical models so it becomes part of the EHI / designated record set.
+**Rule:** Custom data must not extend the record for concepts that belong in the Designated Record Set (DRS). Canvas's native models are the DRS; USCDI V3 is a subset of it. Customer data used to make decisions about a patient — clinical, billing, or administrative — must flow into Canvas's canonical models so it becomes part of the DRS and is available for exports, disclosures, amendments, and audits.
 
-Reference: https://isp.healthit.gov/united-states-core-data-interoperability-uscdi
+References:
+- HIPAA DRS definition: https://www.accountablehq.com/post/designated-record-set-examples-under-hipaa-what-s-included-and-what-s-not
+- USCDI V3: https://isp.healthit.gov/united-states-core-data-interoperability-uscdi
+
+**The DRS test:** *"If the information is used to make a decision about the patient — clinical, billing, coverage, or care coordination — it belongs in the DRS."* If yes, it must flow into a Canvas native model. Custom data is for workflow mechanics, not decision-relevant content.
 
 **Detect:**
 
@@ -59,9 +65,9 @@ grep -rn "CustomModel\|AttributeHub" --include="*.py" .
 grep -rn "class .*(CustomModel)" --include="*.py" .
 ```
 
-For each `CustomModel` / `AttributeHub` usage, inspect the fields and ask: **Is this concept already covered by a USCDI V3 data class?**
+For each `CustomModel` / `AttributeHub` usage, inspect the fields and ask: **Is this concept part of the DRS?** Walk the tables below in order — USCDI first (the required subset), then broader DRS categories.
 
-USCDI V3 data classes (non-exhaustive — flag if a CustomModel looks like one of these):
+**USCDI V3 data classes (required subset of DRS) — flag if a CustomModel looks like one of these:**
 
 | USCDI Data Class | Canvas equivalent — use this, NOT custom data |
 |---|---|
@@ -85,9 +91,45 @@ USCDI V3 data classes (non-exhaustive — flag if a CustomModel looks like one o
 | Care plan | `CarePlan` / Goal |
 | Health insurance information | `Coverage` |
 
-**Flag:** Any `CustomModel`/`AttributeHub` whose fields restate one of the above. Recommend migrating the data capture into Canvas's native model (via the appropriate Command / SDK write path) so the data becomes part of the designated record set.
+**Broader DRS categories (beyond USCDI) — also flag:**
 
-**Acceptable custom data:** Workflow state (assignment queues, in-progress rollups, reminder acknowledgments), integration bookkeeping (external system IDs, sync timestamps), plugin-specific configuration — none of which are USCDI data classes.
+| DRS Category | Examples | Canvas equivalent |
+|---|---|---|
+| Additional clinical documentation | Progress notes, consult notes, operative notes, discharge summaries, therapy notes (non-psychotherapy), referral letters | `Note` + appropriate `Command` / `Document` |
+| Diagnostic artifacts | Pathology reports, imaging reports, cardiac tracings, ECGs | `DiagnosticReport` / `Observation` / `Document` |
+| Orders and administration records | Orders, order sets, medication administration records | Order commands (`Prescribe`, `LabOrder`, `ImagingOrder`) |
+| Care coordination communications | Referrals, inter-provider messages, consult requests affecting treatment | `Refer` command, `Note`, `Document` |
+| Authorizations & consents | Consents, releases, treatment authorizations, prior authorization files | `Consent` / `Document` |
+| Billing & encounter records | Encounter forms, itemized bills, remittance details, billing correspondence, claim files, EOBs | `Claim` / `Coverage` / native billing models |
+| Utilization / case management | Case management notes, disease management records, nurse advice documentation, appeals / grievances | `Note` + `Task` + appropriate Command |
+| Imported external data used for decisions | External lab feeds, HIE imports, device data once incorporated into care | The corresponding native clinical model (not a custom blob) |
+| Patient-generated health data *used for care decisions* | PROs, home BP readings, symptom diaries once reviewed and incorporated | `Observation` / `Questionnaire` response |
+
+**Excluded from the DRS — custom data is appropriate here:**
+
+| Category | Why it's excluded | Notes |
+|---|---|---|
+| **Psychotherapy notes** | HIPAA-special — *separate* notes documenting/analyzing counseling session content | **Do not store in `Note` either** — if plugin handles psychotherapy notes, escalate to Product/Compliance; requires a separate controlled store |
+| Quality assurance / peer review / internal audits | Excluded unless used for individual patient decisions | Custom data or internal tooling is fine |
+| Business planning, forecasting, underwriting workpapers | Not about individual patients | Custom data is fine |
+| De-identified / limited datasets for research | Excluded from DRS by definition | Custom data is fine |
+| Personal notes / memory aids not shared | "Sticky note for myself" — not a record | Custom data is fine (see sticky-note pattern) |
+| Litigation holds | Excluded by regulation | Escalate to Compliance; don't touch via plugin |
+
+**Acceptable custom data (mechanical / non-decisional):**
+- Workflow state (assignment queues, in-progress rollups, reminder acknowledgments, dismissals)
+- Integration bookkeeping (external system IDs, sync timestamps, webhook cursors)
+- Plugin-specific configuration (settings, user preferences, catalog/template definitions)
+- Ephemeral session state (cache keys, QR-code session IDs, WebSocket session bindings)
+- Per-user UI preferences (hidden items, sort orders)
+
+The test: *if removing this custom data would change what the record says about the patient or what a covered entity would use to make a decision about them, it belongs in a Canvas native model, not custom data.*
+
+**Flag:** Any `CustomModel` / `AttributeHub` whose fields restate a concept from either the USCDI or broader DRS tables above. Recommend migrating the data capture into Canvas's native model (via the appropriate Command / SDK write path) so the data becomes part of the designated record set.
+
+**Flag HIGH:** Any plugin handling psychotherapy notes — these have special HIPAA treatment and are neither DRS-bound nor conventional `Note`-bound. Escalate to Product/Compliance before any storage decision.
+
+**Flag HIGH (billing/claims):** Plugins that create, modify, or transmit billing, claims, or EOB content outside Canvas's billing primitives — this is DRS content and likely ONC-adjacent. Confirm with Product before routing around native billing.
 
 ---
 
@@ -385,13 +427,13 @@ Save the report:
 
 **Generated:** {timestamp}
 **Reviewer:** Claude Code (CPA)
-**Scope:** Product alignment, placement, coded data capture, native-primitive usage, alert fatigue, configurability, attribution, terminology, ONC certified-criteria overlap.
+**Scope:** Designated Record Set / clinical data model, placement, coded data capture, native-primitive usage, alert fatigue, configurability, attribution, terminology, ONC certified-criteria overlap.
 
 ## Summary
 
 | Tenet | Status | Issues |
 |---|---|---|
-| 1. Clinical Data Model / USCDI V3 | ✅ / ⚠️ X / ❌ | ... |
+| 1. Designated Record Set / Clinical Data Model | ✅ / ⚠️ X / ❌ | ... |
 | 2. Placement | ✅ / ⚠️ X / ❌ | ... |
 | 3. Coded Data Capture | ✅ / ⚠️ X / ❌ | ... |
 | 4. Native Canvas Primitives | ✅ / ⚠️ X / ❌ | ... |
@@ -403,8 +445,8 @@ Save the report:
 
 ## Detailed Findings
 
-### 1. Clinical Data Model / USCDI V3
-[findings with file:line references, USCDI data class mapping, recommendation]
+### 1. Designated Record Set / Clinical Data Model
+[findings with file:line references, DRS / USCDI category mapping, recommendation]
 
 ### 2. Placement
 [manifest scope vs. actual behavior, mismatches, recommendation]
