@@ -186,21 +186,46 @@ For each `AddBannerAlert`, `LaunchModalEffect`, `ShowPatientChartSummarySection`
 
 ## Tenet 7 — Audit Trail & Attribution
 
-**Rule:** Any write that affects the patient record must be attributable (who / what / when). Silent or un-attributed mutations break the legal record.
+**Rule:** The audit trail must reflect the *real actor* that performed an action. Silent or falsified actor identity breaks the legal record. But actor identity is distinct from routing/assignment fields — and the distinction determines whether a given pattern is HIGH.
+
+**Two concepts, kept separate:**
+
+1. **Actor** — who actually did the thing (pressed the button, made the API call, triggered the effect). Must be captured by Canvas's audit trail. For session-authenticated calls this is the logged-in Staff. For API-key / service-account / webhook calls, this is the **bot** (e.g. "Canvas integration bot," or the service account named in the integration). It must never be silently attributed to a clinician who did not actually perform the action.
+
+2. **Routing / assignment** — fields the caller supplies that *name* a clinician for business reasons: `provider_id` on a note (whose note is this?), `assignee` on a task, `prescriber_id` on a carried-forward prescription, `author` of a draft. These are legitimate for an integration to set. They tell Canvas "file this under Dr. X" — they do not attest that Dr. X authored the content.
+
+**The distinction determines severity:**
+
+- *Not HIGH* — API-key-authenticated endpoints that create or route records on behalf of a named clinician (create an unsigned note attributed to Dr. X, schedule an appointment for Dr. Y, assign a task to Dr. Z), **as long as the audit trail stamps the real actor as the bot**. It is the customer's responsibility to configure these integrations so named clinicians only receive routing for actions where their real attestation is not required.
+
+- *HIGH* — API-key-authenticated endpoints that trigger an **attestation event** as a named clinician:
+  - **Electronic signature** on a note, order, or form (the signer must be the real clinician)
+  - **Signing-adjacent commits**: actions that Canvas treats as the clinician's certification of correctness. Confirm with Canvas internals whether `push_charges`, `commit`, or similar actions imply a signature.
+  - **Shadow-override patterns**: editing displayed data via side-channel metadata while leaving the true record untouched ("two versions of reality") — because downstream viewers see the edited version and may assume the named clinician approved it.
 
 **Verify on every write path:**
-- SDK data writes go through `Effect` types (which carry Canvas attribution)
-- Custom data writes representing clinical workflow state capture the actor (either via `created_by` / `modified_by` FK, or via documented system-attribution for automated actions)
-- Webhook / external-triggered writes log the source
+- SDK data writes go through `Effect` types — Canvas stamps the actor from the session or the plugin's service context.
+- Custom data writes representing clinical workflow state capture the actor (either via `created_by` / `modified_by` FK, or via documented system-attribution for automated actions).
+- Webhook / external-triggered writes log the source (the bot, the inbound webhook origin — not an impersonated clinician).
 
-**Flag:**
-- Any `CustomModel.save()` / `.create()` / `.update()` mutating clinically relevant state without capturing the actor
-- **Client-supplied `staff_id` in POST bodies** — always derive server-side from session (`canvas-logged-in-user-id` header or `self.event.actor.instance.person_subclass.id`)
-- Shared API-key auth on endpoints that mutate per-patient records (any key holder can write as anyone)
-- Shadow-override patterns: editing *displayed* data via a side-channel metadata key while leaving the underlying record untouched ("two versions of reality")
-- Missing Canvas-side audit records for high-impact operations (print, export, transmission)
+**Flag HIGH:**
+- API-key-authenticated endpoints that trigger electronic signatures, signing-adjacent commits, or other attestation events as a named clinician (the real signer must be the real clinician)
+- Shadow-override patterns: editing displayed data via side-channel metadata while leaving the record untouched
 
-**Golden pattern:** `StaffSessionAuthMixin` on the route + `staff_id = self.request.headers["canvas-logged-in-user-id"]` + `Effect` types for all mutations.
+**Flag MEDIUM:**
+- Any `CustomModel.save()` / `.create()` / `.update()` mutating clinically relevant state without capturing the actor at all (no bot, no staff)
+- Missing Canvas-side audit records for high-impact operations (print, export, transmission) — the event happened but is not reconstructable after the fact
+- API-key auth on endpoints that touch PHI-bearing data without a corresponding audit entry naming the bot
+
+**Not a Tenet 7 flag (but call out for customers):**
+- API-key-authenticated endpoints that create / route / assign records to named clinicians for non-attestation purposes. These are legitimate integration patterns (bulk import, scheduling, CCM dashboards, task routing). Document in the plugin README that:
+  - The audit trail stamps the integration bot as the actor
+  - Named clinicians should only receive routing for records where their real attestation is not required
+  - It is the customer's responsibility to ensure the integration is used accordingly
+
+**Golden patterns:**
+- *Clinician-driven action* → `StaffSessionAuthMixin` on the route + `staff_id = self.request.headers["canvas-logged-in-user-id"]` + `Effect` types for all mutations.
+- *Integration-driven action on behalf of a clinician* → API-key or service-account auth + `provider_id` in the body names the routing target + Canvas audit stamps the bot as the real actor. README documents that attestation is NOT implied.
 
 ---
 

@@ -298,21 +298,50 @@ For each hit, classify:
 
 ### Step 9: Tenet 7 — Audit Trail & Attribution
 
-**Rule:** Any write that affects the patient record must be attributable (who/what/when). Silent or un-attributed mutations break the legal record and make incidents un-investigable.
+**Rule:** The audit trail must reflect the *real actor* that performed an action. Actor identity is distinct from routing/assignment fields, and the distinction determines whether a given pattern is HIGH.
+
+**Two concepts to keep separate:**
+
+1. **Actor** — who actually performed the action (pressed the button, made the API call, triggered the effect). Must be captured in Canvas's audit. For session-authenticated calls, this is the logged-in Staff. For API-key / service-account / webhook calls, this is the **bot** (the integration's service account). It must never be silently attributed to a clinician who did not actually perform the action.
+
+2. **Routing / assignment** — fields the caller supplies that *name* a clinician for business reasons: `provider_id` on a note (whose note is this?), `assignee` on a task, `prescriber_id` on a carried-forward prescription, `author` of a draft. These are legitimate for an integration to set. They tell Canvas "file this under Dr. X" — they do not attest that Dr. X authored the content.
 
 **Detect — writes to SDK models or custom data:**
 
 ```bash
 grep -rn "\.save()\|\.create(\|\.update(\|\.delete(" --include="*.py" . | grep -v "test_\|\.venv\|__pycache__"
 grep -rn "Effect\|effect_type" --include="*.py" .
+grep -rn "APIKeyAuthMixin\|StaffSessionAuthMixin" --include="*.py" .
+grep -rn "\.sign(\|\.lock(\|push_charges\|commit_charges\|\.commit(" --include="*.py" .
+grep -rn "provider_id.*=\|staff_id.*=\|author_id.*=" --include="*.py" .
 ```
 
 For each write, verify:
 - Writes to **SDK data** flow through `Effect` types (which carry Canvas's built-in attribution + provenance)
 - Writes to **plugin custom data** that represent clinical workflow state attribute the actor — either via an explicit `created_by` / `modified_by` field storing staff key, or via documented system-attribution when the action is automated
-- Writes triggered by **external systems / webhooks** log the source
+- Writes triggered by **external systems / webhooks** log the source (the bot / inbound origin, not an impersonated clinician)
 
-**Flag:** Any `CustomModel.save()` / `.create()` path that mutates clinically-relevant state without capturing the actor.
+**Flag HIGH:**
+- **API-key-authenticated endpoints that trigger attestation events as a named clinician.** An attestation is an action Canvas (or the clinician herself) treats as certification of correctness:
+  - **Electronic signature** on a note, order, or form (`NoteEffect.sign`, `CommandEffect.commit` on signing-adjacent commands, e-prescribe send, form signature)
+  - **Signing-adjacent commits**: actions that Canvas treats as the clinician's certification — confirm with Canvas internals whether `push_charges`, `commit`, or similar imply a signature
+- **Shadow-override patterns**: side-channel metadata keys that change *displayed* data while the underlying record stays untouched (downstream viewers see the edited version and may assume the named clinician approved it)
+
+**Flag MEDIUM:**
+- `CustomModel.save()` / `.create()` / `.update()` mutating clinically relevant state without capturing the actor at all (neither bot nor staff)
+- Missing Canvas-side audit records for high-impact operations (print, export, transmission) — the event happened but can't be reconstructed
+- API-key auth on endpoints that touch PHI-bearing data without a corresponding audit entry naming the bot
+
+**Not a Tenet 7 flag (but call out for customers):**
+- API-key-authenticated endpoints that **create or route** records on behalf of a named clinician for non-attestation purposes (bulk import, scheduling, CCM dashboards, task routing, unsigned note creation attributed to a provider). Legitimate integration patterns. The README should document that:
+  - The audit trail stamps the **integration bot** as the real actor
+  - `provider_id` / `assignee` / `author` fields are **routing**, not attestation
+  - Named clinicians should only receive routing for records where their real attestation is not required
+  - It is the **customer's responsibility** to ensure the integration is used within those bounds
+
+**Golden patterns:**
+- *Clinician-driven action* → `StaffSessionAuthMixin` + `staff_id` from `canvas-logged-in-user-id` header + `Effect` types for all mutations.
+- *Integration-driven action on behalf of a clinician* → API-key / service-account auth + `provider_id` in the body names the routing target + Canvas audit stamps the **bot** as the real actor + README documents that attestation is NOT implied.
 
 ---
 
