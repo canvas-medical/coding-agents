@@ -195,6 +195,69 @@
         "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
         "No hardcoded hex colors outside the :root block"
       ]
+    },
+    {
+      "id": 15,
+      "prompt": "Build a table of tasks with three columns, title, assignee, and due date. Each row ends with a single trigger that opens a row action menu with Edit, Duplicate, then a divider, then Delete. The trigger is a kebab icon. Wire up a select event that logs which action was chosen for which task.",
+      "expected_output": "A canvas-table with three data columns plus an actions column. The actions cell contains a canvas-menu-button with align=end and a slotted canvas-button trigger. The trigger is a ghost icon only canvas-button with an aria-label and an SVG kebab icon (three vertical dots) as its content. Inside the menu, canvas-option for Edit, canvas-option for Duplicate, an hr divider, then canvas-option for Delete. A script listens for select events on an ancestor of the menu buttons (event delegation via bubbling) and logs the detail.value alongside the row's task id.",
+      "assertions": [
+        "HTML contains at least one canvas-menu-button element",
+        "Each canvas-menu-button has align set to end so the menu hugs the row's right edge",
+        "Each canvas-menu-button contains a slotted canvas-button with slot equal to trigger",
+        "Each slotted canvas-button trigger has an aria-label attribute because it is icon only",
+        "Each canvas-menu-button contains canvas-option children for Edit, Duplicate, and Delete",
+        "Each canvas-menu-button contains an hr element between Duplicate and Delete as a section divider",
+        "Destructive Delete option sits after the divider, not mixed with Edit and Duplicate above it",
+        "No canvas-dropdown used for the row action menu",
+        "canvas-menu-button does not carry name, value, or required attributes",
+        "A script registers a select event listener that reads event.detail.value from the menu button",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Add a filter icon in the header of a notes list that opens a popover when clicked. The popover contains a type dropdown with three values (office visit, phone call, lab result), an author text input, and two date inputs for a date range. The footer of the popover has a ghost Clear button and a primary Apply button. Clicking outside the popover or pressing Escape should dismiss it. Apply the filter and close when the user clicks Apply.",
+      "expected_output": "A canvas-popover element with a slotted canvas-button trigger carrying an aria-label and an SVG filter icon. The popover has a label attribute (required for the dialog aria-label) and pointer because the icon only trigger is ambiguous on its own. Size is md (default) or explicit. Body content is a flex column with a canvas-dropdown for type, a canvas-input for author, two canvas-input type=date elements for the date range, and an action row with a ghost Clear canvas-button and a primary Apply canvas-button. Apply button click closes the popover by removing the open attribute or calling close(). No canvas-modal used for this anchored surface.",
+      "assertions": [
+        "HTML contains at least one canvas-popover element",
+        "Each canvas-popover has a non empty label attribute",
+        "Each canvas-popover contains a slotted element with slot equal to trigger",
+        "The slotted trigger is a canvas-button with an aria-label attribute because it is icon only",
+        "The popover body contains a canvas-dropdown for filter type",
+        "The popover body contains a canvas-input for author and two canvas-input elements with type date",
+        "The popover has an action row with a ghost canvas-button for Clear and a canvas-button for Apply",
+        "No canvas-modal used to wrap the filter form",
+        "canvas-popover carries pointer because the icon only trigger is ambiguous",
+        "Apply click handler removes the open attribute or calls close on the popover",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Build a small medications panel for a patient chart. The panel sits inside a card with a header titled Active medications. When the patient has no medications, render a centered empty state with a heading, one line of supporting text, and a primary button. Add an Add medication button in the card footer with a tooltip describing what the button does. At the top of the panel, include a banner that tells the clinician the vitals were just updated and the heart rate is elevated. Use clinical copy throughout. Follow every rule in references/writing-style.md.",
+      "expected_output": "A canvas-card containing a header with the title Active medications written in sentence case. Inside the card body, a canvas-banner with an appropriate variant reports the vitals update and elevated heart rate with terse clinical copy (for example, Vitals updated at 09 12. Heart rate elevated.). Below the banner, when no medications are recorded, a centered empty state with heading No medications recorded, one line of supporting text such as Add the first medication to begin this patient's record, and a primary canvas-button labeled Add first medication. The card footer contains a canvas-button labeled Add medication with a canvas-tooltip whose text reads Add medication. All strings use sentence case. No em dashes, no en dashes, no curly quotes. No AI puffery (vibrant, boasts, seamlessly, empowering, ensuring), no inflation of significance (serves as, stands as), no didactic disclaimers (It is important to note), no collaborative assistant tone (Let me help you), no knowledge cutoff disclaimers. Clinical vocabulary (Active medications, Vitals, Heart rate, No medications recorded) is preserved in its clinical sense.",
+      "assertions": [
+        "HTML contains zero em dash characters (Unicode U+2014)",
+        "HTML contains zero en dash characters (Unicode U+2013)",
+        "HTML contains zero typographic double quote characters (U+201C left, U+201D right) inside attribute values or rendered text",
+        "HTML contains zero typographic apostrophe characters (U+2019) inside attribute values or rendered text",
+        "Card title is Active medications in sentence case, not Active Medications",
+        "Empty state heading uses sentence case",
+        "Tooltip text uses sentence case",
+        "Banner text uses sentence case at the start of each sentence",
+        "HTML does not contain any of the substrings boasts, vibrant, tapestry, testament, seamlessly, effortlessly, streamlined, powerful, comprehensive, empowering, ensuring, fostering, showcasing",
+        "HTML does not contain any of the substrings serves as, stands as, plays a key role in, sets the stage for",
+        "HTML does not contain any of the substrings It is important to note, Please be aware, It should be emphasized, Rest assured",
+        "HTML does not contain any of the substrings Let me help you, I can help with, Together we will, Allow me to",
+        "HTML does not contain any of the substrings As of my last update, training data, I cannot access real time",
+        "HTML contains at least one of the clinical phrases Active medications, Vitals, Heart rate, No medications recorded, preserving the clinical carve out",
+        "Empty state heading distinguishes recorded from not recorded (No medications recorded passes, No medications alone fails)",
+        "Card footer button label is concise, verb first (Add medication), not padded (Add a New Medication Order Now)",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
     }
   ]
 }

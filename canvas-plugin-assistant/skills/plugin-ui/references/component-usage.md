@@ -53,11 +53,111 @@ Five common patterns for `canvas-textarea`, each suited to a different context.
 
 ## Dropdown vs Combobox vs Native Select
 
-- Use a **`canvas-dropdown`** as the default for picking from a fixed list of options. This matches the Semantic UI selection dropdown used throughout the Canvas home-app. The custom dropdown has a white menu, subtle gray on selected items, and connected border-radius between trigger and menu.
+- Use a **`canvas-dropdown`** as the default for picking from a fixed list of options. Matches the selection dropdown used throughout the Canvas home-app. The custom dropdown has a white menu, subtle gray on selected items, and connected border-radius between trigger and menu.
 - Use a **`canvas-combobox`** when the list is long or the option text is long and the user benefits from typing to filter (provider search, appointment selection, diagnosis lookup, medication search). Visually identical to the dropdown but the input is editable.
 - **Do not use native `<select>` elements.** Native selects render with OS-level styling that does not match the Canvas home-app on any platform. The dropdown menu appearance (colors, fonts, selected item highlight) is controlled by the operating system and cannot be styled. Always use `canvas-dropdown` or `canvas-combobox` instead.
 - Use **radio buttons** when there are 2 to 3 mutually exclusive options and you want all choices visible at once without requiring a click to open.
 - Never use a dropdown for yes/no or on/off choices. Use a toggle or checkbox instead.
+- **Never use `canvas-dropdown` for actions.** A dropdown is for selecting a value that is part of form state. For action triggers such as "Edit, Duplicate, Delete" row menus, plus buttons that open "Add X, Add Y, Add Z" lists, or overflow kebab menus, use `canvas-menu-button`. See Menu Button below. Misusing `canvas-dropdown` here breaks screen readers (wrong ARIA role), exposes unused form props (`name`, `value`), and confuses the visual convention (field styled trigger where a button is expected).
+
+## Menu Button
+
+Use `canvas-menu-button` when a button opens a small list of actions, not a selection of values. The WAI ARIA pattern is "Menu Button", the element exposes `role="menu"` with `role="menuitem"` children, and each option fires a `select` event carrying `value` and `label` rather than contributing to a form.
+
+When to use.
+
+- **Plus button with a list of things to add.** "Add note", "Add task", "Add diagnosis" triggered from a single plus icon that opens a menu below. Common in list headers where multiple creation flows share one entry point.
+- **Row action menu (kebab or ellipsis).** Edit, Duplicate, Archive, Delete on table rows, list rows, and card headers. Pair with `align="end"` so the menu opens toward the row's right edge.
+- **Overflow menu.** When a toolbar has more actions than fit, collapse the tail into a kebab trigger that opens a menu of the remaining actions.
+- **Split actions by category with section dividers.** Place `<hr>` between `canvas-option` children to group related actions, for example "Edit, Duplicate" in one section and "Archive, Delete" in the next.
+
+When not to use.
+
+- **Selecting a value that lives in form state.** Use `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` instead. The menu button emits discrete actions, not a settable value.
+- **More than one interactive control in the popover.** If the popover needs checkboxes, date inputs, or any form beyond a list of actions (filter panels, preference sheets, legends), `canvas-menu-button` is the wrong primitive. Use `canvas-popover` instead, it is the generic anchored container for arbitrary content.
+- **Navigation between pages or routes.** A link or tab bar covers this. A menu button dispatches in-page actions.
+- **Two actions or fewer.** Render them as side by side `canvas-button` elements instead of hiding them behind a menu. The menu button earns its place once there are three or more peers.
+
+Trigger rules.
+
+- The default trigger (when no `slot="trigger"` child is provided) is a ghost button reading "Actions" with a caret. Use this for generic overflow menus.
+- Slot a `canvas-button` when the trigger is an icon button, a primary add button, or anything beyond the generic default. Keep the slotted trigger at `variant="ghost"` and `size="sm"` for toolbar and row contexts. Primary (green) or secondary (blue) triggers are reserved for the plus button that represents the single primary creation affordance on the page.
+- Icon only triggers must carry `aria-label`. The default ghost trigger already wires `aria-haspopup="menu"` and `aria-expanded` automatically, slotted custom triggers inherit these contracts from the component, the only gap you fill is the accessible name.
+
+Placement rules.
+
+- Leave `direction` and `align` unset for the default auto placement. The component measures viewport space on open and flips up or right aligns only when the menu would clip.
+- Set `direction="up"` or `direction="down"` only when the auto decision is wrong for a known layout constraint, for example a menu button pinned to a fixed bottom toolbar where the menu must always open upward regardless of viewport state.
+- Set `align="end"` on row action menus (kebab menus in the right cell of a table row) so the menu hugs the row's right edge instead of extending past it.
+
+Option rules.
+
+- Each `canvas-option` carries a `value` attribute that identifies the action in the `select` event. Keep values short and stable (`edit`, `duplicate`, `archive`, `delete`). Treat them as action identifiers, not human strings.
+- Option text is the verb ("Edit") or verb plus object ("Mark as completed"). Avoid compound labels that read like a sentence. Long labels force wrapping and slow scanning.
+- Disable individual options with the `disabled` attribute when the action is contextually unavailable. Do not hide options conditionally if their availability changes frequently, the shifting menu length confuses muscle memory. Hide only when the option is structurally impossible in the current flow.
+- Place destructive actions (Delete, Remove, Revoke) last. Separate with a `<hr>` divider from non destructive actions above.
+
+## Overlay family
+
+Pick the right overlay before picking attributes. Rows in the table below map the interaction model and content shape to a component.
+
+| Trigger and content | Component |
+|---|---|
+| Hover or focus, short non interactive text | `canvas-tooltip` |
+| Click, three or more action items anchored to a toolbar button | `canvas-menu-button` |
+| Click, arbitrary interactive content, surface tethered by width or edge alignment | `canvas-popover` without `pointer` |
+| Click, arbitrary interactive content, surface floats free of the trigger or the anchor is ambiguous | `canvas-popover` with `pointer` |
+| Click, full task that needs a backdrop, centered focus, and true modality | `canvas-modal` |
+
+Tooltip and popover share the same speech balloon artwork and the same trigger to surface distance, but they carry different ARIA contracts. Tooltip is `role="tooltip"` with hover and focus triggers. Popover is `role="dialog"` with click triggers, explicit open state, and optional focus trap. Do not simulate a tooltip with a popover just to get the arrow, and do not stuff interactive content into a tooltip.
+
+## Popover
+
+Use `canvas-popover` when a button opens an anchored container with arbitrary content. It is the generic complement to `canvas-menu-button`, which is reserved for action menus. The ARIA contract is `role="dialog"` with `aria-modal="false"`, and the trigger carries `aria-haspopup="dialog"` plus `aria-expanded`.
+
+When to use.
+
+- **Filter forms.** Icon triggers that open a short form for narrowing a list, for example the note filter on the patient chart header or a table column filter. Icon only triggers are ambiguous on their own, set `pointer` to tether the surface to the trigger.
+- **Column pickers.** Toolbar buttons that open a checkbox list for toggling table column visibility.
+- **Legends and preference sheets.** Small explanatory panels anchored to an info icon or a settings button. Short body content, often a paragraph plus a key.
+- **Bulk action panels.** Panels anchored to a selection summary with multiple controls (assign to, tag, change status) beyond what a menu button can represent.
+
+When not to use.
+
+- **Action menus.** Use `canvas-menu-button`. The options there map to `role="menuitem"` and the trigger is not carrying a dialog contract.
+- **Form field selection.** Use `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select`. Those participate in form state and emit `change`.
+- **Tooltips.** Short descriptive text on hover belongs in `canvas-tooltip`. Popovers are for click triggered interactive surfaces. If you want the speech balloon arrow on a click triggered callout, use `canvas-popover` with `pointer`.
+- **Full page overlays and confirmations.** Use `canvas-modal` when the content needs centered focus, a backdrop, and true modality. Destructive confirmations, blocking flows, and anything the user must respond to before continuing belong in a modal. Popovers are non blocking, a user can always dismiss by clicking outside or pressing Escape.
+
+Attribute rules.
+
+- Always set `label`. It is required because `role="dialog"` needs an accessible name and the v1 popover has no composite header element to derive it from.
+- Leave `direction` and `align` unset for the default auto placement. Direction picks the side with more room when content does not fit below. Alignment flips to end when the start edge would clip. Set explicitly only when a known layout constraint forces a side.
+- Pick `size` based on the content. `sm` 280 px for short legends and compact checkbox lists. `md` 360 px for filter forms. `lg` 480 px for denser column pickers and bulk action panels. `auto` grows the surface to its content width up to the viewport, use for wide tables, long labels, or data whose width is known only at runtime. Override with `--canvas-popover-max-width` when the content has a known ideal width.
+- Leave `dismiss-on-scroll` off by default. The popover follows the trigger on scroll and hides when the trigger leaves the viewport. Set `dismiss-on-scroll` only when any scroll should close the popover, for example a filter panel that becomes stale when the user scrolls the underlying table.
+
+Pointer.
+
+- Set `pointer` when the anchor is ambiguous, for example an ellipsis in a row of icon buttons, an inline disclosure anchored to a chip or table cell, or a small floating surface next to a cluster of peers. The speech balloon arrow is what tells the user which control opened the surface.
+- Leave `pointer` off when the surface is visually tethered by width or edge alignment, for example a filter panel flush under a full width toolbar button, a column picker aligned to a table header, or a large preference sheet where a small arrow looks vestigial.
+- The pointer does not change keyboard, ARIA, or dismissal behavior. It is a visual affordance only.
+
+Content sizing and escalation.
+
+- Keep the body to one logical group and up to four focused controls. Inputs, checkboxes, and date pickers count together. A date range made of two inputs bound to one label counts as one control. Action rows at the end do not count.
+- Beyond that the popover stops reading as a quick action and starts reading as a form. Escalate to `canvas-modal`. Signals that you have crossed the line include more than four controls, multiple logical groups, side by side columns, or a scroll area inside the popover that appears outside edge cases.
+- The popover is not a scroll container. When content may exceed the direction aware `max-height`, wrap the body in `canvas-scroll-area vertical` with an explicit `max-height` and an `aria-label`. Same contract as `canvas-card-body`. Never place `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` directly inside the scroll area, their menu surfaces will clip. Place those outside the scroll area or restructure the content so the scroll is further in.
+
+Trigger rules.
+
+- Slot a `canvas-button` as the trigger. Ghost variant is the default for toolbar and row contexts. Primary or secondary triggers are reserved for the page's main popover opener, for example the chart filter icon.
+- Icon only triggers must carry `aria-label`. The component wires `aria-haspopup="dialog"` and toggles `aria-expanded` on the slotted trigger automatically.
+
+Content rules.
+
+- Keep the popover focused on a single task. Filter form, not filter plus sort plus export.
+- Wrap content in a flex column when stacking multiple controls so they do not flow side by side.
+- Action rows sit at the end of the body as a flex row aligned to the end, ghost Cancel then primary action button.
 
 ## Multi-Select
 
@@ -237,7 +337,7 @@ Not all consequential actions are destructive. Clinical workflows include action
 
 - Use **mini** (`size="mini"`) as the default size for all status indicators in tables, cards, lists, and accordion titles. This is the size Canvas uses most frequently.
 - Use **tiny** or **small** only when the badge needs to be more prominent, like a standalone tag or a primary visual element.
-- Use the **solid color** variants (`canvas-badge` with a color attribute like `green`, `red`, etc.) for status display. White text on a colored background. This matches the Semantic UI Label used throughout the Canvas home-app.
+- Use the **solid color** variants (`canvas-badge` with a color attribute like `green`, `red`, etc.) for status display. White text on a colored background. Matches the status labels used throughout the Canvas home-app.
 - Use the **basic** variant (add the `basic` attribute) for de-emphasized or neutral statuses like "Inactive", "Self-pay", or "Draft" where a solid color would be too visually heavy.
 - Use the **circular** variant (add the `circular` attribute) for notification counts. Short content renders as a circle, longer content stretches into a pill.
 - Match colors to semantic meaning consistently. See [DESIGN.md](../DESIGN.md) Badge Color Semantics for the full mapping.
@@ -281,6 +381,7 @@ One line only empty states are acceptable inside tight containers like card bodi
 - **Be specific.** Name the domain object, not "data" or "results". "No medications recorded" reads as clinical. "No data found" reads as a bug.
 - **Be action oriented.** Button labels start with a verb tied to the task, "Add first medication", "Clear filters", "Invite team member". No "Click here", no "Learn more".
 - **Be educational on first use, blunt on filter no results.** First use is the one moment where explaining what lives here pays off. Filter no results needs the escape, not a lesson.
+- **For prose beyond empty states**, see [writing-style.md](writing-style.md) for the full copy rules and the clinical vocabulary carve out.
 
 ### Clinical nuance
 
@@ -357,7 +458,7 @@ See [DESIGN.md](../DESIGN.md) Empty State for markup patterns per type, and [wor
 - Do not use tooltips as error messages or validation feedback. Errors should be visible inline via `canvas-input` error state or `canvas-banner`. Tooltips are hidden until hover and can be missed entirely.
 - Do not use tooltips for touch-only contexts. Tablets do not have hover. If the plugin runs in a right chart pane where clinicians may use a tablet, ensure all information is accessible without hover.
 - Do not add tooltips to elements inside a scrollable area the user drags or swipes. The scroll listener hides tooltips immediately, so they will flash and disappear.
-- Keep tooltip text short. One line, two at most. If you need a paragraph, use a popover or inline help text instead.
+- Keep tooltip text short. One line, two at most. If you need a paragraph or interactive content, use `canvas-popover` with `pointer` instead, it shares the tooltip's speech balloon artwork but supports click triggers and arbitrary content.
 - Use the inverted (dark) variant for disabled state explanations and secondary hints. Use the default (light) variant for primary content like truncated text expansion.
 - Add `data-canvas-tooltip-delay="1000"` for disabled state explanations so the tooltip does not flash when the user moves past the element quickly.
 - When a table row has multiple icon-only action buttons (edit, delete, view), each needs its own tooltip. Place them with enough gap that tooltips do not overlap when hovering adjacent buttons quickly.

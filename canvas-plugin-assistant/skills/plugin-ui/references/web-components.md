@@ -609,7 +609,7 @@ A multi-line text area with integrated label, error state, optional auto-resize,
 
 ### canvas-radio
 
-A locked radio button matching the Canvas Semantic UI radio. No visual customization. Grouped by shared `name` attribute. Selecting one radio deselects siblings with the same name.
+A locked radio button matching the Canvas home-app. No visual customization. Grouped by shared `name` attribute. Selecting one radio deselects siblings with the same name.
 
 **Usage**
 
@@ -674,7 +674,7 @@ A locked radio button matching the Canvas Semantic UI radio. No visual customiza
 
 ### canvas-checkbox
 
-A locked checkbox matching the Canvas Semantic UI checkbox. White box with a dark checkmark, no colored fill. Toggles between checked and unchecked on click.
+A locked checkbox matching the Canvas home-app. White box with a dark checkmark, no colored fill. Toggles between checked and unchecked on click.
 
 **Usage**
 
@@ -743,7 +743,7 @@ A locked checkbox matching the Canvas Semantic UI checkbox. White box with a dar
 
 ### canvas-toggle
 
-A locked toggle switch matching the Canvas Semantic UI toggle. Blue active track (#0D71BC, not green), white thumb with gradient and shadow, slide animation. Toggles mean instant effect and must never appear on a screen with a Save or Submit button. If a form has submit, use checkboxes instead.
+A locked toggle switch matching the Canvas home-app. Blue active track (#0D71BC, not green), white thumb with gradient and shadow, slide animation. Toggles mean instant effect and must never appear on a screen with a Save or Submit button. If a form has submit, use checkboxes instead.
 
 **Usage**
 
@@ -798,7 +798,7 @@ A locked toggle switch matching the Canvas Semantic UI toggle. Blue active track
 
 ### canvas-banner
 
-An inline message banner matching the Canvas Semantic UI message. Four semantic variants for communicating status. Never floating. Canvas does not use toasts, snackbars, or auto-dismissing notifications anywhere. The border is rendered via `box-shadow: inset`, not a CSS border.
+An inline message banner matching the Canvas home-app. Four variants for communicating status. Never floating. Canvas does not use toasts, snackbars, or auto-dismissing notifications anywhere. The border is rendered via `box-shadow: inset`, not a CSS border.
 
 **Usage rules.** Canvas uses error and warning banners extensively. Success and info banners are extremely rare in the home-app. Success is communicated through UI state changes (modal closes, form resets, row appears) rather than green banners. Use `error` for API failures and validation errors that block submission (not when field-level errors are sufficient). Use `warning` when the user can proceed but should know about a risk. Use `success` only in the rare case where the user stays on the same page and nothing else changes. Use `info` very sparingly. Never stack multiple banners. If an action produces several errors, use a single banner with a list inside.
 
@@ -881,13 +881,13 @@ Body only (simple inline messages).
 
 **Spacing.** The component does not add outer margin. Vertical spacing between stacked banners is handled by the consumer.
 
-**Locked component.** No visual customization tokens. The four variant colors are fixed to match Canvas Semantic UI. The neutral default (no variant) uses gray.
+**Locked component.** No visual customization tokens. The four variant colors are fixed to match the Canvas home-app. The neutral default (no variant) uses gray.
 
 **File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-card
 
-A segment card matching the Canvas Semantic UI segments pattern. White surface with border, border-radius, and box-shadow. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels. For the decision rule on when to reach for this component rather than a raw div, see [component-usage.md](component-usage.md) Cards and Content Containers.
+A segment card matching the Canvas home-app. White surface with border, border-radius, and box-shadow. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer for actions and metadata. Used for notes, stacked content blocks, and detail panels. For the decision rule on when to reach for this component rather than a raw div, see [component-usage.md](component-usage.md) Cards and Content Containers.
 
 Three custom elements are registered from a single file: `canvas-card` (outer container), `canvas-card-body` (body sections), and `canvas-card-footer` (gray footer area).
 
@@ -1113,7 +1113,7 @@ The scroll area `max-height` is smaller than the old body `max-height` to accoun
 
 ### canvas-dropdown
 
-A non-searchable select dropdown matching the Canvas Semantic UI selection dropdown. Click to open a menu, arrow keys to navigate, Enter to select. For searchable dropdowns, use `canvas-combobox` instead.
+A non-searchable select dropdown matching the Canvas home-app. Click to open a menu, arrow keys to navigate, Enter to select. For searchable dropdowns, use `canvas-combobox` instead.
 
 **Usage**
 
@@ -1200,7 +1200,7 @@ When a dropdown shares a row with inputs, buttons, or other dropdowns, follow th
 
 **Keyboard navigation.** Arrow up/down to navigate options, Enter or Space to select, Escape to close, Home/End to jump, Tab to select and move focus. Disabled options are skipped.
 
-**Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match Canvas Semantic UI.
+**Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1256,7 +1256,7 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 
 **Keyboard navigation.** Arrow up/down to navigate, Enter to select, Escape to restore previous value and close, Home/End to jump, Tab to select and move focus. Disabled options are skipped.
 
-**Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match Canvas Semantic UI.
+**Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1311,6 +1311,178 @@ A multi-value combobox with chip rendering, inline checkbox indicators, and sear
 **Error state.** Same visual treatment as canvas-input and canvas-combobox.
 
 **Locked component.** No visual customization tokens.
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-menu-button
+
+A button that opens a list of actions below. Implements the WAI ARIA "Menu Button" pattern with `role="menu"` and `role="menuitem"` children. Not form associated. Use for action triggers such as plus buttons, kebab row menus, and overflow action lists. Do not use for value selection, that is `canvas-dropdown`. Do not use for arbitrary popover content such as filter forms or legends, use `canvas-popover` for that.
+
+**Usage**
+
+```html
+<canvas-menu-button>
+  <canvas-option value="edit">Edit</canvas-option>
+  <canvas-option value="duplicate">Duplicate</canvas-option>
+  <hr>
+  <canvas-option value="delete">Delete</canvas-option>
+</canvas-menu-button>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `disabled` | boolean | false |
+| `direction` | `down`, `up` | auto, down when space allows, else up |
+| `align` | `start`, `end` | auto, start when space allows, else end |
+
+When `direction` or `align` is set explicitly, the corresponding axis is pinned and does not auto flip. Leaving both unset enables auto placement in both axes.
+
+**Options via `<canvas-option>` children.** Each option has a `value` attribute and optional `label` attribute (falls back to textContent). Disable with `disabled`. HTML content inside options is preserved in the menu. Content can include icons or badges alongside text.
+
+**Section dividers via `<hr>` children.** Insert an `<hr>` element between `<canvas-option>` children to render a section separator. The divider uses the same color as the outer menu border and has small vertical spacing. Dividers are not focusable and are skipped during keyboard navigation.
+
+**Slotted trigger.** By default, the component renders a ghost "Actions" button with a caret. To use a custom trigger such as an icon button, slot an element with `slot="trigger"`.
+
+```html
+<canvas-menu-button>
+  <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="Add">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+      <path d="M5 0h2v5h5v2H7v5H5V7H0V5h5z"/>
+    </svg>
+  </canvas-button>
+  <canvas-option value="user">User</canvas-option>
+  <canvas-option value="item">Item</canvas-option>
+  <canvas-option value="picture">Picture</canvas-option>
+</canvas-menu-button>
+```
+
+Icon only triggers must carry their own `aria-label`. The default ghost trigger sets `aria-haspopup="menu"` and toggles `aria-expanded` automatically.
+
+**Events**
+
+| Event | When |
+|---|---|
+| `select` | When an option is activated by click, Enter, or Space. `event.detail` carries `value` and `label`. Bubbles and composes through shadow DOM. |
+| `open` | When the menu opens. No detail. |
+| `close` | When the menu closes. No detail. |
+
+**No form participation.** `canvas-menu-button` is not form associated. It does not carry a `name` or `value` and does not contribute to FormData. Each option action is a discrete event, not a form value.
+
+**Keyboard navigation.** On the trigger, Enter or Space opens the menu through native button activation without a pre highlighted item. ArrowDown opens and highlights the first option. ArrowUp opens and highlights the last option. Inside the menu, ArrowUp and ArrowDown navigate with wrap, Home and End jump to first and last, Enter or Space select the highlighted item, Escape closes and returns focus to the trigger, Tab closes. Disabled options are skipped.
+
+**Auto placement.** On open, the component measures the trigger position and the menu dimensions against the viewport. If the menu would clip the viewport bottom and more room exists above, `direction` computes to up. If the menu would clip the viewport right and room exists to the left, `align` computes to end. Explicit `direction` or `align` attributes disable auto flipping on the matching axis.
+
+**Dimensions.** Menu `min-width` 180 px, `max-width` 320 px with text wrapping at the cap, `max-height` 16.02857143 rem with vertical scroll. The trigger sizes to its content.
+
+**Locked component.** No visual customization tokens. Trigger, menu, option, and divider styling are fixed to match the Canvas dropdown menu. Customize the trigger through a slotted `canvas-button` variant instead.
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-popover
+
+A click triggered anchored container for arbitrary content. Covers filter forms, column pickers, legends, preference sheets, bulk action panels, and micro confirmation dialogs. Uses `role="dialog"` with `aria-modal="false"` by default. Not form associated. Use when content is arbitrary and not a list of selectable options. For action menus use `canvas-menu-button`. For a single value selection use `canvas-dropdown`. For full overlay modals use `canvas-modal`.
+
+**Usage**
+
+```html
+<canvas-popover label="Filter notes">
+  <canvas-button slot="trigger" variant="ghost" size="sm">Filter</canvas-button>
+  <div>
+    <p>Filter notes</p>
+    <canvas-dropdown label="Type" placeholder="Any type">
+      <canvas-option value="office">Office visit</canvas-option>
+      <canvas-option value="phone">Phone call</canvas-option>
+    </canvas-dropdown>
+  </div>
+</canvas-popover>
+```
+
+**Icon only trigger with pointer and form**
+
+The icon only trigger filter form pattern maps to `canvas-popover` with `pointer`. The arrow tethers the surface to the small trigger so the user sees which control opened the form.
+
+```html
+<canvas-popover pointer label="Filter notes">
+  <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="Filter notes">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+      <path d="M0 1h14v2L9 8v5l-4-2V8L0 3z"/>
+    </svg>
+  </canvas-button>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <p style="margin: 0; font-weight: 700">Filter notes</p>
+    <canvas-dropdown label="Type" placeholder="Any type">
+      <canvas-option value="office">Office visit</canvas-option>
+      <canvas-option value="phone">Phone call</canvas-option>
+    </canvas-dropdown>
+    <canvas-input label="Author" placeholder="Any author"></canvas-input>
+    <div style="display: flex; gap: 8px">
+      <canvas-input label="From" type="date" style="flex:1"></canvas-input>
+      <canvas-input label="To" type="date" style="flex:1"></canvas-input>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px">
+      <canvas-button variant="ghost" size="sm">Clear</canvas-button>
+      <canvas-button variant="primary" size="sm">Apply</canvas-button>
+    </div>
+  </div>
+</canvas-popover>
+```
+
+Three controls (Type, Author, date range) plus an action row. Date range counts as one control because the two inputs share a label. Clear plus Apply closes with the ghost then primary convention.
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `open` | boolean, reflected | false |
+| `label` | string, required | none (sets surface `aria-label`) |
+| `size` | `sm`, `md`, `lg`, `auto` | `md` |
+| `direction` | `down`, `up` | auto, picks the side with more room when content does not fit below |
+| `align` | `start`, `end` | auto, start when space allows, else end |
+| `pointer` | boolean | false (no visual tether to the trigger) |
+| `dismiss-on-scroll` | boolean | false (scroll moves the popover with the trigger by default) |
+
+The `label` attribute is required because `role="dialog"` needs an accessible name. The size attribute sets a `max-width` default, `sm` 280 px, `md` 360 px, `lg` 480 px, and the surface shrinks below that cap when the viewport is narrower. `size="auto"` caps at the viewport width minus 16 px and lets the surface grow to its content width for wide tables, long labels, or content whose width is known only at runtime. `pointer` renders a 14 px speech balloon arrow on the side of the surface that faces the trigger, matching the `canvas-tooltip` artwork. The arrow tracks the trigger center even when the surface clamps to a viewport edge, and flips side with the surface under auto placement. Distance between the trigger and the surface uses the tooltip recipe (10 px gap, 8 px viewport margin) when `pointer` is set, and the tighter popover recipe (6 px gap, 4 px viewport margin) when it is not.
+
+Popover is not modal. Outside click and Escape always dismiss. When the content needs to block the user until they respond, for example a destructive confirmation, use `canvas-modal` instead.
+
+**Slots**
+
+- `trigger`, the anchor element. The component automatically sets `aria-haspopup="dialog"` and `aria-expanded` on the slotted trigger when open state changes.
+- default, arbitrary HTML content for the popover body.
+
+**Events**
+
+| Event | When |
+|---|---|
+| `open` | When the popover opens. No detail. |
+| `close` | When the popover closes, whether by attribute removal, outside click, Escape, or a `close()` method call. |
+| `cancel` | When the popover is dismissed by outside click or Escape, before `close`. Does not fire when the author removes `open` programmatically. |
+
+**Methods**
+
+- `open()`, adds the `open` attribute.
+- `close()`, removes the `open` attribute.
+
+**Keyboard navigation.** On the trigger, Enter or Space opens the popover through native button activation. Focus moves to the first focusable element inside the popover, or to the surface itself when the body has no focusable content. Escape closes the popover, returns focus to the trigger, and dispatches `cancel`. Tab escapes the popover to the next document tab stop, no focus trap.
+
+**Placement.** On open, the component measures the trigger rectangle and the popover content against the viewport. Direction defaults to `down` when the content fits below the trigger. When it does not fit below, direction picks the side with more room. After the direction is chosen, `max-height` caps at the available space in that direction and the surface becomes scrollable when content exceeds the cap. Alignment defaults to `start` and flips to `end` when the start edge would clip the viewport. Explicit `direction` or `align` disable the corresponding axis auto flip. The surface is rendered with `position: fixed` so it escapes ancestor `overflow: hidden` and appears above normal stacking contexts.
+
+**Scroll behavior.** By default the popover follows its trigger on scroll, repositioning continuously. When the trigger leaves the viewport, the surface is visually hidden without closing. When the trigger scrolls back into view, the surface reappears. Set `dismiss-on-scroll` to close the popover on any scroll instead.
+
+**Sizing.**
+
+| Token or attribute | What it controls | Default |
+|---|---|---|
+| `size="sm"` | Max width | 280 px |
+| `size="md"` | Max width | 360 px |
+| `size="lg"` | Max width | 480 px |
+| `size="auto"` | Max width | viewport minus 16 px, surface grows with content up to that cap |
+| `--canvas-popover-max-width` | Override for max width | size attribute default |
+| `--canvas-popover-max-height` | Author cap for max height | viewport minus 8 px (effectively unbounded) |
+
+The surface uses `overflow-wrap: anywhere` so long unbreakable tokens such as IRIs or IDs break rather than produce horizontal scroll. The surface itself is not a scroll container. When body content may exceed the direction aware `max-height`, wrap it in `canvas-scroll-area vertical` with an explicit `max-height` and `aria-label`. Same contract as `canvas-card-body`. This keeps the popover free of ancestor overflow clipping that would otherwise cut off descendant `canvas-dropdown` or `canvas-combobox` menus.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1789,7 +1961,7 @@ A two-column layout with a fixed-width sidebar and flexible content area. Regist
 
 ### canvas-loader
 
-A loading spinner matching the Semantic UI Loader used in Canvas. Renders a spinning circular border with a gray track and a colored arc. Uses a flex container for centering with three positioning modes.
+A loading spinner matching the Canvas home-app. Renders a spinning circular border with a gray track and a colored arc. Uses a flex container for centering with three positioning modes.
 
 **Usage**
 
@@ -1832,7 +2004,7 @@ A loading spinner matching the Semantic UI Loader used in Canvas. Renders a spin
 
 **Backdrop.** Overlay and fullscreen modes show a light backdrop (`rgba(255, 255, 255, 0.85)`) by default. Set `backdrop="dark"` for a dark backdrop (`rgba(0, 0, 0, 0.5)`) which automatically inverts the spinner and text colors. Set `backdrop="none"` to remove the backdrop. The backdrop attribute is ignored in inline mode.
 
-**Sizes.** Mini (1rem), small (1.71rem), default (2.28rem), large (3.42rem). All sizes follow the Semantic UI size scale. Canvas most commonly uses `size="large"`.
+**Sizes.** Mini (1rem), small (1.71rem), default (2.28rem), large (3.42rem). Canvas most commonly uses `size="large"`.
 
 **Text label.** The `text` attribute renders a label below the spinner. Font size scales with the size attribute. Use "Loading ..." for consistency with Canvas patterns.
 
@@ -1867,7 +2039,7 @@ A loading spinner matching the Semantic UI Loader used in Canvas. Renders a spin
 
 ### canvas-progress
 
-A horizontal fill bar matching the Semantic UI Progress used in Canvas. Shows completion percentages, match scores, and campaign tracking. The bar fills from left to right based on the value attribute.
+A horizontal fill bar matching the Canvas home-app. Shows completion percentages, match scores, and campaign tracking. The bar fills from left to right based on the value attribute.
 
 **Usage**
 
@@ -1893,7 +2065,7 @@ A horizontal fill bar matching the Semantic UI Progress used in Canvas. Shows co
 
 **Colors.** Blue is the default and matches active campaign progress in Canvas. Grey for inactive or selected states. Green for match scores and success indicators. Red and orange for error and warning contexts. The color is always set by the consumer. The component does not change color based on the percentage value.
 
-**Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Semantic UI active progress animation.
+**Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Canvas home-app active progress animation.
 
 **ARIA.** The bar element has `role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, and `aria-valuemax="100"`.
 
@@ -1944,7 +2116,7 @@ An infrastructure component that activates a global tooltip system. Place it onc
 
 **Viewport flipping.** If the tooltip would overflow the viewport edge on the requested side, it flips to the opposite side automatically.
 
-**Visual treatment.** Matches the Semantic UI Popup from the Canvas home-app. White background, 1px solid #d4d4d5 border, .28571429rem border-radius, drop shadow, .71428571em arrow rotated 45deg. Inverted variant uses #1b1c1d background with white text and no border/shadow.
+**Visual treatment.** Matches the Canvas home-app tooltip. White background, 1px solid #d4d4d5 border, .28571429rem border-radius, drop shadow, .71428571em arrow rotated 45deg. Inverted variant uses #1b1c1d background with white text and no border/shadow.
 
 **Infrastructure component.** Unlike UI components, `canvas-tooltip` is placed once per page, not per element. It does not render visible content. The double registration guard prevents issues if it appears multiple times. The `connectedCallback` creates the shared tooltip div and attaches listeners. The `disconnectedCallback` cleans up both.
 
@@ -1952,7 +2124,7 @@ An infrastructure component that activates a global tooltip system. Place it onc
 
 ### canvas-divider
 
-A horizontal rule matching the Semantic UI Divider used in Canvas. Separates content sections with a visible line or acts as an invisible spacer. When text content is placed inside, it renders a centered label with lines extending to each side.
+A horizontal rule matching the Canvas home-app. Separates content sections with a visible line or acts as an invisible spacer. When text content is placed inside, it renders a centered label with lines extending to each side.
 
 **Usage**
 

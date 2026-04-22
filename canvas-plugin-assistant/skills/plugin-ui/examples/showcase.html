@@ -134,8 +134,10 @@
       <a href="#form">Form</a>
       <a href="#input">Input</a>
       <a href="#loader">Loader</a>
+      <a href="#menu-button">Menu Button</a>
       <a href="#modal">Modal</a>
       <a href="#multi-select">Multi-Select</a>
+      <a href="#popover">Popover</a>
       <a href="#progress">Progress</a>
       <a href="#radio">Radio</a>
       <a href="#scroll-area">Scroll Area</a>
@@ -1676,6 +1678,146 @@
 
   </section>
 
+  <!-- Menu Button -->
+  <section class="component-section" id="menu-button">
+    <h2>Menu Button</h2>
+    <hr class="section-divider">
+
+    <!-- Default trigger -->
+    <div class="sample-card">
+      <h3>Default trigger</h3>
+      <p class="text-sm text-muted">With no slotted trigger, the component renders a ghost "Actions" button with a caret.</p>
+      <canvas-menu-button id="mb-default">
+        <canvas-option value="edit">Edit</canvas-option>
+        <canvas-option value="duplicate">Duplicate</canvas-option>
+        <canvas-option value="archive">Archive</canvas-option>
+        <canvas-option value="delete">Delete</canvas-option>
+      </canvas-menu-button>
+      <div id="mb-default-log" class="text-sm text-muted" style="margin-top: 12px"></div>
+    </div>
+
+    <!-- Plus icon trigger -->
+    <div class="sample-card">
+      <h3>Plus icon trigger</h3>
+      <p class="text-sm text-muted">Common pattern for "add new" menus. Custom trigger slotted as a ghost canvas-button with a plus SVG.</p>
+      <canvas-menu-button id="mb-add">
+        <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="Add">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+            <path d="M5 0h2v5h5v2H7v5H5V7H0V5h5z"/>
+          </svg>
+        </canvas-button>
+        <canvas-option value="user">User</canvas-option>
+        <canvas-option value="item">Item</canvas-option>
+        <canvas-option value="picture">Picture</canvas-option>
+      </canvas-menu-button>
+      <div id="mb-add-log" class="text-sm text-muted" style="margin-top: 12px"></div>
+    </div>
+
+    <!-- Kebab icon, end-aligned -->
+    <div class="sample-card">
+      <h3>Kebab icon, end-aligned (row action menu)</h3>
+      <p class="text-sm text-muted">Matches the Consents document row pattern. Menu opens to the right edge of the trigger with <code>align="end"</code>.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
+        <span>Patient Consent Form, signed Mar 14, 2026</span>
+        <canvas-menu-button align="end" id="mb-row">
+          <canvas-button slot="trigger" variant="ghost" size="xs" aria-label="Row actions" style="--canvas-button-padding-xs: .5em .65em">
+            <svg width="3" height="13" viewBox="0 0 3 13" fill="currentColor">
+              <circle cx="1.5" cy="1.5" r="1.5"/>
+              <circle cx="1.5" cy="6.5" r="1.5"/>
+              <circle cx="1.5" cy="11.5" r="1.5"/>
+            </svg>
+          </canvas-button>
+          <canvas-option value="view">View</canvas-option>
+          <canvas-option value="edit">Edit</canvas-option>
+          <canvas-option value="remove">Remove</canvas-option>
+        </canvas-menu-button>
+      </div>
+    </div>
+
+    <!-- Disabled option -->
+    <div class="sample-card">
+      <h3>Disabled option</h3>
+      <p class="text-sm text-muted">Individual options can be disabled. They remain visible but non-interactive.</p>
+      <canvas-menu-button>
+        <canvas-option value="assign">Assign to me</canvas-option>
+        <canvas-option value="reassign" disabled>Reassign (unavailable)</canvas-option>
+        <canvas-option value="close">Close task</canvas-option>
+      </canvas-menu-button>
+    </div>
+
+    <!-- Section dividers -->
+    <div class="sample-card">
+      <h3>Section dividers</h3>
+      <p class="text-sm text-muted">Insert <code>&lt;hr&gt;</code> between options to split the menu into sections. The divider uses the same color as the outer menu border.</p>
+      <canvas-menu-button>
+        <canvas-option value="edit">Edit</canvas-option>
+        <canvas-option value="duplicate">Duplicate</canvas-option>
+        <hr>
+        <canvas-option value="archive">Archive</canvas-option>
+        <canvas-option value="delete">Delete</canvas-option>
+      </canvas-menu-button>
+    </div>
+
+    <!-- Width and height extremes -->
+    <div class="sample-card">
+      <h3>Width and height extremes</h3>
+      <p class="text-sm text-muted">Single menu exercising all three limits. Short labels pad to 180px <code>min-width</code>. Long phrases cap at 320px <code>max-width</code> and wrap. Total list exceeds the <code>max-height</code> of 16.02857143rem so the menu scrolls.</p>
+      <canvas-menu-button>
+        <canvas-option value="ok">Ok</canvas-option>
+        <canvas-option value="edit">Edit</canvas-option>
+        <canvas-option value="mark">Mark as completed and archive to historical records</canvas-option>
+        <hr>
+        <canvas-option value="delete">Delete permanently and notify the responsible care team member</canvas-option>
+        <hr>
+        <canvas-option value="assign">Assign</canvas-option>
+        <canvas-option value="reassign">Reassign</canvas-option>
+        <canvas-option value="watch">Watch</canvas-option>
+        <canvas-option value="unwatch">Unwatch</canvas-option>
+        <canvas-option value="pin">Pin</canvas-option>
+        <canvas-option value="unpin">Unpin</canvas-option>
+        <canvas-option value="export">Export</canvas-option>
+        <canvas-option value="share">Share</canvas-option>
+        <canvas-option value="print">Print</canvas-option>
+        <canvas-option value="download">Download</canvas-option>
+      </canvas-menu-button>
+    </div>
+
+    <!-- Disabled menu button -->
+    <div class="sample-card">
+      <h3>Disabled menu button</h3>
+      <p class="text-sm text-muted">The whole trigger and menu are disabled.</p>
+      <canvas-menu-button disabled>
+        <canvas-option value="one">Option one</canvas-option>
+        <canvas-option value="two">Option two</canvas-option>
+      </canvas-menu-button>
+    </div>
+
+    <!-- Auto-flip placement -->
+    <div class="sample-card">
+      <h3>Auto-flip placement</h3>
+      <p class="text-sm text-muted">Default behavior. The menu measures available space on open and flips vertically (up instead of down) and horizontally (end instead of start) when the menu would clip the viewport. Scroll so this trigger sits near the bottom of the window, then open, the menu opens upward. Move the trigger near the right edge (for example in a narrow window) and the menu right-aligns.</p>
+      <canvas-menu-button>
+        <canvas-button slot="trigger" variant="ghost" size="sm">Actions (auto)</canvas-button>
+        <canvas-option value="a">Export</canvas-option>
+        <canvas-option value="b">Share</canvas-option>
+        <canvas-option value="c">Print</canvas-option>
+        <canvas-option value="d">Download</canvas-option>
+      </canvas-menu-button>
+    </div>
+
+    <!-- Explicit direction override -->
+    <div class="sample-card">
+      <h3>Explicit direction override</h3>
+      <p class="text-sm text-muted">Setting <code>direction="up"</code> or <code>direction="down"</code> pins the placement and disables the vertical auto-flip. Same for <code>align="start"</code> and <code>align="end"</code> on the horizontal axis.</p>
+      <canvas-menu-button direction="up">
+        <canvas-button slot="trigger" variant="ghost" size="sm">Forced upward</canvas-button>
+        <canvas-option value="a">Export</canvas-option>
+        <canvas-option value="b">Share</canvas-option>
+        <canvas-option value="c">Print</canvas-option>
+      </canvas-menu-button>
+    </div>
+  </section>
+
   <!-- Modal -->
   <section class="component-section" id="modal">
     <h2>Modal</h2>
@@ -1901,6 +2043,177 @@
         </canvas-multi-select>
         <div id="multi-change-log"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- Popover -->
+  <section class="component-section" id="popover">
+    <h2>Popover</h2>
+    <hr class="section-divider">
+
+    <!-- Filter form -->
+    <div class="sample-card">
+      <h3>Filter form</h3>
+      <p class="text-sm text-muted">A filter icon opens a popover with a small form. Mirrors the Canvas patient chart note filter pattern. Uses <code>size="lg"</code> (480px max) so the date range row has comfortable room, and <code>pointer</code> because the icon only trigger is ambiguous on its own.</p>
+      <canvas-popover id="pop-filter" size="lg" pointer label="Filter notes">
+        <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="Filter">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <path d="M0 1h14v2L9 8v5l-4-2V8L0 3z"/>
+          </svg>
+        </canvas-button>
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <p style="margin: 0; font-weight: 700">Filter notes</p>
+          <canvas-dropdown label="Type" placeholder="Any type">
+            <canvas-option value="office">Office visit</canvas-option>
+            <canvas-option value="phone">Phone call</canvas-option>
+            <canvas-option value="lab">Lab result</canvas-option>
+          </canvas-dropdown>
+          <canvas-input label="Author" placeholder="Any author"></canvas-input>
+          <div style="display: flex; gap: 8px">
+            <canvas-input label="From" type="date" style="flex:1"></canvas-input>
+            <canvas-input label="To" type="date" style="flex:1"></canvas-input>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px">
+            <canvas-button variant="ghost" size="sm" id="pop-filter-clear">Clear</canvas-button>
+            <canvas-button variant="primary" size="sm" id="pop-filter-apply">Apply</canvas-button>
+          </div>
+        </div>
+      </canvas-popover>
+      <div id="pop-filter-log" class="text-sm text-muted" style="margin-top: 12px"></div>
+    </div>
+
+    <!-- Column picker -->
+    <div class="sample-card">
+      <h3>Column picker</h3>
+      <p class="text-sm text-muted">A toolbar button opens a popover with a checkbox list for column visibility. Uses size <code>sm</code> for compact content.</p>
+      <canvas-popover id="pop-columns" size="sm" label="Visible columns">
+        <canvas-button slot="trigger" variant="ghost" size="sm">
+          Columns
+        </canvas-button>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <p style="margin: 0 0 4px; font-weight: 700">Visible columns</p>
+          <canvas-checkbox checked label="Patient name"></canvas-checkbox>
+          <canvas-checkbox checked label="MRN"></canvas-checkbox>
+          <canvas-checkbox checked label="Date of birth"></canvas-checkbox>
+          <canvas-checkbox label="Primary insurance"></canvas-checkbox>
+          <canvas-checkbox label="Last visit"></canvas-checkbox>
+          <canvas-checkbox label="Care team"></canvas-checkbox>
+        </div>
+      </canvas-popover>
+    </div>
+
+    <!-- Size variants -->
+    <div class="sample-card">
+      <h3>Size variants</h3>
+      <p class="text-sm text-muted">Three fixed <code>max-width</code> sizes. <code>sm</code> 280px, <code>md</code> 360px, <code>lg</code> 480px. Authors may set <code>--canvas-popover-max-width</code> to override.</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <canvas-popover size="sm" label="Small legend">
+          <canvas-button slot="trigger" variant="ghost" size="sm">Small (280px)</canvas-button>
+          <p style="margin: 0; font-weight: 700">Status legend</p>
+          <p style="margin: 8px 0 0">Active, in care. Inactive, discharged. On hold, awaiting authorization. Archived, no longer accessible in default views.</p>
+        </canvas-popover>
+        <canvas-popover size="md" label="Medium legend">
+          <canvas-button slot="trigger" variant="ghost" size="sm">Medium (360px)</canvas-button>
+          <p style="margin: 0; font-weight: 700">Status legend</p>
+          <p style="margin: 8px 0 0">Active indicates the patient is currently receiving care. Inactive indicates a completed discharge. On hold indicates pending insurance authorization or outstanding documents. Archived records stay available through audit views but are hidden from the default patient list.</p>
+        </canvas-popover>
+        <canvas-popover size="lg" label="Large legend">
+          <canvas-button slot="trigger" variant="ghost" size="sm">Large (480px)</canvas-button>
+          <p style="margin: 0; font-weight: 700">Status legend</p>
+          <p style="margin: 8px 0 0">Active indicates the patient is currently receiving care. Inactive indicates a completed discharge, meaning the patient has signed off and the care plan is closed. On hold indicates pending insurance authorization or outstanding documents that must be resolved before the next encounter. Archived records stay available through audit views but are hidden from the default patient list to keep the working set focused on active panel members.</p>
+        </canvas-popover>
+        <canvas-popover label="Overridden width" style="--canvas-popover-max-width: 220px">
+          <canvas-button slot="trigger" variant="ghost" size="sm">Custom (220px)</canvas-button>
+          <p style="margin: 0; font-weight: 700">Custom width</p>
+          <p style="margin: 8px 0 0">The <code>--canvas-popover-max-width</code> CSS custom property wins over the <code>size</code> attribute default.</p>
+        </canvas-popover>
+        <canvas-popover size="auto" label="Auto width">
+          <canvas-button slot="trigger" variant="ghost" size="sm">Auto (content width)</canvas-button>
+          <p style="margin: 0; font-weight: 700">Auto sizing</p>
+          <p style="margin: 8px 0 0">Width grows with the content and caps at the viewport. Use for wide tables, long labels, or content whose width is not known up front.</p>
+        </canvas-popover>
+      </div>
+    </div>
+
+    <!-- Pointer affordance -->
+    <div class="sample-card">
+      <h3>Pointer affordance</h3>
+      <p class="text-sm text-muted">Set the <code>pointer</code> attribute to add a speech balloon arrow that visually tethers the popover to its trigger. Use when the anchor is ambiguous, for example an ellipsis in a row of icon buttons. Distance from trigger to surface matches <code>canvas-tooltip</code>.</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <canvas-popover pointer label="More actions">
+          <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="More actions">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <circle cx="7" cy="2" r="1.4"/>
+              <circle cx="7" cy="7" r="1.4"/>
+              <circle cx="7" cy="12" r="1.4"/>
+            </svg>
+          </canvas-button>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <p style="margin: 0; font-weight: 700">Documents</p>
+            <a href="#" onclick="return false">Generate full chart PDF</a>
+            <a href="#" onclick="return false">Print basic information</a>
+            <a href="#" onclick="return false">Print chart summary</a>
+          </div>
+        </canvas-popover>
+        <canvas-popover pointer size="sm" label="Inline filter">
+          <canvas-button slot="trigger" variant="ghost" size="sm" aria-label="Filter">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <path d="M0 1h14v2L9 8v5l-4-2V8L0 3z"/>
+            </svg>
+          </canvas-button>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <p style="margin: 0; font-weight: 700">Filter</p>
+            <canvas-checkbox label="Open"></canvas-checkbox>
+            <canvas-checkbox label="In progress"></canvas-checkbox>
+            <canvas-checkbox label="Closed"></canvas-checkbox>
+          </div>
+        </canvas-popover>
+        <canvas-popover pointer align="end" label="End aligned pointer">
+          <canvas-button slot="trigger" variant="ghost" size="sm">End aligned</canvas-button>
+          <p style="margin: 0; font-weight: 700">Align end</p>
+          <p style="margin: 8px 0 0">The arrow still tracks the trigger center while the surface right edge aligns to the trigger right edge.</p>
+        </canvas-popover>
+      </div>
+    </div>
+
+    <!-- Auto-flip placement -->
+    <div class="sample-card">
+      <h3>Auto-flip placement</h3>
+      <p class="text-sm text-muted">Default behavior. The popover measures content height, picks <code>down</code> when the content fits below the trigger, and flips to <code>up</code> when the above side has more room. The same applies horizontally for <code>start</code> and <code>end</code>.</p>
+      <canvas-popover label="Auto placement demo">
+        <canvas-button slot="trigger" variant="ghost" size="sm">Open near viewport edge</canvas-button>
+        <p style="margin: 0; font-weight: 700">Auto placement</p>
+        <p style="margin: 8px 0 0">Scroll so this trigger sits near the bottom of the viewport, then open. The popover opens upward because the above side has more space.</p>
+      </canvas-popover>
+    </div>
+
+    <!-- Tall content with scroll area -->
+    <div class="sample-card">
+      <h3>Tall content with canvas-scroll-area</h3>
+      <p class="text-sm text-muted">Popover is not a scroll container by default. When content may exceed the direction aware <code>max-height</code>, wrap the body in <code>canvas-scroll-area vertical</code>. Same contract as <code>canvas-card-body</code>. Keeps descendant menu surfaces (canvas-dropdown, canvas-combobox) from getting clipped by popover overflow.</p>
+      <canvas-popover label="Tall content demo">
+        <canvas-button slot="trigger" variant="ghost" size="sm">Open tall popover</canvas-button>
+        <canvas-scroll-area vertical aria-label="Care plan overview" style="max-height: 320px; display: flex; flex-direction: column; gap: 10px">
+          <p style="margin: 0; font-weight: 700">Care plan overview</p>
+          <p style="margin: 0">The popover caps at whichever side has more room and scrolls internally when content exceeds the cap. Open this trigger at the very top of the viewport and the popover opens downward. Open it near the bottom and it flips upward. In both cases the surface uses as much vertical room as the chosen side allows.</p>
+          <p style="margin: 0; font-weight: 700">Vitals</p>
+          <p style="margin: 0">Blood pressure trending at 128 over 82 over the last three visits. Resting heart rate in the low seventies. Weight stable within two pounds of the baseline taken last spring. Temperature and oxygen saturation both within normal range during the most recent in office measurement.</p>
+          <p style="margin: 0; font-weight: 700">Problem list</p>
+          <p style="margin: 0">Hypertension controlled on a single agent. Type 2 diabetes with last A1c at 6.8. Mild osteoarthritis of the right knee, conservatively managed. Seasonal allergic rhinitis treated as needed during spring pollen peaks.</p>
+          <p style="margin: 0; font-weight: 700">Medications</p>
+          <p style="margin: 0">Lisinopril ten milligrams daily. Metformin five hundred milligrams twice daily with meals. Atorvastatin twenty milligrams nightly. Cetirizine ten milligrams as needed for allergy symptoms. Acetaminophen as needed for knee discomfort, capped at three grams per day.</p>
+          <p style="margin: 0; font-weight: 700">Allergies</p>
+          <p style="margin: 0">Penicillin, rash reaction documented in 2004. No known food or environmental allergies beyond the seasonal rhinitis noted above.</p>
+          <p style="margin: 0; font-weight: 700">Recent encounters</p>
+          <p style="margin: 0">Annual wellness visit completed in the fourth quarter of last year. Telehealth follow up for medication refill three months ago. Urgent care visit for a minor laceration repaired with three sutures, healed without complication.</p>
+          <p style="margin: 0; font-weight: 700">Upcoming preventive care</p>
+          <p style="margin: 0">Mammogram due within the next sixty days. Colonoscopy due per the ten year interval based on the last normal screening. Shingles booster recommended based on age. Annual flu vaccine pending for the current season.</p>
+          <p style="margin: 0; font-weight: 700">Social and lifestyle</p>
+          <p style="margin: 0">Married, lives with spouse. Works remotely. Walks thirty minutes most days. Does not smoke. Drinks wine socially, averaging three glasses per week. Reports good sleep quality, seven to eight hours nightly.</p>
+          <p style="margin: 0; font-weight: 700">Next steps</p>
+          <p style="margin: 0">Schedule annual wellness visit. Order routine labs including lipid panel and A1c. Confirm primary pharmacy contact and prior authorization status for the statin refill. Document updated emergency contacts. Review home safety checklist at the next in office visit.</p>
+        </canvas-scroll-area>
+      </canvas-popover>
     </div>
   </section>
 
@@ -3544,6 +3857,28 @@ document.getElementById('toggle-demo').addEventListener('change', function() {
 document.getElementById('dropdown-duration').addEventListener('change', function(e) {
   document.getElementById('dropdown-change-log').textContent = 'Selected: ' + e.target.value + ' min';
 });
+
+// Menu Button select events
+document.getElementById('mb-default').addEventListener('select', function(e) {
+  document.getElementById('mb-default-log').textContent = 'Selected: ' + e.detail.label + ' (value: ' + e.detail.value + ')';
+});
+document.getElementById('mb-add').addEventListener('select', function(e) {
+  document.getElementById('mb-add-log').textContent = 'Added: ' + e.detail.label;
+});
+document.getElementById('mb-row').addEventListener('select', function(e) {
+  console.log('Row action', e.detail);
+});
+
+// Popover filter form
+document.getElementById('pop-filter-apply').addEventListener('click', function() {
+  document.getElementById('pop-filter-log').textContent = 'Filter applied';
+  document.getElementById('pop-filter').close();
+});
+document.getElementById('pop-filter-clear').addEventListener('click', function() {
+  document.getElementById('pop-filter-log').textContent = 'Filter cleared';
+  document.getElementById('pop-filter').close();
+});
+
 
 // Combobox change
 document.getElementById('combobox-location').addEventListener('change', function(e) {

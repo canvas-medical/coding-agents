@@ -14,7 +14,7 @@ description: >
   Canvas does not use those patterns.
 compatibility: Designed for Claude Code. Targets Canvas plugin SDK with HTMLResponse delivery.
 metadata:
-  version: "4.8.0"
+  version: "4.13.0"
   author: Vicert
 allowed-tools: Read, Grep, Glob
 ---
@@ -35,11 +35,12 @@ The workflow references the files below at the appropriate steps. Do not read al
 - [DESIGN.md](DESIGN.md) — Visual specification. Color palette, typography, spacing, shape, token system, text pairing, density, truncation, dates, patterns without components
 - [references/web-components.md](references/web-components.md) — Component APIs (attributes, events, CSS custom properties, slots), loading modes
 - [assets/canvas-plugin-ui.css](assets/canvas-plugin-ui.css) — Combined tokens and typography, the single source of truth for all CSS variables and type styles
-- [assets/canvas-plugin-ui.js](assets/canvas-plugin-ui.js) — All 25 web components bundled into a single script
+- [assets/canvas-plugin-ui.js](assets/canvas-plugin-ui.js) — All 27 web components bundled into a single script
 - [assets/head.html](assets/head.html) — Copy-paste snippet with the three tags needed in the plugin HTML head
 - [references/component-usage.md](references/component-usage.md) — Decision rules for when to use which component, banner and modal patterns, button color discipline
 - [references/surface-selection.md](references/surface-selection.md) — When to use left nav, right pane, modal, note buttons, bento grid
 - [references/interaction-patterns.md](references/interaction-patterns.md) — Keyboard nav, focus management, ARIA, toggle-submit prohibition, touch targets, patient safety
+- [references/writing-style.md](references/writing-style.md) — Copy rules for every user facing string, banned punctuation and vocabulary, clinical vocabulary carve out for vital, critical, significant, active, acute, and related terms
 - [references/validation-checklist.md](references/validation-checklist.md) — Post-generation checklist, run after every UI change
 
 ## How Styles and Components Load in Canvas Plugins
@@ -60,11 +61,14 @@ When working inside a Canvas plugin directory that uses `<canvas-*>` web compone
 - Spacing grid: 4, 8, 12, 16, 20, 24 px (see [design.md](DESIGN.md) Spacing Scale for usage context).
 - Right chart pane plugins (`RIGHT_CHART_PANE` and `RIGHT_CHART_PANE_LARGE`) must have `padding-bottom: 120px` to clear the Pylon Chat widget. See [surface-selection.md](references/surface-selection.md) for details. This does not apply to other surfaces.
 - On colored backgrounds, text must be white and bold. On gray backgrounds, only dark text (see [design.md](DESIGN.md) Text and Background Pairing).
-- All 25 components have documented APIs in [references/web-components.md](references/web-components.md). Check the API before using any component. Do not write raw HTML for elements that have a web component. This includes `<input>`, which is always `canvas-input`, `<select>`, which is always `canvas-dropdown` or `canvas-combobox`, and `<details>` with `<summary>`, which is always `canvas-accordion` with `canvas-accordion-item`, `canvas-accordion-title`, and `canvas-accordion-content`.
+- All 27 components have documented APIs in [references/web-components.md](references/web-components.md). Check the API before using any component. Do not write raw HTML for elements that have a web component. This includes `<input>`, which is always `canvas-input`, `<select>`, which is always `canvas-dropdown` or `canvas-combobox`, and `<details>` with `<summary>`, which is always `canvas-accordion` with `canvas-accordion-item`, `canvas-accordion-title`, and `canvas-accordion-content`.
+- Action menus are not dropdowns. A button that opens a list of verbs (Edit, Duplicate, Delete, Add X, Add Y) is a `canvas-menu-button`, not a `canvas-dropdown`. The dropdown element is form associated with a `value` and a `change` event. The menu button carries no form state and dispatches a `select` event per action. Wrong choice breaks ARIA, confuses screen readers, and surfaces form fields that do not exist. See Menu Button in [references/component-usage.md](references/component-usage.md).
+- Anchored content surfaces are not modals. A button that opens a panel tied to that specific trigger (filter form, column picker, legend, bulk action panel) is a `canvas-popover`, not a `canvas-modal`. Popovers anchor to the trigger, follow it on scroll, and use `role="dialog"` with `aria-modal="false"`. They are non blocking by contract, outside click and Escape always dismiss. Destructive confirmations and blocking flows that the user must respond to before continuing are not popovers, they are `canvas-modal`. See Popover in [references/component-usage.md](references/component-usage.md).
 - Form elements sharing a visual row must render at the same height. The `size` attribute is not a universal height tier across components. Do not mix `size="sm"` and default in the same row. See Same Row Height Cohesion in [references/component-usage.md](references/component-usage.md).
 - When refactoring existing plugin HTML that contains JavaScript, scan all script blocks and inline event handlers before changing markup. If JavaScript references an element being changed (by id, class, data attribute, or tag type), that element is structurally bound. Update the JavaScript at the same time as the markup, or surface the migration to the user when the path is unclear. Read the refactor safety steps in [references/workflow.md](references/workflow.md) before modifying structurally bound elements.
 - Watch for global CSS resets in the plugin style tag. Universal selector rules (`* { margin: 0; padding: 0; box-sizing: border-box; }`), unscoped `html` or `body` rules that set typography, linked reset libraries (normalize.css, reset.css, sanitize.css, modern-normalize.css), and Tailwind Preflight all override canvas web component styles. Padding on the `canvas-accordion` family (which is light DOM) gets stripped directly. Typography inherits across the Shadow DOM boundary and replaces Lato inside every component. Host box sizing shifts on every `<canvas-*>` element. When a plugin ships with a reset, flag it and offer to remove or scope it before proceeding with component work. See Global CSS Resets in [references/workflow.md](references/workflow.md) Common Mistakes.
 - Empty, loading, and error are three states, not one. Render `canvas-loader` during fetch, the typed empty pattern only after fetch resolves with zero rows, and `canvas-banner variant="error"` on failure. Empty states are typed by cause (first use, user cleared, filter no results). A filter bar that can produce zero results must pair with a Clear filters action in the filter no results empty state. See Empty States in [references/component-usage.md](references/component-usage.md) and [DESIGN.md](DESIGN.md) Empty State.
+- User facing strings follow [references/writing-style.md](references/writing-style.md). No em dashes, sentence case headings, no AI puffery (vibrant, boasts, serves as, seamlessly), no didactic disclaimers (It is important to note), no collaborative assistant tone (Let me help you). The clinical vocabulary carve out in writing-style.md preserves vital signs, critical values, clinically significant findings, active medications, acute and chronic conditions, pivotal trials, presenting complaints, and related domain terms in their clinical sense.
 
 ## Visual Specification
 
