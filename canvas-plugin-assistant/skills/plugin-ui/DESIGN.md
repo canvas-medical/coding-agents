@@ -4,7 +4,7 @@ Visual rules for the Canvas plugin design system. This file is the single source
 
 ## Visual Theme
 
-The Canvas home-app inherits from Semantic UI. The aesthetic is clinical and dense, not decorative. Screens prioritize information density and scannability over whitespace and visual flair. Plugins must match this tone. A plugin that looks like a marketing landing page will feel wrong next to the home-app.
+The Canvas home-app aesthetic is clinical and dense, not decorative. Screens prioritize information density and scannability over whitespace and visual flair. Plugins must match this tone. A plugin that looks like a marketing landing page will feel wrong next to the home-app.
 
 ## Color Palette and Roles
 
@@ -82,7 +82,7 @@ Nesting indent is a separate concern from container padding. When a component ne
 
 | Property | Value | Notes |
 |---|---|---|
-| Border-radius | `.28571429rem` | All rounded elements. From Semantic UI. Never change. |
+| Border-radius | `.28571429rem` | All rounded elements. Canvas baseline, never change. |
 | Border width | `1px` | Default for inputs, cards, dividers |
 | Border color | `rgba(34, 36, 38, 0.15)` | The `--color-border` token |
 | Focus ring | `2px solid #2185D0` | The `--focus-ring` token |
@@ -277,6 +277,129 @@ For button groups where one side is flush left and the other flush right (cancel
   <canvas-button>Save</canvas-button>
 </div>
 ```
+
+## Menu Button Visual Spec
+
+`canvas-menu-button` is a locked component with no customization tokens. Visual parity with the Canvas dropdown menu is maintained by fixing the following values inside the component's scoped styles.
+
+### Default trigger
+
+When no `slot="trigger"` child is provided, the component renders a ghost button.
+
+- Background, `#e0e1e2`. Hover, `#cacbcd`.
+- Text color, `rgba(0, 0, 0, 0.6)`. Hover, `rgba(0, 0, 0, 0.8)`.
+- Padding, `.67857143em 1.5em`. Font size, `1rem`. Font weight, `700`. Line height, `1.21428571em`.
+- Border, `1px solid transparent`. Radius, `var(--radius, .28571429rem)`.
+- Caret, 8 px wide by 5 px tall SVG, inherits `currentColor`.
+- Focus, `var(--focus-ring, 2px solid #2185D0)` outline with 2 px offset.
+
+### Menu container
+
+- Background, `var(--color-surface, #FFFFFF)`.
+- Border, `1px solid rgba(34, 36, 38, 0.15)`. Radius, `var(--radius, .28571429rem)`.
+- Shadow, `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`.
+- Offset from trigger, 2 px margin on the open axis.
+- Width, `min-width: 180px`, `max-width: 320px`. Text wraps at the cap.
+- Height, `max-height: 16.02857143rem` with `overflow-y: auto`. Scroll bar rendered by the browser, no custom scrollbar styling.
+- Z index, `100`.
+- Padding, `0`. Options sit flush against the top and bottom menu edges.
+
+### Option
+
+- Padding, `.78571429rem 1.14285714rem`. Font size, `1rem`. Line height, `1.0625rem`.
+- Default color, `var(--color-text, rgba(0, 0, 0, 0.87))`.
+- Hover and highlighted, background `rgba(0, 0, 0, 0.05)`, color `rgba(0, 0, 0, 0.95)`.
+- Disabled, color `#767676`, cursor `not-allowed`, background transparent on hover.
+- No per option border.
+
+### Section divider
+
+- Rendered for each `<hr>` child inside the default slot.
+- Border top, `1px solid rgba(34, 36, 38, 0.15)`, same as the outer menu border.
+- Height, `0`. Margin, `.28571429rem 0`. Padding, `0`.
+- Role, `separator`. Not focusable, skipped by keyboard navigation.
+
+### Placement
+
+- Default, auto. Component measures trigger rect against the viewport on open and sets `data-placement-direction="up"` or `data-placement-align="end"` on the inner root when the menu would clip.
+- `direction="down"` and `direction="up"` pin the vertical axis and disable auto flip on that axis.
+- `align="start"` and `align="end"` pin the horizontal axis and disable auto flip on that axis.
+
+## Popover Visual Spec
+
+`canvas-popover` is an anchored content container for arbitrary HTML. It complements `canvas-menu-button` by covering anchored content that is not an action menu or a value selection, for example filter forms, column pickers, legends, and micro confirmation dialogs.
+
+### Surface
+
+- Background, `var(--color-surface, #FFFFFF)`.
+- Border, `1px solid #d4d4d5`. Radius, `var(--radius, .28571429rem)`. Matches `canvas-tooltip` and `canvas-card` so anchored surfaces share one container gray.
+- Shadow, `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`, same as the menu button menu and the Canvas dropdown menu.
+- Padding, `1em 1.14285714em`. The surface holds arbitrary content, padding belongs to the container not the options.
+- Text, font size `1rem`, line height `1.4285714`, color `var(--color-text, rgba(0, 0, 0, 0.87))`.
+- Positioning, `position: fixed` with inline top and left values set by the component. Rendered above ancestor stacking contexts and outside ancestor `overflow: hidden`. Z index, `2000`.
+- Offset from trigger, 6 px gutter without `pointer`, 10 px gutter with `pointer` (matches `canvas-tooltip`).
+- Overflow, none. The surface is not a scroll container, `canvas-scroll-area` wraps the body when content may exceed `max-height`. Long unbreakable tokens are broken by `overflow-wrap: anywhere`.
+
+### Size
+
+The `size` attribute sets `max-width`.
+
+- `sm`, 280 px.
+- `md` default, 360 px.
+- `lg`, 480 px.
+- `auto`, `calc(100vw - 16px)`. Surface grows to content width up to the viewport cap. Use for wide tables, long labels, or content whose width is known only at runtime.
+- Override via `--canvas-popover-max-width` when the content has a known ideal width.
+- Effective cap, `min(size default or override, calc(100vw - 8px))` for fixed sizes, `calc(100vw - 16px)` for `auto`. The popover shrinks below the configured size when the viewport is narrower.
+
+### Height
+
+- No hard default cap. The effective `max-height` is `min(--canvas-popover-max-height override, calc(100vh - 8px), available space in chosen direction)`.
+- When content fits below the trigger, direction is down. When content does not fit below, direction is whichever of up or down has more room. After the direction is chosen, `max-height` caps at that side's available space.
+- Scroll inside the surface is automatic when content exceeds the cap.
+
+### Placement
+
+- Default, auto. Component measures trigger rect and content against the viewport on open and picks direction plus alignment.
+- Direction, down by default. Flips to up when content does not fit below and up has more room.
+- Alignment, start by default. Flips to end when the start edge would clip the viewport right.
+- Explicit `direction` and `align` attributes pin the corresponding axis.
+
+### Scroll behavior
+
+- The popover follows the trigger on scroll and resize, repositioning continuously while visible.
+- When the trigger leaves the viewport, the surface visually hides via `visibility: hidden` without closing. When the trigger scrolls back, the surface reappears.
+- `dismiss-on-scroll` opts into closing on any scroll.
+
+### Focus
+
+- Focus moves into the surface on open, to the first focusable descendant or to the surface itself.
+- Escape closes the popover, returns focus to the trigger, and dispatches `cancel`.
+- Tab escapes the popover to the next document tab stop. Popover does not trap focus. Content that needs modality and focus trap belongs in `canvas-modal`.
+
+### ARIA
+
+- Surface, `role="dialog"`, `aria-modal="false"`, `aria-label` from the `label` attribute.
+- Trigger, `aria-haspopup="dialog"` and `aria-expanded`, wired by the component.
+
+### Pointer
+
+The `pointer` boolean attribute renders a speech balloon arrow on the side of the surface that faces the trigger. Same artwork as `canvas-tooltip`.
+
+- Artwork, 14 px by 7 px SVG triangle, rotated 45 degrees equivalent via path geometry. Border color `#d4d4d5`, fill `var(--color-surface, #FFFFFF)` on the overlay cover.
+- Layering, grey arrow sits behind the surface so only the protruding tip shows in the border color. White cover sits above the surface and masks the 1 px surface border at the 14 px joint so the arrow reads as continuous with the surface body. Same technique as the tooltip.
+- Offset, 5 px of the 7 px arrow protrudes outside the surface, 2 px overlaps behind the surface so the cover has a surface to paint on.
+- Position, arrow tracks the trigger center even when the surface edge clamps inward from the viewport. Clamp inside the surface keeps the arrow 6 px from each corner so it cannot slide into the border radius.
+- Flip, when auto placement flips direction from down to up, the arrow moves from the surface top edge to the surface bottom edge and the SVG inverts so the tip still points at the trigger.
+- Distance, when `pointer` is set the surface sits 10 px from the trigger with 8 px of viewport margin. Without `pointer`, 6 px gap and 4 px margin.
+
+### Border gray alignment
+
+Anchored surfaces and containers share one gray. Form indicators share a second gray that darkens on hover.
+
+- `#d4d4d5` on container chrome, `canvas-tooltip`, `canvas-popover` surface, `canvas-card` outer border.
+- `rgba(34, 36, 38, 0.15)` on form controls and form indicators, `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-textarea`, `canvas-multi-select`, `canvas-checkbox` resting, `canvas-radio` resting. Darkens to `rgba(34, 36, 38, 0.35)` on hover, to `#85b7d9` on focus.
+
+Do not introduce a third gray without mapping it into one of these two categories.
 
 ## Patterns Without Components
 

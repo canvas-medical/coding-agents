@@ -33,6 +33,60 @@
     };
   })();
 
+  /* ---- Internal helpers ---- */
+
+  /* Shared constants for anchored callout positioning. Used by canvas-tooltip
+     and by canvas-popover when the pointer affordance is enabled. The gap is
+     the distance between the trigger edge and the surface edge along the
+     direction axis. The edge margin is the minimum distance the surface keeps
+     from any viewport side. The arrow size constants describe the 14 px by
+     7 px triangular artwork the tooltip and the pointer popover share, and
+     the corner inset keeps the arrow clear of the surface border radius. */
+  var ANCHOR_GAP = 10;
+  var ANCHOR_EDGE = 8;
+  var ANCHOR_ARROW_SIZE = 14;
+  var ANCHOR_ARROW_DEPTH = 7;
+  var ANCHOR_ARROW_HALF = 7;
+  var ANCHOR_ARROW_CORNER_INSET = 6;
+
+  /* computeAutoPlacement: viewport aware flip decision for anchored floating
+     elements. Given an anchor rectangle and a rendered floating element, it
+     returns which direction ('up') and alignment ('end') should override the
+     default 'down' plus 'start' placement when viewport space is insufficient.
+     Explicit direction and align options opt out of the corresponding axis.
+     Shared by canvas-menu-button and canvas-popover. */
+  function computeAutoPlacement(anchorRect, floatingEl, options) {
+    options = options || {};
+    var explicitDirection = options.direction || null;
+    var explicitAlign = options.align || null;
+    var gutter = typeof options.gutter === 'number' ? options.gutter : 4;
+
+    var floatingHeight = floatingEl.offsetHeight;
+    var floatingWidth = floatingEl.offsetWidth;
+    var viewportHeight = window.innerHeight;
+    var viewportWidth = window.innerWidth;
+
+    var placement = { direction: null, align: null };
+
+    if (!explicitDirection) {
+      var spaceBelow = viewportHeight - anchorRect.bottom - gutter;
+      var spaceAbove = anchorRect.top - gutter;
+      if (spaceBelow < floatingHeight && spaceAbove > spaceBelow) {
+        placement.direction = 'up';
+      }
+    }
+
+    if (!explicitAlign) {
+      var spaceRight = viewportWidth - anchorRect.left - gutter;
+      var spaceLeft = anchorRect.right - gutter;
+      if (spaceRight < floatingWidth && spaceLeft >= floatingWidth) {
+        placement.align = 'end';
+      }
+    }
+
+    return placement;
+  }
+
   /* ---- Components ---- */
 
   /* ======== canvas-option (shared) ======== */
@@ -162,6 +216,7 @@
         '[role="link"]', '[role="menuitem"]', '[role="tab"]', '[role="option"]',
         'canvas-button', 'canvas-toggle', 'canvas-checkbox', 'canvas-radio',
         'canvas-dropdown', 'canvas-combobox', 'canvas-multi-select',
+        'canvas-menu-button', 'canvas-popover',
         'canvas-input', 'canvas-date-input', 'canvas-textarea'
       ].join(',');
 
@@ -690,7 +745,7 @@
             position: relative;
             box-sizing: border-box;
             width: 100%;
-            border: 1px solid rgba(34, 36, 38, 0.15);
+            border: 1px solid #d4d4d5;
             box-shadow: var(--canvas-card-shadow, 0 1px 2px 0 rgba(34, 36, 38, 0.15));
             border-radius: var(--radius, .28571429rem);
             background: var(--color-surface, #FFFFFF);
@@ -851,7 +906,7 @@
             width: 17px;
             height: 17px;
             background: #FFFFFF;
-            border: 1px solid #d4d4d5;
+            border: 1px solid rgba(34, 36, 38, 0.15);
             border-radius: .21428571rem;
             transition: border 0.1s ease, background 0.1s ease;
             box-sizing: border-box;
@@ -2440,6 +2495,781 @@
 
   CanvasUI.register('canvas-loader', CanvasLoader);
 
+  /* ======== canvas-menu-button ======== */
+
+  /* canvas-menu-button: button that opens a menu of actions below.
+     Not form associated. Uses role="menu" with role="menuitem" children.
+     Trigger is slotted via slot="trigger", or a default ghost button is rendered.
+     Items are canvas-option children. Clicking an option dispatches a 'select'
+     event with detail.value and detail.label. */
+
+  class CanvasMenuButton extends HTMLElement {
+    static get observedAttributes() {
+      return ['disabled', 'align', 'direction'];
+    }
+
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this._options = [];
+      this._highlighted = -1;
+      this._open = false;
+      this._onDocClick = this._onDocClick.bind(this);
+    }
+
+    connectedCallback() {
+      var self = this;
+      setTimeout(function() {
+        self._readOptions();
+        self._render();
+        self._bindEvents();
+      }, 0);
+      document.addEventListener('click', this._onDocClick);
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('click', this._onDocClick);
+    }
+
+    attributeChangedCallback(name) {
+      if (!this.shadowRoot.querySelector('.menu-button')) return;
+      if (name === 'disabled' || name === 'align' || name === 'direction') {
+        this._render();
+        this._bindEvents();
+      }
+    }
+
+    _readOptions() {
+      this._children = [];
+      this._options = [];
+      var kids = this.children;
+      for (var i = 0; i < kids.length; i++) {
+        var el = kids[i];
+        if (el.getAttribute && el.getAttribute('slot') === 'trigger') continue;
+        var tag = el.tagName ? el.tagName.toLowerCase() : '';
+        if (tag === 'canvas-option') {
+          var record = {
+            type: 'option',
+            value: el.getAttribute('value') || el.textContent.trim(),
+            label: el.getAttribute('label') || el.textContent.trim(),
+            html: el.innerHTML,
+            disabled: el.hasAttribute('disabled')
+          };
+          this._children.push(record);
+          this._options.push(record);
+        } else if (tag === 'hr') {
+          this._children.push({ type: 'divider' });
+        }
+      }
+    }
+
+    _render() {
+      var optionsHtml = '';
+      for (var i = 0; i < this._children.length; i++) {
+        var c = this._children[i];
+        if (c.type === 'divider') {
+          optionsHtml += '<li class="divider" role="separator"></li>';
+          continue;
+        }
+        var attrs = 'role="menuitem" tabindex="-1" data-value="' + c.value + '"';
+        if (c.disabled) attrs += ' aria-disabled="true"';
+        optionsHtml += '<li class="option" ' + attrs + '>' + c.html + '</li>';
+      }
+
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: inline-block;
+            position: relative;
+            font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+          }
+
+          :host([disabled]) { opacity: 0.45; pointer-events: none; }
+
+          .menu-button { position: relative; }
+
+          .trigger-wrap { display: inline-flex; }
+
+          .default-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-tiny, 8px);
+            padding: .67857143em 1.5em;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            line-height: 1.21428571em;
+            background: #e0e1e2;
+            color: rgba(0, 0, 0, 0.6);
+            border: 1px solid transparent;
+            border-radius: var(--radius, .28571429rem);
+            cursor: pointer;
+            transition: background-color 0.1s ease, color 0.1s ease;
+          }
+          .default-trigger:hover {
+            background: #cacbcd;
+            color: rgba(0, 0, 0, 0.8);
+          }
+          .default-trigger:focus-visible {
+            outline: var(--focus-ring, 2px solid #2185D0);
+            outline-offset: 2px;
+          }
+          .default-arrow { width: 8px; height: 5px; }
+
+          .menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 180px;
+            max-width: 320px;
+            margin: 2px 0 0;
+            padding: 0;
+            max-height: 16.02857143rem;
+            overflow-y: auto;
+            background: var(--color-surface, #FFFFFF);
+            border: 1px solid rgba(34, 36, 38, 0.15);
+            border-radius: var(--radius, .28571429rem);
+            box-shadow: 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+            z-index: 100;
+            list-style: none;
+          }
+
+          :host([align="end"]) .menu,
+          .menu-button[data-placement-align="end"] .menu { left: auto; right: 0; }
+
+          :host([direction="up"]) .menu,
+          .menu-button[data-placement-direction="up"] .menu {
+            top: auto;
+            bottom: 100%;
+            margin: 0 0 2px;
+          }
+
+          .menu-button.open .menu { display: block; }
+
+          .option {
+            padding: .78571429rem 1.14285714rem;
+            font-size: 1rem;
+            line-height: 1.0625rem;
+            color: var(--color-text, rgba(0, 0, 0, 0.87));
+            cursor: pointer;
+            transition: background 0.1s ease;
+            outline: none;
+          }
+
+          .option:hover,
+          .option.highlighted {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.95);
+          }
+
+          .option[aria-disabled="true"] {
+            color: #767676;
+            cursor: not-allowed;
+          }
+
+          .option[aria-disabled="true"]:hover {
+            background: transparent;
+            color: #767676;
+          }
+
+          .divider {
+            height: 0;
+            margin: .28571429rem 0;
+            padding: 0;
+            border-top: 1px solid rgba(34, 36, 38, 0.15);
+            list-style: none;
+          }
+        </style>
+        <div class="menu-button">
+          <span class="trigger-wrap">
+            <slot name="trigger">
+              <button class="default-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span>Actions</span>
+                <svg class="default-arrow" viewBox="0 0 10 6" fill="currentColor"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
+              </button>
+            </slot>
+          </span>
+          <ul class="menu" role="menu" tabindex="-1">${optionsHtml}</ul>
+        </div>
+      `;
+    }
+
+    _bindEvents() {
+      var self = this;
+      var triggerWrap = this.shadowRoot.querySelector('.trigger-wrap');
+
+      triggerWrap.addEventListener('click', function(e) {
+        if (self.hasAttribute('disabled')) return;
+        if (self._open) self._close();
+        else self._openMenu();
+      });
+
+      triggerWrap.addEventListener('keydown', function(e) {
+        if (self.hasAttribute('disabled')) return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          self._openMenu();
+          self._highlightIndex(0);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          self._openMenu();
+          var opts = self._enabledOptions();
+          if (opts.length) self._highlightIndex(opts.length - 1);
+        }
+      });
+
+      var menu = this.shadowRoot.querySelector('.menu');
+
+      menu.addEventListener('click', function(e) {
+        var opt = e.target.closest('.option');
+        if (!opt) return;
+        if (opt.getAttribute('aria-disabled') === 'true') return;
+        self._selectOption(opt.dataset.value);
+      });
+
+      menu.addEventListener('keydown', function(e) {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            self._highlightNext(1);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            self._highlightNext(-1);
+            break;
+          case 'Home':
+            e.preventDefault();
+            self._highlightIndex(0);
+            break;
+          case 'End':
+            e.preventDefault();
+            var opts = self._enabledOptions();
+            if (opts.length) self._highlightIndex(opts.length - 1);
+            break;
+          case 'Enter':
+          case ' ':
+            e.preventDefault();
+            if (self._highlighted >= 0) {
+              var enabledOpts = self._enabledOptions();
+              if (enabledOpts[self._highlighted]) {
+                self._selectOption(enabledOpts[self._highlighted].dataset.value);
+              }
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            self._close();
+            self._focusTrigger();
+            break;
+          case 'Tab':
+            self._close();
+            break;
+        }
+      });
+    }
+
+    _enabledOptions() {
+      return this.shadowRoot.querySelectorAll('.option:not([aria-disabled="true"])');
+    }
+
+    _openMenu() {
+      if (this._open) return;
+      this._open = true;
+      this._highlighted = -1;
+      var root = this.shadowRoot.querySelector('.menu-button');
+      root.classList.add('open');
+      this._computePlacement();
+      var defaultBtn = this.shadowRoot.querySelector('.default-trigger');
+      if (defaultBtn) defaultBtn.setAttribute('aria-expanded', 'true');
+      var menu = this.shadowRoot.querySelector('.menu');
+      menu.focus();
+      this.dispatchEvent(new CustomEvent('open', { bubbles: true, composed: true }));
+    }
+
+    _computePlacement() {
+      var root = this.shadowRoot.querySelector('.menu-button');
+      var menu = this.shadowRoot.querySelector('.menu');
+
+      root.removeAttribute('data-placement-direction');
+      root.removeAttribute('data-placement-align');
+
+      var placement = computeAutoPlacement(root.getBoundingClientRect(), menu, {
+        direction: this.getAttribute('direction'),
+        align: this.getAttribute('align')
+      });
+
+      if (placement.direction) root.setAttribute('data-placement-direction', placement.direction);
+      if (placement.align) root.setAttribute('data-placement-align', placement.align);
+    }
+
+    _close() {
+      if (!this._open) return;
+      this._open = false;
+      this._highlighted = -1;
+      var root = this.shadowRoot.querySelector('.menu-button');
+      root.classList.remove('open');
+      var defaultBtn = this.shadowRoot.querySelector('.default-trigger');
+      if (defaultBtn) defaultBtn.setAttribute('aria-expanded', 'false');
+      this._clearHighlight();
+      this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+    }
+
+    _focusTrigger() {
+      var slot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      var assigned = slot ? slot.assignedElements() : [];
+      if (assigned.length && typeof assigned[0].focus === 'function') {
+        assigned[0].focus();
+        return;
+      }
+      var defaultBtn = this.shadowRoot.querySelector('.default-trigger');
+      if (defaultBtn) defaultBtn.focus();
+    }
+
+    _onDocClick(e) {
+      if (!this.contains(e.target) && !this.shadowRoot.contains(e.target)) {
+        if (this._open) this._close();
+      }
+    }
+
+    _selectOption(val) {
+      var opt = this._options.find(function(o) { return o.value === val; });
+      if (!opt || opt.disabled) return;
+      this.dispatchEvent(new CustomEvent('select', {
+        bubbles: true,
+        composed: true,
+        detail: { value: opt.value, label: opt.label }
+      }));
+      this._close();
+      this._focusTrigger();
+    }
+
+    _highlightNext(dir) {
+      var opts = this._enabledOptions();
+      if (opts.length === 0) return;
+      this._highlighted += dir;
+      if (this._highlighted < 0) this._highlighted = opts.length - 1;
+      if (this._highlighted >= opts.length) this._highlighted = 0;
+      this._applyHighlight(opts);
+    }
+
+    _highlightIndex(index) {
+      var opts = this._enabledOptions();
+      if (index < 0 || index >= opts.length) return;
+      this._highlighted = index;
+      this._applyHighlight(opts);
+    }
+
+    _applyHighlight(opts) {
+      this._clearHighlight();
+      if (this._highlighted >= 0 && opts[this._highlighted]) {
+        opts[this._highlighted].classList.add('highlighted');
+        opts[this._highlighted].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    _clearHighlight() {
+      var items = this.shadowRoot.querySelectorAll('.option.highlighted');
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.remove('highlighted');
+      }
+    }
+  }
+
+  CanvasUI.register('canvas-menu-button', CanvasMenuButton);
+
+  /* ======== canvas-popover ======== */
+
+  /* canvas-popover: click triggered anchored container for arbitrary content.
+     Covers filter forms, column pickers, legends, preference sheets, and bulk
+     action panels. Uses role="dialog" with aria-modal="false" so it is a non
+     modal dialog. For content that needs true modality (confirmations,
+     blocking flows), use canvas-modal. Shares the auto-flip placement helper
+     with canvas-menu-button. */
+
+  class CanvasPopover extends HTMLElement {
+    static get observedAttributes() {
+      return ['open', 'align', 'direction', 'size', 'label', 'pointer'];
+    }
+
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this._isActive = false;
+      this._onDocClick = this._onDocClick.bind(this);
+      this._onKeyDown = this._onKeyDown.bind(this);
+      this._onReposition = this._onReposition.bind(this);
+    }
+
+    connectedCallback() {
+      var self = this;
+      setTimeout(function() {
+        self._render();
+        self._bindEvents();
+        self._wireTriggerAria();
+        if (self.hasAttribute('open')) self._activate();
+      }, 0);
+      document.addEventListener('click', this._onDocClick);
+      document.addEventListener('keydown', this._onKeyDown);
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('click', this._onDocClick);
+      document.removeEventListener('keydown', this._onKeyDown);
+      this._unbindTracking();
+    }
+
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (!this.shadowRoot.querySelector('.popover-root')) return;
+      if (name === 'open') {
+        if (newVal !== null && !this._isActive) this._activate();
+        else if (newVal === null && this._isActive) this._deactivate();
+        return;
+      }
+      if (name === 'label') {
+        var surface = this.shadowRoot.querySelector('.surface');
+        if (surface) surface.setAttribute('aria-label', newVal || '');
+        return;
+      }
+      if (name === 'align' || name === 'direction' || name === 'pointer') {
+        if (this._isActive) this._computePlacement();
+      }
+    }
+
+    open() {
+      if (!this.hasAttribute('open')) this.setAttribute('open', '');
+    }
+
+    close() {
+      if (this.hasAttribute('open')) this.removeAttribute('open');
+    }
+
+    _render() {
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: inline-block;
+            position: relative;
+            font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+          }
+
+          .trigger-wrap { display: inline-flex; }
+
+          .surface {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1em 1.14285714em;
+            width: max-content;
+            max-width: min(var(--canvas-popover-max-width, 360px), calc(100vw - 8px));
+            max-height: min(var(--canvas-popover-max-height, 100vh), calc(100vh - 8px), var(--canvas-popover-available-height, 100vh));
+            background: var(--color-surface, #FFFFFF);
+            border: 1px solid #d4d4d5;
+            border-radius: var(--radius, .28571429rem);
+            box-shadow: 0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15);
+            z-index: 2000;
+            color: var(--color-text, rgba(0, 0, 0, 0.87));
+            font-size: 1rem;
+            line-height: 1.4285714;
+            box-sizing: border-box;
+            overflow-wrap: anywhere;
+          }
+
+          :host([size="sm"]) .surface { max-width: min(var(--canvas-popover-max-width, 280px), calc(100vw - 8px)); }
+          :host([size="md"]) .surface { max-width: min(var(--canvas-popover-max-width, 360px), calc(100vw - 8px)); }
+          :host([size="lg"]) .surface { max-width: min(var(--canvas-popover-max-width, 480px), calc(100vw - 8px)); }
+          :host([size="auto"]) .surface { max-width: min(var(--canvas-popover-max-width, calc(100vw - 16px)), calc(100vw - 16px)); }
+
+          .popover-root.open .surface { display: block; }
+
+          .surface:focus { outline: none; }
+
+          .pointer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            line-height: 0;
+          }
+
+          .pointer-arrow {
+            z-index: 1999;
+            filter: drop-shadow(0 2px 4px rgba(34, 36, 38, 0.12)) drop-shadow(0 2px 10px rgba(34, 36, 38, 0.15));
+          }
+
+          .pointer-arrow svg { display: block; fill: #d4d4d5; stroke: none; }
+
+          .pointer-cover { z-index: 2001; }
+
+          .pointer-cover svg { display: block; fill: var(--color-surface, #FFFFFF); stroke: none; }
+
+          :host([pointer]) .popover-root.open .pointer { display: block; }
+        </style>
+        <div class="popover-root">
+          <span class="trigger-wrap">
+            <slot name="trigger"></slot>
+          </span>
+          <div class="surface" role="dialog" aria-modal="false" tabindex="-1">
+            <slot></slot>
+          </div>
+          <div class="pointer pointer-arrow" aria-hidden="true"></div>
+          <div class="pointer pointer-cover" aria-hidden="true"></div>
+        </div>
+      `;
+      var surface = this.shadowRoot.querySelector('.surface');
+      surface.setAttribute('aria-label', this.getAttribute('label') || '');
+    }
+
+    _bindEvents() {
+      var self = this;
+      var triggerWrap = this.shadowRoot.querySelector('.trigger-wrap');
+
+      triggerWrap.addEventListener('click', function() {
+        if (self.hasAttribute('open')) self.close();
+        else self.open();
+      });
+
+      var triggerSlot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      triggerSlot.addEventListener('slotchange', function() {
+        self._wireTriggerAria();
+      });
+    }
+
+    _wireTriggerAria() {
+      var slot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      if (!slot) return;
+      var assigned = slot.assignedElements();
+      var expanded = this.hasAttribute('open') ? 'true' : 'false';
+      for (var i = 0; i < assigned.length; i++) {
+        assigned[i].setAttribute('aria-haspopup', 'dialog');
+        assigned[i].setAttribute('aria-expanded', expanded);
+      }
+    }
+
+    _activate() {
+      if (this._isActive) return;
+      this._isActive = true;
+      var root = this.shadowRoot.querySelector('.popover-root');
+      root.classList.add('open');
+      var surface = this.shadowRoot.querySelector('.surface');
+      surface.style.visibility = '';
+      this._computePlacement();
+      this._wireTriggerAria();
+      var first = this._firstFocusable();
+      if (first) first.focus();
+      else surface.focus();
+      this._bindTracking();
+      this.dispatchEvent(new CustomEvent('open', { bubbles: true, composed: true }));
+    }
+
+    _deactivate() {
+      if (!this._isActive) return;
+      this._isActive = false;
+      var root = this.shadowRoot.querySelector('.popover-root');
+      root.classList.remove('open');
+      this._wireTriggerAria();
+      this._unbindTracking();
+      this._focusTrigger();
+      this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+    }
+
+    _computePlacement() {
+      var surface = this.shadowRoot.querySelector('.surface');
+      var triggerWrap = this.shadowRoot.querySelector('.trigger-wrap');
+
+      surface.style.removeProperty('--canvas-popover-available-height');
+
+      var triggerRect = triggerWrap.getBoundingClientRect();
+      var hasPointer = this.hasAttribute('pointer');
+      // When the pointer is enabled, adopt the tooltip recipe so the distance
+      // between trigger and surface matches canvas-tooltip and the arrow can
+      // tuck into the gap. Without a pointer, keep the compact 6 px gutter
+      // and 4 px viewport edge so existing popover adopters see no shift.
+      var gutter = hasPointer ? ANCHOR_GAP : 6;
+      var viewportEdge = hasPointer ? ANCHOR_EDGE : 4;
+
+      var spaceBelow = window.innerHeight - triggerRect.bottom - gutter - viewportEdge;
+      var spaceAbove = triggerRect.top - gutter - viewportEdge;
+      if (spaceBelow < 0) spaceBelow = 0;
+      if (spaceAbove < 0) spaceAbove = 0;
+
+      var contentHeight = surface.scrollHeight;
+      var explicitDirection = this.getAttribute('direction');
+      var direction;
+      if (explicitDirection === 'up' || explicitDirection === 'down') {
+        direction = explicitDirection;
+      } else if (contentHeight <= spaceBelow) {
+        direction = 'down';
+      } else if (spaceAbove > spaceBelow) {
+        direction = 'up';
+      } else {
+        direction = 'down';
+      }
+
+      var availableSpace = direction === 'up' ? spaceAbove : spaceBelow;
+      surface.style.setProperty('--canvas-popover-available-height', availableSpace + 'px');
+
+      var surfaceWidth = surface.offsetWidth;
+      var surfaceHeight = surface.offsetHeight;
+
+      var explicitAlign = this.getAttribute('align');
+      var align;
+      if (explicitAlign === 'end' || explicitAlign === 'start') {
+        align = explicitAlign;
+      } else {
+        var spaceRight = window.innerWidth - triggerRect.left - viewportEdge;
+        var spaceLeft = triggerRect.right - viewportEdge;
+        if (spaceRight < surfaceWidth && spaceLeft >= surfaceWidth) {
+          align = 'end';
+        } else {
+          align = 'start';
+        }
+      }
+
+      var top, left;
+      if (direction === 'up') {
+        top = triggerRect.top - surfaceHeight - gutter;
+      } else {
+        top = triggerRect.bottom + gutter;
+      }
+
+      if (align === 'end') {
+        left = triggerRect.right - surfaceWidth;
+      } else {
+        left = triggerRect.left;
+      }
+
+      // Far edge first, near edge second. When the surface is wider than the
+      // viewport minus the edge margin on both sides, the near edge wins and
+      // overflow happens on the far side instead of producing a negative left.
+      if (left + surfaceWidth > window.innerWidth - viewportEdge) {
+        left = window.innerWidth - surfaceWidth - viewportEdge;
+      }
+      if (left < viewportEdge) left = viewportEdge;
+      if (top < viewportEdge) top = viewportEdge;
+
+      surface.style.top = top + 'px';
+      surface.style.left = left + 'px';
+
+      if (hasPointer) {
+        this._applyPointer(triggerRect, left, top, surfaceWidth, surfaceHeight, direction);
+      }
+    }
+
+    _applyPointer(triggerRect, surfaceLeft, surfaceTop, surfaceWidth, surfaceHeight, direction) {
+      var arrow = this.shadowRoot.querySelector('.pointer-arrow');
+      var cover = this.shadowRoot.querySelector('.pointer-cover');
+      if (!arrow || !cover) return;
+
+      // The arrow points toward the trigger. direction 'down' means the
+      // surface sits below the trigger and the arrow hangs off the top edge
+      // pointing up. direction 'up' means the surface sits above the trigger
+      // and the arrow hangs off the bottom edge pointing down. 5 px of the
+      // 7 px arrow sits outside the surface, 2 px overlaps the surface so the
+      // cover can hide the 1 px surface border that the arrow crosses.
+      var tipUp = '<svg width="' + ANCHOR_ARROW_SIZE + '" height="' + ANCHOR_ARROW_DEPTH + '" viewBox="0 0 ' + ANCHOR_ARROW_SIZE + ' ' + ANCHOR_ARROW_DEPTH + '"><path d="M0 ' + ANCHOR_ARROW_DEPTH + ' L' + ANCHOR_ARROW_HALF + ' 0 L' + ANCHOR_ARROW_SIZE + ' ' + ANCHOR_ARROW_DEPTH + '"/></svg>';
+      var tipDown = '<svg width="' + ANCHOR_ARROW_SIZE + '" height="' + ANCHOR_ARROW_DEPTH + '" viewBox="0 0 ' + ANCHOR_ARROW_SIZE + ' ' + ANCHOR_ARROW_DEPTH + '"><path d="M0 0 L' + ANCHOR_ARROW_HALF + ' ' + ANCHOR_ARROW_DEPTH + ' L' + ANCHOR_ARROW_SIZE + ' 0"/></svg>';
+      var svg = direction === 'up' ? tipDown : tipUp;
+      arrow.innerHTML = svg;
+      cover.innerHTML = svg;
+
+      // Trigger center on the horizontal axis, clamped so the arrow does not
+      // slide into the surface border radius. The same clamp math the tooltip
+      // uses so a pointer popover near a viewport edge keeps its arrow tip on
+      // the trigger while the surface shifts inward.
+      var triggerCenterX = triggerRect.left + triggerRect.width / 2;
+      var idealLeft = triggerCenterX - ANCHOR_ARROW_HALF;
+      var minLeft = surfaceLeft + ANCHOR_ARROW_CORNER_INSET;
+      var maxLeft = surfaceLeft + surfaceWidth - ANCHOR_ARROW_CORNER_INSET - ANCHOR_ARROW_SIZE;
+      if (maxLeft < minLeft) maxLeft = minLeft;
+      if (idealLeft < minLeft) idealLeft = minLeft;
+      if (idealLeft > maxLeft) idealLeft = maxLeft;
+
+      var arrowTop;
+      var coverTop;
+      if (direction === 'up') {
+        arrowTop = surfaceTop + surfaceHeight - 2;
+        coverTop = surfaceTop + surfaceHeight - 3;
+      } else {
+        arrowTop = surfaceTop - (ANCHOR_ARROW_DEPTH - 2);
+        coverTop = surfaceTop - (ANCHOR_ARROW_DEPTH - 3);
+      }
+
+      arrow.style.left = idealLeft + 'px';
+      arrow.style.top = arrowTop + 'px';
+      cover.style.left = idealLeft + 'px';
+      cover.style.top = coverTop + 'px';
+    }
+
+    _bindTracking() {
+      document.addEventListener('scroll', this._onReposition, { capture: true, passive: true });
+      window.addEventListener('resize', this._onReposition, { passive: true });
+    }
+
+    _unbindTracking() {
+      document.removeEventListener('scroll', this._onReposition, { capture: true });
+      window.removeEventListener('resize', this._onReposition);
+    }
+
+    _onReposition() {
+      if (!this._isActive) return;
+      if (this.hasAttribute('dismiss-on-scroll')) {
+        this.close();
+        return;
+      }
+      var triggerWrap = this.shadowRoot.querySelector('.trigger-wrap');
+      var surface = this.shadowRoot.querySelector('.surface');
+      var arrow = this.shadowRoot.querySelector('.pointer-arrow');
+      var cover = this.shadowRoot.querySelector('.pointer-cover');
+      var triggerRect = triggerWrap.getBoundingClientRect();
+      var outOfView = triggerRect.bottom < 0 || triggerRect.top > window.innerHeight;
+      if (outOfView) {
+        surface.style.visibility = 'hidden';
+        if (arrow) arrow.style.visibility = 'hidden';
+        if (cover) cover.style.visibility = 'hidden';
+        return;
+      }
+      surface.style.visibility = '';
+      if (arrow) arrow.style.visibility = '';
+      if (cover) cover.style.visibility = '';
+      this._computePlacement();
+    }
+
+    _firstFocusable() {
+      var sel = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), canvas-button, canvas-input, canvas-textarea, canvas-date-input, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-checkbox, canvas-radio, canvas-toggle, canvas-menu-button';
+      return this.querySelector(sel);
+    }
+
+    _focusTrigger() {
+      var slot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      if (!slot) return;
+      var assigned = slot.assignedElements();
+      if (assigned.length && typeof assigned[0].focus === 'function') {
+        assigned[0].focus();
+      }
+    }
+
+    _onDocClick(e) {
+      if (!this._isActive) return;
+      if (this.contains(e.target)) return;
+      this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
+      this.close();
+    }
+
+    _onKeyDown(e) {
+      if (!this._isActive) return;
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
+      this.close();
+    }
+
+  }
+
+  CanvasUI.register('canvas-popover', CanvasPopover);
+
   /* ======== canvas-modal ======== */
 
   /*
@@ -2687,7 +3517,7 @@
           if (this._isFocusable(shadowChildren[i])) list.push(shadowChildren[i]);
         }
       }
-      var children = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), canvas-button, canvas-input, canvas-dropdown, canvas-combobox, canvas-multi-select');
+      var children = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), canvas-button, canvas-input, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-menu-button, canvas-popover');
       for (var i = 0; i < children.length; i++) {
         this._collectFocusable(children[i], list);
       }
@@ -3341,7 +4171,7 @@
             width: 15px;
             height: 15px;
             background: #FFFFFF;
-            border: 1px solid #d4d4d5;
+            border: 1px solid rgba(34, 36, 38, 0.15);
             border-radius: 500rem;
             transition: border 0.1s ease;
           }
@@ -6006,10 +6836,10 @@
     }
 
     _calcPosition(position, triggerRect, tipRect) {
-      var gap = 10;
-      var edge = 8;         // viewport edge margin, box never sits closer than this
-      var arrowHalf = 7;    // half of arrow width/height (arrow svg is 14x7 or 7x14)
-      var arrowInset = 6;   // min distance from tooltip corner to arrow edge
+      var gap = ANCHOR_GAP;
+      var edge = ANCHOR_EDGE;
+      var arrowHalf = ANCHOR_ARROW_HALF;
+      var arrowInset = ANCHOR_ARROW_CORNER_INSET;
       var left, top;
       var flipped = false;
 

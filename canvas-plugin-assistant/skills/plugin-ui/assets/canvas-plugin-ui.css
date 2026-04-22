@@ -72,7 +72,7 @@
   --focus-ring-offset: 2px;
 }
 
-/* Typography rules matching Canvas Semantic UI heading and paragraph styles.
+/* Typography rules matching Canvas heading and paragraph styles.
    Plugin iframes do not inherit the parent page's fonts.
    Lato is loaded via a <link> tag in head.html. */
 

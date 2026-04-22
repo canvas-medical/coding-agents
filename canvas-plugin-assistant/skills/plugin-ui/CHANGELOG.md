@@ -1,5 +1,95 @@
 # Changelog
 
+## 4.13.0
+
+### Added
+
+- `references/writing-style.md` with rules for every user facing string the skill generates. Banned punctuation (em dash, en dash, curly quotes, smart apostrophes), sentence case headings, banned assistant tone and didactic disclaimers, vocabulary to avoid (puffery clusters, inflation of significance, weasel wording, participle commentary, promotional stems), structural patterns to avoid (negative parallelism, rule of three padding, elegant variation, exhaustive tooltips, section summaries), and a clinical vocabulary carve out table covering vital, critical, significant, active, chronic, acute, pivotal, present, presenting, underlying, and key. Canvas domain terms (encounter, problem list, chief complaint, medication, allergy, prescription) listed as always safe.
+- Writing Style check block in `references/validation-checklist.md` Phase 3. Twelve checks covering punctuation, case, disclaimers, assistant tone, knowledge cutoff phrases, emoji, puffery, inflation of significance, weasel wording, negative parallelism, and the clinical carve out lookup.
+- Cross link from `references/component-usage.md` Empty States Voice subsection to `references/writing-style.md` for prose beyond empty states.
+- Routing reference to `references/writing-style.md` in `references/workflow.md` step 4 (Build or refactor HTML) so copy rules load alongside component selection. Common Mistakes bullet for AI puffery in generated strings points at the clinical carve out.
+- Key Rule in `SKILL.md` naming `references/writing-style.md` and summarizing the banned patterns plus the clinical carve out principle.
+
+## 4.12.0
+
+### Removed
+
+- `persistent` attribute on `canvas-popover`. The attribute claimed to block dismissal by outside click and Escape, but the surrounding page stayed interactive so users could still walk away from a "blocking" popover by clicking any non trigger control, opening another popover, or focusing another input. The modal feeling was never real. Content that truly needs commitment belongs in `canvas-modal`, which has a backdrop and a focus trap and actually blocks the user.
+- `trap-focus` attribute on `canvas-popover`. Same reasoning. Cycling Tab inside a surface that the user can click out of freely is inconsistent. Focus trap belongs to `canvas-modal`.
+- Persistent confirmation micro dialog demo in `examples/showcase.html` and the matching section in the `canvas-popover` component sample. Destructive confirmations should use `canvas-modal`.
+
+### Changed
+
+- Popover is now documented as non modal by contract. Outside click and Escape always dismiss, Tab escapes to the next document tab stop. Reference docs, validation checks, and the overlay family decision rule updated to point confirmations and blocking flows at `canvas-modal`.
+
+### Migration
+
+- Any plugin using `<canvas-popover persistent>` or `<canvas-popover trap-focus>` should replace the popover with a `canvas-modal`. The body content transfers largely unchanged, the trigger becomes a button whose click handler calls `modal.open()`.
+
+## 4.11.0
+
+### Added
+
+- `pointer` boolean attribute on `canvas-popover`. Renders a 14 px speech balloon arrow on the side of the surface that faces the trigger, matching the `canvas-tooltip` artwork. The arrow tracks the trigger center even when the surface clamps against a viewport edge, and flips side with the surface under auto placement. Use for icon only triggers, inline contextual disclosures, and small surfaces that float free of their trigger where the anchor would otherwise be ambiguous. Pointer does not change keyboard, ARIA, or dismissal behavior, it is a visual affordance only. When `pointer` is set the component adopts the tooltip distance recipe (10 px gap, 8 px viewport margin), otherwise the tighter popover recipe (6 px gap, 4 px viewport margin) stays in effect.
+- `size="auto"` option on `canvas-popover`. Caps at `calc(100vw - 16px)` and lets the surface grow to its content width for wide tables, long labels, or content whose width is known only at runtime. Existing `sm` 280 px, `md` 360 px, `lg` 480 px defaults are unchanged.
+- Overlay family decision table in `references/component-usage.md` mapping trigger and content shape to `canvas-tooltip`, `canvas-popover` without `pointer`, `canvas-popover` with `pointer`, `canvas-menu-button`, and `canvas-modal`. Replaces the scattered cross references between the tooltip and popover sections.
+- Pointer subsection in `references/component-usage.md` Popover section with when to set and when to skip rules. Content sizing and escalation subsection caps the popover body at one logical group with up to four focused controls and names the escalation to `canvas-modal` when the task outgrows the popover.
+- Icon only pointer filter form example in `references/web-components.md` showing the canonical filter trigger plus form pattern on `canvas-popover` with `pointer`.
+- Shared anchored callout constants `ANCHOR_GAP` 10, `ANCHOR_EDGE` 8, `ANCHOR_ARROW_SIZE` 14, `ANCHOR_ARROW_DEPTH` 7, `ANCHOR_ARROW_HALF` 7, `ANCHOR_ARROW_CORNER_INSET` 6 hoisted to module scope in `canvas-plugin-ui.js`. `canvas-tooltip._calcPosition` now reads these constants instead of inline literals. `canvas-popover` pointer math consumes the same constants so tooltip and pointer popover distance and arrow geometry stay locked together.
+- Pointer affordance, pointer at viewport edge, pointer with auto flip, and size auto demos in the `canvas-popover` component sample.
+
+### Changed
+
+- Border gray alignment across four components. Container chrome now uses `#d4d4d5` across the board. Form indicators use `rgba(34, 36, 38, 0.15)` resting, `rgba(34, 36, 38, 0.35)` hover.
+- `canvas-popover .surface` no longer sets `overflow-y: auto`. The surface is not an internal scroll container. When content may exceed the direction aware `max-height`, wrap the body in `canvas-scroll-area vertical`. Same contract as `canvas-card-body`. Removes the ancestor overflow clip that was cutting off `canvas-dropdown` and `canvas-combobox` menus rendered inside a popover.
+  - `canvas-card .card` outer border from `rgba(34, 36, 38, 0.15)` to `#d4d4d5`.
+  - `canvas-popover .surface` border from `rgba(34, 36, 38, 0.15)` to `#d4d4d5`. Applies to both pointerless and pointer popovers so the surface edge matches `canvas-tooltip`.
+  - `canvas-checkbox .box` resting border from `#d4d4d5` to `rgba(34, 36, 38, 0.15)`. Hover, checked, and focus borders unchanged.
+  - `canvas-radio .dot` resting border from `#d4d4d5` to `rgba(34, 36, 38, 0.15)`. Hover, checked, and focus borders unchanged.
+
+## 4.10.0
+
+### Added
+
+- New component `canvas-popover` for click triggered anchored content containers. Covers filter forms, column pickers, legends, preference sheets, bulk action panels, and confirmation micro dialogs. Uses `role="dialog"` with `aria-modal="false"`, trigger carries `aria-haspopup="dialog"` and `aria-expanded`. Not form associated. Component count in `SKILL.md` goes from 26 to 27.
+- Slotted trigger via `slot="trigger"`. Default slot carries arbitrary HTML content. No composite sub elements in v1, authors wire their own header or action row inside the body.
+- Attributes. `open` boolean reflected, `label` string required for `aria-label` on the dialog surface, `size` `sm` 280 px, `md` 360 px, or `lg` 480 px, `align` `start` or `end` with auto flip, `direction` `down` or `up` with content aware auto flip, `persistent` disables outside click and Escape dismissal, `trap-focus` cycles focus within the body, `dismiss-on-scroll` closes on any scroll instead of tracking. `persistent` and `trap-focus` are orthogonal, combine them for a micro dialog.
+- Events. `open` and `close` for lifecycle, `cancel` for outside click and Escape dismissal when not persistent. Methods `open()` and `close()` for imperative control.
+- Content aware placement. Direction defaults to `down` when content fits below the trigger, flips to whichever side has more room when content does not fit below. After the direction is chosen, `max-height` caps at the available space in that direction and the surface becomes scrollable when content exceeds the cap. Alignment defaults to `start` and flips to `end` when the start edge would clip. Explicit `direction` or `align` disable the corresponding axis auto flip.
+- Top layer rendering. Surface uses `position: fixed` so it escapes ancestor `overflow: hidden` and appears above normal stacking contexts. `z-index: 2000`. Positioned continuously on scroll and resize so the surface follows the trigger. When the trigger leaves the viewport the surface visually hides while preserving `open` state, when the trigger scrolls back the surface reappears.
+- Sizing. `size` attribute maps to `max-width` with an effective cap of `min(size default or override, calc(100vw - 8px))` so the popover shrinks below the configured size when the viewport is narrower. `max-height` is `min(--canvas-popover-max-height override, calc(100vh - 8px), available direction space)` with no hard default cap so tall content uses the viewport. Long unbreakable tokens break via `overflow-wrap: anywhere` so horizontal scroll rarely appears.
+- Popover section in `references/web-components.md` covering attributes, slots, events, methods, keyboard, ARIA, placement, scroll behavior, and sizing tokens.
+- Popover section in `references/component-usage.md` naming the use cases (filter forms, column pickers, legends, bulk action panels, micro confirmation dialogs) and non uses (action menus, form field selection, tooltips, full page overlays) plus attribute, trigger, and content rules.
+- Popover Keyboard and Focus, Popover Placement and Scroll, and Popover ARIA sections in `references/interaction-patterns.md`.
+- Popovers check block in `references/validation-checklist.md` Phase 2. Eight checks covering dialog role content, required label, slotted trigger with accessible name, lifecycle handler, persistent restraint, trap focus paired with a close control, no nested popovers, and placement override restraint.
+- Popover Visual Spec section in `DESIGN.md` with surface, size, height, placement, scroll behavior, focus, and ARIA values.
+- Key Rules entry in `SKILL.md` stating that anchored content surfaces are popovers, not modals.
+- Showcase additions in `examples/showcase.html`. New Popover nav link between Multi-Select and Progress. Six demo cards covering filter form, column picker, persistent confirmation micro dialog, size variants including a `--canvas-popover-max-width` override, auto-flip placement, and tall content adapting to available space with directional height capping.
+- `canvas-popover` added to the `INTERACTIVE_SELECTOR` used by `canvas-accordion-title` click handling and to the focusable descendants query used by `canvas-modal` focus trap.
+
+### Changed
+
+- Shared placement helper `computeAutoPlacement` extracted into module scope. `canvas-menu-button` now calls the shared helper instead of inlining the flip math. `canvas-popover` uses the same helper for the align decision and adds content aware direction picking on top. Pure refactor for menu button, no observable change.
+- Common Mistake entry in `references/workflow.md` added for anchored content surface built as a modal, pointing at `canvas-popover`.
+
+## 4.9.0
+
+### Added
+
+- New component `canvas-menu-button` for action menus (plus buttons, row kebabs, overflow menus). Implements the WAI ARIA Menu Button pattern with `role="menu"` and `role="menuitem"` children rather than overloading `canvas-dropdown`. Not form associated, no `name` or `value`, each option activation dispatches a `select` event with `detail.value` and `detail.label`. Children are `canvas-option` elements, the shared option element already used by `canvas-dropdown`, `canvas-combobox`, and `canvas-multi-select`. The 26 component count in `SKILL.md` reflects the addition.
+- Slotted trigger via `slot="trigger"`. Default trigger (when no trigger is slotted) renders a ghost Actions button with a caret. Slotted triggers are typically a `canvas-button` with an icon for plus and kebab patterns. The default trigger owns `aria-haspopup="menu"` and toggles `aria-expanded` automatically, slotted triggers only need `aria-label` when icon only.
+- Section dividers via `<hr>` children. A plain HTML `<hr>` between `canvas-option` children renders a section separator using the same color as the outer menu border, with small vertical spacing. Dividers expose `role="separator"` and are skipped by keyboard navigation.
+- Auto-flip placement. On open the component measures the trigger rect against the viewport and flips the menu to `up` when the menu would clip below, or to `end` alignment when it would clip the right edge. Explicit `direction="down"`, `direction="up"`, `align="start"`, or `align="end"` attributes pin the corresponding axis and disable auto flipping on that axis only.
+- Dimension rules. `min-width: 180px`, `max-width: 320px` with text wrapping at the cap, `max-height: 16.02857143rem` with scroll. Option padding and font match `canvas-dropdown` for visual parity.
+- Menu Button section in `references/web-components.md` covering attributes, slots, events, keyboard, ARIA, placement, and dimensions.
+- Menu Button section in `references/component-usage.md` naming the use cases (plus button, row action menu, overflow menu, sectioned actions) and non uses (value selection, arbitrary popover content, navigation, two or fewer actions). Dropdown vs Combobox vs Native Select section now explicitly calls out that actions belong in `canvas-menu-button`, not `canvas-dropdown`.
+- Menu Button Keyboard Navigation, Focus Return, and ARIA sections in `references/interaction-patterns.md` documenting the Enter and Space open without highlight contract, ArrowDown and ArrowUp open with highlighted first or last, wrap behavior, Home and End, select returns focus to the trigger, Escape and Tab close, outside click close.
+- Menu Buttons check block in `references/validation-checklist.md` Phase 2. Eight checks covering action role intent, trigger accessibility, select listener presence, row alignment, absence of form participation attributes, divider usage, minimum option count, and placement override restraint. Dropdowns and Comboboxes block gains a second check that flags `canvas-dropdown` whose children read like actions and points at the replacement.
+- Menu Button Visual Spec section in `DESIGN.md` with trigger, menu container, option, divider, and placement values.
+- Key Rules entry in `SKILL.md` stating that action menus are not dropdowns and naming the two behavioral differences (form association, event shape).
+- Showcase additions in `examples/showcase.html`. New Menu Button nav link between Loader and Modal. Eight demo cards covering default trigger, plus icon, kebab row action, disabled option, disabled menu button, section dividers, width and height extremes (exercises min-width, max-width wrapping, and max-height scrolling in one menu), auto-flip placement, and explicit direction override.
+- `canvas-menu-button` added to the `INTERACTIVE_SELECTOR` used by `canvas-accordion-title` click handling and to the focusable descendants query used by `canvas-modal` focus trap, so menu buttons nested inside titles and modals behave correctly.
+
 ## 4.8.0
 
 ### Added
@@ -243,7 +333,7 @@
 
 ### Added
 
-- `canvas-loader`. Loading spinner matching the Semantic UI Loader used in Canvas. Four sizes (mini, small, default, large), inline and centered positioning modes, inverted mode for dark backgrounds, and optional text label. Arc color is #767676 (gray) matching the Canvas home-app, not blue.
+- `canvas-loader`. Loading spinner matching the Canvas home-app. Four sizes (mini, small, default, large), inline and centered positioning modes, inverted mode for dark backgrounds, and optional text label. Arc color is #767676 (gray), not blue.
 
 ### Changed
 
@@ -261,10 +351,10 @@ Web components migration. The design system moves from CSS class patterns with i
 **Web components.** 18 self-contained Custom Elements, each with Shadow DOM scoped styles, double registration guard, and three-layer CSS custom property fallback chain (component token, global token, hardcoded default).
 
 - `canvas-button`. Four color variants (primary/green, secondary/blue, ghost/gray, danger/red), three sizes (base, sm, xs), form submission via ElementInternals.
-- `canvas-badge`. 13 Semantic UI colors, 4 sizes (mini, tiny, small, large), basic (outlined) and circular variants.
+- `canvas-badge`. 13 named colors, 4 sizes (mini, tiny, small, large), basic (outlined) and circular variants.
 - `canvas-chip`. Dismissible tag sharing the badge color palette. Fires a `dismiss` event on X click.
 - `canvas-input`. Text input and textarea with integrated label, error state, and form participation via ElementInternals.
-- `canvas-radio`. Locked radio matching Canvas Semantic UI. Grouped by shared `name` attribute. ElementInternals for form data.
+- `canvas-radio`. Locked radio matching the Canvas home-app. Grouped by shared `name` attribute. ElementInternals for form data.
 - `canvas-checkbox`. Locked checkbox. White box with dark checkmark, no colored fill. ElementInternals for form data.
 - `canvas-toggle`. Locked toggle switch. Blue active track (#0D71BC, not green). No form participation because toggles mean instant effect.
 - `canvas-banner`. Four semantic variants (error, warning, success, info). Dismissible option. Slotted content for rich messages.
@@ -282,7 +372,7 @@ Web components migration. The design system moves from CSS class patterns with i
 **Infrastructure.**
 
 - `assets/tokens.css`. Shared token file with raw palette, semantic aliases, spacing, shape, and transition tokens.
-- `assets/typography.css`. Heading and paragraph styles matching Canvas Semantic UI. Loads Lato via `@import`.
+- `assets/typography.css`. Heading and paragraph styles matching the Canvas home-app. Loads Lato via `@import`.
 - `canvas-option`. Shared marker element registered once, used by dropdown, combobox, and multi-select.
 - `scripts/bundle.sh`. Concatenates all component JS into `canvas-components.js` and copies `tokens.css` and `typography.css` to a target plugin static directory.
 - `examples/showcase.html`. Demonstration page with all 18 components and multiple variants.
@@ -373,8 +463,8 @@ Web components migration. The design system moves from CSS class patterns with i
 
 ### Components added
 - Chip component (dismissible badge variant)
-- Badge system aligned to Semantic UI Label (13 solid colors, basic bordered variant, size tiers)
-- Banner aligned to Semantic UI Message (4 semantic variants, toast removed)
+- Badge system (13 solid colors, basic bordered variant, size tiers)
+- Banner (4 semantic variants, toast removed)
 
 ### Components changed
 - Accordion corrected from Canvas source inspection (borderless basic variant, h3 headers, 7px padding, 34.58px natural height)

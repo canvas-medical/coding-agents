@@ -22,7 +22,7 @@ Verify the plugin loads the design system correctly and bundled assets exist.
 
 Verify all web components are used correctly.
 
-1. **Tag name check.** Every `<canvas-*>` element in the HTML matches one of the registered component names. Misspelled tags render as empty unknown elements. The valid names are: canvas-button, canvas-badge, canvas-chip, canvas-input, canvas-radio, canvas-checkbox, canvas-toggle, canvas-banner, canvas-card, canvas-card-body, canvas-card-footer, canvas-inline-row, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-option, canvas-tabs, canvas-tab, canvas-tab-label, canvas-tab-panel, canvas-accordion, canvas-accordion-item, canvas-accordion-title, canvas-accordion-content, canvas-modal, canvas-modal-header, canvas-modal-content, canvas-modal-footer, canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell, canvas-sortable-list, canvas-sortable-item, canvas-sidebar-layout, canvas-sidebar, canvas-content, canvas-loader, canvas-button-group, canvas-textarea, canvas-tooltip, canvas-progress, canvas-divider, canvas-scroll-area.
+1. **Tag name check.** Every `<canvas-*>` element in the HTML matches one of the registered component names. Misspelled tags render as empty unknown elements. The valid names are: canvas-button, canvas-badge, canvas-chip, canvas-input, canvas-radio, canvas-checkbox, canvas-toggle, canvas-banner, canvas-card, canvas-card-body, canvas-card-footer, canvas-inline-row, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-menu-button, canvas-popover, canvas-option, canvas-tabs, canvas-tab, canvas-tab-label, canvas-tab-panel, canvas-accordion, canvas-accordion-item, canvas-accordion-title, canvas-accordion-content, canvas-modal, canvas-modal-header, canvas-modal-content, canvas-modal-footer, canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell, canvas-sortable-list, canvas-sortable-item, canvas-sidebar-layout, canvas-sidebar, canvas-content, canvas-loader, canvas-button-group, canvas-textarea, canvas-tooltip, canvas-progress, canvas-divider, canvas-scroll-area.
 2. **Attribute check.** Every attribute set on a `<canvas-*>` element is documented in web-components.md for that component. Unknown attributes are silently ignored.
 3. **No native replacements.** No `<select>` elements anywhere. No `<input type="checkbox">` or `<input type="radio">` outside of a web component. No `<details>` or `<summary>` elements anywhere. Use canvas-dropdown, canvas-checkbox, canvas-radio, canvas-accordion.
 4. **Plugin-specific CSS uses tokens.** Scan the `<style>` tag for any CSS rules. All color, spacing, radius, font-family, and transition values must use `var(--token)` references. The only allowed raw values are `0`, `none`, `auto`, `100%`, position values, and `z-index` integers.
@@ -46,6 +46,30 @@ Inventory which component types are present. Run only the checks relevant to com
 ### Dropdowns and Comboboxes
 
 1. canvas-dropdown used for fixed lists. canvas-combobox used for searchable lists. canvas-multi-select used for multi-value selection with 8 or more options.
+2. **No canvas-dropdown for actions.** Scan for any `<canvas-dropdown>` whose `canvas-option` children read like actions (verbs such as Edit, Delete, Duplicate, Archive, Assign, Remove) or whose surrounding code attaches behavior on `change` that dispatches actions rather than storing a value. Replace with `<canvas-menu-button>`. The `name` and `value` props on `canvas-dropdown` are form field concerns, not action triggers. See Menu Button in component-usage.md.
+
+### Menu Buttons (canvas-menu-button)
+
+1. **Action menu role.** Every `<canvas-menu-button>` contains `canvas-option` children that represent actions (verbs). Options that read like form values (Active, Inactive, Pending, Jane Smith, Medicare Part B) indicate the wrong component, use `canvas-dropdown` instead.
+2. **Trigger accessibility.** Icon only slotted triggers carry an `aria-label` on the slotted element. The default ghost trigger handles `aria-haspopup` and `aria-expanded` automatically and needs no additional ARIA. A slotted trigger that is an icon only `canvas-button` without `aria-label` fails this check.
+3. **Select event listener.** If the menu button is interactive on the page (not a static showcase), a `select` event listener exists on the element or a common ancestor. A menu button with no listener is either dead code or the wrong component.
+4. **Row action alignment.** A `<canvas-menu-button>` rendered in the last cell of a table row or at the trailing edge of a list row uses `align="end"`. A row kebab menu without `align="end"` will clip or extend past the row's right edge.
+5. **No form participation attributes.** Scan for `name`, `value`, or `required` on `<canvas-menu-button>`. These are form associated concerns that do not apply to action menus. Their presence indicates the author mistook it for `canvas-dropdown`.
+6. **Divider usage.** Section separators inside the menu use `<hr>` children between `canvas-option` elements. A raw `<li class="divider">` or custom CSS divider inside a menu button fails this check.
+7. **Minimum option count.** A menu button with two or fewer enabled options should be replaced with side by side `canvas-button` elements. Hiding two actions behind a menu adds a click with no discoverability payoff.
+8. **Placement override restraint.** Every `direction` and `align` attribute on `<canvas-menu-button>` has a documented layout reason (pinned toolbar, fixed row cell). Default auto placement covers the common case. A menu button in an ordinary page flow with an explicit `direction` is a review target.
+
+### Popovers (canvas-popover)
+
+1. **Dialog role content.** Every `<canvas-popover>` holds arbitrary content, not a list of `canvas-option` children used as actions. If the body is a list of verbs (Edit, Delete, Archive), replace with `<canvas-menu-button>`. The dialog role is reserved for interactive content surfaces.
+2. **Required label.** Every `<canvas-popover>` carries a non empty `label` attribute. The attribute sets the `aria-label` on the surface, without it screen readers announce the dialog without a name. A missing or empty `label` fails this check.
+3. **Slotted trigger with accessible name.** Every `<canvas-popover>` has a `slot="trigger"` child. Icon only triggers carry `aria-label`. The component wires `aria-haspopup="dialog"` and `aria-expanded` automatically, the author fills the accessible name.
+4. **Lifecycle handler or controlled open.** An interactive popover on the page has either an `open` listener, a `close` listener, a `cancel` listener, or controls the `open` attribute from another handler. A popover with no lifecycle wiring is either dead code or the wrong component.
+5. **No nested popovers.** A `<canvas-popover>` does not contain another `<canvas-popover>` as a descendant. Nested anchored dialogs confuse the focus and dismissal contract.
+6. **Placement override restraint.** Every `direction` and `align` attribute on `<canvas-popover>` has a documented layout reason. Default auto placement covers the common case. A popover in an ordinary page flow with an explicit `direction` is a review target.
+7. **Pointer matches ambiguity.** Every `<canvas-popover pointer>` has an ambiguous anchor, icon only trigger, inline disclosure, or small surface floating free of its trigger. A wide filter popover flush under a full width toolbar button with `pointer` is a review target, the arrow looks vestigial against a width tethered surface.
+8. **Content sizing.** Every `<canvas-popover>` body stays within one logical group and up to four focused controls. A popover with five or more inputs, multiple logical groups, or side by side columns should escalate to `<canvas-modal>`. A popover whose body needs an internal scroll area outside of auto placement edge cases is a review target.
+9. **No modal use.** A `<canvas-popover>` is never used for content the user must respond to before continuing. Destructive confirmations, required data entry, and blocking flows belong in `<canvas-modal>`. A popover carrying Cancel and Confirm for a destructive action fails this check.
 
 ### Tables (canvas-table)
 
@@ -114,6 +138,23 @@ Cross-component behavioral rules spanning the whole page.
 6. **Content hierarchy.** Empty copy includes a heading plus one line of supporting text. Single line empty states are acceptable only inside containers narrower than 300 pixels.
 7. **Clinical distinction.** Clinical data empty states distinguish recorded from not recorded where the distinction is meaningful. "No allergies recorded" passes, "No allergies" fails on an allergies surface.
 8. **Accessibility.** The empty container uses a semantic heading element. Filter empty regions that replace previously rendered rows wrap their results region in `aria-live="polite"`.
+
+### Writing Style
+
+Run on every user facing string (button labels, tooltips, headings, modal bodies, banners, empty states, error messages, form labels, onboarding copy). See writing-style.md for the full rules and the clinical vocabulary carve out.
+
+1. **No em dashes or en dashes.** No `—` or `–` characters in any rendered string. Scan attribute values, text content, and template literals. Use commas, parentheses, or separate sentences instead.
+2. **No curly quotes or smart apostrophes.** No typographic `"`, `"`, `'`, or `'` characters inside attribute values, template strings, or rendered text. Straight ASCII only. Curly characters break HTML attributes and template interpolation.
+3. **Sentence case headings.** Every heading (`<h1>`, `<h2>`, `<h3>`, canvas-card titles, modal titles, section labels, tab labels) capitalizes the first word and proper nouns only. "Active Medications" fails. "Active medications" passes.
+4. **No didactic disclaimers.** Scan for "It is important to note", "It's important to note", "Please be aware", "It should be emphasized", "Rest assured", "Note that". Each occurrence fails. Warnings render in canvas-banner, not in throat clearing prose.
+5. **No collaborative assistant tone.** Scan for "Let me help you", "I can help with", "Together we will", "We'll walk you through", "Allow me to". Plugin copy addresses the clinician in second person or no person, never first person plural.
+6. **No knowledge cutoff disclaimers.** Scan for "As of my last update", "training data", "I cannot access real time", "my last training". Each occurrence fails.
+7. **No emoji as visual formatting.** Scan for emoji characters used as bullets, section breaks, or status markers. Replace with canvas-icon and banner severity variants. Emoji inside user authored content the plugin displays is not a violation.
+8. **No puffery vocabulary.** Scan for vibrant, boasts, tapestry, testament, indelible, deeply rooted, enduring legacy, seamlessly, effortlessly, streamlined, powerful, comprehensive, robust, intuitive, empowering, fostering. Each occurrence fails unless the clinical carve out in writing-style.md applies.
+9. **No inflation of significance.** Scan for "serves as", "stands as", "plays a key role in", "sets the stage for", "symbolizing", "marks a turning point". Each occurrence fails.
+10. **No weasel wording.** Scan for "studies show", "research suggests", "experts agree", "industry reports", "several sources", "some critics" in UI copy. Each occurrence fails unless paired with a concrete citation.
+11. **No negative parallelism.** Scan for "Not just X, but Y" and "Not X, but Y" patterns in UI strings. Each occurrence fails. Name the thing once.
+12. **Clinical carve out honored.** Before flagging vital, critical, significant, active, acute, pivotal, present, presenting, or underlying, confirm the surrounding phrase. "Vital signs", "critical value", "clinically significant", "active medications", "acute allergic reaction", "pivotal trial", "presenting complaint", "underlying condition" all pass. See the carve out table in writing-style.md.
 
 ### Loading and Patient Context
 
