@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.14.0
+
+### Added
+
+- `references/setup.md`. New home for plugin HTML boilerplate, the three head tags, SimpleAPI routes with `StaffSessionAuthMixin`, Content Security Policy requirements, the static file prerequisite check, global CSS reset detection, and the `CanvasUI.utils` host communication bridge. Extracted from `web-components.md` Loading Components section and `SKILL.md` Design System Prerequisite.
+- `references/refactor-safety.md`. New home for the four-part JavaScript dependency scan protocol (dependency scan, risk classification, migration declarations, risk summary). Extracted verbatim from `workflow.md` Refactor Safety section.
+- `references/patterns.md`. New home for copy-paste multi-component templates. Covers the four typed empty state variants (first use, user cleared, filter no results, load error), the patient context header markup, the filter bar markup (card + inline-row + optional footer), the sortable list minimum height token usage, and the loading/empty/error state machine. Extracted from `DESIGN.md` Patterns Without Components and `component-usage.md` markup examples.
+- `references/anti-patterns.md`. New home for common mistakes with consistent shape (name, detection, why, fix, rule home, validation check). Covers card imitations, native input and details use, mixed size tier rows, missed inline row and scroll area swaps, silent card body overflow, forbidden popup nesting, action menu built as a dropdown, anchored surface built as a modal, empty state during loading, filter without escape, generic empty copy, AI puffery, and global CSS reset override. Extracted and reorganized from `workflow.md` Common Mistakes.
+
+### Changed
+
+- Restructured the skill so each reference file answers exactly one question. Rule ownership map documented in `CLAUDE.md`. Every rule now lives in exactly one file with other files using one-line pointers. Generated output is unchanged, only the routing between reference files is reorganized.
+- `SKILL.md`. Removed "Key Rules to Never Forget" block (rules restated content that lives in the reference files). Replaced with a three-link pointer to `component-usage.md`, `interaction-patterns.md`, and `anti-patterns.md`. Kept the escalation ladder and customization boundaries since they are unique to `SKILL.md`. The reference file table now names the one question each file answers.
+- `DESIGN.md`. Narrowed to visual language only. Removed Menu Button Visual Spec and Popover Visual Spec (moved to `web-components.md` canvas-menu-button and canvas-popover sections). Removed Patterns Without Components (moved to `patterns.md`).
+- `references/web-components.md`. Absorbed the Menu Button visual spec and Popover visual spec from `DESIGN.md` into the respective component sections. Added keyboard and ARIA detail to canvas-tabs, canvas-dropdown, canvas-combobox, canvas-menu-button, canvas-popover, and canvas-sortable-list. Removed the full Loading Components section (moved to `setup.md`) and replaced with a pointer. Stated the authoritative component count (28 components, 47 tag names) in the header, other files point here.
+- `references/workflow.md`. Added a Step 0 Verify Setup row pointing at `setup.md`. Trimmed Refactor Safety (now in `refactor-safety.md`) and Common Mistakes (now in `anti-patterns.md`) to pointer lines. Step 4 now also loads `patterns.md` for multi-component templates.
+- `references/interaction-patterns.md`. Narrowed to cross-cutting interaction rules only. Removed Tab, Combobox, Menu Button, Popover, and Sortable List per-component sections (those details now live with each component in `web-components.md`). Kept focus management, toggle and submit prohibition, ARIA essentials table, scrollable containers, form submission, touch targets, and patient context safety.
+- `references/component-usage.md`. Narrowed to decision rules only. The minimal filter bar example moved to `patterns.md` Filter Bar. The Loading, empty, error state machine moved to `patterns.md`. Header paragraph updated to name the new file split.
+- `references/validation-checklist.md`. Converted to binary form. Every check now has a pass or fail condition and a one-line pointer to its rule home, no inline rule restatement. Writing Style check block reduced from narrative to a numbered list. Cross references added to `anti-patterns.md` entries where a check has a named anti-pattern.
+- `README.md`. Trimmed the three-tag loading description (duplicated in `setup.md`) and the reference file table (duplicated in `SKILL.md`). Kept the good-prompt examples and the iterating guidance which are unique to `README.md`.
+- `CLAUDE.md`. File Consistency Matrix rewritten to include rows for `setup.md`, `refactor-safety.md`, `patterns.md`, and `anti-patterns.md`. Added a Rule Ownership table naming which file owns which rule type.
+
+### Migration
+
+- Plugin authors. No action required. Generated output is unchanged, the same rules apply, only the location of the rules inside the skill changed.
+- Skill maintainers. When adding a new component, follow the updated matrix in `CLAUDE.md`. The component section in `web-components.md` now carries keyboard, ARIA, and visual spec details, not just API. The `component-usage.md` entry carries decision rules only. Common mistakes go in `anti-patterns.md`, not in `workflow.md`.
+
 ## 4.13.0
 
 ### Added

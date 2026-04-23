@@ -1,6 +1,6 @@
 # Component Usage
 
-These rules describe when to use each component and how interactions should behave. Keyboard and accessibility behavior is in interaction-patterns.md (loaded at Step 5).
+These rules describe when to use each component. Per-component API and keyboard behavior live in [web-components.md](web-components.md). Cross-cutting interaction rules (focus management, toggle-submit prohibition, touch targets, ARIA essentials) live in [interaction-patterns.md](interaction-patterns.md). Copy-paste markup templates live in [patterns.md](patterns.md).
 
 ## Tabs
 
@@ -31,7 +31,7 @@ These rules describe when to use each component and how interactions should beha
 
 - Use a `canvas-toggle` for settings that take effect immediately (enable/disable a feature, show/hide a section). The user expects the change to apply as soon as they flip the toggle.
 - Use a `canvas-checkbox` for selections that are part of a form and only take effect when the user submits. Also use checkboxes when the user can select multiple items from a list.
-- The toggle-submit prohibition (SKILL.md Key Rules) forbids combining toggles with save or submit actions in the same UI segment. See interaction-patterns.md Toggle and Submit Prohibition for the full behavioral rule.
+- The toggle-submit prohibition forbids combining toggles with save or submit actions in the same UI segment. See [interaction-patterns.md](interaction-patterns.md) Toggle and Submit Prohibition for the full behavioral rule.
 
 ## Text Inputs vs Textareas
 
@@ -216,29 +216,11 @@ Use cases. Each extends the primitive with ingredients specific to that pattern.
 - **Search bar.** Row with a text input plus a search button, optionally with filter dropdowns. No card wrapper. Lives in a page header region or toolbar area.
 - **Action bar.** Context text or selection count on the left, one or two action buttons on the right. Use a plain div with flex when the action bar stands alone. When the action bar is attached to a card below a table, use `canvas-card-footer` instead.
 
-Minimal filter bar example.
-
-```html
-<canvas-card>
-  <canvas-card-body>
-    <canvas-inline-row>
-      <canvas-input label="From" type="date"></canvas-input>
-      <canvas-input label="To" type="date"></canvas-input>
-      <canvas-dropdown label="Provider">
-        <canvas-option value="" selected>All Providers</canvas-option>
-        <canvas-option value="1">Dr. Alvarez</canvas-option>
-      </canvas-dropdown>
-      <canvas-button>Load Appointments</canvas-button>
-    </canvas-inline-row>
-  </canvas-card-body>
-</canvas-card>
-```
+The copy-paste filter bar markup lives in [patterns.md](patterns.md) Filter Bar.
 
 Narrow surfaces. `canvas-inline-row` wraps automatically when the row cannot fit. Every growing child (input, dropdown, combobox, multi-select, textarea) keeps at least 160 px width before wrapping. Override the minimum with `style="--canvas-inline-row-item-min: 140px"` on the row for compact contexts that must stay on one line.
 
 When not to use `canvas-inline-row`. Horizontal scrollers such as chip strips (use `canvas-scroll-area horizontal`), tab bars (use `canvas-tabs`), vertical stacks (use a plain flex column or block flow), right aligned action clusters inside a card footer (use `canvas-card-footer` directly with a plain div using `justify-content: space-between`), or single element rows (render the element directly). See `web-components.md` canvas-inline-row for the full reference.
-
-For the full filter bar pattern with table and action footer, see the Filter Bar (with table and action footer) card in `examples/showcase.html` under the Form section.
 
 ## Scroll Areas
 
@@ -390,14 +372,7 @@ One line only empty states are acceptable inside tight containers like card bodi
 
 ### Loading, empty, error state machine
 
-Every data region renders in one of four states. Pick the right one.
-
-- **Loading.** Fetch in flight. Render `canvas-loader`. Do not render the empty pattern during this window, an empty state that flashes before rows arrive reads as broken.
-- **Populated.** Fetch resolved with one or more rows. Render the list or table.
-- **Empty.** Fetch resolved with zero rows. Render the typed empty state from the four above.
-- **Error.** Fetch failed. Render a `canvas-banner variant="error"`, not the centered empty pattern.
-
-Gate the empty pattern behind fetch resolution. Mount it only after rows is known to be zero, never alongside the loader.
+For the four-state gating rules (loading, populated, empty, error), see [patterns.md](patterns.md) Loading, Empty, Error State Machine.
 
 ### Accessibility
 
@@ -405,7 +380,7 @@ Gate the empty pattern behind fetch resolution. Mount it only after rows is know
 - For filter no results that replaces previously rendered rows, wrap the results region in `aria-live="polite"` so the change is announced without stealing focus.
 - Keep the primary action reachable with one Tab from the surrounding filter bar or page header. Do not trap focus inside a decorative empty container.
 
-See [DESIGN.md](../DESIGN.md) Empty State for markup patterns per type, and [workflow.md](workflow.md) Common Mistakes for the filter without Clear filters and empty during loading pitfalls.
+See [patterns.md](patterns.md) Empty State for markup per type, and [anti-patterns.md](anti-patterns.md) Filter Without Escape and Empty State During Loading for the common pitfalls.
 
 ## Progress Indicators
 

@@ -1,78 +1,8 @@
 # Interaction Patterns
 
-Keyboard navigation, focus management, ARIA attributes, and behavioral rules for interactive elements. Clinical environment guidelines for touch targets, confirmations, and patient safety. For visual specification rules (hierarchy, density, truncation, date formatting), see [DESIGN.md](../DESIGN.md). When-to-use guidance is in component-usage.md (loaded at Step 3).
+Cross-cutting interaction rules that apply across components. Focus management for modals, the toggle and submit prohibition, shared ARIA essentials, scrollable container contract, form submission behavior, touch targets, and patient context safety. Per-component keyboard, focus return, and ARIA contracts live with each component in [web-components.md](web-components.md). When-to-use rules live in [component-usage.md](component-usage.md). Visual specification rules (hierarchy, density, truncation, date formatting) live in [DESIGN.md](../DESIGN.md).
 
-## Interaction Behavior
-
-### Tab Keyboard Navigation
-
-- Left and Right arrow keys move focus between tab items within the tab menu.
-- Home jumps to the first tab. End jumps to the last tab.
-- Enter or Space activates the focused tab and shows its panel.
-- Tab items use `role="tab"`, the container uses `role="tablist"`, and panels use `role="tabpanel"`.
-- Active tab has `aria-selected="true"`. Inactive tabs have `aria-selected="false"`.
-- Each tab has `aria-controls` pointing to its panel ID. Each panel has `aria-labelledby` pointing to its tab ID.
-
-### Combobox and Select Keyboard Navigation
-
-- Click, Enter, or Space on the trigger opens the dropdown.
-- Escape closes the dropdown and returns focus to the trigger.
-- Up and Down arrow keys open the dropdown if closed. When open, they move the highlight through options.
-- Enter selects the currently highlighted option and closes the dropdown.
-- Type-ahead: typing a letter jumps to the first option starting with that letter. Typing multiple letters in quick succession narrows the match.
-- Home and End keys jump to the first and last option when the dropdown is open.
-- Tab closes the dropdown (selecting the highlighted option if any) and moves focus to the next focusable element.
-- Clicking outside the dropdown closes it without selecting.
-
-### Dropdown and Menu Behavior
-
-- Clicking outside the dropdown or menu closes it.
-- Dropdown menus must not exceed the viewport. If the menu would overflow below the trigger, flip it to open above. If it would overflow on the right, align it to the right edge of the trigger.
-- Long option lists should scroll within the dropdown rather than growing the dropdown beyond the viewport.
-- Menu items that perform actions use `role="menuitem"`. Menu items that toggle state use `role="menuitemcheckbox"` or `role="menuitemradio"`.
-
-### Menu Button Keyboard Navigation
-
-`canvas-menu-button` implements the WAI ARIA Menu Button pattern. The keyboard model is deliberately different from `canvas-dropdown` because the menu carries actions, not a selectable value.
-
-- **On the trigger.** Enter or Space activates the trigger through the native button contract and opens the menu without a pre highlighted item. ArrowDown opens the menu and moves highlight to the first option. ArrowUp opens the menu and moves highlight to the last option.
-- **Inside the menu.** ArrowUp and ArrowDown move the highlight with wrap. Home and End jump to first and last. Enter or Space activate the highlighted option, dispatch the `select` event with `detail.value` and `detail.label`, close the menu, and return focus to the trigger. Escape closes the menu and returns focus to the trigger without firing a select. Tab closes the menu and lets focus move to the next tab stop in the document.
-- **Disabled options** (`disabled` on `canvas-option`) are skipped during highlight navigation and cannot be activated.
-- **Section dividers** (`<hr>` children) are not in the focus cycle.
-- **Outside click** closes the menu without firing select, same as Escape.
-
-### Menu Button Focus Return
-
-After a select event fires, the component calls `focus()` on the trigger. For the default trigger, this puts focus on the internal Actions button. For a slotted `canvas-button` trigger, focus lands on the slotted element's host, which forwards to the inner button via `delegatesFocus`. This focus return matches the Menu Button pattern and prevents focus from becoming orphaned on the closed menu. Code that listens for `select` should not call `focus()` on unrelated elements during that handler, the return is automatic.
-
-### Menu Button ARIA
-
-- Trigger, `aria-haspopup="menu"` and `aria-expanded="true"` or `aria-expanded="false"` are set automatically on the default trigger. Slotted triggers inherit this through the component, authors only supply `aria-label` when the trigger is icon only.
-- Menu container, `role="menu"` and `tabindex="-1"` so it is reachable by programmatic focus but not part of the tab order.
-- Option, `role="menuitem"` and `aria-disabled="true"` when the `disabled` attribute is set on the `canvas-option`.
-- Divider, `role="separator"` on the `<li>` rendered for each `<hr>` child.
-
-### Popover Keyboard and Focus
-
-`canvas-popover` implements a non modal dialog anchored to a trigger. The keyboard contract differs from the menu button pattern because the body is arbitrary content, not a focus ring of options.
-
-- **On the trigger.** Enter or Space activates the trigger through the native button contract and opens the popover. Focus moves into the body on open, to the first focusable element if one exists, otherwise to the surface itself so Escape and screen reader announcements still work.
-- **Inside the popover.** Tab escapes to the next tab stop in the document. The popover does not trap focus. Escape closes the popover, returns focus to the trigger, and dispatches a `cancel` event before the `close` event.
-- **Outside click** closes the popover and dispatches `cancel`. Popover is non blocking by contract, use `canvas-modal` for content that needs true modality.
-
-### Popover Placement and Scroll
-
-- Auto placement picks direction based on content fit, not just space. If content fits below the trigger, the popover opens down. If it does not fit below, it picks the side with more room and caps `max-height` at that side's available space, making the surface scrollable when needed.
-- The popover follows its trigger continuously on scroll and resize. When the trigger leaves the viewport, the surface visually hides while preserving the `open` state. When the trigger scrolls back, the surface reappears.
-- `dismiss-on-scroll` opts into closing on any scroll instead of tracking. Use only when the popover content would become stale if the underlying view scrolls, for example a filter panel tied to a visible table region.
-- `pointer` adds a 14 px speech balloon arrow on the side of the surface that faces the trigger. The arrow tracks the trigger center even when the surface clamps against a viewport edge, and flips side with the surface when direction flips from `down` to `up`. Pointer is visual only, it does not affect keyboard, ARIA, or dismissal. When `pointer` is set the surface sits 10 px from the trigger with an 8 px viewport margin, matching `canvas-tooltip`. Without `pointer` the surface uses a tighter 6 px gap and 4 px viewport margin.
-
-### Popover ARIA
-
-- Trigger, `aria-haspopup="dialog"` and `aria-expanded="true"` or `aria-expanded="false"` are wired automatically on the slotted trigger element when open state changes. Icon only triggers must supply `aria-label` themselves.
-- Surface, `role="dialog"`, `aria-modal="false"`, `aria-label` set from the component's `label` attribute. Without `label` the dialog has no accessible name, which is why the attribute is required.
-
-### Focus Management
+## Focus Management
 
 - When a modal opens, move focus to the first focusable element inside (usually the close button or the first form input).
 - When a modal closes, return focus to the element that triggered it. Never leave focus in an undefined state.
@@ -80,36 +10,37 @@ After a select event fires, the component calls `focus()` on the trigger. For th
 - When content loads dynamically (fetch, AJAX), focus should not jump unpredictably. If new content replaces the current view entirely, move focus to the top of the new content. If content is appended (like loading more list items), keep focus where it was.
 - When a banner or notification appears, it should not steal focus. Use `aria-live` to announce it to screen readers without disrupting the user's current position.
 
-### Toggle and Submit Prohibition
+## Toggle and Submit Prohibition
 
-This is the most common UX mistake in generated plugin UI. It must be prevented. (Summary in SKILL.md Key Rules.)
+This is the most common UX mistake in generated plugin UI. It must be prevented.
 
 - Toggles must never appear on a screen that has a Save or Submit button. This is a hard rule with no exceptions.
 - If a form collects settings that are saved together, every control must be a checkbox, radio button, or input. Never a toggle.
 - If a setting should take effect immediately, use a standalone toggle with no submit button anywhere on the screen. Provide instant visual feedback (an inline banner or confirmation).
 - Mixed patterns on the same screen (some toggles for instant effect, some checkboxes for deferred submission) confuse users about what is saved and what is not. Pick one model per screen and apply it consistently.
 
-### ARIA Essentials
+## ARIA Essentials
 
-These are the minimum ARIA attributes for common plugin UI elements. Do not over-apply ARIA. Use semantic HTML first (a `<button>` element does not need `role="button"`).
+Minimum ARIA attributes for common plugin UI elements. Do not over-apply ARIA. Use semantic HTML first (a `<button>` element does not need `role="button"`). Per-component ARIA contracts (roles, states, wiring) live with each component in [web-components.md](web-components.md).
 
-- **Buttons that toggle state** need `aria-pressed="true"` or `aria-pressed="false"`. Buttons that expand/collapse content need `aria-expanded="true"` or `aria-expanded="false"`.
+- **Buttons that toggle state** need `aria-pressed="true"` or `aria-pressed="false"`. Buttons that expand or collapse content need `aria-expanded="true"` or `aria-expanded="false"`.
 - **Form inputs** need associated `<label>` elements using `for`/`id` pairing. If a visible label is not feasible, use `aria-label` on the input.
 - **Error messages** need `aria-live="polite"` on the container so screen readers announce validation errors as they appear.
 - **Loading spinners** need `aria-label="Loading"` and `role="status"`.
 - **Tables** need `<caption>` or `aria-label` on the `<table>` element describing the table's purpose.
 - **Toggle switches** need `role="switch"` and `aria-checked="true"` or `aria-checked="false"`.
-- **Comboboxes** need `role="combobox"` on the input, `aria-expanded` to indicate dropdown state, `aria-controls` pointing to the listbox ID, and `aria-activedescendant` pointing to the currently highlighted option.
+- **Menu items** that perform actions use `role="menuitem"`. Menu items that toggle state use `role="menuitemcheckbox"` or `role="menuitemradio"`. `canvas-menu-button` wires `role="menuitem"` automatically, the other two roles are for hand rolled menus only.
 - **Required fields** need `aria-required="true"` (or use the HTML `required` attribute).
 - **Disabled elements** should use the `disabled` attribute on native HTML elements. For custom elements, use `aria-disabled="true"` and remove click handlers.
 - Do not use `aria-label` as a substitute for visible text. It is for screen readers when visible text is not feasible. If you can show the text, show it.
 
-### Scrollable Containers
+## Scrollable Containers
 
 - Scrollable regions need `tabindex="0"` so keyboard users can scroll them with arrow keys.
 - Scrollable regions need an accessible name via `aria-label` or `aria-labelledby` so screen readers can identify them.
+- `canvas-scroll-area` applies both automatically when a `vertical` or `horizontal` direction is set. See [web-components.md](web-components.md) canvas-scroll-area.
 
-### Form Submission
+## Form Submission
 
 - Pressing Enter in a single-line text input should submit the form when there is only one input and one submit action on the screen.
 - In multi-field forms, Enter should not submit. Only the explicit submit button triggers submission.
@@ -124,36 +55,15 @@ These rules are driven by the clinical environment. Clinicians work under time p
 ### Accessibility and Touch Targets
 
 - Minimum touch target size is `44px` by `44px` for all interactive elements (buttons, checkboxes, toggles, links, table row actions). Clinicians use tablets at the bedside and rolling cart touchscreens.
-- Clickable areas can be visually smaller than 44px as long as the hit area (padding included) meets the minimum.
+- Clickable areas can be visually smaller than 44 px as long as the hit area (padding included) meets the minimum.
 - All color pairings must meet WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text). Green `#22BA45` on white and white on green both pass. Muted text `#767676` on white passes at 4.6:1.
 - Never rely on color alone to convey meaning. Pair color with text, icons, or patterns. A red badge should also have a label like "Critical" or an icon.
 
 ### Confirmation Hierarchy
 
-For the confirmation hierarchy (no confirmation, soft undo, hard dialog, destructive typed input), see component-usage.md Confirmation Hierarchy.
+For the confirmation hierarchy (no confirmation, soft undo, hard dialog, destructive typed input), see [component-usage.md](component-usage.md) Confirmation Hierarchy.
 
 ### Patient Context Safety
 
-- When a plugin displays patient-specific data, the patient's identity must be visible on the screen. In a right chart pane, the chart on the left provides this context. In a modal or standalone page, the plugin must show the patient's name and at least one identifier (date of birth or MRN) near the top. See [surface-selection.md](surface-selection.md) for which surfaces require a patient context header.
+- When a plugin displays patient-specific data, the patient's identity must be visible on the screen. In a right chart pane, the chart on the left provides this context. In a modal or standalone page, the plugin must show the patient's name and at least one identifier (date of birth or MRN) near the top. See [surface-selection.md](surface-selection.md) for which surfaces require a patient context header. The copy-paste markup lives in [patterns.md](patterns.md).
 - Never display clinical data from one patient in a context where the user might believe they are looking at a different patient.
-
-## Sortable List Keyboard
-
-Focus a `canvas-sortable-item` handle with Tab.
-
-- `ArrowUp` and `ArrowDown` reorder within the current list. Each keypress fires `reorder` and `change`, and announces position N of M in the list label.
-- `ArrowLeft` and `ArrowRight` move the item into the previous or next list in the same group. Only active when the list has a `group` attribute and a compatible sibling list exists. Each keypress fires `move` and `change`, and announces source and destination labels.
-
-Sibling resolution walks all compatible lists by screen position left to right, not by strict DOM sibling order. A list placed anywhere in the document that shares the group can be reached by ArrowRight.
-
-## Sortable List Cross List Cancel
-
-`beforemove`, `beforereorder`, and `beforechange` are cancelable. Calling `e.preventDefault()` in a handler snaps the item back to its source position and suppresses the success events. Always pair a cancel with visible user feedback, a toast or inline message. A silent cancel reads as a visual glitch to the user.
-
-## Sortable List ARIA
-
-A shared polite live region announces every move. Label lists explicitly so announcements read naturally.
-
-- Give each participating list an `aria-labelledby` pointing at its column heading, or an `aria-label` with the column name. Without a label, the announcer falls back to the list's `id`, then to the generic word "list".
-- Within list moves announce "Moved item to position N of M in <label>.".
-- Cross list moves announce "Moved item from <source label> to <destination label>, position N of M.".
