@@ -1,104 +1,16 @@
 # Web Components
 
-Reference for the Canvas plugin web component system. The system includes 25 components (44 tag names). This file covers how components load and the API for each component. For the token system, fallback chain, button spacing rules, and patterns without components, see [DESIGN.md](../DESIGN.md). Read this before writing any plugin that uses `<canvas-*>` elements.
+Reference for the Canvas plugin web component system. The system registers 28 components spanning 47 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
 
 ## Contents
 
-[Loading Components](#loading-components) | [Layout](#layout) | [Components](#components)
+[Layout](#layout) | [Components](#components)
 
-**Components.** [canvas-button](#canvas-button) | [canvas-button-group](#canvas-button-group) | [canvas-badge](#canvas-badge) | [canvas-chip](#canvas-chip) | [canvas-input](#canvas-input) | [canvas-textarea](#canvas-textarea) | [canvas-radio](#canvas-radio) | [canvas-checkbox](#canvas-checkbox) | [canvas-toggle](#canvas-toggle) | [canvas-banner](#canvas-banner) | [canvas-card](#canvas-card) | [canvas-dropdown](#canvas-dropdown) | [canvas-combobox](#canvas-combobox) | [canvas-multi-select](#canvas-multi-select) | [canvas-tabs](#canvas-tabs) | [canvas-accordion](#canvas-accordion) | [canvas-modal](#canvas-modal) | [canvas-table](#canvas-table) | [canvas-sortable-list](#canvas-sortable-list) | [canvas-sidebar-layout](#canvas-sidebar-layout) | [canvas-loader](#canvas-loader) | [canvas-progress](#canvas-progress) | [canvas-tooltip](#canvas-tooltip) | [canvas-divider](#canvas-divider)
+**Components.** [canvas-button](#canvas-button) | [canvas-button-group](#canvas-button-group) | [canvas-badge](#canvas-badge) | [canvas-chip](#canvas-chip) | [canvas-input](#canvas-input) | [canvas-textarea](#canvas-textarea) | [canvas-radio](#canvas-radio) | [canvas-checkbox](#canvas-checkbox) | [canvas-toggle](#canvas-toggle) | [canvas-banner](#canvas-banner) | [canvas-card](#canvas-card) | [canvas-inline-row](#canvas-inline-row) | [canvas-scroll-area](#canvas-scroll-area) | [canvas-dropdown](#canvas-dropdown) | [canvas-combobox](#canvas-combobox) | [canvas-multi-select](#canvas-multi-select) | [canvas-menu-button](#canvas-menu-button) | [canvas-popover](#canvas-popover) | [canvas-tabs](#canvas-tabs) | [canvas-accordion](#canvas-accordion) | [canvas-modal](#canvas-modal) | [canvas-table](#canvas-table) | [canvas-sortable-list](#canvas-sortable-list) | [canvas-sidebar-layout](#canvas-sidebar-layout) | [canvas-loader](#canvas-loader) | [canvas-progress](#canvas-progress) | [canvas-tooltip](#canvas-tooltip) | [canvas-divider](#canvas-divider)
 
 ## Loading Components
 
-For setup instructions and an overview of the three asset files, see SKILL.md.
-
-### CanvasUI.utils
-
-The `canvas-plugin-ui.js` file registers a `CanvasUI.utils` object on the global `window`. This provides a host communication bridge that plugins use to send messages to the Canvas app through a MessageChannel.
-
-The MessageChannel handshake (`INIT_CHANNEL`) is handled automatically when the script loads. No setup code is needed.
-
-**CanvasUI.utils.dismissModal()** sends a `CLOSE_MODAL` message to the host app via the MessageChannel. Use this in plugins rendered on `DEFAULT_MODAL` or `NOTE` surfaces that need to close themselves after completing an action.
-
-```html
-<canvas-button onclick="CanvasUI.utils.dismissModal()">Done</canvas-button>
-```
-
-**CanvasUI.utils.resizeModal(width, height)** sends a `RESIZE` message with optional width and height values. Use this to adjust the iframe dimensions when the plugin content changes size.
-
-```html
-<script>
-  // Expand the modal to fit a larger form
-  CanvasUI.utils.resizeModal(800, 600);
-</script>
-```
-
-Both width and height are optional. Omitting a value leaves that dimension unchanged on the host side.
-
-### Serving
-
-Each file needs a SimpleAPI GET route that reads it via `render_to_string` and returns it with the correct content type. The plugin sandbox does not allow `os`, `pathlib`, or `open()` for file access. Use `render_to_string("static/filename")` for all file reads.
-
-The SimpleAPI class serving these routes must inherit from `StaffSessionAuthMixin`. Plugin pages load inside an authenticated Canvas iframe that passes a staff session cookie. Without the mixin, asset routes return a credentials error instead of the file contents, and the page renders with no styling or components.
-
-If the plugin sets a custom `Content-Security-Policy` header, the policy must include `'self'` in `style-src` and `script-src`. Without it the browser silently blocks the design system CSS and JS files and the page renders unstyled. `'unsafe-inline'` alone is not enough because it only covers inline styles and scripts, not files loaded via `<link>` or `<script src>`.
-
-```python
-@api.get("/canvas-plugin-ui.css")
-def plugin_ui_css(self) -> list[Response]:
-    return [
-        Response(
-            render_to_string("static/canvas-plugin-ui.css").encode(),
-            status_code=HTTPStatus.OK,
-            content_type="text/css",
-        )
-    ]
-
-@api.get("/canvas-plugin-ui.js")
-def plugin_ui_js(self) -> list[Response]:
-    return [
-        Response(
-            render_to_string("static/canvas-plugin-ui.js").encode(),
-            status_code=HTTPStatus.OK,
-            content_type="application/javascript",
-        )
-    ]
-```
-
-### Loading in the HTML shell
-
-The plugin's index template includes two asset files and a Google Fonts link in the `<head>`. Replace `{plugin_name}` with the `name` field from `CANVAS_MANIFEST.json` (uses underscores) and `{prefix}` with the SimpleAPI PREFIX value (without the leading slash).
-
-```html
-<link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
-<link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.css">
-<script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.js"></script>
-```
-
-The Google Fonts link tag is required. The CSS file does not use `@import` for font loading, so without this tag the Lato typeface will not render. Every `<canvas-*>` element works anywhere in the page body without additional script tags.
-
-### Plugin HTML Boilerplate
-
-Start every plugin HTML page from this shell. Replace `{plugin_name}` with the name from CANVAS_MANIFEST.json and `{prefix}` with the SimpleAPI PREFIX value.
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
-  <link rel="stylesheet" href="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.css">
-  <script src="/plugin-io/api/{plugin_name}/{prefix}/canvas-plugin-ui.js"></script>
-  <style>
-    /* Plugin-specific CSS only. Use var(--token) for all values. */
-  </style>
-</head>
-<body>
-  <!-- Plugin content using <canvas-*> elements -->
-</body>
-</html>
-```
+All setup and serving instructions (SimpleAPI routes, `StaffSessionAuthMixin`, CSP requirements, the three head tags, the HTML boilerplate, `CanvasUI.utils` host communication bridge) live in [setup.md](setup.md). Read `setup.md` before authoring any `<canvas-*>` markup.
 
 ## Layout
 
@@ -1198,7 +1110,9 @@ When a dropdown shares a row with inputs, buttons, or other dropdowns, follow th
 </canvas-dropdown>
 ```
 
-**Keyboard navigation.** Arrow up/down to navigate options, Enter or Space to select, Escape to close, Home/End to jump, Tab to select and move focus. Disabled options are skipped.
+**Keyboard navigation.** Click, Enter, or Space on the trigger opens the dropdown. ArrowUp and ArrowDown open the dropdown when closed and move the highlight through options when open. Enter selects the currently highlighted option and closes. Type-ahead, typing a letter jumps to the first option starting with that letter, typing multiple letters in quick succession narrows the match. Home and End jump to first and last when open. Tab closes the dropdown (selecting the highlighted option if any) and moves focus to the next focusable element. Escape closes without selecting and returns focus to the trigger. Clicking outside closes without selecting. Disabled options are skipped.
+
+**Menu behavior.** The dropdown menu must not exceed the viewport. If the menu would overflow below the trigger, it flips to open above. If it would overflow on the right, it aligns to the right edge of the trigger. Long option lists scroll within the menu rather than growing the menu beyond the viewport.
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
@@ -1254,7 +1168,11 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 
 **Error state.** Same visual treatment as `canvas-input`. Setting the `error` attribute shows a red label, pink input background, pink border, and error message below the input.
 
-**Keyboard navigation.** Arrow up/down to navigate, Enter to select, Escape to restore previous value and close, Home/End to jump, Tab to select and move focus. Disabled options are skipped.
+**Keyboard navigation.** Click, Enter, or Space on the input opens the dropdown. ArrowUp and ArrowDown navigate through filtered options, Enter selects the highlighted option and closes, Escape restores the previous value and closes, Home and End jump to first and last, Tab selects the highlighted option and moves focus to the next element. Disabled options are skipped. Clicking outside closes without selecting.
+
+**ARIA.** The input carries `role="combobox"`, `aria-expanded` reflecting dropdown state, `aria-controls` pointing to the listbox id, and `aria-activedescendant` pointing to the currently highlighted option.
+
+**Menu behavior.** Same contract as `canvas-dropdown`. The menu must not exceed the viewport. If it would overflow below the input, it flips to open above. Long filtered lists scroll within the menu rather than growing beyond the viewport.
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
@@ -1370,13 +1288,54 @@ Icon only triggers must carry their own `aria-label`. The default ghost trigger 
 
 **No form participation.** `canvas-menu-button` is not form associated. It does not carry a `name` or `value` and does not contribute to FormData. Each option action is a discrete event, not a form value.
 
-**Keyboard navigation.** On the trigger, Enter or Space opens the menu through native button activation without a pre highlighted item. ArrowDown opens and highlights the first option. ArrowUp opens and highlights the last option. Inside the menu, ArrowUp and ArrowDown navigate with wrap, Home and End jump to first and last, Enter or Space select the highlighted item, Escape closes and returns focus to the trigger, Tab closes. Disabled options are skipped.
+**Keyboard navigation.** On the trigger, Enter or Space opens the menu through native button activation without a pre highlighted item. ArrowDown opens and highlights the first option. ArrowUp opens and highlights the last option. Inside the menu, ArrowUp and ArrowDown navigate with wrap, Home and End jump to first and last. Enter or Space activate the highlighted option, dispatch the `select` event with `detail.value` and `detail.label`, close the menu, and return focus to the trigger. Escape closes the menu and returns focus to the trigger without firing a select. Tab closes the menu and lets focus move to the next tab stop in the document. Outside click closes the menu without firing select, same as Escape. Disabled options are skipped during highlight navigation and cannot be activated. Section dividers (`<hr>` children) are not in the focus cycle.
 
-**Auto placement.** On open, the component measures the trigger position and the menu dimensions against the viewport. If the menu would clip the viewport bottom and more room exists above, `direction` computes to up. If the menu would clip the viewport right and room exists to the left, `align` computes to end. Explicit `direction` or `align` attributes disable auto flipping on the matching axis.
+**Focus return.** After a `select` event fires, the component calls `focus()` on the trigger. For the default trigger, this puts focus on the internal Actions button. For a slotted `canvas-button` trigger, focus lands on the slotted element's host, which forwards to the inner button via `delegatesFocus`. This focus return matches the Menu Button pattern and prevents focus from becoming orphaned on the closed menu. Code that listens for `select` should not call `focus()` on unrelated elements during that handler, the return is automatic.
+
+**ARIA.** Trigger, `aria-haspopup="menu"` and `aria-expanded="true"` or `aria-expanded="false"` are set automatically on the default trigger. Slotted triggers inherit this through the component, authors only supply `aria-label` when the trigger is icon only. Menu container, `role="menu"` and `tabindex="-1"` so it is reachable by programmatic focus but not part of the tab order. Option, `role="menuitem"` and `aria-disabled="true"` when the `disabled` attribute is set on the `canvas-option`. Divider, `role="separator"` on the `<li>` rendered for each `<hr>` child.
+
+**Auto placement.** On open, the component measures the trigger position and the menu dimensions against the viewport. If the menu would clip the viewport bottom and more room exists above, `direction` computes to up, and `data-placement-direction="up"` is set on the inner root. If the menu would clip the viewport right and room exists to the left, `align` computes to end, and `data-placement-align="end"` is set. Explicit `direction` or `align` attributes disable auto flipping on the matching axis.
 
 **Dimensions.** Menu `min-width` 180 px, `max-width` 320 px with text wrapping at the cap, `max-height` 16.02857143 rem with vertical scroll. The trigger sizes to its content.
 
 **Locked component.** No visual customization tokens. Trigger, menu, option, and divider styling are fixed to match the Canvas dropdown menu. Customize the trigger through a slotted `canvas-button` variant instead.
+
+**Visual spec.**
+
+*Default trigger.* When no `slot="trigger"` child is provided, the component renders a ghost button.
+
+- Background, `#e0e1e2`. Hover, `#cacbcd`.
+- Text color, `rgba(0, 0, 0, 0.6)`. Hover, `rgba(0, 0, 0, 0.8)`.
+- Padding, `.67857143em 1.5em`. Font size, `1rem`. Font weight, `700`. Line height, `1.21428571em`.
+- Border, `1px solid transparent`. Radius, `var(--radius, .28571429rem)`.
+- Caret, 8 px wide by 5 px tall SVG, inherits `currentColor`.
+- Focus, `var(--focus-ring, 2px solid #2185D0)` outline with 2 px offset.
+
+*Menu container.*
+
+- Background, `var(--color-surface, #FFFFFF)`.
+- Border, `1px solid rgba(34, 36, 38, 0.15)`. Radius, `var(--radius, .28571429rem)`.
+- Shadow, `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`.
+- Offset from trigger, 2 px margin on the open axis.
+- Width, `min-width: 180px`, `max-width: 320px`. Text wraps at the cap.
+- Height, `max-height: 16.02857143rem` with `overflow-y: auto`. Scroll bar rendered by the browser, no custom scrollbar styling.
+- Z index, `100`.
+- Padding, `0`. Options sit flush against the top and bottom menu edges.
+
+*Option.*
+
+- Padding, `.78571429rem 1.14285714rem`. Font size, `1rem`. Line height, `1.0625rem`.
+- Default color, `var(--color-text, rgba(0, 0, 0, 0.87))`.
+- Hover and highlighted, background `rgba(0, 0, 0, 0.05)`, color `rgba(0, 0, 0, 0.95)`.
+- Disabled, color `#767676`, cursor `not-allowed`, background transparent on hover.
+- No per option border.
+
+*Section divider.*
+
+- Rendered for each `<hr>` child inside the default slot.
+- Border top, `1px solid rgba(34, 36, 38, 0.15)`, same as the outer menu border.
+- Height, `0`. Margin, `.28571429rem 0`. Padding, `0`.
+- Role, `separator`. Not focusable, skipped by keyboard navigation.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1465,11 +1424,13 @@ Popover is not modal. Outside click and Escape always dismiss. When the content 
 - `open()`, adds the `open` attribute.
 - `close()`, removes the `open` attribute.
 
-**Keyboard navigation.** On the trigger, Enter or Space opens the popover through native button activation. Focus moves to the first focusable element inside the popover, or to the surface itself when the body has no focusable content. Escape closes the popover, returns focus to the trigger, and dispatches `cancel`. Tab escapes the popover to the next document tab stop, no focus trap.
+**Keyboard navigation.** On the trigger, Enter or Space opens the popover through native button activation. Focus moves to the first focusable element inside the popover, or to the surface itself when the body has no focusable content, so Escape and screen reader announcements still work. Escape closes the popover, returns focus to the trigger, and dispatches a `cancel` event before the `close` event. Tab escapes the popover to the next document tab stop, no focus trap. Content that needs modality and focus trap belongs in `canvas-modal`. Outside click closes the popover and dispatches `cancel`.
+
+**ARIA.** Trigger, `aria-haspopup="dialog"` and `aria-expanded="true"` or `aria-expanded="false"` are wired automatically on the slotted trigger element when open state changes. Icon only triggers must supply `aria-label` themselves. Surface, `role="dialog"`, `aria-modal="false"`, `aria-label` set from the component's `label` attribute. Without `label` the dialog has no accessible name, which is why the attribute is required.
 
 **Placement.** On open, the component measures the trigger rectangle and the popover content against the viewport. Direction defaults to `down` when the content fits below the trigger. When it does not fit below, direction picks the side with more room. After the direction is chosen, `max-height` caps at the available space in that direction and the surface becomes scrollable when content exceeds the cap. Alignment defaults to `start` and flips to `end` when the start edge would clip the viewport. Explicit `direction` or `align` disable the corresponding axis auto flip. The surface is rendered with `position: fixed` so it escapes ancestor `overflow: hidden` and appears above normal stacking contexts.
 
-**Scroll behavior.** By default the popover follows its trigger on scroll, repositioning continuously. When the trigger leaves the viewport, the surface is visually hidden without closing. When the trigger scrolls back into view, the surface reappears. Set `dismiss-on-scroll` to close the popover on any scroll instead.
+**Scroll behavior.** By default the popover follows its trigger on scroll, repositioning continuously. When the trigger leaves the viewport, the surface is visually hidden without closing (via `visibility: hidden`). When the trigger scrolls back into view, the surface reappears. Set `dismiss-on-scroll` to close the popover on any scroll instead.
 
 **Sizing.**
 
@@ -1483,6 +1444,43 @@ Popover is not modal. Outside click and Escape always dismiss. When the content 
 | `--canvas-popover-max-height` | Author cap for max height | viewport minus 8 px (effectively unbounded) |
 
 The surface uses `overflow-wrap: anywhere` so long unbreakable tokens such as IRIs or IDs break rather than produce horizontal scroll. The surface itself is not a scroll container. When body content may exceed the direction aware `max-height`, wrap it in `canvas-scroll-area vertical` with an explicit `max-height` and `aria-label`. Same contract as `canvas-card-body`. This keeps the popover free of ancestor overflow clipping that would otherwise cut off descendant `canvas-dropdown` or `canvas-combobox` menus.
+
+**Visual spec.**
+
+*Surface.*
+
+- Background, `var(--color-surface, #FFFFFF)`.
+- Border, `1px solid #d4d4d5`. Radius, `var(--radius, .28571429rem)`. Matches `canvas-tooltip` and `canvas-card` so anchored surfaces share one container gray.
+- Shadow, `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`, same as the `canvas-menu-button` menu.
+- Padding, `1em 1.14285714em`. The surface holds arbitrary content, padding belongs to the container not the options.
+- Text, font size `1rem`, line height `1.4285714`, color `var(--color-text, rgba(0, 0, 0, 0.87))`.
+- Positioning, `position: fixed` with inline top and left values set by the component. Z index, `2000`.
+- Offset from trigger, 6 px gutter without `pointer`, 10 px gutter with `pointer` (matches `canvas-tooltip`).
+- Overflow, none. Long unbreakable tokens are broken by `overflow-wrap: anywhere`.
+
+*Height.*
+
+- No hard default cap. The effective `max-height` is `min(--canvas-popover-max-height override, calc(100vh - 8px), available space in chosen direction)`.
+- When content fits below the trigger, direction is down. When content does not fit below, direction is whichever of up or down has more room. After the direction is chosen, `max-height` caps at that side's available space.
+- Scroll inside the surface is automatic when content exceeds the cap.
+
+*Pointer artwork.*
+
+- 14 px by 7 px SVG triangle, rotated 45 degrees equivalent via path geometry. Border color `#d4d4d5`, fill `var(--color-surface, #FFFFFF)` on the overlay cover.
+- Layering, grey arrow sits behind the surface so only the protruding tip shows in the border color. White cover sits above the surface and masks the 1 px surface border at the 14 px joint so the arrow reads as continuous with the surface body. Same technique as the tooltip.
+- Offset, 5 px of the 7 px arrow protrudes outside the surface, 2 px overlaps behind the surface so the cover has a surface to paint on.
+- Position, arrow tracks the trigger center even when the surface edge clamps inward from the viewport. Clamp inside the surface keeps the arrow 6 px from each corner so it cannot slide into the border radius.
+- Flip, when auto placement flips direction from down to up, the arrow moves from the surface top edge to the surface bottom edge and the SVG inverts so the tip still points at the trigger.
+- Distance, when `pointer` is set the surface sits 10 px from the trigger with 8 px of viewport margin. Without `pointer`, 6 px gap and 4 px margin.
+
+*Border gray alignment.*
+
+Anchored surfaces and containers share one gray. Form indicators share a second gray that darkens on hover.
+
+- `#d4d4d5` on container chrome, `canvas-tooltip`, `canvas-popover` surface, `canvas-card` outer border.
+- `rgba(34, 36, 38, 0.15)` on form controls and form indicators, `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-textarea`, `canvas-multi-select`, `canvas-checkbox` resting, `canvas-radio` resting. Darkens to `rgba(34, 36, 38, 0.35)` on hover, to `#85b7d9` on focus.
+
+Do not introduce a third gray without mapping it into one of these two categories.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1548,7 +1546,9 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 
 **Overflow fade.** When tabs overflow horizontally, CSS mask gradients fade the edges to indicate scrollable content.
 
-**Keyboard navigation.** ArrowLeft/ArrowRight cycle through tabs. Home/End jump to first/last. Focus follows selection.
+**Keyboard navigation.** Left and Right arrow keys move focus between tab items within the tab menu. Home jumps to the first tab, End jumps to the last tab. Enter or Space activates the focused tab and shows its panel. Focus follows selection.
+
+**ARIA.** Tab items use `role="tab"`, the container uses `role="tablist"`, and panels use `role="tabpanel"`. Active tab has `aria-selected="true"`, inactive tabs have `aria-selected="false"`. Each tab has `aria-controls` pointing to its panel ID. Each panel has `aria-labelledby` pointing to its tab ID.
 
 **Initial selection.** The first tab with the `active` attribute becomes selected on mount. If no tab has `active`, the first tab is selected.
 
@@ -1884,10 +1884,12 @@ The `change` event is a single listener path when you do not care to distinguish
 
 **Keyboard.** Focus the drag handle with Tab.
 
-- `ArrowUp` and `ArrowDown` reorder within the current list, firing `reorder` and `change`.
-- `ArrowLeft` and `ArrowRight` move the item into the previous or next list in the same group, firing `move` and `change`. Active only when the list has a `group` attribute and a compatible sibling list exists. Sibling resolution goes by screen position left to right.
+- `ArrowUp` and `ArrowDown` reorder within the current list. Each keypress fires `reorder` and `change`, and announces position N of M in the list label.
+- `ArrowLeft` and `ArrowRight` move the item into the previous or next list in the same group. Each keypress fires `move` and `change`, and announces source and destination labels. Active only when the list has a `group` attribute and a compatible sibling list exists. Sibling resolution walks all compatible lists by screen position left to right, not by strict DOM sibling order.
 
-**ARIA.** A shared polite live region announces every move. Within list announcements read "Moved item to position N of M in <list label>.". Cross list announcements read "Moved item from <source> to <destination>, position N of M.". List labels come from `aria-labelledby`, then `aria-label`, then `id`, then "list". Label kanban columns explicitly so announcements read well.
+**Cross list cancel.** `beforemove`, `beforereorder`, and `beforechange` are cancelable. Calling `e.preventDefault()` in a handler snaps the item back to its source position and suppresses the success events. Always pair a cancel with visible user feedback, a toast or inline message. A silent cancel reads as a visual glitch to the user.
+
+**ARIA.** A shared polite live region announces every move. Label lists explicitly so announcements read naturally. Give each participating list an `aria-labelledby` pointing at its column heading, or an `aria-label` with the column name. Without a label, the announcer falls back to the list's `id`, then to the generic word "list". Within list moves announce "Moved item to position N of M in `<label>`.". Cross list moves announce "Moved item from `<source label>` to `<destination label>`, position N of M.".
 
 **Single drop vs bulk changes.** For small lists and fast backends, fire an API call on every `move` or `reorder`. For larger boards, accumulate `change` events in a `Map` keyed by id and flush on Save or after a debounced timer. The Map collapses repeated moves of the same item so only the final position ships in one payload.
 
