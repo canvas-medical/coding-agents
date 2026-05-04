@@ -105,9 +105,9 @@ After you've [installed your plugin](/sdk/canvas_cli/#canvas-install) and create
     ```sh
     INFO 2024-09-26 17:04:08,396 Starting server, listening on port 50051
     INFO 2024-09-26 17:04:08,396 Loading custom-plugins/task_webhook
-    INFO 2024-09-26 17:04:08,396 Loading plugin 'task_webhook:task_webhook.handlers.my_protocol:Protocol'
+    INFO 2024-09-26 17:04:08,396 Loading plugin 'task_webhook:task_webhook.handlers.event_handlers:Protocol'
     INFO 2024-09-26 17:04:24,410 A Task was created!
-    INFO 2024-09-26 17:04:24,410 task_webhook:task_webhook.handlers.my_protocol:Protocol.compute() completed (0 ms)
+    INFO 2024-09-26 17:04:24,410 task_webhook:task_webhook.handlers.event_handlers:Protocol.compute() completed (0 ms)
     INFO 2024-09-26 17:04:24,411 Responded to Event TASK_CREATED (1 ms)
     ```
 Awesome! But we're not here to log, we need to make an API request. To do that, we need to use the HTTP client found in the Canvas SDK's [Utils module](/sdk/utils/)
@@ -142,9 +142,9 @@ We can use <https://webhook.site/> for a quick way to test our webhook and see t
 After you've [installed your updated plugin](/sdk/canvas_cli/#canvas-install) and created a task, you should see this in your log stream:
     ```sh
     INFO 2024-09-26 17:18:23,206 Loading custom-plugins/task_webhook
-    INFO 2024-09-26 17:18:23,207 Reloading plugin 'task_webhook:task_webhook.handlers.my_protocol:Protocol'
+    INFO 2024-09-26 17:18:23,207 Reloading plugin 'task_webhook:task_webhook.handlers.event_handlers:Protocol'
     INFO 2024-09-26 17:18:33,850 Successfully notified API of task creation!
-    INFO 2024-09-26 17:18:33,851 task_webhook:task_webhook.handlers.my_protocol:Protocol.compute() completed (693 ms)
+    INFO 2024-09-26 17:18:33,851 task_webhook:task_webhook.handlers.event_handlers:Protocol.compute() completed (693 ms)
     INFO 2024-09-26 17:18:33,851 Responded to Event TASK_CREATED (696 ms)
     ```
 This log output is a great reminder for me to mention that making HTTP requests to external servers will slow plugin execution while it waits on the external server to respond. It's a good idea to make sure the servers you're hitting have a sufficiently quick response time.
@@ -165,7 +165,7 @@ We'll set two secrets, one for the unique id of the webhook, and one for an auth
         "components": {
             "handlers": [
                 {
-                    "class": "task_webhook.handlers.my_protocol:Protocol",
+                    "class": "task_webhook.handlers.event_handlers:Protocol",
                     "description": "Hit an API when a task is created",
                     "data_access": {
                         "event": "",
@@ -1395,7 +1395,7 @@ The Canvas CLI gives you a great head start when creating a plugin. Simply run `
       [1/1] project_name (My Cool Plugin): Pediatric Patient Chart Customizations
     Project created in /Users/andrew/src/canvas-plugins/pediatric-patient-chart-customizations
     ```
-This output shows the location of our freshly generated plugin project. In this directory, you'll see a default class (`pediatric_patient_chart_customizations/handlers/my_protocol.py`) provided as a starting point for your code.
+This output shows the location of our freshly generated plugin project. In this directory, you'll see a default class (`pediatric_patient_chart_customizations/handlers/event_handlers.py`) provided as a starting point for your code.
     ```sh
     $ tree pediatric_patient_chart_customizations/
     pediatric_patient_chart_customizations/
@@ -1403,10 +1403,10 @@ This output shows the location of our freshly generated plugin project. In this 
     ├── README.md
     └── handlers
         ├── __init__.py
-        └── my_protocol.py
+        └── event_handlers.py
     2 directories, 4 files
     ```
-You can use this file as a starting point, or you can start fresh with a new file. At minimum, I recommend renaming `my_protocol.py` to something more descriptive, and you'll need to update the references to the file in `CANVAS_MANIFEST.json` as well.
+You can use this file as a starting point, or you can start fresh with a new file. At minimum, I recommend renaming `event_handlers.py` to something more descriptive, and you'll need to update the references to the file in `CANVAS_MANIFEST.json` as well.
 ###  Move Immunizations to the Top of the Patient Summary 
 I've created a new file, `handlers/pediatric_chart_layout.py`, and I've updated my `CANVAS_MANIFEST.json` to reflect it.
     ```sh
@@ -1926,9 +1926,9 @@ Let's take a look at what was generated for us.
     ├── paperwork_eviscerator
     │    ├── CANVAS_MANIFEST.json
     │    ├── README.md
-    │    └── protocols
+    │    └── handlers
     │         ├── __init__.py
-    │         └── my_protocol.py
+    │         └── event_handlers.py
     ├── pyproject.toml
     └── tests
         ├── __init__.py
@@ -1946,7 +1946,7 @@ The CANVAS_MANIFEST.json is particularly important. It is used during the instal
         "components": {
             "handlers": [
                 {
-                    "class": "paperwork_eviscerator.handlers.my_protocol:Protocol",
+                    "class": "paperwork_eviscerator.handlers.event_handlers:Protocol",
                     "description": "A handler that does xyz...",
                     "data_access": {
                         "event": "",
@@ -1973,7 +1973,7 @@ Only handlers declared here are invoked by the plugin runner. If they are not de
 Secrets can be declared (though not defined) here. Any secrets declared here will be initialized on plugin install, and can be set in the plugin listing in the Settings section of your Canvas instance.
 ###  README.md 
 Share details about the purpose of your plugins and how it works in this README file.
-###  handlers/my_protocol.py 
+###  handlers/event_handlers.py 
 This file contains the handler class declared in the manifest file. We've included some sample content and copious comments for inspiration.
     ```python
     from canvas_sdk.events import EventType
@@ -4969,6 +4969,155 @@ All clients follow a consistent pattern: configure credentials via [plugin secre
 ----- END PAGE https://docs.canvasmedical.com/sdk/clients/
 
 
+----- BEGIN PAGE https://docs.canvasmedical.com/sdk/command-metadata-create-form-effect/
+##  Overview 
+The `CommandMetadataCreateFormEffect` allows developers to dynamically display additional fields with a command in a note. The values entered in these fields are stored as [command metadata](/sdk/data-command/#commandmetadata) against the target `command_uuid`.
+The effect is returned from a handler that responds to the `COMMAND__FORM__GET_ADDITIONAL_FIELDS` event.
+    ```python
+    from canvas_sdk.effects.command_metadata import (
+        CommandMetadataCreateFormEffect,
+        FormField,
+        InputType,
+    )
+    CommandMetadataCreateFormEffect(
+        command_uuid="command-uuid",
+        form_fields=[
+            FormField(
+                key="reason",
+                label="Reason",
+                type=InputType.SELECT,
+                options=["Routine", "Follow-up", "Other"],
+            ),
+        ],
+    )
+    ```
+##  Structure 
+###  **FormField**
+A FormField consists of the following properties:
+####  Attributes 
+Attribute | Type | Description  
+---|---|---  
+`key` | `str` | unique identifier of the field - command metadata key  
+`label` | `str` | the label that will be displayed on the field  
+`type` | `InputType` | the type of the input - TEXT, SELECT, DATE.  
+`required` | `bool` | if the input is required.  
+`editable` | `bool` | if the input can be editabled.  
+`options` | `list[str]` | possible options for when the input type is set to "SELECT"  
+`value` | `str` | default value for the field  
+###  **CommandMetadataCreateFormEffect**
+A CommandMetadataCreateFormEffect consists of the following properties:
+####  Attributes 
+Attribute | Type | Description  
+---|---|---  
+`command_uuid` | `str` | the UUID of the command these fields should be rendered on.  
+`form_fields` | `list[FormField]` | list of fields.  
+##  Validation 
+The effect validates inputs before it is applied:
+  - `command_uuid` is required.
+  - `options` may only be set on fields whose `type` is `InputType.SELECT`; providing `options` on a `TEXT` or `DATE` field raises a validation error.
+  - Every `key` must be unique across `form_fields`. Duplicates raise a validation error per duplicated key.
+##  Example Usage 
+The following handler declares two extra fields on every plan command when the platform requests additional fields for it:
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.command_metadata import (
+        CommandMetadataCreateFormEffect,
+        FormField,
+        InputType,
+    )
+    from canvas_sdk.events import EventType
+    from canvas_sdk.handlers import BaseHandler
+    class PlanCommandAdditionalFields(BaseHandler):
+        RESPONDS_TO = EventType.Name(EventType.COMMAND__FORM__GET_ADDITIONAL_FIELDS)
+        def compute(self) -> list[Effect]:
+            # Only respond for plan commands.
+            if self.event.context.get("schema_key") != "plan":
+                return []
+            form = CommandMetadataCreateFormEffect(
+                command_uuid=self.event.target.id,
+                form_fields=[
+                    FormField(
+                        key="priority",
+                        label="Priority",
+                        type=InputType.SELECT,
+                        options=["low", "medium", "high"],
+                    ),
+                    FormField(
+                        key="follow_up_date",
+                        label="Follow-up date",
+                        type=InputType.DATE,
+                        editable=True,
+                    ),
+                ],
+            )
+            return [form.apply()]
+    ```
+Once the user fills out these fields, their values are persisted as command metadata and can be read back through the SDK [command metadata](/sdk/data-command/#commandmetadata) table.
+##  Rendering on the printed note 
+The same `COMMAND__FORM__GET_ADDITIONAL_FIELDS` event fires when a command is rendered for printing (single-command print URL or full note printout). The platform uses the response to label and order the fields shown beneath each command in the printed output.
+Two things differ from the chart-form render path:
+  - **Values come from stored command metadata, not from`FormField.value`.** The platform pairs each field declared in your effect with the matching `CommandMetadata` row by `key`. Whatever value is on `FormField` is ignored during print rendering. You do not need to populate `value` for print.
+  - **Fields with no stored value or a blank value are skipped.** Only fields the user actually filled in will appear in the printout.
+  - **Fields you do not declare are hidden.** A `CommandMetadata` row whose `key` is not in your response will not print, even if it exists in the database. This matches the chart UI: removing or renaming a key in your effect makes the prior data invisible.
+###  Branching on `purpose`
+The event context carries a `purpose` key indicating which call site triggered the request:
+Value | When  
+---|---  
+`"form"` | Chart UI is rendering the command's edit form (default).  
+`"print"` | Single-command printout or note printout is being generated.  
+Read it from the handler context to vary your response — for example, to omit internal fields from print, or shorten labels for a denser layout.
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.command_metadata import (
+        CommandMetadataCreateFormEffect,
+        FormField,
+        InputType,
+    )
+    from canvas_sdk.events import EventType
+    from canvas_sdk.handlers import BaseHandler
+    class PlanCommandAdditionalFields(BaseHandler):
+        RESPONDS_TO = EventType.Name(EventType.COMMAND__FORM__GET_ADDITIONAL_FIELDS)
+        def compute(self) -> list[Effect]:
+            if self.event.context.get("schema_key") != "plan":
+                return []
+            is_print = self.event.context.get("purpose") == "print"
+            fields = [
+                FormField(
+                    key="priority",
+                    label="Priority",
+                    type=InputType.SELECT,
+                    options=["low", "medium", "high"],
+                ),
+                FormField(
+                    key="follow_up_date",
+                    label="Follow-up date",
+                    type=InputType.DATE,
+                ),
+            ]
+            if not is_print:
+                # Internal-only: visible on the form, hidden from printouts.
+                fields.append(
+                    FormField(
+                        key="reviewer_notes",
+                        label="Reviewer notes",
+                        type=InputType.TEXT,
+                    )
+                )
+            return [
+                CommandMetadataCreateFormEffect(
+                    command_uuid=self.event.target.id,
+                    form_fields=fields,
+                ).apply()
+            ]
+    ```
+###  Tips for the print path 
+  - **Use clear, human-readable`label` values.** Whatever you put on `FormField.label` is what the printed output shows. The platform does not derive a label from the `key`.
+  - **Use the same`key` you used when persisting metadata.** The print path joins on `key`; mismatches mean nothing renders for that field.
+  - **`type`, `options`, and `required` are ignored at print time.** Only `key` and `label` shape the printout.
+  - **Need to retire a field?** Removing it from the print response hides it for all future prints — including for committed notes. If you need the historical value to keep showing on signed records, keep the field declared (or declare it only when `purpose == "print"`).
+----- END PAGE https://docs.canvasmedical.com/sdk/command-metadata-create-form-effect/
+
+
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/commands-custom-command/
 ##  Introduction 
 The `CustomCommand` class allows plugins to create custom commands with HTML-rendered content that can be inserted into patient charts. Custom commands are designed for displaying read-only content and do not support user input or interactive forms.
@@ -5469,7 +5618,7 @@ The simplest way to originate and commit a command in a single plugin action is 
     ```
 This handles the origination and commit in a single effect, without needing to manage a `command_uuid` yourself.
 ###  Chaining Methods with a User-set UUID 
-If you need more control over the process — for example, to edit a command between origination and commit — you can chain separate effects by setting the `command_uuid` manually. This is also required for questionnaire-based commands, where `originate()` creates the command but does not add the answers — you must chain an `edit()` to populate the responses (see Usage Example). This chaining is necessary because the `originate` method executes asynchronously, so there is no way to get the `command_uuid` back from the originate action and use it for subsequent actions in the same operation.
+If you need more control over the process — for example, to edit a command between origination and commit — you can chain separate effects by setting the `command_uuid` manually. This chaining is necessary because the `originate` method executes asynchronously, so there is no way to get the `command_uuid` back from the originate action and use it for subsequent actions in the same operation.
     ```python
     from uuid import uuid4
     from canvas_sdk.commands import DiagnoseCommand
@@ -6498,8 +6647,7 @@ Below is an example that demonstrates how to instantiate a `QuestionnaireCommand
                   last_option = question.options[-1]
                   question.add_response(option=first_option, selected=True, comment="Don't panic")
                   question.add_response(option=last_option, selected=True)
-          # Because we're directly setting a command_uuid, we can return both originate and edit.
-          return [command.originate(), command.edit()]
+          return [command.originate()]
     ```
 ###  Explanation 
   - **Retrieving Questions:** The `questions` property returns a list of question objects created from the questionnaire's data.
@@ -6509,11 +6657,8 @@ Below is an example that demonstrates how to instantiate a `QuestionnaireCommand
     - For **RadioQuestion** , you must pass an `option` parameter (a `ResponseOption` instance) that corresponds to one of the allowed options.
     - For **CheckboxQuestion** , you must pass an `option` parameter along with an optional `selected` flag (defaulting to True) and an optional `comment`. Multiple responses can be recorded for checkbox questions.
     - **Note for Checkboxes:** Only the responses explicitly provided in the command payload will be updated in the UI. If a checkbox response is already selected and is not sent as unselected in the payload, its state remains unchanged.
-  - **Creating and Editing:** When creating a new questionnaire command, you must explicitly set a unique `command_uuid`. Providing this UUID enables you to originate the command within the note and then subsequently edit it with detailed responses in the same protocol execution.
-  - This approach is necessary because given the dynamic nature of the questionnaire command, the initial creation (origination) only includes the questionnaire ID. Once the command has been originated, you can immediately follow up with an edit to populate it with the patient's responses.
-  - If you are looking to insert a committed questionnaire command, you'll need to return three effects: 
-    - An `.originate()` to insert the command and select the questionnaire
-    - An `.edit()` to populate the responses
+  - If you are looking to insert a committed questionnaire command, you'll need to return two effects: 
+    - An `.originate()` to insert the command and select the questionnaire with the responses
     - A `.commit()` to commit the command
 * * *
 ##  ReasonForVisit 
@@ -6966,6 +7111,415 @@ PulseRhythm | Value | Description
     )
     ```
 ----- END PAGE https://docs.canvasmedical.com/sdk/commands/
+
+
+----- BEGIN PAGE https://docs.canvasmedical.com/sdk/companion/
+The **Provider Companion** is a mobile-optimized, provider-facing web app that runs alongside Canvas. It's designed for the phone-in-hand moments in a clinician's day — looking something up between rooms, triaging a message list, checking in on a patient's tasks — rather than the sit-down charting workflows the desktop app covers.
+Your plugins can contribute applications to the companion just like they do to the desktop. This page covers how plugins integrate, the three companion-specific application scopes, and how to share code when you want the same plugin to work across multiple scopes.
+##  Accessing the companion 
+The companion lives at `/companion/` on your Canvas instance:
+    ```text
+    https://<instance>.canvasmedical.com/companion/
+    ```
+Any staff user who can log in to the desktop Canvas app can log in to the companion with the same credentials. Patients don't have access — it's a provider surface only.
+##  How plugins extend the companion 
+Canvas plugins contribute embedded apps through the `Application` handler — a Python class with an `on_open()` method that returns a URL for Canvas to iframe into its UI. Which surface your app appears on is controlled by the `scope` value in your plugin's `CANVAS_MANIFEST.json`. Companion apps work exactly the same way; they just use one of three companion-specific `scope` values. If you haven't built an embedded app before, start with the [Applications](/sdk/handlers-applications/) page — this page assumes you know the basics and focuses on what's companion-specific.
+There are three companion scopes:
+Scope | Where the app shows up  
+---|---  
+`provider_companion_global` | Icon in the app launcher on the companion's main page, outside of any patient context  
+`provider_companion_patient_specific` | Tab on the patient page, next to the built-in Timeline tab  
+`provider_companion_note_specific` | Tab within an opened note on the patient page  
+When a user opens your app, Canvas fires an `APPLICATION__ON_OPEN` event and your handler's `on_open()` runs. Return a `LaunchModalEffect` pointing at whatever URL you want embedded — typically a page served by a SimpleAPI handler in the same plugin.
+##  `provider_companion_global`
+Global-scope apps appear in the companion's launcher on the main page. They run with no patient or note context — they're the right surface for workflows that span many patients, or administrative work that isn't tied to a chart.
+![](/assets/images/sdk/companion/companion-global.png) ![](/assets/images/sdk/companion/global-app.png)
+###  Event context 
+`self.event.context` contains the acting user but no patient or note keys.
+###  Use cases 
+  - A **task queue** showing every task assigned to the logged-in provider across all patients.
+  - A **schedule viewer** for the day's appointments.
+  - A **secure chat** for the care team.
+  - An **administrative dashboard** — e.g. open lab orders awaiting review.
+###  Example 
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.launch_modal import LaunchModalEffect
+    from canvas_sdk.handlers.application import Application
+    class TaskDashboardGlobal(Application):
+        """Companion global app — every task for the logged-in provider."""
+        def on_open(self) -> Effect:
+            return LaunchModalEffect(
+                url="/plugin-io/api/task_dashboard/app/tasks",
+                target=LaunchModalEffect.TargetType.DEFAULT_MODAL,
+            ).apply()
+    ```
+`CANVAS_MANIFEST.json`:
+    ```json
+    {
+      "sdk_version": "0.1.4",
+      "plugin_version": "0.0.1",
+      "name": "task_dashboard",
+      "description": "A task dashboard for the provider companion.",
+      "components": {
+        "applications": [
+          {
+            "class": "task_dashboard.applications.global_app:TaskDashboardGlobal",
+            "name": "Tasks",
+            "description": "All tasks assigned to me.",
+            "scope": "provider_companion_global",
+            "icon": "assets/tasks.png"
+          }
+        ],
+        "handlers": [
+          {
+            "class": "task_dashboard.handlers.api:TaskDashboardAPI",
+            "description": "Serves the task dashboard page the iframe loads."
+          }
+        ],
+        "commands": [],
+        "content": [],
+        "effects": [],
+        "views": []
+      },
+      "secrets": [],
+      "tags": {},
+      "references": [],
+      "license": "",
+      "diagram": false,
+      "readme": "./README.md"
+    }
+    ```
+The `TaskDashboardAPI` class is the [SimpleAPI handler](/sdk/handlers-simple-api/) that actually serves the page `on_open` iframes. `on_open` only returns the launch effect; the page itself has to be served by something, and that something is a SimpleAPI handler registered here.
+##  `provider_companion_patient_specific`
+Patient-scope apps appear as tabs on the patient page. Your tab sits next to the built-in Timeline tab, and when the user taps it, your handler's `on_open()` fires with the patient in `event.context`.
+![](/assets/images/sdk/companion/patient-timeline.png) ![](/assets/images/sdk/companion/patient-app.png)
+###  Event context 
+    ```python
+    self.event.context["patient"]["id"]  # Patient key (UUID string)
+    ```
+###  Use cases 
+  - A **chart summary** of conditions, meds, allergies, vitals, etc. for the open patient.
+  - A **risk-score panel** tied to the patient.
+  - A **care-plan checklist** for this patient's current programs.
+  - A **patient-scoped task list** — the same tasks view as the global app, but filtered to just this patient's tasks.
+###  Example 
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.launch_modal import LaunchModalEffect
+    from canvas_sdk.handlers.application import Application
+    class TaskDashboardPatient(Application):
+        """Companion patient app — tasks filtered to one patient."""
+        def on_open(self) -> Effect:
+            patient_id = self.event.context.get("patient", {}).get("id", "")
+            return LaunchModalEffect(
+                url=f"/plugin-io/api/task_dashboard/app/tasks?patient_id={patient_id}",
+                target=LaunchModalEffect.TargetType.DEFAULT_MODAL,
+            ).apply()
+    ```
+`CANVAS_MANIFEST.json`:
+    ```json
+    {
+      "sdk_version": "0.1.4",
+      "plugin_version": "0.0.1",
+      "name": "task_dashboard",
+      "description": "A patient-scoped task dashboard for the provider companion.",
+      "components": {
+        "applications": [
+          {
+            "class": "task_dashboard.applications.patient_app:TaskDashboardPatient",
+            "name": "Tasks",
+            "description": "Tasks for this patient.",
+            "scope": "provider_companion_patient_specific",
+            "icon": "assets/tasks.png"
+          }
+        ],
+        "handlers": [
+          {
+            "class": "task_dashboard.handlers.api:TaskDashboardAPI",
+            "description": "Serves the task dashboard page the iframe loads."
+          }
+        ],
+        "commands": [],
+        "content": [],
+        "effects": [],
+        "views": []
+      },
+      "secrets": [],
+      "tags": {},
+      "references": [],
+      "license": "",
+      "diagram": false,
+      "readme": "./README.md"
+    }
+    ```
+##  `provider_companion_note_specific`
+Note-scope apps appear as tabs inside an opened note on the patient page. Use these for workflows scoped to a single encounter. Both the patient and the note are passed in the event context.
+![](/assets/images/sdk/companion/note.png) ![](/assets/images/sdk/companion/note-app.png)
+###  Event context 
+    ```python
+    self.event.context["patient"]["id"]  # Patient key (UUID string)
+    self.event.context["note"]["id"]     # Note UUID
+    ```
+###  Use cases 
+  - A **documentation assistant** that reads the note's commands and suggests improvements.
+  - A **coding / billing helper** that computes E&M level from the note's content.
+  - A **visit-specific questionnaire** the provider fills out per encounter.
+  - An **inline scribe** that writes note content from dictation or an LLM.
+###  Example 
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.launch_modal import LaunchModalEffect
+    from canvas_sdk.handlers.application import Application
+    class ScribeAssistant(Application):
+        """Companion note app — inline scribe for the open note."""
+        def on_open(self) -> Effect:
+            patient_id = self.event.context.get("patient", {}).get("id", "")
+            note_id = self.event.context.get("note", {}).get("id", "")
+            return LaunchModalEffect(
+                url=(
+                    f"/plugin-io/api/scribe/app/compose"
+                    f"?patient_id={patient_id}&note_id={note_id}"
+                ),
+                target=LaunchModalEffect.TargetType.DEFAULT_MODAL,
+            ).apply()
+    ```
+`CANVAS_MANIFEST.json`:
+    ```json
+    {
+      "sdk_version": "0.1.4",
+      "plugin_version": "0.0.1",
+      "name": "scribe",
+      "description": "Inline scribe for the provider companion.",
+      "components": {
+        "applications": [
+          {
+            "class": "scribe.applications.note_app:ScribeAssistant",
+            "name": "Scribe",
+            "description": "Inline scribe for this note.",
+            "scope": "provider_companion_note_specific",
+            "icon": "assets/scribe.png"
+          }
+        ],
+        "handlers": [
+          {
+            "class": "scribe.handlers.api:ScribeAPI",
+            "description": "Serves the scribe page the iframe loads."
+          }
+        ],
+        "commands": [],
+        "content": [],
+        "effects": [],
+        "views": []
+      },
+      "secrets": [],
+      "tags": {},
+      "references": [],
+      "license": "",
+      "diagram": false,
+      "readme": "./README.md"
+    }
+    ```
+###  Originating commands on the note 
+The note scope's real payoff is that your app can contribute to the note it's running in. Take the `note_uuid` from the event context, build an SDK command with it, and return the command's `originate()` effect alongside your JSON response — the platform will materialize the command in the note after your handler returns.
+    ```python
+    from http import HTTPStatus
+    from canvas_sdk.commands.commands.vitals import VitalsCommand
+    from canvas_sdk.effects.simple_api import JSONResponse
+    from canvas_sdk.handlers.simple_api import SimpleAPI, StaffSessionAuthMixin, api
+    class VitalsEntryAPI(StaffSessionAuthMixin, SimpleAPI):
+        PREFIX = "/app"
+        @api.post("/vitals")
+        def submit(self):
+            note_id = self.request.query_params.get("note_id", "")
+            body = self.request.json() or {}
+            command = VitalsCommand(
+                note_uuid=note_id,
+                blood_pressure_systole=body.get("bp_sys"),
+                blood_pressure_diastole=body.get("bp_dia"),
+                pulse=body.get("pulse"),
+            )
+            return [
+                command.originate(),
+                JSONResponse(
+                    {"status": "submitted"},
+                    status_code=HTTPStatus.ACCEPTED,
+                ),
+            ]
+    ```
+The Application passes `note_id` through to the iframe on the launch URL's query string; the iframe sends it along on the POST to `/vitals`. The same pattern works for any SDK command that exposes an `originate()` method — assessments, prescriptions, lab orders, imaging orders, etc.
+**Attribution is the plugin author's responsibility.** Commands don't carry an explicit originator field; the platform attributes them to whoever the authenticated session belongs to when the effect is applied. The [`StaffSessionAuthMixin`](/sdk/handlers-simple-api-http/#staff-session) on the handler above ensures the request is gated on a logged-in staff session, so the originated command is attributed to that staff user rather than a generic plugin service identity. If your handler doesn't enforce a staff session, commands it originates won't be tied to the provider using the app — gate every command-originating route with `StaffSessionAuthMixin` (or a stricter equivalent).
+##  Sharing code across scopes 
+You don't need a separate plugin per scope — a single plugin can register several applications, all backed by the same SimpleAPI handler and the same UI bundle. The Application subclasses differ only in which scope they declare and what they put in the launch URL's query string; the shared handler branches on what it receives.
+The task dashboard is a natural example. The global view and the patient-scoped view show the same UI — a list of task cards — but one shows every task assigned to the provider and the other shows only tasks tied to the open patient. They can share everything except the scope declaration and one query-string parameter.
+###  Manifest — two applications, one handler 
+    ```json
+    {
+      "sdk_version": "0.1.4",
+      "plugin_version": "0.0.1",
+      "name": "task_dashboard",
+      "description": "Task dashboard — global and patient-scoped from one codebase.",
+      "components": {
+        "applications": [
+          {
+            "class": "task_dashboard.applications.global_app:TaskDashboardGlobal",
+            "name": "Tasks",
+            "description": "All tasks assigned to me.",
+            "scope": "provider_companion_global",
+            "icon": "assets/tasks.png"
+          },
+          {
+            "class": "task_dashboard.applications.patient_app:TaskDashboardPatient",
+            "name": "Tasks",
+            "description": "Tasks for this patient.",
+            "scope": "provider_companion_patient_specific",
+            "icon": "assets/tasks.png"
+          }
+        ],
+        "handlers": [
+          {
+            "class": "task_dashboard.handlers.api:TaskDashboardAPI",
+            "description": "Serves the task dashboard page and JSON bundle."
+          }
+        ],
+        "commands": [],
+        "content": [],
+        "effects": [],
+        "views": []
+      },
+      "secrets": [],
+      "tags": {},
+      "references": [],
+      "license": "",
+      "diagram": false,
+      "readme": "./README.md"
+    }
+    ```
+###  Shared SimpleAPI handler 
+The handler serves the same HTML for both scopes and branches on `patient_id` in its data endpoint: present → filter to that patient, absent → return the provider's entire task queue.
+    ```python
+    from http import HTTPStatus
+    from canvas_sdk.effects.simple_api import HTMLResponse, JSONResponse
+    from canvas_sdk.handlers.simple_api import SimpleAPI, StaffSessionAuthMixin, api
+    from canvas_sdk.templates import render_to_string
+    from canvas_sdk.v1.data.task import Task
+    class TaskDashboardAPI(StaffSessionAuthMixin, SimpleAPI):
+        PREFIX = "/app"
+        @api.get("/tasks")
+        def page(self):
+            return [HTMLResponse(
+                render_to_string("static/tasks.html"),
+                status_code=HTTPStatus.OK,
+            )]
+        @api.get("/tasks/data.json")
+        def data(self):
+            user_id = self.request.headers["canvas-logged-in-user-id"]
+            patient_id = self.request.query_params.get("patient_id")
+            tasks = Task.objects.filter(assigned_to_id=user_id)
+            if patient_id:
+                tasks = tasks.filter(patient__key=patient_id)
+            return [JSONResponse(
+                {"tasks": [serialize(t) for t in tasks]},
+                status_code=HTTPStatus.OK,
+            )]
+    ```
+The HTML/JS bundle (served by `/app/tasks`) fetches `/app/tasks/data.json` relative to its own URL, so it gets the right slice of tasks without knowing which scope launched it — the scope is encoded in whether the Application handler appended `?patient_id=...` to the launch URL.
+This pattern generalizes: any time the _same UI_ works on a filtered or unfiltered dataset, you can register one Application per scope and share the handler, templates, and client-side code underneath.
+##  Dismissing your modal 
+Shortly after your iframe loads, Canvas transfers a `MessagePort` to it via a `postMessage` event. The plugin stores that port and posts `{type: 'CLOSE_MODAL'}` through it whenever it wants to dismiss itself — typically right after a successful form submit, or from a Cancel button.
+    ```javascript
+    let messagePort = null;
+    window.addEventListener('message', (event) => {
+        if (event.data?.type === 'INIT_CHANNEL' && event.ports?.[0]) {
+            messagePort = event.ports[0];
+            messagePort.start();
+        }
+    });
+    function closeModal() {
+        if (messagePort) {
+            messagePort.postMessage({ type: 'CLOSE_MODAL' });
+        } else {
+            window.close();  // fallback if the port never arrived
+        }
+    }
+    ```
+Register the `message` listener at module scope, not inside a `DOMContentLoaded` handler — the port can arrive before your DOM is ready, and a listener attached later will miss it.
+##  Async effects from SimpleAPI handlers 
+Effects returned from a SimpleAPI route execute **after** the handler returns — they're dispatched to a platform worker, not applied inside your handler's transaction. That means you can't emit e.g. `Patient(...).create()` and then query for the new patient in the same request — the effect hasn't been processed yet and the record doesn't exist.
+If you need the new record's UUID (for example to deep-link to it), do the lookup on a follow-up request from the iframe. The simplest shape: `POST /create` emits the effect and returns `202 Accepted` with everything needed to identify the new record; the iframe polls a separate `GET /find` endpoint until the record appears (or a short timeout fires).
+    ```python
+    import datetime
+    from http import HTTPStatus
+    from canvas_sdk.effects.patient import Patient as PatientEffect
+    from canvas_sdk.effects.simple_api import JSONResponse
+    from canvas_sdk.handlers.simple_api import SimpleAPI, StaffSessionAuthMixin, api
+    from canvas_sdk.v1.data.patient import Patient
+    class RegisterPatientAPI(StaffSessionAuthMixin, SimpleAPI):
+        PREFIX = "/app"
+        @api.post("/create")
+        def create(self):
+            body = self.request.json() or {}
+            # ... validate the submission ...
+            effect = PatientEffect(
+                first_name=body["first_name"],
+                last_name=body["last_name"],
+                birthdate=body["birth_date"],
+            ).create()
+            return [
+                effect,
+                JSONResponse({
+                    "status": "submitted",
+                    "lookup_params": {
+                        "first_name": body["first_name"],
+                        "last_name": body["last_name"],
+                        "birth_date": body["birth_date"],
+                    },
+                    "lookup_started_at":
+                        datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                }, status_code=HTTPStatus.ACCEPTED),
+            ]
+        @api.get("/find")
+        def find(self):
+            params = self.request.query_params
+            found = (
+                Patient.objects
+                .filter(
+                    first_name=params["first_name"],
+                    last_name=params["last_name"],
+                    birth_date=params["birth_date"],
+                    created__gte=params["after"],
+                )
+                .order_by("-created")
+                .first()
+            )
+            return [JSONResponse(
+                {"patient_id": str(found.id) if found else None},
+                status_code=HTTPStatus.OK,
+            )]
+    ```
+On the iframe, poll `/find` at ~500 ms intervals for ~5 s. On the first hit, deep-link to the new record. On timeout, surface a clear error message — the effect failed and there's nothing to link to. Don't claim success before the lookup confirms the record exists.
+##  Common patterns 
+The conventions are the same as any other SDK application — the companion just chooses where and when to render your iframe.
+  - **Serve your UI from a[SimpleAPI handler](/sdk/handlers-simple-api/)** in the same plugin. `on_open()` returns a `LaunchModalEffect` pointing at a URL like `/plugin-io/api/<plugin_name>/...`.
+  - **Authenticate with[`StaffSessionAuthMixin`](/sdk/handlers-simple-api-http/#staff-session).** The companion is staff-only, so every request hitting your plugin's SimpleAPI should be gated on a valid staff session. Mix the class in instead of writing your own `authenticate()` — it rejects non-staff sessions (including patient-portal sessions) up front:
+        ```python
+        from canvas_sdk.handlers.simple_api import SimpleAPI, StaffSessionAuthMixin
+        class TaskDashboardAPI(StaffSessionAuthMixin, SimpleAPI):
+            PREFIX = "/app"
+            # ... routes ...
+        ```
+The logged-in user is then available via `self.request.headers["canvas-logged-in-user-id"]`.
+  - **Push live updates with a plugin-owned WebSocket.** If your app needs to stay in sync when data changes, add a `BaseHandler` that listens for the relevant domain events and broadcasts on a channel the iframe subscribes to. See [WebSocket API](/sdk/handlers-simple-api-websocket/) for the handler shape and authentication flow.
+  - **Keep it mobile-first.** The companion runs on phones. System fonts, stacked sections, generous tap targets, no hover interactions — your app should feel native inside the companion's shell.
+  - **Drop your own top chrome in patient and note scope.** The companion harness already renders the patient's name (and, in note scope, the note type and date) above your iframe. If your plugin also renders a title bar, the result is a doubled-up header. Suppress the iframe's header when running in patient or note scope — either branch in your Application and pass a hint through the launch URL, or scope the CSS on a body class your shell sets from the query string.
+  - **Link out to another patient with`window.top.location`.** To navigate from inside your modal to another patient's companion view — for example, a "tap a patient name to jump there" pattern — set `window.top.location = "/companion/patient/<uuid>/"`. That tears down the iframe and replaces the parent page. Setting only the iframe's `location` leaves the modal open showing the patient page on top of whatever was behind it, which is rarely what you want.
+##  Further reading 
+  - [Applications](/sdk/handlers-applications/) — the base `Application` handler class, `on_open()`, and other application scopes.
+  - [SimpleAPI](/sdk/handlers-simple-api/) — serving HTML and JSON from a plugin.
+  - [WebSocket API](/sdk/handlers-simple-api-websocket/) — pushing live updates to an iframe.
+  - [Data module](/sdk/data/) — read-only clinical data models.
+  - Example plugin: [`example_provider_companion_app`](https://github.com/canvas-medical/canvas-plugins/tree/main/example-plugins/example_provider_companion_app) demonstrates one plugin registering apps at all three companion scopes.
+----- END PAGE https://docs.canvasmedical.com/sdk/companion/
 
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/custom-data-attribute-hubs/
@@ -12438,7 +12992,7 @@ from_patient_portal | From Patient Portal
 
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/data-lab-partner-and-test/
 ##  Introduction 
-The **LabPartner** and **LabPartnerTest** models represent external lab partners and the tests they offer within Canvas.
+The **LabPartner** , **LabPartnerTest** , **LabPartnerTestQuestion** , and **LabPartnerTestQuestionChoice** models represent external lab partners, the tests they offer, and the ask-at-order-entry (AOE) questions associated with each test within Canvas.
 * * *
 ##  LabPartner 
 The `LabPartner` model stores information about a lab partner
@@ -12483,11 +13037,72 @@ Field Name | Type | Description
 ---|---|---  
 id | UUID | The universally unique identifier for the test record.  
 dbid | Integer | The internal database identifier (primary key) for the test record.  
-lab_partner | ForeignKey | A reference to the related `LabPartner` (accessible via the related name `available_tests`).  
+lab_partner | LabPartner | A reference to the related `LabPartner` (accessible via the related name `available_tests`).  
 order_code | String | A code used to identify the test order. May be blank.  
 order_name | Text | The name of the test order.  
 keywords | Text | Keywords associated with the test. May be blank.  
 cpt_code | String | The CPT code for the test, if available. Can be blank or null.  
+questions | LabPartnerTestQuestion[] | AOE questions associated with this test.  
+* * *
+##  LabPartnerTestQuestion 
+The `LabPartnerTestQuestion` model represents an ask-at-order-entry (AOE) question associated with a lab partner test. AOE questions are prompts that must be answered when ordering a specific lab test (e.g., "Is the patient fasting?", "Source of specimen").
+###  Basic Usage 
+To retrieve questions for a given lab partner test:
+    ```python
+    from canvas_sdk.v1.data.lab import LabPartnerTest
+    test = LabPartnerTest.objects.get(id="your-uuid-here")
+    questions = test.questions.all()
+    ```
+To filter for required questions only:
+    ```python
+    required_questions = test.questions.filter(required=True)
+    ```
+To directly query questions by code:
+    ```python
+    from canvas_sdk.v1.data.lab import LabPartnerTestQuestion
+    questions = LabPartnerTestQuestion.objects.filter(code="FAST")
+    ```
+* * *
+##  LabPartnerTestQuestionChoice 
+The `LabPartnerTestQuestionChoice` model represents a selectable answer option for an AOE question. Not all questions have predefined choices (e.g., free-text questions may have none).
+###  Basic Usage 
+To retrieve choices for a given question:
+    ```python
+    question = test.questions.first()
+    choices = question.choices.all()
+    ```
+###  Example: Building AOE prompts for a lab test 
+    ```python
+    from canvas_sdk.v1.data.lab import LabPartnerTest
+    from logger import log
+    test = LabPartnerTest.objects.get(id="your-uuid-here")
+    for question in test.questions.all():
+        log.info(f"Question: {question.body} (required={question.required})")
+        for choice in question.choices.all():
+            log.info(f"  - {choice.label}: {choice.value}")
+    ```
+##  Attributes 
+###  LabPartnerTestQuestion Attributes 
+Field Name | Type | Description  
+---|---|---  
+dbid | Integer | The internal database identifier (primary key) for the question.  
+lab_partner_test | LabPartnerTest | A reference to the related `LabPartnerTest` (accessible via the related name `questions`).  
+required | Boolean | Whether this question must be answered when ordering the test.  
+code | String | A code identifying the question (e.g., "FAST" for fasting status).  
+body | Text | The full text of the question displayed to the user.  
+type | String | The question type (e.g., "text", "select", "date", "numeric").  
+created | DateTime | When the record was created.  
+modified | DateTime | When the record was last modified.  
+choices | LabPartnerTestQuestionChoice[] | Selectable answer options for this question.  
+###  LabPartnerTestQuestionChoice Attributes 
+Field Name | Type | Description  
+---|---|---  
+dbid | Integer | The internal database identifier (primary key) for the choice.  
+lab_partner_test_question | LabPartnerTestQuestion | A reference to the related `LabPartnerTestQuestion` (accessible via the related name `choices`).  
+label | String | The display label for this choice (shown to the user).  
+value | String | The value submitted when this choice is selected.  
+created | DateTime | When the record was created.  
+modified | DateTime | When the record was last modified.  
 ----- END PAGE https://docs.canvasmedical.com/sdk/data-lab-partner-and-test/
 
 
@@ -17976,6 +18591,60 @@ ADT^A13 | Cancel Discharge/End Visit
 ----- END PAGE https://docs.canvasmedical.com/sdk/effect-external-event/
 
 
+----- BEGIN PAGE https://docs.canvasmedical.com/sdk/effect-health-gorilla-lab-order-override/
+The `HealthGorillaLabOrderOverride` effect lets a plugin inject FHIR-shaped values (account numbers, bill-to, performer organization, sub-tenant, location) into Canvas's outbound Health Gorilla lab-order payload at order-send time. It is returned from a handler of the [`LAB_ORDER_COMMAND__PRE_SEND`](/sdk/events/) event, which fires from Canvas right before the FHIR `RequestGroup` is built and POSTed to Health Gorilla.
+This is the supported way to drive lab-order routing from plugin-owned state (for example, a partner-specific lab account selected in a custom chart UI) without putting any partner/tenant concept into Canvas core.
+##  Behavior 
+Each field on the effect is independently optional. A field set to a non-`None` value overrides Canvas's default resolution for that field; a field left as `None` (the default) means **no override** — Canvas falls through to its existing resolution path for that field.
+Multiple plugins may return overrides for the same order. When two effects set the same field, the later one wins.
+##  Attributes 
+Attribute | Type | Description  
+---|---|---  
+practitioner_account_number | str | Stamped on the contained `Practitioner.identifier` (Account Number).  
+organizational_account_number | str | Stamped on the contained authorizing `Organization.identifier` (Account Number).  
+hg_organization_id | str | Health Gorilla facility id (`f-...`) used for the `requestgroup-performer` reference. Skips the lab-name catalog lookup.  
+hg_tenant_id | str | Health Gorilla sub-tenant Organization id. Adds a `requestgroup-authorizedBy` reference to `Organization/t-{tenant_id}`.  
+hg_location_id | str | Optional Location reference for the order.  
+bill_to_code | BillToCode | Explicit `Account.type` coding. Overrides the existing coverage-derived inference.  
+###  BillToCode 
+`bill_to_code` is constrained to one of four Health-Gorilla–recognized codes. It is a Pydantic `Literal`, so attempting to construct the effect with any other value raises a `ValidationError` at construction time.
+Value | HG `Account.type.coding.code` | Display  
+---|---|---  
+`self` | `self` | Client  
+`patient` | `patient` | Patient  
+`guarantor` | `guarantor` | Guarantor  
+`thirdParty` | `thirdParty` | Third Party  
+When `bill_to_code` is `patient` or `guarantor`, Canvas attaches the appropriate `guarantor` reference to the FHIR `Account` automatically.
+##  Example 
+    ```python
+    from canvas_generated.messages.events_pb2 import EventType
+    from canvas_sdk.effects.lab_order import HealthGorillaLabOrderOverride
+    from canvas_sdk.handlers import BaseHandler
+    class InjectPartnerLabAccount(BaseHandler):
+        RESPONDS_TO = EventType.Name(EventType.LAB_ORDER_COMMAND__PRE_SEND)
+        def compute(self):
+            # Resolve the selected lab account from plugin-owned state — for
+            # example, a custom-model row keyed off the note's partner_slug
+            # stored in note.related_data.
+            account = self.resolve_lab_account_for_note(self.event.target)
+            if account is None:
+                return []
+            return [HealthGorillaLabOrderOverride(
+                practitioner_account_number=account.practitioner_account_number,
+                organizational_account_number=account.organizational_account_number,
+                hg_organization_id=account.hg_organization_id,
+                hg_tenant_id=account.tenant_id or None,
+                hg_location_id=account.location_id or None,
+                bill_to_code="self",
+            ).apply()]
+    ```
+##  Related 
+  - [`LAB_ORDER_COMMAND__PRE_SEND`](/sdk/events/) event — fires this effect's host
+  - [Health Gorilla multi-tenant Organization model](https://developer.healthgorilla.com/docs/organization-2)
+  - [HG `RequestGroup` profile](https://developer.healthgorilla.com/docs/requestgroup)
+----- END PAGE https://docs.canvasmedical.com/sdk/effect-health-gorilla-lab-order-override/
+
+
 ----- BEGIN PAGE https://docs.canvasmedical.com/sdk/effect-messages/
 The `Message` effect provides a unified way to create, edit, and transmit messages between users (patients or staff) within the Canvas platform. It supports standalone creation, immediate send after creating, edits, and dedicated send operations.
 ##  Attributes 
@@ -19885,6 +20554,31 @@ Some effects have helper classes that assist you by providing payload validation
             ])
             return [layout.apply()]
     ```
+###  Async Execution 
+By default, effects returned from a plugin's `compute` method are executed inline as part of the request that triggered them. Any `Effect` can be opted into asynchronous execution by chaining `.set_async()` on it, in which case the platform will run the effect as an asynchronous task instead of inline. This is useful for effects that should run on a delay, that are tolerant of retries, or that you don't want to block the originating request.
+    ```python
+    from canvas_sdk.effects.claim import ClaimEffect
+    from canvas_sdk.events import EventType
+    from canvas_sdk.handlers import BaseHandler
+    class MyHandler(BaseHandler):
+        RESPONDS_TO = EventType.Name(EventType.NOTE_STATE_CHANGE_EVENT_CREATED)
+        def compute(self):
+            claim_id = self.event.context["claim_id"]
+            return [
+                ClaimEffect(claim_id=claim_id)
+                .add_comment("Reviewed by automation.")
+                .set_async(delay_seconds=60, max_retries=3)
+            ]
+    ```
+`set_async()` returns the same `Effect` so it can be chained directly off any effect-producing call (e.g. `ClaimEffect(...).add_comment(...)`, `Response(...).apply()`, or a manually-constructed `Effect(...)`).
+####  Parameters 
+Parameter | Type | Description | Required  
+---|---|---|---  
+`delay_seconds` | `int` | Number of seconds to wait before running the effect. Must be non-negative. `0` schedules the effect to run asynchronously as soon as possible. | No  
+`max_retries` | `int` | Maximum number of retry attempts on failure. Must be non-negative. When omitted, the platform default is applied. Pass `0` to explicitly disable retries. | No  
+Both parameters are keyword-only. Calling `.set_async()` with neither argument is a no-op and returns the effect unchanged.
+####  Implementation Details 
+  - Negative values or non-integer values for `delay_seconds` or `max_retries` raise `TypeError` / `ValueError`.
 ###  Disallowed Effect/Event Combinations 
 Canvas prevents certain combinations of events and effects to avoid infinite loops that could occur when an effect triggers the same event that generated it. The following combinations are specifically disallowed:
 Event Type | Disallowed Effect Types  
@@ -19895,7 +20589,7 @@ Event Type | Disallowed Effect Types
 `ADD_OR_UPDATE_PROTOCOL_CARD`  
 For example, if you have a plugin that responds to `PATIENT_CHART__CONDITIONS` events, you cannot return `ADD_BANNER_ALERT` or `ADD_OR_UPDATE_PROTOCOL_CARD` effects from that plugin, as this could create an infinite loop where the effect triggers another conditions event.
 ##  Effect Classes 
-[ Appointment Labels Programmatically manage labels on appointments for categorization and automation. ](/sdk/effect-appointment-labels/) [ Appointment Metadata Interact with appointment metadata. ](/sdk/effect-appointment-metadata/) [ Appointment Metadata Create Form Effect for dynamically displaying forms when scheduling an appointment. ](/sdk/appointment-metadata-create-form-effect/) [ Appointments Create, update, and cancel patient appointments. ](/sdk/effect-notes/#appointment-effect) [ Banner Alerts Contextual information in a patient's chart. ](/sdk/effect-banner-alerts/) [ Batch Originate Commands Efficiently insert multiple commands into a note in a single batch operation. ](/sdk/effect-batch-originate/) [ Billing Line Items Add, modify, or remove billing codes on a note. ](/sdk/effect-billing-line-items/) [ C-CDA Export Create a C-CDA (Consolidated Clinical Document Architecture) document for a patient. ](/sdk/effect-create-ccda-export/) [ Claims Manage labels, update line items, move to a queue, or post a payment. ](/sdk/effect-claims/) [ Command Metadata Attach custom key-value metadata to command records. ](/sdk/effect-command-metadata/) [ Command Validation Validate commands and return structured error messages to users. ](/sdk/effect-command-validation/) [ Compound Medications Create or update compound medications. ](/sdk/effect-compound-medication/) [ Create Calendar Create a calendar for a provider. ](/sdk/calendar-create-effect/) [ Create Patient Preferred Pharmacies Create preferred pharmacies for a patient. ](/sdk/effect-create-patient-preferred-pharmacies/) [ Custom HTML and Django Templates Render custom HTML using Django templates. ](/sdk/layout-effect/#custom-html-and-django-templates/) [ Default Homepage Set a provider's default homepage in Canvas. ](/sdk/default-homepage-effect/) [ Event Validation Error Effect for blocking event creation with a validation error message. ](/sdk/effect-event-validation-error/) [ External Events Create or update external clinical events from ADT feeds. ](/sdk/effect-external-event/) [ Form Result Effect for dynamically displaying forms in the Patient Portal. ](/sdk/form-result-effect/) [ Layout Effects Modify or interact with the layout in Canvas. ](/sdk/layout-effect/) [ Manage Calendar Events Manage calendar events. ](/sdk/calendar-event-management-effects/) [ Messages Interact with messages in Canvas. ](/sdk/effect-messages/) [ Note Metadata Attach custom key-value metadata to note records. ](/sdk/effect-note-metadata/) [ Notes Interact with notes in Canvas. ](/sdk/effect-notes/) [ Observations Create or update clinical observations. ](/sdk/effect-observation/) [ Patient Interact with patient data. ](/sdk/effect-patient/) [ Patient Chart Group Effect for grouping items on a patient chart section. ](/sdk/patient-chart-group-effect/) [ Patient Chart Summary Custom Section Serve content for a custom section in the patient chart summary. ](/sdk/patient-chart-summary-custom-section-effect/) [ Patient External ID Create a new external identifier for a patient. ](/sdk/effect-create-patient-external-identifier/) [ Patient Facility Address Create, update, or delete patient facility address associations. ](/sdk/effect-patient-facility-address/) [ Patient Group Interact with patient group data. ](/sdk/effect-patient-group/) [ Patient Metadata Interact with patient metadata. ](/sdk/effect-patient-metadata/) [ Patient Metadata Create Form Effect for dynamically displaying forms in the Patient profile. ](/sdk/patient-metadata-create-form-effect/) [ Patient Portal Customize your Patient Portal. ](/sdk/patient-portal/) [ Patient Timeline Configure a patient's timeline by excluding specific note types. ](/sdk/effect-patient-timeline/) [ Protocol Cards Calls to action in a patient's chart, commonly used for decision support intervention. ](/sdk/effect-protocol-cards/) [ Questionnaires Interact with questionnaires and interviews. ](/sdk/effect-questionnaires/) [ Task Metadata Interact with Task metadata. ](/sdk/effect-task-metadata/) [ Tasks Create or update tasks. ](/sdk/effect-tasks/) [ Commands The building blocks of many end-user workflows in Canvas, including nearly all clinical workflows for documentation. ](/sdk/commands/)
+[ Appointment Labels Programmatically manage labels on appointments for categorization and automation. ](/sdk/effect-appointment-labels/) [ Appointment Metadata Interact with appointment metadata. ](/sdk/effect-appointment-metadata/) [ Appointment Metadata Create Form Effect for dynamically displaying forms when scheduling an appointment. ](/sdk/appointment-metadata-create-form-effect/) [ Appointments Create, update, and cancel patient appointments. ](/sdk/effect-notes/#appointment-effect) [ Banner Alerts Contextual information in a patient's chart. ](/sdk/effect-banner-alerts/) [ Batch Originate Commands Efficiently insert multiple commands into a note in a single batch operation. ](/sdk/effect-batch-originate/) [ Billing Line Items Add, modify, or remove billing codes on a note. ](/sdk/effect-billing-line-items/) [ C-CDA Export Create a C-CDA (Consolidated Clinical Document Architecture) document for a patient. ](/sdk/effect-create-ccda-export/) [ Claims Manage labels, update line items, move to a queue, or post a payment. ](/sdk/effect-claims/) [ Command Metadata Attach custom key-value metadata to command records. ](/sdk/effect-command-metadata/) [ Command Metadata Create form Adds additional fields to commands that are stored as command metadata. ](/sdk/command-metadata-create-form-effect/) [ Command Validation Validate commands and return structured error messages to users. ](/sdk/effect-command-validation/) [ Compound Medications Create or update compound medications. ](/sdk/effect-compound-medication/) [ Create Calendar Create a calendar for a provider. ](/sdk/calendar-create-effect/) [ Create Patient Preferred Pharmacies Create preferred pharmacies for a patient. ](/sdk/effect-create-patient-preferred-pharmacies/) [ Custom HTML and Django Templates Render custom HTML using Django templates. ](/sdk/layout-effect/#custom-html-and-django-templates/) [ Default Homepage Set a provider's default homepage in Canvas. ](/sdk/default-homepage-effect/) [ Event Validation Error Effect for blocking event creation with a validation error message. ](/sdk/effect-event-validation-error/) [ External Events Create or update external clinical events from ADT feeds. ](/sdk/effect-external-event/) [ Form Result Effect for dynamically displaying forms in the Patient Portal. ](/sdk/form-result-effect/) [ Layout Effects Modify or interact with the layout in Canvas. ](/sdk/layout-effect/) [ Manage Calendar Events Manage calendar events. ](/sdk/calendar-event-management-effects/) [ Messages Interact with messages in Canvas. ](/sdk/effect-messages/) [ Note Metadata Attach custom key-value metadata to note records. ](/sdk/effect-note-metadata/) [ Notes Interact with notes in Canvas. ](/sdk/effect-notes/) [ Observations Create or update clinical observations. ](/sdk/effect-observation/) [ Patient Interact with patient data. ](/sdk/effect-patient/) [ Patient Chart Group Effect for grouping items on a patient chart section. ](/sdk/patient-chart-group-effect/) [ Patient Chart Summary Custom Section Serve content for a custom section in the patient chart summary. ](/sdk/patient-chart-summary-custom-section-effect/) [ Patient External ID Create a new external identifier for a patient. ](/sdk/effect-create-patient-external-identifier/) [ Patient Facility Address Create, update, or delete patient facility address associations. ](/sdk/effect-patient-facility-address/) [ Patient Group Interact with patient group data. ](/sdk/effect-patient-group/) [ Patient Metadata Interact with patient metadata. ](/sdk/effect-patient-metadata/) [ Patient Metadata Create Form Effect for dynamically displaying forms in the Patient profile. ](/sdk/patient-metadata-create-form-effect/) [ Patient Portal Customize your Patient Portal. ](/sdk/patient-portal/) [ Patient Timeline Configure a patient's timeline by excluding specific note types. ](/sdk/effect-patient-timeline/) [ Protocol Cards Calls to action in a patient's chart, commonly used for decision support intervention. ](/sdk/effect-protocol-cards/) [ Questionnaires Interact with questionnaires and interviews. ](/sdk/effect-questionnaires/) [ Task Metadata Interact with Task metadata. ](/sdk/effect-task-metadata/) [ Tasks Create or update tasks. ](/sdk/effect-tasks/) [ Commands The building blocks of many end-user workflows in Canvas, including nearly all clinical workflows for documentation. ](/sdk/commands/)
 ##  Effect Types 
 The following effects are available to be applied in Canvas.
 ###  Banner Alerts & Protocol Cards 
@@ -19953,6 +20647,7 @@ COMMAND_AVAILABLE_ACTIONS_RESULTS | Sort or filter command available actions. Ch
 COMMAND_VALIDATION_ERRORS | Return validation errors for commands. Check out [Command Validation](/sdk/effect-command-validation/).  
 EVENT_VALIDATION_ERROR | Return validation errors for events. Check out [Event Validation Error](/sdk/effect-event-validation-error/).  
 BATCH_ORIGINATE_COMMANDS | Originate multiple commands in a note at once. Check out [Batch Originate](/sdk/effect-batch-originate/).  
+COMMAND__FORM__CREATE_ADDITIONAL_FIELDS | Returns additional fields to be displayed on a command and stored as command metadata. Check out [Command Metadata Create Form](/sdk/command-metadata-create-form-effect/).  
 ###  Notes 
 Check out the [Note Effects](/sdk/effect-notes/) documentation.
 Effect | Description  
@@ -26163,6 +26858,22 @@ Target object | Context object
       "uuid": note_id
     "patient":
       "id": pt_id  
+LAB_ORDER_COMMAND__PRE_SEND  
+---  
+Fires from Canvas right before a lab order's FHIR `RequestGroup` is built and POSTed to Health Gorilla. Plugins may respond with one or more [HealthGorillaLabOrderOverride](/sdk/effect-health-gorilla-lab-order-override/) effects to inject account numbers, bill-to, performer organization, sub-tenant, or location into the outbound payload.  
+Target object | Context object  
+    "id": laborder_id
+    "type": [LabOrder](/sdk/data-labs/#laborder)
+| 
+    "lab_order":
+      "id": laborder_id
+      "uuid": laborder_id
+    "lab_partner": str
+    "note":
+      "id": note_id
+      "uuid": note_id
+    "patient":
+      "id": pt_id  
 LAB_ORDER_COMMAND__PRE_UPDATE  
 ---  
 Target object | Context object  
@@ -32166,6 +32877,12 @@ Context object:
         "id": str
         "type": [Staff](/sdk/data-staff/) | [Patient](/sdk/data-patient/)  
 GET_HOMEPAGE_CONFIGURATION | Homepage is loading. See [Set default homepage](/guides/set-default-homepage/) for examples of how to use this event.  
+COMMAND__FORM__GET_ADDITIONAL_FIELDS | Command is originated. See [Command metadata Create Form](/sdk/command-metadata-create-form-effect/) for how to use this event.   
+Target: 
+    "command_uuid": str
+Context object: 
+    "schema_key": str
+    "purpose": "form" | "print"  
 ###  Search Result Data Structures 
 Many event payloads include search results. This section documents the common structures within them.
 ####  MedicationSearchResult 
@@ -36285,6 +37002,9 @@ Scope | Description
 `full_chart` | Displayed as a tab in the patient chart navigation menu alongside Chart and Profile  
 `provider_menu_item` | Displayed as a menu item in the provider menu  
 `portal_menu_item` | Displayed as a menu item in the patient portal  
+`provider_companion_global` | In the app launcher on the [Provider Companion](/sdk/companion/) main page  
+`provider_companion_patient_specific` | As a tab on a patient's page in the [Provider Companion](/sdk/companion/)  
+`provider_companion_note_specific` | As a tab within an opened note in the [Provider Companion](/sdk/companion/)  
 ###  Full Chart Scope 
 Applications with the `full_chart` scope appear as navigation tabs at the top of the patient chart, alongside the default "Chart" and "Profile" tabs. This is ideal for building comprehensive patient-level views or dashboards.
     ```json
