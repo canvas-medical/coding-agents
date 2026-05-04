@@ -1,0 +1,263 @@
+{
+  "skill_name": "canvas-plugin-ui",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a right chart pane plugin view that shows a table of active medications with columns for medication name, dose, and frequency.",
+      "expected_output": "HTML with right chart pane surface (pane-body class on body), a canvas-table with canvas-table-head, canvas-table-body, canvas-table-row, and canvas-table-cell elements for three columns, padding-bottom 120px on the scrollable container, canvas-plugin-ui.css and canvas-plugin-ui.js linked in the head, no canvas-button with variant primary, muted text for secondary data.",
+      "assertions": [
+        "Body element has class pane-body or outermost container has padding-bottom 120px",
+        "HTML contains a table element with aria-label attribute",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "Table uses canvas-table, canvas-table-head, canvas-table-body, canvas-table-row, canvas-table-cell elements",
+        "No hardcoded hex colors outside the :root block",
+        "No canvas-button with variant primary on the page",
+        "Table headers include Medication, Dose, and Frequency or equivalent"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a settings page for a plugin with toggles for enabling email notifications, SMS notifications, and auto-scheduling, plus a Save button at the bottom.",
+      "expected_output": "The agent should detect the toggle/submit violation and use canvas-checkbox elements instead of canvas-toggle since the page has a Save button. The Save button should be a canvas-button without variant primary.",
+      "assertions": [
+        "No canvas-toggle elements on the page",
+        "Boolean controls use canvas-checkbox elements",
+        "Save button is a canvas-button without variant primary",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors in plugin-specific CSS"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML that has inline styles with raw hex colors (#333, #4CAF50 for buttons, #e0e0e0 for borders), a purple (#9C27B0) status badge, a toggle switch next to a Submit button, and no ARIA attributes on interactive elements.",
+      "expected_output": "All raw hex values replaced with CSS variable references, purple badge replaced with a palette color, toggle replaced with canvas-checkbox since Submit button is present, ARIA attributes added to interactive elements.",
+      "assertions": [
+        "No raw hex color values in CSS rules outside :root",
+        "No purple, teal, cyan, or pink colors anywhere",
+        "No toggle switch on the page (has Submit button)",
+        "Boolean controls use canvas-checkbox elements",
+        "Interactive elements have appropriate ARIA attributes",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML. It has tabs built with <div class=\"tab\" onclick=\"switchTab('settings')\"> where a switchTab function queries document.querySelectorAll('.tab') and toggles active state. It has a native <select id=\"provider-filter\" onchange=\"updateFilter(this.value)\"> where updateFilter sends an API request with the selected value. It also has inline styles with raw hex colors (#333333, #f0f0f0) and missing ARIA attributes.",
+      "expected_output": "Tabs replaced with canvas-tabs, canvas-tab, canvas-tab-label, and canvas-tab-panel elements. Tab switching handled by the canvas-tabs component via the tab-change event, with the switchTab function updated accordingly. Native select replaced with canvas-dropdown or canvas-combobox, and the updateFilter function updated to read from the component. All raw hex replaced with tokens. All original function names preserved in the refactored script blocks.",
+      "assertions": [
+        "Tabs use canvas-tabs, canvas-tab, canvas-tab-label, and canvas-tab-panel elements",
+        "No native select elements. Dropdowns use canvas-dropdown or canvas-combobox",
+        "No raw hex color values in plugin-specific CSS",
+        "JavaScript function switchTab is defined in a script tag",
+        "JavaScript function updateFilter is defined in a script tag",
+        "Tab switching handled by canvas-tabs component via tab-change event",
+        "The dropdown component has a mechanism to pass the selected value to updateFilter",
+        "Every getElementById call in the scripts has a matching id in the HTML",
+        "Every inline onclick or onchange handler calls a function that exists in the scripts"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Build a confirmation modal for a plugin. The modal should ask the user to confirm an action, have a Cancel button and a Confirm button, and close itself when the user clicks Confirm.",
+      "expected_output": "A canvas-modal with canvas-modal-header (dismissable attribute), canvas-modal-content with confirmation text, and canvas-modal-footer with Cancel and Confirm buttons. The Confirm button calls CanvasUI.utils.dismissModal() in its click handler. Cancel calls the modal's dismiss() method.",
+      "assertions": [
+        "HTML contains a canvas-modal element with an id attribute",
+        "HTML contains a canvas-modal-header with the dismissable attribute",
+        "HTML contains a canvas-modal-content element with confirmation text",
+        "HTML contains a canvas-modal-footer element",
+        "Footer contains a Cancel button that calls dismiss() on the modal",
+        "Footer contains a Confirm button whose click handler calls CanvasUI.utils.dismissModal()",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Create a provider filter using a multi-select dropdown. The user should be able to pick multiple providers from a list and the page should react when the selection changes.",
+      "expected_output": "A canvas-multi-select with a label attribute, placeholder, and canvas-option children for each provider. A change event listener on the multi-select reads the updated value array.",
+      "assertions": [
+        "HTML contains a canvas-multi-select element with a label attribute",
+        "canvas-multi-select contains at least three canvas-option children with value attributes",
+        "A script tag registers a change event listener on the canvas-multi-select",
+        "The change event handler reads the selected values from the component",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No native select elements on the page"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Build an FAQ section for a plugin with three expandable questions and answers.",
+      "expected_output": "A canvas-accordion containing three canvas-accordion-item children. Each item has a canvas-accordion-title with the question text and a canvas-accordion-content with the answer text.",
+      "assertions": [
+        "HTML contains a canvas-accordion element",
+        "canvas-accordion contains at least three canvas-accordion-item elements",
+        "Each canvas-accordion-item contains a canvas-accordion-title element",
+        "Each canvas-accordion-item contains a canvas-accordion-content element",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Create a patient intake form with fields for full name, date of birth (dropdown), notes (multiline), a consent checkbox, and a submit button.",
+      "expected_output": "A form with canvas-input for the name, canvas-dropdown for date of birth, canvas-textarea for notes, canvas-checkbox for consent, and a canvas-button for submit. The submit button should not use variant primary (green is reserved for clinical state transitions like sign or lock).",
+      "assertions": [
+        "HTML contains a canvas-input element with a label for the name field",
+        "HTML contains a canvas-dropdown element for date of birth",
+        "HTML contains a canvas-textarea element for notes",
+        "HTML contains a canvas-checkbox element for consent",
+        "HTML contains a canvas-button for form submission",
+        "The submit canvas-button does not have variant set to primary",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Build a right chart pane plugin that shows a patient risk score panel with a score value, a brief description, and a list of contributing factors.",
+      "expected_output": "HTML for a right chart pane surface. The outermost scrollable container has padding-bottom: 120px to clear the Pylon Chat widget. Content includes a score display, description text, and a list of risk factors.",
+      "assertions": [
+        "Outermost scrollable container has padding-bottom: 120px or body has class pane-body",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block",
+        "No canvas-button with variant primary on the page",
+        "Content includes a visible risk score value",
+        "Content includes a list of contributing factors"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Create a plugin page that displays a list of lab results, but when there are no results to show, it should display a friendly empty state message with a button to request new labs.",
+      "expected_output": "HTML with an empty state pattern using a centered container, a heading or description explaining no results exist, and an optional canvas-button to take action. The container uses text-align: center, color from the muted text token, and padding from a spacing token.",
+      "assertions": [
+        "HTML contains a centered container with text-align: center",
+        "Empty state container uses var(--color-text-muted) or the muted text color token",
+        "Empty state container uses a spacing token for padding",
+        "Empty state includes a text description about no results",
+        "Empty state includes a canvas-button for requesting new labs",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Build a plugin page with a data table that shows a loading spinner while the data is being fetched from an API.",
+      "expected_output": "HTML with a canvas-loader component displayed while data loads. The loader should use an appropriate mode (inline for within content, overlay for covering a container). A script handles showing and hiding the loader based on fetch state.",
+      "assertions": [
+        "HTML contains a canvas-loader element",
+        "canvas-loader has a mode attribute or uses the default inline mode",
+        "A script tag controls the visibility of the loader based on data fetching",
+        "HTML contains a canvas-table or table structure for displaying the data",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Create a dismissible info banner at the top of a plugin page that tells the user about a new feature. When the user dismisses it, the banner should be removed from the page.",
+      "expected_output": "A canvas-banner with variant info and the dismissible attribute. A dismiss event listener removes the banner element from the DOM when fired.",
+      "assertions": [
+        "HTML contains a canvas-banner element with variant set to info",
+        "canvas-banner has the dismissible attribute",
+        "A script tag registers a dismiss event listener",
+        "The dismiss event handler removes the banner from the DOM using e.target.remove() or equivalent",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Apply the Canvas design system to this existing plugin HTML. It has a collapsible matched medications section built with <details class=\"section\" id=\"matchedSection\"><summary class=\"matched\">Matched</summary><div id=\"matchedContainer\"></div><details><summary style=\"padding:6px 14px;\">Active Meds</summary><div id=\"activeMedsContainer\"></div></details></details>. Preserve the ids so existing JavaScript that references matchedContainer and activeMedsContainer keeps working.",
+      "expected_output": "Native details and summary replaced with canvas-accordion, canvas-accordion-item, canvas-accordion-title, and canvas-accordion-content. The outer Matched section becomes a canvas-accordion-item and the nested Active Meds becomes a second canvas-accordion-item or a canvas-accordion nested inside the first content. Ids matchedContainer and activeMedsContainer stay on the inner div elements. Inline style blobs on the native summary are removed because the component handles styling.",
+      "assertions": [
+        "HTML contains a canvas-accordion element",
+        "HTML contains canvas-accordion-item elements",
+        "HTML contains canvas-accordion-title elements",
+        "HTML contains canvas-accordion-content elements",
+        "No native details elements on the page",
+        "No native summary elements on the page",
+        "The element with id matchedContainer is still present in the HTML",
+        "The element with id activeMedsContainer is still present in the HTML",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Build a medications list surface for a plugin. The page has a filter bar above the list with a status dropdown (All, Active, Discontinued) and a date range canvas-input pair. The list fetches from a JS endpoint on load and renders rows. Handle the full state machine, loading, populated, filter no results, and first use. Use the Canvas design system and render the correct typed empty state based on cause. Pay attention to what the user can do when filters produce zero results.",
+      "expected_output": "A page with canvas-loader shown during fetch, the populated list rendered on success with rows, and two distinct empty state branches. First use (no medications exist at all) renders a centered empty with a heading, supporting text, and a primary Add first medication button. Filter no results (medications exist but the current filter excludes all) renders a centered empty inside the list container with a heading, supporting text, and a Clear filters ghost button that resets the filter inputs. The empty pattern does not render during the loading window. Empty state copy names the domain object and uses a semantic heading element.",
+      "assertions": [
+        "HTML contains a canvas-loader element for the loading state",
+        "A script gates rendering of the empty state behind fetch resolution so the empty pattern does not mount during loading",
+        "Filter no results empty state contains a canvas-button with variant ghost labeled Clear filters or equivalent reset wording",
+        "The Clear filters button handler resets the filter inputs to their default values",
+        "First use empty state contains a canvas-button labeled with a verb tied to adding a medication (Add, Add medication, Add first medication, or similar) and not a generic Click here or Learn more",
+        "Each empty state uses a semantic heading element (h1 through h6) inside the empty container",
+        "Empty copy names the domain object (medications, medication, or meds) and not generic No data or No results found on its own",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Build a table of tasks with three columns, title, assignee, and due date. Each row ends with a single trigger that opens a row action menu with Edit, Duplicate, then a divider, then Delete. The trigger is a kebab icon. Wire up a select event that logs which action was chosen for which task.",
+      "expected_output": "A canvas-table with three data columns plus an actions column. The actions cell contains a canvas-menu-button with align=end and a slotted canvas-button trigger. The trigger is a ghost icon only canvas-button with an aria-label and an SVG kebab icon (three vertical dots) as its content. Inside the menu, canvas-option for Edit, canvas-option for Duplicate, an hr divider, then canvas-option for Delete. A script listens for select events on an ancestor of the menu buttons (event delegation via bubbling) and logs the detail.value alongside the row's task id.",
+      "assertions": [
+        "HTML contains at least one canvas-menu-button element",
+        "Each canvas-menu-button has align set to end so the menu hugs the row's right edge",
+        "Each canvas-menu-button contains a slotted canvas-button with slot equal to trigger",
+        "Each slotted canvas-button trigger has an aria-label attribute because it is icon only",
+        "Each canvas-menu-button contains canvas-option children for Edit, Duplicate, and Delete",
+        "Each canvas-menu-button contains an hr element between Duplicate and Delete as a section divider",
+        "Destructive Delete option sits after the divider, not mixed with Edit and Duplicate above it",
+        "No canvas-dropdown used for the row action menu",
+        "canvas-menu-button does not carry name, value, or required attributes",
+        "A script registers a select event listener that reads event.detail.value from the menu button",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Add a filter icon in the header of a notes list that opens a popover when clicked. The popover contains a type dropdown with three values (office visit, phone call, lab result), an author text input, and two date inputs for a date range. The footer of the popover has a ghost Clear button and a primary Apply button. Clicking outside the popover or pressing Escape should dismiss it. Apply the filter and close when the user clicks Apply.",
+      "expected_output": "A canvas-popover element with a slotted canvas-button trigger carrying an aria-label and an SVG filter icon. The popover has a label attribute (required for the dialog aria-label) and pointer because the icon only trigger is ambiguous on its own. Size is md (default) or explicit. Body content is a flex column with a canvas-dropdown for type, a canvas-input for author, two canvas-input type=date elements for the date range, and an action row with a ghost Clear canvas-button and a primary Apply canvas-button. Apply button click closes the popover by removing the open attribute or calling close(). No canvas-modal used for this anchored surface.",
+      "assertions": [
+        "HTML contains at least one canvas-popover element",
+        "Each canvas-popover has a non empty label attribute",
+        "Each canvas-popover contains a slotted element with slot equal to trigger",
+        "The slotted trigger is a canvas-button with an aria-label attribute because it is icon only",
+        "The popover body contains a canvas-dropdown for filter type",
+        "The popover body contains a canvas-input for author and two canvas-input elements with type date",
+        "The popover has an action row with a ghost canvas-button for Clear and a canvas-button for Apply",
+        "No canvas-modal used to wrap the filter form",
+        "canvas-popover carries pointer because the icon only trigger is ambiguous",
+        "Apply click handler removes the open attribute or calls close on the popover",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Build a small medications panel for a patient chart. The panel sits inside a card with a header titled Active medications. When the patient has no medications, render a centered empty state with a heading, one line of supporting text, and a primary button. Add an Add medication button in the card footer with a tooltip describing what the button does. At the top of the panel, include a banner that tells the clinician the vitals were just updated and the heart rate is elevated. Use clinical copy throughout. Follow every rule in references/writing-style.md.",
+      "expected_output": "A canvas-card containing a header with the title Active medications written in sentence case. Inside the card body, a canvas-banner with an appropriate variant reports the vitals update and elevated heart rate with terse clinical copy (for example, Vitals updated at 09 12. Heart rate elevated.). Below the banner, when no medications are recorded, a centered empty state with heading No medications recorded, one line of supporting text such as Add the first medication to begin this patient's record, and a primary canvas-button labeled Add first medication. The card footer contains a canvas-button labeled Add medication with a canvas-tooltip whose text reads Add medication. All strings use sentence case. No em dashes, no en dashes, no curly quotes. No AI puffery (vibrant, boasts, seamlessly, empowering, ensuring), no inflation of significance (serves as, stands as), no didactic disclaimers (It is important to note), no collaborative assistant tone (Let me help you), no knowledge cutoff disclaimers. Clinical vocabulary (Active medications, Vitals, Heart rate, No medications recorded) is preserved in its clinical sense.",
+      "assertions": [
+        "HTML contains zero em dash characters (Unicode U+2014)",
+        "HTML contains zero en dash characters (Unicode U+2013)",
+        "HTML contains zero typographic double quote characters (U+201C left, U+201D right) inside attribute values or rendered text",
+        "HTML contains zero typographic apostrophe characters (U+2019) inside attribute values or rendered text",
+        "Card title is Active medications in sentence case, not Active Medications",
+        "Empty state heading uses sentence case",
+        "Tooltip text uses sentence case",
+        "Banner text uses sentence case at the start of each sentence",
+        "HTML does not contain any of the substrings boasts, vibrant, tapestry, testament, seamlessly, effortlessly, streamlined, powerful, comprehensive, empowering, ensuring, fostering, showcasing",
+        "HTML does not contain any of the substrings serves as, stands as, plays a key role in, sets the stage for",
+        "HTML does not contain any of the substrings It is important to note, Please be aware, It should be emphasized, Rest assured",
+        "HTML does not contain any of the substrings Let me help you, I can help with, Together we will, Allow me to",
+        "HTML does not contain any of the substrings As of my last update, training data, I cannot access real time",
+        "HTML contains at least one of the clinical phrases Active medications, Vitals, Heart rate, No medications recorded, preserving the clinical carve out",
+        "Empty state heading distinguishes recorded from not recorded (No medications recorded passes, No medications alone fails)",
+        "Card footer button label is concise, verb first (Add medication), not padded (Add a New Medication Order Now)",
+        "HTML links canvas-plugin-ui.css and canvas-plugin-ui.js",
+        "No hardcoded hex colors outside the :root block"
+      ]
+    }
+  ]
+}
