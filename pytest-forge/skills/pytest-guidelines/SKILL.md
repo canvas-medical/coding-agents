@@ -278,6 +278,44 @@ def test_fetch_data(mock_api):
 
 For detailed naming examples, see `references/naming-conventions.md`.
 
+### Assert Complete Outputs, Not Subsets
+
+**CRITICAL**: When a method produces a collection of outputs (a list, a set of files, written text, created objects), assert on the **complete** output using equality — not on a subset using membership or individual element checks.
+
+Partial assertions let source-level additions (a new item in a loop, a new line in a file, a new key in a dict) go completely undetected even at 100% line coverage.
+
+**FORBIDDEN** (subset / membership checks):
+
+```python
+# WRONG — only checks two of three symlinks; adding a third goes unnoticed
+assert (clinic_home / ".claude").is_symlink()
+assert (clinic_home / ".ssh").is_symlink()
+
+# WRONG — only checks partial file content
+assert "line1" in content
+assert "line2" in content
+```
+
+**CORRECT** (equality on the complete output):
+
+```python
+# CORRECT — equality covers ALL symlinks; adding one fails the test immediately
+created = {p.name for p in clinic_home.iterdir() if p.is_symlink()}
+expected = {".claude", ".ssh", ".gitconfig"}
+assert created == expected
+
+# CORRECT — full file content equality
+expected = "line1\nline2\nline3\n"
+assert content == expected
+```
+
+**Rule of thumb**: if the full expected value is deterministic (a constant tuple, a known list of keys, a fixed file content), use `==`. Reserve `in` / `is_symlink()` / individual element checks only for cases where the output is genuinely partial by design.
+
+This applies everywhere:
+- File contents: assert the complete text, not just that certain lines are present
+- Collections returned by methods: assert the complete list/set, not just selected items
+- Side effects (files created, directories made): verify the complete set of expected side effects
+
 ### Assertion Style
 
 **Singleton Comparisons**: Use `is` (not `==`) when comparing to singletons: `True`, `False`, `None`.
