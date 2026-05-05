@@ -109,13 +109,70 @@ def test_fetch_data(mock_api):
     assert mock_api.mock_calls == exp_calls
 ```
 
+## Mock Verification: Object Level Only
+
+**CRITICAL RULE**: verify every mock at the **mock object level** — never at the child attribute level.
+
+```python
+# FORBIDDEN — child attribute level:
+assert mock_auth.validate_request.mock_calls == [call(request=request)]
+assert tested.current_status.mock_calls == [call(FooStatus)]
+
+# CORRECT — object level, child calls appear as call.child_name(...):
+assert mock_auth.mock_calls == [call.validate_request(request=request)]
+assert tested.mock_calls == [call.current_status(FooStatus), call.save_status(status)]
+```
+
+A single `assert mock.mock_calls == [...]` at the top of the mock object covers **all** its child calls at once. This is both shorter and safer: it catches new calls that were added to the source but not anticipated in the test.
+
+## Testing Abstract Classes with `MagicMock(spec=...) + __get__`
+
+When the class under test is abstract or hard to instantiate, use:
+
+```python
+tested = MagicMock(spec=MyAbstractClass)
+tested.method_under_test = MyAbstractClass.method_under_test.__get__(tested)
+```
+
+This runs the **real implementation** of `method_under_test` while keeping all other methods as mocks. After calling:
+
+```python
+result = tested.method_under_test(arg)
+```
+
+Verify **all** interactions through a single `tested.mock_calls` assertion:
+
+```python
+# CORRECT — one comprehensive assertion at object level:
+exp_tested_calls = [
+    call.dependency_a(arg1),
+    call.dependency_b(),
+    call.dependency_c(arg2),
+]
+assert tested.mock_calls == exp_tested_calls
+
+# FORBIDDEN — individual child checks miss future additions:
+assert tested.dependency_a.mock_calls == [call(arg1)]   # method level
+assert tested.dependency_b.mock_calls == [call()]        # method level
+```
+
+If a child dependency needs setup (e.g., it returns a value the real code uses), set it via `side_effect`:
+
+```python
+tested.dependency_a.side_effect = [some_value]
+```
+
+Then include `call.dependency_a(arg1)` in `exp_tested_calls` — the object-level check covers it.
+
 ## Important Reminders
 
 - **ALWAYS** reference pytest-guidelines skill
 - **ALWAYS** use `side_effect` for mocks (never `return_value`)
-- **ALWAYS** verify mocks with `mock_calls`
+- **ALWAYS** verify mocks with `mock_calls` **at the object level** — `assert mock.mock_calls == [...]`
+- **NEVER** verify at child attribute level — `assert mock.child.mock_calls` is forbidden even when it appears to cover the call
 - **ALWAYS** use standard variable names
 - **ALWAYS** use hardcoded expected values (never computed or dynamic)
+- **ALWAYS** assert on the **complete** output using equality (`==`), not on a subset using membership (`in`) or individual element checks — partial assertions let source additions go undetected at 100% line coverage
 - **ALWAYS** use tuple as first parameter in `@pytest.mark.parametrize` (not string)
 - **ALWAYS** test edge cases and error paths
 - **ALWAYS** run tests to verify they pass
