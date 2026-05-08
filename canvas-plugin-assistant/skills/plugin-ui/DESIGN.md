@@ -16,8 +16,8 @@ Green is rare. Only for clinical state transitions that affect the patient recor
 |---|---|---|
 | Green | `#22BA45` | Primary actions (clinical state transitions), success |
 | Blue | `#2185D0` | Secondary actions, links, focus rings, info badges |
-| White | `#FFFFFF` | Backgrounds, card surfaces, input backgrounds |
-| Light Gray | `#F5F5F5` | Page backgrounds, disabled inputs |
+| White | `#FFFFFF` | Plugin page background (default), card surfaces, input backgrounds |
+| Light Gray | `#F5F5F5` | Disabled inputs, opt-in page canvas for peer `canvas-card` collections |
 | Mid Gray | `#E9E9E9` | Borders, dividers, inactive toggles |
 | Red | `#BD0B00` | Destructive actions only, errors |
 | Orange | `#ED4A0B` | Warnings, stale indicators |
@@ -139,7 +139,7 @@ Shared properties that apply across all components. These are defined in `assets
 | `--color-text` | `--palette-text` | Primary body text |
 | `--color-text-active` | `--palette-text-active` | Hovered or active text |
 | `--color-text-muted` | `--palette-text-muted` | Secondary text on white backgrounds |
-| `--color-bg` | `--palette-bg` | Page backgrounds |
+| `--color-bg` | `--palette-bg` | Opt-in page canvas for peer card collections. Not the default plugin background. |
 | `--color-border` | `--palette-border` | Borders, dividers |
 | `--color-surface` | `--palette-white` | Card and input backgrounds |
 
@@ -199,6 +199,22 @@ This means.
 - Setting nothing gives every component the Canvas default radius.
 
 The same logic applies to every property in every component.
+
+## Plugin Background
+
+Plugin pages use a white background by default. This matches the Canvas home-app, which leaves the body unstyled so the browser's white surface shows through. Single cards, forms, prose pages, pages with accordions, and pages with tables all sit on white. A single `canvas-card` on a white page still reads as elevated through its own border and shadow.
+
+The one exception is a page whose entire purpose is a peer `canvas-card` collection laid out as a masonry, grid, or gallery. In that case, set the page background to `--color-bg` (light gray) so the gaps between cards do the visual grouping. This is not an everyday layout. If the page is not explicitly a card collection, stay on white.
+
+```css
+body {
+  background: var(--palette-white);
+}
+
+.card-gallery-page {
+  background: var(--color-bg);
+}
+```
 
 ## Text and Background Pairing
 

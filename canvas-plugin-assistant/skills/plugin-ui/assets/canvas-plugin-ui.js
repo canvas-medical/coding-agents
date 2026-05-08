@@ -87,6 +87,187 @@
     return placement;
   }
 
+  /* ---- Accessibility helpers ---- */
+
+  /* Shared accessibility utilities used by component classes below. Scoped to
+     the IIFE so they do not leak onto window. The two CSS template constants
+     are concatenated into a component shadow style block when needed. The
+     trap and proxy utilities run at component lifetime. */
+
+  var _cuidCounter = 0;
+
+  /** Per element unique id generator. Usage, var id = cuid('err'); errSpan.id = id; */
+  function cuid(prefix) {
+    _cuidCounter += 1;
+    return (prefix || 'cui') + '_' + Date.now().toString(36) + '_' + _cuidCounter.toString(36);
+  }
+
+  /** Reduced motion preference query helper. Usage, if (reduceMotion()) spinner.style.animationName = 'none'; */
+  function reduceMotion() {
+    return typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches === true;
+  }
+
+  /* _isFocusVisible. Returns true if the element can receive keyboard focus
+     based on disabled state, hidden attribute, computed display, computed
+     visibility, and bounding rectangle. Used by _collectTabbable. */
+  function _isFocusVisible(el) {
+    if (!el || el.disabled) return false;
+    if (typeof el.hasAttribute === 'function' && el.hasAttribute('hidden')) return false;
+    if (typeof el.getBoundingClientRect === 'function') {
+      var r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return false;
+    }
+    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+      var s = window.getComputedStyle(el);
+      if (s && (s.display === 'none' || s.visibility === 'hidden')) return false;
+    }
+    return true;
+  }
+
+  /* _collectTabbable. Walks an element subtree in source order and collects
+     tabbable elements. Descends into open shadow roots so callers can find
+     focus targets inside web components. Considers a, button, input, select,
+     textarea, and any element with a non negative tabindex. Skips disabled,
+     hidden, and visually invisible elements. */
+  function _collectTabbable(node, acc) {
+    acc = acc || [];
+    if (!node || node.nodeType !== 1) return acc;
+    var tag = node.tagName ? node.tagName.toLowerCase() : '';
+    var tiAttr = typeof node.getAttribute === 'function' ? node.getAttribute('tabindex') : null;
+    var ti = tiAttr != null ? parseInt(tiAttr, 10) : null;
+    var defaultFocusable = tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea' ||
+      (tag === 'a' && typeof node.hasAttribute === 'function' && node.hasAttribute('href'));
+    var explicitlyFocusable = ti != null && ti >= 0;
+    var explicitlyUnfocusable = ti != null && ti < 0;
+    if (!explicitlyUnfocusable && (defaultFocusable || explicitlyFocusable) && _isFocusVisible(node)) {
+      acc.push(node);
+    }
+    if (node.shadowRoot) {
+      var shadowKids = node.shadowRoot.children;
+      for (var i = 0; i < shadowKids.length; i++) _collectTabbable(shadowKids[i], acc);
+    }
+    var lightKids = node.children;
+    if (lightKids) {
+      for (var j = 0; j < lightKids.length; j++) _collectTabbable(lightKids[j], acc);
+    }
+    return acc;
+  }
+
+  /** Focus trap that descends open shadow roots and returns a release function. Usage, var release = trapFocus(modal); release(); */
+  function trapFocus(root, opts) {
+    opts = opts || {};
+    var restoreFocus = opts.restore !== false;
+    var previouslyFocused = restoreFocus ? document.activeElement : null;
+
+    function onKeydown(ev) {
+      if (ev.key !== 'Tab') return;
+      var path = typeof ev.composedPath === 'function' ? ev.composedPath() : [];
+      if (path.length && path.indexOf(root) === -1) return;
+      var tabbables = _collectTabbable(root);
+      if (tabbables.length === 0) {
+        ev.preventDefault();
+        return;
+      }
+      var first = tabbables[0];
+      var last = tabbables[tabbables.length - 1];
+      var current = path[0];
+      if (ev.shiftKey) {
+        if (current === first) {
+          ev.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (current === last) {
+          ev.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', onKeydown, true);
+
+    return function release() {
+      document.removeEventListener('keydown', onKeydown, true);
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        try { previouslyFocused.focus(); } catch (e) {}
+      }
+    };
+  }
+
+  /* Default attribute list AriaProxy mirrors from host onto inner control.
+     Components can pass a custom list via options.attributes if they need a
+     subset or an extension of the defaults. */
+  var ARIA_PROXY_DEFAULT_ATTRS = [
+    'required',
+    'aria-invalid',
+    'disabled',
+    'aria-describedby',
+    'aria-labelledby',
+    'aria-controls',
+    'aria-expanded',
+    'aria-activedescendant'
+  ];
+
+  /** AriaProxy mixin factory. Class that mirrors aria attributes from the host onto the element returned by this._ariaProxyTarget. Usage, class CanvasInput extends AriaProxy(HTMLElement) {}. */
+  function AriaProxy(BaseClass, options) {
+    options = options || {};
+    var attrs = options.attributes || ARIA_PROXY_DEFAULT_ATTRS;
+    return class extends BaseClass {
+      static get observedAttributes() {
+        var inherited = BaseClass.observedAttributes || [];
+        var merged = inherited.slice();
+        for (var i = 0; i < attrs.length; i++) {
+          if (merged.indexOf(attrs[i]) === -1) merged.push(attrs[i]);
+        }
+        return merged;
+      }
+      attributeChangedCallback(name, oldVal, newVal) {
+        if (typeof super.attributeChangedCallback === 'function') {
+          super.attributeChangedCallback(name, oldVal, newVal);
+        }
+        if (attrs.indexOf(name) === -1) return;
+        var target = typeof this._ariaProxyTarget === 'function' ? this._ariaProxyTarget() : null;
+        if (!target) return;
+        if (newVal == null) target.removeAttribute(name);
+        else target.setAttribute(name, newVal);
+      }
+      _syncAriaProxy() {
+        var target = typeof this._ariaProxyTarget === 'function' ? this._ariaProxyTarget() : null;
+        if (!target) return;
+        for (var i = 0; i < attrs.length; i++) {
+          var n = attrs[i];
+          if (this.hasAttribute(n)) target.setAttribute(n, this.getAttribute(n));
+          else target.removeAttribute(n);
+        }
+      }
+    };
+  }
+
+  /** Visually hidden CSS for screen reader status regions. Usage, style.innerHTML += SR_STATUS_CSS; */
+  var SR_STATUS_CSS = '.sr-status {' +
+    'position: absolute;' +
+    'width: 1px;' +
+    'height: 1px;' +
+    'padding: 0;' +
+    'margin: -1px;' +
+    'overflow: hidden;' +
+    'clip: rect(0, 0, 0, 0);' +
+    'white-space: nowrap;' +
+    'border: 0;' +
+  '}';
+
+  /** Reduced motion CSS block for shadow style sheets. Usage, style.innerHTML += PREFERS_REDUCED_MOTION_CSS; */
+  var PREFERS_REDUCED_MOTION_CSS = '@media (prefers-reduced-motion: reduce) {' +
+    '*, *::before, *::after {' +
+      'animation-duration: 0.01ms !important;' +
+      'animation-iteration-count: 1 !important;' +
+      'transition-duration: 0.01ms !important;' +
+      'scroll-behavior: auto !important;' +
+    '}' +
+  '}';
+
   /* ---- Components ---- */
 
   /* ======== canvas-option (shared) ======== */
@@ -94,6 +275,8 @@
   class CanvasOption extends HTMLElement {
     constructor() { super(); }
     connectedCallback() { this.style.display = 'none'; }
+    get value() { return this.getAttribute('value') || (this.textContent || '').trim(); }
+    set value(v) { this.setAttribute('value', v == null ? '' : String(v)); }
   }
   CanvasUI.register('canvas-option', CanvasOption);
 
@@ -122,12 +305,18 @@
   }
   CanvasUI.register('canvas-accordion-content', CanvasAccordionContent);
 
-  /* canvas-accordion-item: collapsible section with chevron, title slot, and content slot */
+  /* canvas-accordion-item: collapsible section with chevron, title slot, and content slot.
+     The shadow trigger is a native <button>. The header button id and the
+     content id are generated via cuid so multiple instances coexist without
+     collisions and the canvas-accordion-content can label its region by
+     pointing aria-labelledby at the header button id. */
   class CanvasAccordionItem extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
       this._isOpen = false;
+      this._titleId = cuid('accordion-title');
+      this._contentId = cuid('accordion-content');
     }
 
     connectedCallback() {
@@ -161,6 +350,7 @@
             align-items: center;
             gap: 8px;
             padding: 7px 0;
+            margin: 0;
             font-size: 1.125em;
             font-weight: 700;
             line-height: 1.14285714em;
@@ -172,6 +362,8 @@
             cursor: pointer;
             font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
             transition: color 0.1s ease;
+            -webkit-appearance: none;
+            appearance: none;
           }
           .title:hover { color: rgba(0, 0, 0, 0.95); }
           .title:focus-visible {
@@ -192,10 +384,10 @@
             transform: rotate(0deg);
           }
         </style>
-        <div class="title" role="button" tabindex="0" aria-expanded="false">
-          <span class="icon"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg></span>
+        <button type="button" class="title" id="${this._titleId}" aria-expanded="false" aria-controls="${this._contentId}">
+          <span class="icon"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" aria-hidden="true" focusable="false"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg></span>
           <slot name="title"></slot>
-        </div>
+        </button>
         <slot name="content"></slot>
       `;
     }
@@ -204,7 +396,17 @@
       var titleEl = this.querySelector('canvas-accordion-title');
       if (titleEl) titleEl.setAttribute('slot', 'title');
       var contentEl = this.querySelector('canvas-accordion-content');
-      if (contentEl) contentEl.setAttribute('slot', 'content');
+      if (contentEl) {
+        contentEl.setAttribute('slot', 'content');
+        if (contentEl.id) {
+          this._contentId = contentEl.id;
+        } else {
+          contentEl.id = this._contentId;
+        }
+        contentEl.setAttribute('aria-labelledby', this._titleId);
+        var btn = this.shadowRoot.querySelector('.title');
+        if (btn) btn.setAttribute('aria-controls', this._contentId);
+      }
     }
 
     _bindEvents() {
@@ -220,6 +422,10 @@
         'canvas-input', 'canvas-date-input', 'canvas-textarea'
       ].join(',');
 
+      /* Slotted interactive children dispatch click events that bubble to the
+         shadow trigger button. Skip toggle when the click originated from one
+         so a checkbox or button inside the title does not also expand the item.
+         Native button handles Enter and Space, so no keydown handler is needed. */
       function isFromInteractiveChild(e) {
         var path = e.composedPath();
         for (var i = 0; i < path.length; i++) {
@@ -232,13 +438,6 @@
 
       title.addEventListener('click', function(e) {
         if (isFromInteractiveChild(e)) return;
-        self.toggle();
-      });
-
-      title.addEventListener('keydown', function(e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        if (isFromInteractiveChild(e)) return;
-        e.preventDefault();
         self.toggle();
       });
     }
@@ -267,16 +466,54 @@
   }
   CanvasUI.register('canvas-accordion-item', CanvasAccordionItem);
 
-  /* canvas-accordion: thin container, no shadow DOM */
+  /* canvas-accordion: thin container, no shadow DOM. The optional label
+     attribute mirrors to aria-label on the host so the accordion group can
+     carry an accessible name when needed. */
   class CanvasAccordion extends HTMLElement {
+    static get observedAttributes() { return ['label']; }
     constructor() { super(); }
-    connectedCallback() { this.style.display = 'block'; this.style.width = '100%'; }
+    connectedCallback() {
+      this.style.display = 'block';
+      this.style.width = '100%';
+      this._syncLabel();
+    }
+    attributeChangedCallback(name) {
+      if (name === 'label') this._syncLabel();
+    }
+    _syncLabel() {
+      if (this.hasAttribute('label')) {
+        this.setAttribute('aria-label', this.getAttribute('label'));
+      } else {
+        this.removeAttribute('aria-label');
+      }
+    }
   }
   CanvasUI.register('canvas-accordion', CanvasAccordion);
 
   /* ======== canvas-badge ======== */
 
+  /* Color to severity word lookup used by canvas-badge to render visually
+     hidden status text alongside the colored chip. Keeps the audible meaning
+     in sync with the color so screen reader users get the same signal as
+     sighted users. Colors that carry no inherent severity, like violet or
+     purple, intentionally have no entry. */
+  var BADGE_SEVERITY = {
+    red: 'negative',
+    orange: 'warning',
+    yellow: 'caution',
+    olive: 'positive',
+    green: 'positive',
+    teal: 'positive',
+    blue: 'informational',
+    grey: 'neutral',
+    black: 'neutral'
+  };
+
   class CanvasBadge extends HTMLElement {
+    static get observedAttributes() {
+      return ['color'];
+    }
+
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -361,16 +598,23 @@
             aspect-ratio: auto;
             padding: 0 .5em;
           }
+          ${SR_STATUS_CSS}
         </style>
-        <span part="badge"><slot></slot></span>
+        <span part="badge"><slot></slot><span class="sr-status" part="sr-status"></span></span>
       `;
-      this._span = this.shadowRoot.querySelector('span');
+      this._span = this.shadowRoot.querySelector('span[part="badge"]');
       this._slot = this.shadowRoot.querySelector('slot');
+      this._srStatus = this.shadowRoot.querySelector('.sr-status');
     }
 
     connectedCallback() {
       this._slot.addEventListener('slotchange', () => this._updateShape());
       this._updateShape();
+      this._syncSeverity();
+    }
+
+    attributeChangedCallback(name) {
+      if (name === 'color') this._syncSeverity();
     }
 
     _updateShape() {
@@ -380,6 +624,15 @@
       } else {
         this._span.classList.remove('pill');
       }
+    }
+
+    /* Append a visually hidden severity word so screen readers hear the
+       meaning carried by color. The leading comma is a pacing hint for AT
+       so the word lands as a separate phrase after the slotted text. */
+    _syncSeverity() {
+      var color = (this.getAttribute('color') || '').toLowerCase();
+      var word = BADGE_SEVERITY[color] || '';
+      this._srStatus.textContent = word ? ', ' + word : '';
     }
   }
 
@@ -395,11 +648,19 @@
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
+      this._headingId = cuid('banner-heading');
+      this._fallbackId = cuid('banner');
       this._render();
       this._onDismissClick = this._onDismissClick.bind(this);
     }
 
     connectedCallback() {
+      /* Setting the host id from inside the constructor is disallowed by
+         the custom elements spec, so the assignment lives here. The
+         template already wrote aria-controls pointing at this same value
+         via the _fallbackId branch in _render, so the shadow stays in
+         sync once the host carries the id. */
+      if (!this.id) this.id = this._fallbackId;
       var btn = this.shadowRoot.querySelector('.dismiss');
       if (btn) btn.addEventListener('click', this._onDismissClick);
     }
@@ -423,6 +684,21 @@
     _render() {
       var header = this.getAttribute('header');
       var dismissible = this.hasAttribute('dismissible');
+      var variant = this.getAttribute('variant');
+      /* Split role by severity. Error and warning carry role alert so AT
+         interrupts the user, info and success carry role status so the
+         announcement is polite. The default banner uses role status to
+         match the calmer information tone. */
+      var role = (variant === 'error' || variant === 'warning') ? 'alert' : 'status';
+      /* Use the author supplied host id when present so plugin code can
+         target it from aria-controls or aria-describedby outside the
+         banner. Fall back to a stable cuid otherwise so dismiss can point
+         at the banner host. The actual host id assignment happens in
+         connectedCallback because the custom elements spec disallows
+         attribute writes from the constructor. */
+      var hostId = this.id || this._fallbackId;
+      var headingId = this._headingId;
+      var headerAttr = header ? ' aria-labelledby="' + headingId + '"' : '';
 
       this.shadowRoot.innerHTML = `
         <style>
@@ -511,10 +787,10 @@
           .dismiss:hover { opacity: 1; }
           .dismiss svg { display: block; }
         </style>
-        <div class="banner" role="alert">
-          ${header ? '<div class="header">' + header + '</div>' : ''}
+        <div class="banner" role="${role}"${headerAttr}>
+          ${header ? '<div class="header" id="' + headingId + '">' + header + '</div>' : ''}
           <div class="body"><slot></slot></div>
-          ${dismissible ? '<button class="dismiss" aria-label="Dismiss"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' : ''}
+          ${dismissible ? '<button type="button" class="dismiss" aria-label="Dismiss" aria-controls="' + hostId + '"' + (header ? ' aria-labelledby="' + headingId + '"' : '') + '><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' : ''}
         </div>
       `;
     }
@@ -524,9 +800,26 @@
 
   /* ======== canvas-button ======== */
 
-  class CanvasButton extends HTMLElement {
+  /* Subset of aria attributes the button mirrors from host to inner native
+     button. Excludes the default required and aria-invalid which do not
+     apply to buttons, and uses aria-disabled instead of native disabled so
+     the inner button stays in the accessibility tree even when disabled. */
+  var BUTTON_ARIA_PROXY_ATTRS = [
+    'aria-label',
+    'aria-pressed',
+    'aria-expanded',
+    'aria-controls',
+    'aria-disabled'
+  ];
+
+  class CanvasButton extends AriaProxy(HTMLElement, { attributes: BUTTON_ARIA_PROXY_ATTRS }) {
     static get observedAttributes() {
-      return ['variant', 'size', 'disabled', 'type'];
+      var base = ['variant', 'size', 'disabled', 'type'];
+      var inherited = super.observedAttributes || [];
+      for (var i = 0; i < inherited.length; i++) {
+        if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
+      }
+      return base;
     }
 
     constructor() {
@@ -625,8 +918,11 @@
       this._button = this.shadowRoot.querySelector('button');
     }
 
+    _ariaProxyTarget() { return this._button; }
+
     connectedCallback() {
       this._syncType();
+      this._syncAriaProxy();
       this._syncDisabled();
       this._button.addEventListener('click', this._handleClick.bind(this));
     }
@@ -635,26 +931,44 @@
       this._button.removeEventListener('click', this._handleClick.bind(this));
     }
 
-    attributeChangedCallback(name) {
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (typeof super.attributeChangedCallback === 'function') {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
       if (name === 'type') this._syncType();
-      if (name === 'disabled') this._syncDisabled();
+      if (name === 'disabled' || name === 'aria-disabled') this._syncDisabled();
     }
 
     _syncType() {
       this._button.type = this.getAttribute('type') || 'button';
     }
 
+    /* Disabled handling keeps the inner button in the a11y tree. We never
+       set the native disabled attribute on the inner button, only
+       aria-disabled, so AT can still discover the control and announce its
+       disabled state. Click suppression lives in _handleClick which
+       returns early when host has disabled. The host disabled attribute
+       wins over a host aria-disabled if both are present. When neither is
+       set we fall back to the host aria-disabled so the AriaProxy
+       mirroring behaves as expected. */
     _syncDisabled() {
-      var disabled = this.hasAttribute('disabled');
-      if (disabled) {
-        this._button.setAttribute('disabled', '');
+      var hostDisabled = this.hasAttribute('disabled');
+      this._button.removeAttribute('disabled');
+      if (hostDisabled) {
+        this._button.setAttribute('aria-disabled', 'true');
+        return;
+      }
+      var hostAriaDisabled = this.getAttribute('aria-disabled');
+      if (hostAriaDisabled == null) {
+        this._button.removeAttribute('aria-disabled');
       } else {
-        this._button.removeAttribute('disabled');
+        this._button.setAttribute('aria-disabled', hostAriaDisabled);
       }
     }
 
     _handleClick(e) {
       if (this.hasAttribute('disabled')) return;
+      if (this.getAttribute('aria-disabled') === 'true') return;
       if (this.getAttribute('type') === 'submit') {
         var form = this.closest('form');
         if (form) form.requestSubmit();
@@ -859,9 +1173,14 @@
 
   /* ======== canvas-checkbox ======== */
 
-  class CanvasCheckbox extends HTMLElement {
+  class CanvasCheckbox extends AriaProxy(HTMLElement) {
     static get observedAttributes() {
-      return ['label', 'checked', 'disabled', 'name', 'value'];
+      var base = ['label', 'checked', 'disabled', 'name', 'value'];
+      var inherited = super.observedAttributes || [];
+      for (var i = 0; i < inherited.length; i++) {
+        if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
+      }
+      return base;
     }
 
     static formAssociated = true;
@@ -875,6 +1194,7 @@
           :host {
             display: inline-flex;
             align-items: center;
+            position: relative;
             min-height: var(--canvas-checkbox-min-height, auto);
             min-width: var(--canvas-checkbox-min-width, auto);
             cursor: pointer;
@@ -950,14 +1270,29 @@
       `;
       this._input = this.shadowRoot.querySelector('input');
       this._labelText = this.shadowRoot.querySelector('.label-text');
+      this._inputId = cuid('cb');
+      this._labelId = cuid('cb-lbl');
+      this._input.id = this._inputId;
+      this._labelText.id = this._labelId;
+      this._input.setAttribute('aria-labelledby', this._labelId);
       this._boundOnChange = this._onChange.bind(this);
       this._boundOnClick = this._onClick.bind(this);
+    }
+
+    _ariaProxyTarget() { return this._input; }
+
+    _syncLabelledBy() {
+      var hostLb = this.getAttribute('aria-labelledby');
+      if (hostLb) this._input.setAttribute('aria-labelledby', this._labelId + ' ' + hostLb);
+      else this._input.setAttribute('aria-labelledby', this._labelId);
     }
 
     connectedCallback() {
       this._input.addEventListener('change', this._boundOnChange);
       this.addEventListener('click', this._boundOnClick);
       this._syncAll();
+      this._syncAriaProxy();
+      this._syncLabelledBy();
     }
 
     disconnectedCallback() {
@@ -965,7 +1300,14 @@
       this.removeEventListener('click', this._boundOnClick);
     }
 
-    attributeChangedCallback(name) {
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (typeof super.attributeChangedCallback === 'function') {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
+      if (name === 'aria-labelledby') {
+        this._syncLabelledBy();
+        return;
+      }
       switch (name) {
         case 'label':
           this._labelText.textContent = this.getAttribute('label') || '';
@@ -1028,7 +1370,7 @@
 
     _onClick(e) {
       if (this.hasAttribute('disabled')) return;
-      if (e.target === this._input) return;
+      if (e.composedPath()[0] === this._input) return;
       this._input.checked = !this._input.checked;
       this._input.dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -1140,10 +1482,20 @@
           .dismiss:hover { opacity: 1; }
           .dismiss svg { display: block; }
 
+          /* The chip host is the single tab stop. The dismiss button stays
+             reachable via pointer and shows focus when clicked, but is not
+             a separate stop in the keyboard tab order. Authors get a
+             visible focus ring on the chip via this :host(:focus-visible)
+             rule because tabindex without a CSS rule has no default ring
+             on a span layout. */
+          :host(:focus-visible) span[part="chip"] {
+            outline: var(--focus-ring, 2px solid #2185D0);
+            outline-offset: var(--focus-ring-offset, 2px);
+          }
         </style>
         <span part="chip">
           <slot></slot>
-          <button class="dismiss" aria-label="Dismiss">
+          <button type="button" class="dismiss" aria-label="Dismiss" tabindex="-1">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
@@ -1151,19 +1503,54 @@
         </span>
       `;
       this._dismiss = this.shadowRoot.querySelector('.dismiss');
+      this._slot = this.shadowRoot.querySelector('slot');
+      this._boundDismiss = this._handleDismiss.bind(this);
+      this._boundKeydown = this._handleKeydown.bind(this);
+      this._boundSlotChange = this._updateDismissLabel.bind(this);
     }
 
     connectedCallback() {
-      this._dismiss.addEventListener('click', this._handleDismiss.bind(this));
+      /* Make the chip host the single tab stop so AT users land on the
+         chip itself rather than the inner dismiss button. The done
+         criteria for this session require tabindex 0 on actionable chips,
+         and every chip currently renders a dismiss button, so the chip is
+         always actionable. The author can still remove tabindex via the
+         attribute if they need a non interactive chip. */
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
+      this._dismiss.addEventListener('click', this._boundDismiss);
+      /* Keydown on the chip host catches Delete and Backspace whenever
+         the host or inner dismiss button has focus, since keydown bubbles
+         out of the shadow root onto the host. AT users can remove the
+         chip with the keyboard without relying on a pointer. */
+      this.addEventListener('keydown', this._boundKeydown);
+      this._slot.addEventListener('slotchange', this._boundSlotChange);
+      this._updateDismissLabel();
     }
 
     disconnectedCallback() {
-      this._dismiss.removeEventListener('click', this._handleDismiss.bind(this));
+      this._dismiss.removeEventListener('click', this._boundDismiss);
+      this.removeEventListener('keydown', this._boundKeydown);
+      this._slot.removeEventListener('slotchange', this._boundSlotChange);
     }
 
     _handleDismiss(e) {
       e.stopPropagation();
       this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }));
+    }
+
+    _handleKeydown(e) {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        this._handleDismiss(e);
+      }
+    }
+
+    /* Specific dismiss label that names the chip text so screen reader
+       users know what the action removes. Falls back to a generic label
+       when the chip has no text content yet. */
+    _updateDismissLabel() {
+      var text = this.textContent.trim();
+      this._dismiss.setAttribute('aria-label', text ? 'Remove ' + text : 'Dismiss');
     }
   }
 
@@ -1174,7 +1561,7 @@
   /* canvas-combobox: searchable single-select dropdown with type-to-filter */
   class CanvasCombobox extends HTMLElement {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name'];
+      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name', 'empty-state', 'creatable', 'creatable-label', 'loading', 'loading-label'];
     }
 
     static get formAssociated() { return true; }
@@ -1189,6 +1576,12 @@
       this._selectedText = '';
       this._previousText = '';
       this._open = false;
+      this._creatable = false;
+      this._pendingOpen = false;
+      this._inputId = cuid('cb-input');
+      this._labelId = cuid('cb-label');
+      this._listboxId = cuid('cb-list');
+      this._errorId = cuid('cb-err');
       this._onDocClick = this._onDocClick.bind(this);
     }
 
@@ -1207,11 +1600,46 @@
     }
 
     attributeChangedCallback(name) {
+      if (name === 'creatable') {
+        this._creatable = this.hasAttribute('creatable');
+        if (this.shadowRoot.querySelector('.combobox')) this._checkEmpty();
+        return;
+      }
+      if (name === 'creatable-label') {
+        if (this.shadowRoot.querySelector('.combobox')) this._checkEmpty();
+        return;
+      }
       if (name === 'value') {
         var val = this.getAttribute('value');
         if (val !== this._selectedValue) this._selectByValue(val, true);
       }
-      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled') {
+      if (name === 'loading') {
+        if (this.shadowRoot.querySelector('.combobox')) {
+          var nowLoading = this.hasAttribute('loading');
+          if (nowLoading && this._open) {
+            this._pendingOpen = true;
+            this._close();
+          }
+          if (!nowLoading) this._readOptions();
+          this._render();
+          this._bindEvents();
+          if (!nowLoading && this._pendingOpen) {
+            this._pendingOpen = false;
+            this._openMenu();
+            var input = this.shadowRoot.querySelector('.input');
+            if (input) input.focus();
+          }
+        }
+        return;
+      }
+      if (name === 'loading-label') {
+        if (this.shadowRoot.querySelector('.combobox') && this.hasAttribute('loading')) {
+          this._render();
+          this._bindEvents();
+        }
+        return;
+      }
+      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled' || name === 'empty-state') {
         if (this.shadowRoot.querySelector('.combobox')) {
           this._render();
           this._bindEvents();
@@ -1221,8 +1649,22 @@
 
     get value() { return this._selectedValue || ''; }
     set value(v) {
-      this._selectByValue(v, true);
-      this.setAttribute('value', v || '');
+      var str = v == null ? '' : String(v);
+      if (this._creatable) {
+        if (str === '') {
+          this._commitText('', true);
+          this.removeAttribute('value');
+          return;
+        }
+        var match = this._options.find(function(o) { return o.value === str; });
+        if (!match) {
+          this._commitText(str, true);
+          this.setAttribute('value', str);
+          return;
+        }
+      }
+      this._selectByValue(str, true);
+      this.setAttribute('value', str);
     }
 
     get name() { return this.getAttribute('name'); }
@@ -1237,7 +1679,8 @@
           label: opt.getAttribute('label') || opt.textContent.trim(),
           html: opt.innerHTML,
           disabled: opt.hasAttribute('disabled'),
-          selected: opt.hasAttribute('selected')
+          selected: opt.hasAttribute('selected'),
+          domId: cuid('cb-opt')
         });
       }
       var preselected = this._options.find(function(o) { return o.selected; });
@@ -1254,6 +1697,9 @@
       var placeholder = this.getAttribute('placeholder') || '';
       var error = this.getAttribute('error');
       var disabled = this.hasAttribute('disabled');
+      var loading = this.hasAttribute('loading');
+      var loadingLabel = this.getAttribute('loading-label') || 'Loading options';
+      var emptyState = this.getAttribute('empty-state');
       var displayText = this._selectedText || '';
 
       var optionsHtml = '';
@@ -1261,7 +1707,7 @@
         var o = this._options[i];
         var classes = 'option';
         if (o.value === this._selectedValue) classes += ' selected';
-        var attrs = 'role="option" data-value="' + o.value + '" data-index="' + i + '"';
+        var attrs = 'role="option" id="' + o.domId + '" data-value="' + o.value + '" data-index="' + i + '" title="' + o.label.replace(/"/g, '&quot;') + '"';
         if (o.disabled) attrs += ' aria-disabled="true"';
         if (o.value === this._selectedValue) attrs += ' aria-selected="true"';
         optionsHtml += '<li class="' + classes + '" ' + attrs + '>' + o.html + '</li>';
@@ -1288,10 +1734,69 @@
           .input.open.flip { border-color: #96c8da; border-top-color: transparent; border-radius: 0 0 var(--radius, .28571429rem) var(--radius, .28571429rem); }
           :host([disabled]) .input { opacity: 0.45; cursor: default; pointer-events: none; }
           :host([error]) .input { background: #fff6f6; border-color: #e0b4b4; }
+          :host([loading]) .input { display: none; }
+          .loading-state {
+            display: none;
+            width: 100%;
+            margin: 0;
+            padding: .67857143em 2.1em .67857143em 1em;
+            font-size: 1em;
+            font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+            line-height: 1.21428571em;
+            color: rgba(0, 0, 0, 0.55);
+            background: var(--color-surface, #FFFFFF);
+            border: 1px solid rgba(34, 36, 38, 0.15);
+            border-radius: var(--radius, .28571429rem);
+            outline: none;
+            box-sizing: border-box;
+            cursor: progress;
+            align-items: center;
+            gap: .5em;
+          }
+          .loading-state:focus { border-color: #96c8da; }
+          :host([loading]) .loading-state { display: flex; }
+          :host([loading][error]) .loading-state { background: #fff6f6; border-color: #e0b4b4; }
+          :host([loading][disabled]) .loading-state { opacity: 0.45; cursor: default; pointer-events: none; }
+          :host([loading]) .arrow { opacity: 0.4; }
+          .loading-spinner {
+            position: relative;
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            flex-shrink: 0;
+          }
+          .loading-spinner::before,
+          .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 500rem;
+            box-sizing: border-box;
+          }
+          .loading-spinner::before {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+          }
+          .loading-spinner::after {
+            border: 2px solid;
+            border-color: #767676 transparent transparent;
+            animation: canvas-combobox-spin .6s linear infinite;
+          }
+          .loading-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          @keyframes canvas-combobox-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
           .arrow { position: absolute; right: 1em; top: 50%; transform: translateY(-50%); width: 8px; height: 5px; pointer-events: none; }
           .menu {
             display: none; position: absolute; top: calc(100% - 1px); left: 0; right: 0;
-            max-height: 16.02857143rem; overflow-y: auto;
+            max-height: 16.02857143rem; overflow-y: auto; overscroll-behavior: none;
             background: var(--color-surface, #FFFFFF);
             border: 1px solid #96c8da; border-top: none;
             border-radius: 0 0 var(--radius, .28571429rem) var(--radius, .28571429rem);
@@ -1309,6 +1814,7 @@
             padding: .78571429rem 1.14285714rem; font-size: 1rem; line-height: 1.0625rem;
             color: var(--color-text, rgba(0, 0, 0, 0.87)); cursor: pointer;
             border-top: 1px solid #fafafa; transition: background 0.1s ease;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           }
           .option:first-child { border-top: none; }
           .option:hover, .option.highlighted { background: rgba(0, 0, 0, 0.05); color: rgba(0, 0, 0, 0.95); }
@@ -1318,41 +1824,85 @@
           .option.hidden { display: none; }
           .empty { padding: .78571429rem 1.14285714rem; font-size: 1rem; color: rgba(0, 0, 0, 0.4); display: none; }
           .empty.visible { display: block; }
+          .empty.creatable-hint { color: rgba(0, 0, 0, 0.55); cursor: pointer; border-top: 1px solid #fafafa; }
+          .empty.creatable-hint:hover { background: rgba(0, 0, 0, 0.025); }
+          .empty.creatable-hint .creatable-name { color: #1e70bf; font-weight: 600; }
           .error-text { margin-top: .28571429rem; font-size: .92857143em; font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif); color: #9f3a38; line-height: 1.4285em; }
         </style>
-        ${label ? '<span class="label">' + label + '</span>' : ''}
+        ${label ? '<label class="label" id="' + this._labelId + '" for="' + this._inputId + '">' + label + '</label>' : ''}
         <div class="combobox">
-          <input class="input" type="text" role="combobox"
-            aria-autocomplete="list" aria-expanded="false" aria-controls="listbox"
+          <input class="input" id="${this._inputId}" type="text" role="combobox"
+            aria-autocomplete="list" aria-expanded="false" aria-controls="${this._listboxId}"
+            ${label ? 'aria-labelledby="' + this._labelId + '"' : ''}
+            ${error ? 'aria-describedby="' + this._errorId + '" aria-invalid="true"' : ''}
+            ${this.hasAttribute('required') ? 'aria-required="true"' : ''}
             placeholder="${placeholder}" value="${displayText}"
             ${disabled ? 'disabled' : ''}>
+          <div class="loading-state" tabindex="${disabled ? '-1' : '0'}" role="status" aria-live="polite"${loading ? ' aria-busy="true"' : ''}>
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span class="loading-text">${loadingLabel}</span>
+          </div>
           <svg class="arrow" viewBox="0 0 10 6" fill="#575757"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
-          <ul class="menu" id="listbox" role="listbox">
+          <ul class="menu" id="${this._listboxId}" role="listbox"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}>
             ${optionsHtml}
-            <li class="empty">No results</li>
+            <li class="empty"><slot name="empty">${emptyState != null ? emptyState : 'No results'}</slot></li>
           </ul>
         </div>
-        ${error ? '<span class="error-text">' + error + '</span>' : ''}
+        ${error ? '<span class="error-text" id="' + this._errorId + '">' + error + '</span>' : ''}
       `;
     }
 
     _bindEvents() {
       var self = this;
       var input = this.shadowRoot.querySelector('.input');
+      var loadingState = this.shadowRoot.querySelector('.loading-state');
       var menu = this.shadowRoot.querySelector('.menu');
+
+      if (loadingState) {
+        loadingState.addEventListener('click', function() {
+          if (self.hasAttribute('disabled')) return;
+          if (!self.hasAttribute('loading')) return;
+          if (self._pendingOpen) self._cancelPending('toggle');
+          else self._pendingOpen = true;
+        });
+
+        loadingState.addEventListener('keydown', function(e) {
+          if (self.hasAttribute('disabled')) return;
+          if (!self.hasAttribute('loading')) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            self._cancelPending('escape');
+            return;
+          }
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!self._pendingOpen) self._pendingOpen = true;
+          }
+        });
+
+        loadingState.addEventListener('blur', function() {
+          if (!self.hasAttribute('loading')) return;
+          setTimeout(function() {
+            if (self.hasAttribute('loading')) self._cancelPending('blur');
+          }, 0);
+        });
+      }
 
       input.addEventListener('click', function() {
         if (self.hasAttribute('disabled')) return;
+        if (self.hasAttribute('loading')) return;
         if (!self._open) self._openMenu();
       });
 
       input.addEventListener('input', function() {
+        if (self.hasAttribute('loading')) return;
         if (!self._open) self._openMenu();
         self._filter(input.value);
       });
 
       input.addEventListener('keydown', function(e) {
         if (self.hasAttribute('disabled')) return;
+        if (self.hasAttribute('loading')) return;
         switch (e.key) {
           case 'ArrowDown':
             e.preventDefault();
@@ -1374,6 +1924,9 @@
                 self._selectByValue(visible[self._highlighted].dataset.value, false);
                 self._close();
               }
+            } else if (self._creatable) {
+              self._commitOrRestore();
+              self._close();
             }
             break;
           case 'Escape':
@@ -1397,7 +1950,7 @@
                 var visible = self._getVisibleOptions();
                 if (visible[self._highlighted]) self._selectByValue(visible[self._highlighted].dataset.value, false);
               } else {
-                self._restore();
+                self._commitOrRestore();
               }
               self._close();
             }
@@ -1407,11 +1960,21 @@
 
       menu.addEventListener('click', function(e) {
         var opt = e.target.closest('.option');
-        if (!opt) return;
-        if (opt.getAttribute('aria-disabled') === 'true') return;
-        self._selectByValue(opt.dataset.value, false);
-        self._close();
-        input.focus();
+        if (opt) {
+          if (opt.getAttribute('aria-disabled') === 'true') return;
+          self._selectByValue(opt.dataset.value, false);
+          self._close();
+          input.focus();
+          return;
+        }
+        if (self._creatable) {
+          var hint = e.target.closest('.empty.creatable-hint');
+          if (hint) {
+            self._commitOrRestore();
+            self._close();
+            input.focus();
+          }
+        }
       });
     }
 
@@ -1424,8 +1987,28 @@
       input.classList.add('open');
       input.setAttribute('aria-expanded', 'true');
       menu.classList.add('visible');
-      this._showAll();
+      var typed = (input.value || '').trim();
+      if (this._creatable && typed.length > 0) {
+        this._filter(input.value);
+      } else {
+        this._showAll();
+      }
+      this._checkEmpty();
       this._checkFlip();
+      this._scrollToSelected();
+    }
+
+    _scrollToSelected() {
+      var self = this;
+      requestAnimationFrame(function() {
+        var menu = self.shadowRoot.querySelector('.menu');
+        var sel = self.shadowRoot.querySelector('.option.selected');
+        if (!menu || !sel) return;
+        var menuRect = menu.getBoundingClientRect();
+        var selRect = sel.getBoundingClientRect();
+        var itemOffset = selRect.top - menuRect.top + menu.scrollTop;
+        menu.scrollTop = itemOffset - (menu.clientHeight / 2) + (selRect.height / 2);
+      });
     }
 
     _close() {
@@ -1445,34 +2028,87 @@
       input.value = this._previousText;
     }
 
+    _commitText(value, silent) {
+      var v = value == null ? '' : String(value).trim();
+      this._selectedValue = v;
+      this._selectedText = v;
+      this._previousText = v;
+      this._internals.setFormValue(v);
+      var input = this.shadowRoot.querySelector('.input');
+      if (input) input.value = v;
+      if (!silent) {
+        this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
+      }
+    }
+
+    _commitOrRestore() {
+      if (!this._creatable) {
+        this._restore();
+        return;
+      }
+      var input = this.shadowRoot.querySelector('.input');
+      var typed = (input && input.value || '').trim();
+      var priorValue = this._selectedValue || '';
+      var match = this._options.find(function(o) { return o.label.toLowerCase() === typed.toLowerCase(); });
+      if (match) {
+        if (match.value !== priorValue) {
+          this._selectByValue(match.value, false);
+        } else {
+          this._restore();
+        }
+        return;
+      }
+      if (typed !== priorValue) {
+        this._commitText(typed, false);
+      } else if (input) {
+        input.value = this._selectedText || '';
+      }
+    }
+
+    _escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     _onDocClick(e) {
       if (!this.contains(e.target) && !this.shadowRoot.contains(e.target)) {
+        if (this.hasAttribute('loading') && this._pendingOpen) {
+          this._cancelPending('outside');
+          return;
+        }
         if (this._open) {
-          this._restore();
+          this._commitOrRestore();
           this._close();
         }
       }
     }
 
+    _cancelPending(reason) {
+      if (!this._pendingOpen) return;
+      this._pendingOpen = false;
+      this.dispatchEvent(new CustomEvent('loading-cancel', {
+        detail: { reason: reason },
+        bubbles: true,
+        composed: true
+      }));
+    }
+
     _filter(query) {
       var q = query.toLowerCase();
       var items = this.shadowRoot.querySelectorAll('.option');
-      var anyVisible = false;
       for (var i = 0; i < items.length; i++) {
         var label = this._options[items[i].dataset.index].label.toLowerCase();
         if (label.indexOf(q) >= 0) {
           items[i].classList.remove('hidden');
-          anyVisible = true;
         } else {
           items[i].classList.add('hidden');
         }
       }
-      var empty = this.shadowRoot.querySelector('.empty');
-      if (anyVisible) {
-        empty.classList.remove('visible');
-      } else {
-        empty.classList.add('visible');
-      }
+      this._checkEmpty();
       this._highlighted = -1;
       this._clearHighlight();
     }
@@ -1480,8 +2116,28 @@
     _showAll() {
       var items = this.shadowRoot.querySelectorAll('.option');
       for (var i = 0; i < items.length; i++) items[i].classList.remove('hidden');
+    }
+
+    _checkEmpty() {
+      var visible = this.shadowRoot.querySelectorAll('.option:not(.hidden)');
       var empty = this.shadowRoot.querySelector('.empty');
-      empty.classList.remove('visible');
+      if (!empty) return;
+      var input = this.shadowRoot.querySelector('.input');
+      var typed = (input && input.value || '').trim();
+      var showCreatableHint = this._creatable && visible.length === 0 && typed.length > 0;
+      if (showCreatableHint) {
+        var prefix = this.getAttribute('creatable-label') || 'New entry';
+        empty.innerHTML = this._escapeHtml(prefix) + ' <span class="creatable-name">"' + this._escapeHtml(typed) + '"</span> will be created on save.';
+        empty.classList.add('creatable-hint', 'visible');
+      } else {
+        if (empty.classList.contains('creatable-hint')) {
+          var emptyState = this.getAttribute('empty-state');
+          empty.innerHTML = '<slot name="empty">' + (emptyState != null ? this._escapeHtml(emptyState) : 'No results') + '</slot>';
+          empty.classList.remove('creatable-hint');
+        }
+        if (visible.length === 0) empty.classList.add('visible');
+        else empty.classList.remove('visible');
+      }
     }
 
     _checkFlip() {
@@ -1544,14 +2200,19 @@
     _applyHighlight(opts) {
       this._clearHighlight();
       if (this._highlighted >= 0 && opts[this._highlighted]) {
-        opts[this._highlighted].classList.add('highlighted');
-        opts[this._highlighted].scrollIntoView({ block: 'nearest' });
+        var hot = opts[this._highlighted];
+        hot.classList.add('highlighted');
+        hot.scrollIntoView({ block: 'nearest' });
+        var input = this.shadowRoot.querySelector('.input');
+        if (input && hot.id) input.setAttribute('aria-activedescendant', hot.id);
       }
     }
 
     _clearHighlight() {
       var items = this.shadowRoot.querySelectorAll('.option.highlighted');
       for (var i = 0; i < items.length; i++) items[i].classList.remove('highlighted');
+      var input = this.shadowRoot.querySelector('.input');
+      if (input) input.removeAttribute('aria-activedescendant');
     }
   }
 
@@ -1661,7 +2322,7 @@
 
   class CanvasDropdown extends HTMLElement {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name', 'size'];
+      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name', 'size', 'empty-state', 'loading', 'loading-label'];
     }
 
     static get formAssociated() { return true; }
@@ -1675,6 +2336,11 @@
       this._selectedValue = null;
       this._selectedText = '';
       this._open = false;
+      this._pendingOpen = false;
+      this._labelId = cuid('dd-label');
+      this._listboxId = cuid('dd-list');
+      this._errorId = cuid('dd-err');
+      this._statusId = cuid('dd-status');
       this._onDocClick = this._onDocClick.bind(this);
     }
 
@@ -1697,7 +2363,33 @@
         var val = this.getAttribute('value');
         if (val !== this._selectedValue) this._selectByValue(val);
       }
-      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled') {
+      if (name === 'loading') {
+        if (this.shadowRoot.querySelector('.dropdown')) {
+          var nowLoading = this.hasAttribute('loading');
+          if (nowLoading && this._open) {
+            this._pendingOpen = true;
+            this._close();
+          }
+          if (!nowLoading) this._readOptions();
+          this._render();
+          this._bindEvents();
+          if (!nowLoading && this._pendingOpen) {
+            this._pendingOpen = false;
+            this._openMenu();
+            var dd = this.shadowRoot.querySelector('.dropdown');
+            if (dd) dd.focus();
+          }
+        }
+        return;
+      }
+      if (name === 'loading-label') {
+        if (this.shadowRoot.querySelector('.dropdown') && this.hasAttribute('loading')) {
+          this._render();
+          this._bindEvents();
+        }
+        return;
+      }
+      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled' || name === 'empty-state') {
         if (this.shadowRoot.querySelector('.dropdown')) {
           this._render();
           this._bindEvents();
@@ -1723,7 +2415,8 @@
           label: opt.getAttribute('label') || opt.textContent.trim(),
           html: opt.innerHTML,
           disabled: opt.hasAttribute('disabled'),
-          selected: opt.hasAttribute('selected')
+          selected: opt.hasAttribute('selected'),
+          domId: cuid('dd-opt')
         });
       }
       var preselected = this._options.find(function(o) { return o.selected; });
@@ -1739,15 +2432,19 @@
       var placeholder = this.getAttribute('placeholder') || '';
       var error = this.getAttribute('error');
       var disabled = this.hasAttribute('disabled');
+      var loading = this.hasAttribute('loading');
+      var loadingLabel = this.getAttribute('loading-label') || 'Loading options';
+      var emptyState = this.getAttribute('empty-state');
       var displayText = this._selectedText || '';
       var isPlaceholder = !displayText;
+      var ariaDescribedBy = error ? this._errorId : '';
 
       var optionsHtml = '';
       for (var i = 0; i < this._options.length; i++) {
         var o = this._options[i];
         var classes = 'option';
         if (o.value === this._selectedValue) classes += ' selected';
-        var attrs = 'role="option" data-value="' + o.value + '" data-index="' + i + '"';
+        var attrs = 'role="option" id="' + o.domId + '" data-value="' + o.value + '" data-index="' + i + '" title="' + o.label.replace(/"/g, '&quot;') + '"';
         if (o.disabled) attrs += ' aria-disabled="true"';
         if (o.value === this._selectedValue) attrs += ' aria-selected="true"';
         optionsHtml += '<li class="' + classes + '" ' + attrs + '>' + o.html + '</li>';
@@ -1816,6 +2513,18 @@
             border-color: #e0b4b4;
           }
 
+          :host([loading]) .dropdown {
+            cursor: progress;
+          }
+
+          :host([loading][disabled]) .dropdown {
+            cursor: default;
+          }
+
+          :host([loading]) .arrow {
+            opacity: 0.4;
+          }
+
           .text {
             flex: 1;
             white-space: nowrap;
@@ -1826,6 +2535,57 @@
 
           .text.placeholder {
             color: rgba(191, 191, 191, 0.87);
+          }
+
+          .loading-state {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: .5em;
+            color: rgba(0, 0, 0, 0.55);
+            overflow: hidden;
+            min-width: 0;
+          }
+
+          .loading-spinner {
+            position: relative;
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            flex-shrink: 0;
+          }
+
+          .loading-spinner::before,
+          .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 500rem;
+            box-sizing: border-box;
+          }
+
+          .loading-spinner::before {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+          }
+
+          .loading-spinner::after {
+            border: 2px solid;
+            border-color: #767676 transparent transparent;
+            animation: canvas-dropdown-spin .6s linear infinite;
+          }
+
+          .loading-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          @keyframes canvas-dropdown-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
           }
 
           .arrow {
@@ -1846,6 +2606,7 @@
             right: -1px;
             max-height: 16.02857143rem;
             overflow-y: auto;
+            overscroll-behavior: none;
             background: var(--color-surface, #FFFFFF);
             border: 1px solid #96c8da;
             border-top: none;
@@ -1869,6 +2630,9 @@
             cursor: pointer;
             border-top: 1px solid #fafafa;
             transition: background 0.1s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
 
           .option:first-child { border-top: none; }
@@ -1894,6 +2658,15 @@
             background: transparent;
           }
 
+          .empty {
+            padding: .78571429rem 1.14285714rem;
+            font-size: 1rem;
+            color: rgba(0, 0, 0, 0.4);
+            display: none;
+          }
+
+          .empty.visible { display: block; }
+
           .error-text {
             margin-top: .28571429rem;
             font-size: .92857143em;
@@ -1901,14 +2674,21 @@
             color: #9f3a38;
             line-height: 1.4285em;
           }
+          ${SR_STATUS_CSS}
         </style>
-        ${label ? '<span class="label">' + label + '</span>' : ''}
-        <div class="dropdown" tabindex="${disabled ? '-1' : '0'}" role="combobox" aria-expanded="false" aria-haspopup="listbox">
-          <span class="text${isPlaceholder ? ' placeholder' : ''}">${isPlaceholder ? placeholder : displayText}</span>
+        ${label ? '<span class="label" id="' + this._labelId + '">' + label + '</span>' : ''}
+        <div class="dropdown" tabindex="${disabled ? '-1' : '0'}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-controls="${this._listboxId}"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}${ariaDescribedBy ? ' aria-describedby="' + ariaDescribedBy + '"' : ''}${error ? ' aria-invalid="true"' : ''}${this.hasAttribute('required') ? ' aria-required="true"' : ''}${loading ? ' aria-busy="true"' : ''}>
+          ${loading
+            ? '<span class="loading-state" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><span class="loading-text">' + loadingLabel + '</span></span>'
+            : '<span class="text' + (isPlaceholder ? ' placeholder' : '') + '">' + (isPlaceholder ? placeholder : displayText) + '</span>'}
           <svg class="arrow" viewBox="0 0 10 6" fill="#575757"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
-          <ul class="menu" role="listbox">${optionsHtml}</ul>
+          <ul class="menu" id="${this._listboxId}" role="listbox"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}>
+            ${optionsHtml}
+            <li class="empty"><slot name="empty">${emptyState != null ? emptyState : 'No options'}</slot></li>
+          </ul>
         </div>
-        ${error ? '<span class="error-text">' + error + '</span>' : ''}
+        ${error ? '<span class="error-text" id="' + this._errorId + '">' + error + '</span>' : ''}
+        <span class="sr-status" id="${this._statusId}" aria-live="polite" aria-atomic="true"></span>
       `;
     }
 
@@ -1918,6 +2698,11 @@
 
       dd.addEventListener('click', function(e) {
         if (self.hasAttribute('disabled')) return;
+        if (self.hasAttribute('loading')) {
+          if (self._pendingOpen) self._cancelPending('toggle');
+          else self._pendingOpen = true;
+          return;
+        }
         var opt = e.target.closest('.option');
         if (opt) {
           if (opt.getAttribute('aria-disabled') === 'true') return;
@@ -1929,8 +2714,28 @@
         }
       });
 
+      dd.addEventListener('blur', function() {
+        if (!self.hasAttribute('loading')) return;
+        setTimeout(function() {
+          if (self.hasAttribute('loading')) self._cancelPending('blur');
+        }, 0);
+      });
+
       dd.addEventListener('keydown', function(e) {
         if (self.hasAttribute('disabled')) return;
+        if (self.hasAttribute('loading')) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            self._cancelPending('escape');
+            return;
+          }
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!self._pendingOpen) self._pendingOpen = true;
+            return;
+          }
+          return;
+        }
         switch (e.key) {
           case 'ArrowDown':
             e.preventDefault();
@@ -1993,6 +2798,21 @@
       var dd = this.shadowRoot.querySelector('.dropdown');
       dd.classList.add('open');
       dd.setAttribute('aria-expanded', 'true');
+      this._checkEmpty();
+      this._scrollToSelected();
+    }
+
+    _scrollToSelected() {
+      var self = this;
+      requestAnimationFrame(function() {
+        var menu = self.shadowRoot.querySelector('.menu');
+        var sel = self.shadowRoot.querySelector('.option.selected');
+        if (!menu || !sel) return;
+        var menuRect = menu.getBoundingClientRect();
+        var selRect = sel.getBoundingClientRect();
+        var itemOffset = selRect.top - menuRect.top + menu.scrollTop;
+        menu.scrollTop = itemOffset - (menu.clientHeight / 2) + (selRect.height / 2);
+      });
     }
 
     _close() {
@@ -2004,10 +2824,32 @@
       this._clearHighlight();
     }
 
+    _checkEmpty() {
+      var options = this.shadowRoot.querySelectorAll('.option');
+      var empty = this.shadowRoot.querySelector('.empty');
+      if (!empty) return;
+      if (options.length === 0) empty.classList.add('visible');
+      else empty.classList.remove('visible');
+    }
+
     _onDocClick(e) {
       if (!this.contains(e.target) && !this.shadowRoot.contains(e.target)) {
+        if (this.hasAttribute('loading') && this._pendingOpen) {
+          this._cancelPending('outside');
+          return;
+        }
         if (this._open) this._close();
       }
+    }
+
+    _cancelPending(reason) {
+      if (!this._pendingOpen) return;
+      this._pendingOpen = false;
+      this.dispatchEvent(new CustomEvent('loading-cancel', {
+        detail: { reason: reason },
+        bubbles: true,
+        composed: true
+      }));
     }
 
     _selectByValue(val) {
@@ -2034,6 +2876,9 @@
         }
       }
 
+      var status = this.shadowRoot.getElementById(this._statusId);
+      if (status) status.textContent = opt.label + ' selected';
+
       this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
     }
 
@@ -2056,10 +2901,11 @@
     _applyHighlight(opts) {
       this._clearHighlight();
       if (this._highlighted >= 0 && opts[this._highlighted]) {
-        opts[this._highlighted].classList.add('highlighted');
-        opts[this._highlighted].scrollIntoView({ block: 'nearest' });
+        var hot = opts[this._highlighted];
+        hot.classList.add('highlighted');
+        hot.scrollIntoView({ block: 'nearest' });
         var dd = this.shadowRoot.querySelector('.dropdown');
-        dd.setAttribute('aria-activedescendant', 'opt-' + this._highlighted);
+        if (dd && hot.id) dd.setAttribute('aria-activedescendant', hot.id);
       }
     }
 
@@ -2077,9 +2923,14 @@
 
   /* ======== canvas-input ======== */
 
-  class CanvasInput extends HTMLElement {
+  class CanvasInput extends AriaProxy(HTMLElement) {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'required', 'error', 'disabled', 'value', 'name', 'type'];
+      var base = ['label', 'placeholder', 'required', 'error', 'disabled', 'value', 'name', 'type'];
+      var inherited = super.observedAttributes || [];
+      for (var i = 0; i < inherited.length; i++) {
+        if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
+      }
+      return base;
     }
 
     static formAssociated = true;
@@ -2186,6 +3037,11 @@
           :host([error]) input::placeholder {
             color: var(--canvas-input-error-border, #e0b4b4);
           }
+
+          :host([required][label]) label::after {
+            content: " *";
+            color: var(--canvas-input-required-text, var(--canvas-input-error-text, #9f3a38));
+          }
         </style>
         <label part="label"></label>
         <input part="input" type="text">
@@ -2194,14 +3050,34 @@
       this._label = this.shadowRoot.querySelector('label');
       this._input = this.shadowRoot.querySelector('input');
       this._errorMsg = this.shadowRoot.querySelector('.error-msg');
+      this._inputId = cuid('input');
+      this._labelId = cuid('input-lbl');
+      this._errorId = cuid('err');
+      this._input.id = this._inputId;
+      this._label.id = this._labelId;
+      this._label.setAttribute('for', this._inputId);
+      this._errorMsg.id = this._errorId;
       this._boundOnInput = this._onInput.bind(this);
       this._boundOnChange = this._onChange.bind(this);
+    }
+
+    _ariaProxyTarget() { return this._input; }
+
+    _syncDescribedBy() {
+      var hostDesc = this.getAttribute('aria-describedby');
+      var errId = this.hasAttribute('error') ? this._errorId : '';
+      var combined = ((hostDesc || '') + ' ' + errId).replace(/\s+/g, ' ').trim();
+      if (combined) this._input.setAttribute('aria-describedby', combined);
+      else this._input.removeAttribute('aria-describedby');
     }
 
     connectedCallback() {
       this._input.addEventListener('input', this._boundOnInput);
       this._input.addEventListener('change', this._boundOnChange);
       this._syncAll();
+      this._syncAriaProxy();
+      this._syncDescribedBy();
+      if (this.hasAttribute('error')) this._input.setAttribute('aria-invalid', 'true');
     }
 
     disconnectedCallback() {
@@ -2210,6 +3086,17 @@
     }
 
     attributeChangedCallback(name, oldVal, newVal) {
+      if (typeof super.attributeChangedCallback === 'function') {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
+      if (name === 'aria-describedby') {
+        this._syncDescribedBy();
+        return;
+      }
+      if (name === 'aria-invalid') {
+        if (this.hasAttribute('error')) this._input.setAttribute('aria-invalid', 'true');
+        return;
+      }
       switch (name) {
         case 'label':
           this._label.textContent = newVal || '';
@@ -2282,13 +3169,15 @@
       if (err) {
         this._errorMsg.textContent = err;
         this._input.setAttribute('aria-invalid', 'true');
-        this._errorMsg.id = 'err';
-        this._input.setAttribute('aria-describedby', 'err');
       } else {
         this._errorMsg.textContent = '';
-        this._input.removeAttribute('aria-invalid');
-        this._input.removeAttribute('aria-describedby');
+        if (this.hasAttribute('aria-invalid')) {
+          this._input.setAttribute('aria-invalid', this.getAttribute('aria-invalid'));
+        } else {
+          this._input.removeAttribute('aria-invalid');
+        }
       }
+      this._syncDescribedBy();
     }
 
     _onInput(e) {
@@ -2328,7 +3217,22 @@
 
     _render() {
       const text = this.getAttribute('text');
-      const label = this.getAttribute('aria-label') || 'Loading';
+      const userLabel = this.getAttribute('aria-label');
+      const label = userLabel || 'Loading';
+      /* Runtime check so the spinner renders with no animation when the
+         user has reduced motion enabled. The CSS media query is also
+         present below as a defense in depth so motion never starts when
+         the preference is set after the loader has already mounted. */
+      const prefersReduced = reduceMotion();
+
+      /* Reflect role status, aria-live polite, and the resolved aria-label
+         onto the host so the host itself is the live region. AT picks up
+         the loader being attached or detached without needing the spinner
+         span to be the announcement target. The guards prevent the
+         attribute change from re entering attributeChangedCallback. */
+      if (this.getAttribute('role') !== 'status') this.setAttribute('role', 'status');
+      if (this.getAttribute('aria-live') !== 'polite') this.setAttribute('aria-live', 'polite');
+      if (this.getAttribute('aria-label') !== label) this.setAttribute('aria-label', label);
 
       this.shadowRoot.innerHTML = `
         <style>
@@ -2484,9 +3388,21 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
+
+          /* Static affordance shown in place of the rotating arc when the
+             user has reduced motion enabled. Renders the arc color on all
+             four borders so the spinner reads as a solid ring at rest. The
+             host still carries the same role and aria-label so AT users
+             get the same announcement either way. */
+          .spinner.static::after {
+            animation: none;
+            border-color: var(--canvas-loader-arc-color, #767676);
+          }
+
+          ${PREFERS_REDUCED_MOTION_CSS}
         </style>
         <div class="container">
-          <div class="spinner" role="status" aria-label="${label}"></div>
+          <div class="spinner${prefersReduced ? ' static' : ''}"></div>
           ${text ? `<span class="text">${text}</span>` : ''}
         </div>
       `;
@@ -2514,6 +3430,7 @@
       this._options = [];
       this._highlighted = -1;
       this._open = false;
+      this._menuId = cuid('mb-menu');
       this._onDocClick = this._onDocClick.bind(this);
     }
 
@@ -2553,7 +3470,8 @@
             value: el.getAttribute('value') || el.textContent.trim(),
             label: el.getAttribute('label') || el.textContent.trim(),
             html: el.innerHTML,
-            disabled: el.hasAttribute('disabled')
+            disabled: el.hasAttribute('disabled'),
+            domId: cuid('mb-opt')
           };
           this._children.push(record);
           this._options.push(record);
@@ -2571,7 +3489,7 @@
           optionsHtml += '<li class="divider" role="separator"></li>';
           continue;
         }
-        var attrs = 'role="menuitem" tabindex="-1" data-value="' + c.value + '"';
+        var attrs = 'role="menuitem" id="' + c.domId + '" tabindex="-1" data-value="' + c.value + '"';
         if (c.disabled) attrs += ' aria-disabled="true"';
         optionsHtml += '<li class="option" ' + attrs + '>' + c.html + '</li>';
       }
@@ -2627,6 +3545,7 @@
             padding: 0;
             max-height: 16.02857143rem;
             overflow-y: auto;
+            overscroll-behavior: none;
             background: var(--color-surface, #FFFFFF);
             border: 1px solid rgba(34, 36, 38, 0.15);
             border-radius: var(--radius, .28571429rem);
@@ -2684,13 +3603,13 @@
         <div class="menu-button">
           <span class="trigger-wrap">
             <slot name="trigger">
-              <button class="default-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+              <button class="default-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="${this._menuId}">
                 <span>Actions</span>
                 <svg class="default-arrow" viewBox="0 0 10 6" fill="currentColor"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
               </button>
             </slot>
           </span>
-          <ul class="menu" role="menu" tabindex="-1">${optionsHtml}</ul>
+          <ul class="menu" id="${this._menuId}" role="menu" tabindex="-1">${optionsHtml}</ul>
         </div>
       `;
     }
@@ -2698,6 +3617,13 @@
     _bindEvents() {
       var self = this;
       var triggerWrap = this.shadowRoot.querySelector('.trigger-wrap');
+      var triggerSlot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      if (triggerSlot) {
+        triggerSlot.addEventListener('slotchange', function() {
+          self._wireSlottedTrigger();
+        });
+        self._wireSlottedTrigger();
+      }
 
       triggerWrap.addEventListener('click', function(e) {
         if (self.hasAttribute('disabled')) return;
@@ -2773,6 +3699,18 @@
       return this.shadowRoot.querySelectorAll('.option:not([aria-disabled="true"])');
     }
 
+    _wireSlottedTrigger() {
+      var slot = this.shadowRoot.querySelector('slot[name="trigger"]');
+      if (!slot) return;
+      var assigned = slot.assignedElements();
+      var expanded = this._open ? 'true' : 'false';
+      for (var i = 0; i < assigned.length; i++) {
+        assigned[i].setAttribute('aria-haspopup', 'menu');
+        assigned[i].setAttribute('aria-expanded', expanded);
+        assigned[i].setAttribute('aria-controls', this._menuId);
+      }
+    }
+
     _openMenu() {
       if (this._open) return;
       this._open = true;
@@ -2782,6 +3720,7 @@
       this._computePlacement();
       var defaultBtn = this.shadowRoot.querySelector('.default-trigger');
       if (defaultBtn) defaultBtn.setAttribute('aria-expanded', 'true');
+      this._wireSlottedTrigger();
       var menu = this.shadowRoot.querySelector('.menu');
       menu.focus();
       this.dispatchEvent(new CustomEvent('open', { bubbles: true, composed: true }));
@@ -2811,6 +3750,7 @@
       root.classList.remove('open');
       var defaultBtn = this.shadowRoot.querySelector('.default-trigger');
       if (defaultBtn) defaultBtn.setAttribute('aria-expanded', 'false');
+      this._wireSlottedTrigger();
       this._clearHighlight();
       this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
     }
@@ -2863,8 +3803,11 @@
     _applyHighlight(opts) {
       this._clearHighlight();
       if (this._highlighted >= 0 && opts[this._highlighted]) {
-        opts[this._highlighted].classList.add('highlighted');
-        opts[this._highlighted].scrollIntoView({ block: 'nearest' });
+        var hot = opts[this._highlighted];
+        hot.classList.add('highlighted');
+        hot.scrollIntoView({ block: 'nearest' });
+        var menu = this.shadowRoot.querySelector('.menu');
+        if (menu && hot.id) menu.setAttribute('aria-activedescendant', hot.id);
       }
     }
 
@@ -2873,6 +3816,8 @@
       for (var i = 0; i < items.length; i++) {
         items[i].classList.remove('highlighted');
       }
+      var menu = this.shadowRoot.querySelector('.menu');
+      if (menu) menu.removeAttribute('aria-activedescendant');
     }
   }
 
@@ -2889,7 +3834,7 @@
 
   class CanvasPopover extends HTMLElement {
     static get observedAttributes() {
-      return ['open', 'align', 'direction', 'size', 'label', 'pointer'];
+      return ['open', 'align', 'direction', 'size', 'label', 'pointer', 'labelledby'];
     }
 
     constructor() {
@@ -2907,6 +3852,7 @@
         self._render();
         self._bindEvents();
         self._wireTriggerAria();
+        self._wireLabelledBy();
         if (self.hasAttribute('open')) self._activate();
       }, 0);
       document.addEventListener('click', this._onDocClick);
@@ -2927,8 +3873,11 @@
         return;
       }
       if (name === 'label') {
-        var surface = this.shadowRoot.querySelector('.surface');
-        if (surface) surface.setAttribute('aria-label', newVal || '');
+        this._wireLabelledBy();
+        return;
+      }
+      if (name === 'labelledby') {
+        this._wireLabelledBy();
         return;
       }
       if (name === 'align' || name === 'direction' || name === 'pointer') {
@@ -3018,8 +3967,7 @@
           <div class="pointer pointer-cover" aria-hidden="true"></div>
         </div>
       `;
-      var surface = this.shadowRoot.querySelector('.surface');
-      surface.setAttribute('aria-label', this.getAttribute('label') || '');
+      this._wireLabelledBy();
     }
 
     _bindEvents() {
@@ -3035,6 +3983,13 @@
       triggerSlot.addEventListener('slotchange', function() {
         self._wireTriggerAria();
       });
+
+      var defaultSlot = this.shadowRoot.querySelector('.surface > slot');
+      if (defaultSlot) {
+        defaultSlot.addEventListener('slotchange', function() {
+          self._wireLabelledBy();
+        });
+      }
     }
 
     _wireTriggerAria() {
@@ -3045,6 +4000,26 @@
       for (var i = 0; i < assigned.length; i++) {
         assigned[i].setAttribute('aria-haspopup', 'dialog');
         assigned[i].setAttribute('aria-expanded', expanded);
+      }
+    }
+
+    _wireLabelledBy() {
+      var surface = this.shadowRoot.querySelector('.surface');
+      if (!surface) return;
+      var labelledBy = this.getAttribute('labelledby');
+      if (!labelledBy) {
+        var heading = this.querySelector('h1, h2, h3, h4, h5, h6, [data-popover-heading]');
+        if (heading) {
+          if (!heading.id) heading.id = cuid('popover-h');
+          labelledBy = heading.id;
+        }
+      }
+      if (labelledBy) {
+        surface.setAttribute('aria-labelledby', labelledBy);
+        surface.removeAttribute('aria-label');
+      } else {
+        surface.removeAttribute('aria-labelledby');
+        surface.setAttribute('aria-label', this.getAttribute('label') || '');
       }
     }
 
@@ -3313,7 +4288,7 @@
           :host([dismissable]) .close { display: inline-flex; }
         </style>
         <span class="title"><slot></slot></span>
-        <button class="close" aria-label="Close">
+        <button type="button" class="close" aria-label="Close">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -3332,6 +4307,7 @@
 
   /* canvas-modal-content: padded content area */
   class CanvasModalContent extends HTMLElement {
+    static get observedAttributes() { return ['label']; }
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -3351,11 +4327,24 @@
         <slot></slot>
       `;
     }
+    connectedCallback() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'group');
+      this._syncLabel();
+    }
+    attributeChangedCallback() { this._syncLabel(); }
+    _syncLabel() {
+      var label = this.getAttribute('label');
+      if (label) this.setAttribute('aria-label', label);
+      else if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
+        this.setAttribute('aria-label', 'Modal content');
+      }
+    }
   }
   CanvasUI.register('canvas-modal-content', CanvasModalContent);
 
   /* canvas-modal-footer: actions bar */
   class CanvasModalFooter extends HTMLElement {
+    static get observedAttributes() { return ['label']; }
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -3373,6 +4362,18 @@
         <slot></slot>
       `;
     }
+    connectedCallback() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'group');
+      this._syncLabel();
+    }
+    attributeChangedCallback() { this._syncLabel(); }
+    _syncLabel() {
+      var label = this.getAttribute('label');
+      if (label) this.setAttribute('aria-label', label);
+      else if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
+        this.setAttribute('aria-label', 'Modal actions');
+      }
+    }
   }
   CanvasUI.register('canvas-modal-footer', CanvasModalFooter);
 
@@ -3387,12 +4388,24 @@
       this.attachShadow({ mode: 'open' });
       this._isOpen = false;
       this._previousFocus = null;
+      this._releaseTrap = null;
+      this._inertedSiblings = [];
+      this._headingId = cuid('modal-h');
       this._onKeyDown = this._onKeyDown.bind(this);
     }
 
     connectedCallback() {
       this._render();
       this._bindEvents();
+    }
+
+    disconnectedCallback() {
+      if (this._isOpen) {
+        document.removeEventListener('keydown', this._onKeyDown);
+        if (this._releaseTrap) { this._releaseTrap(); this._releaseTrap = null; }
+        this._uninertSiblings();
+        document.body.style.overflow = '';
+      }
     }
 
     attributeChangedCallback() {
@@ -3413,9 +4426,15 @@
       backdrop.classList.add('active');
       scroll.classList.add('active');
       document.body.style.overflow = 'hidden';
+      this._inertSiblings();
+      this._wireHeading();
       document.addEventListener('keydown', this._onKeyDown);
       var self = this;
-      requestAnimationFrame(function() { self._focusFirst(); });
+      requestAnimationFrame(function() {
+        self._focusFirst();
+        var modal = self.shadowRoot.querySelector('.modal');
+        if (modal) self._releaseTrap = trapFocus(modal, { restore: false });
+      });
       this.dispatchEvent(new CustomEvent('open', { bubbles: true, composed: true }));
     }
 
@@ -3427,12 +4446,49 @@
       backdrop.classList.remove('active');
       scroll.classList.remove('active');
       document.body.style.overflow = '';
+      this._uninertSiblings();
       document.removeEventListener('keydown', this._onKeyDown);
+      if (this._releaseTrap) { this._releaseTrap(); this._releaseTrap = null; }
       if (this._previousFocus && this._previousFocus.focus) {
-        this._previousFocus.focus();
+        try { this._previousFocus.focus(); } catch (e) {}
       }
       this._previousFocus = null;
       this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }));
+    }
+
+    _inertSiblings() {
+      var parent = this.parentNode;
+      if (!parent) return;
+      var siblings = parent.children;
+      this._inertedSiblings = [];
+      for (var i = 0; i < siblings.length; i++) {
+        var sib = siblings[i];
+        if (sib === this) continue;
+        if (sib.hasAttribute('inert')) continue;
+        sib.setAttribute('inert', '');
+        sib.setAttribute('aria-hidden', 'true');
+        this._inertedSiblings.push(sib);
+      }
+    }
+
+    _uninertSiblings() {
+      for (var i = 0; i < this._inertedSiblings.length; i++) {
+        this._inertedSiblings[i].removeAttribute('inert');
+        this._inertedSiblings[i].removeAttribute('aria-hidden');
+      }
+      this._inertedSiblings = [];
+    }
+
+    _wireHeading() {
+      var modal = this.shadowRoot.querySelector('.modal');
+      if (!modal) return;
+      var header = this.querySelector('canvas-modal-header');
+      if (header) {
+        if (!header.id) header.id = this._headingId;
+        modal.setAttribute('aria-labelledby', header.id);
+      } else {
+        modal.removeAttribute('aria-labelledby');
+      }
     }
 
     _render() {
@@ -3462,6 +4518,7 @@
             margin: auto;
             font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
           }
+          .modal:focus { outline: none; }
           .modal-small { width: 35rem; max-width: calc(100vw - 4rem); }
           .modal-medium { width: 52.5rem; max-width: calc(100vw - 4rem); }
           .modal-full { width: calc(100vw - 6rem); min-height: calc(100vh - 6rem); }
@@ -3469,7 +4526,7 @@
         </style>
         <div class="backdrop"></div>
         <div class="scroll">
-          <div class="${sizeClass}" role="dialog" aria-modal="true">
+          <div class="${sizeClass}" role="dialog" aria-modal="true" tabindex="-1">
             <slot></slot>
           </div>
         </div>
@@ -3490,66 +4547,18 @@
         if (this.hasAttribute('persistent')) return;
         e.preventDefault();
         this.dismiss();
-        return;
-      }
-      if (e.key === 'Tab') {
-        this._trapFocus(e);
-      }
-    }
-
-    _getFocusable() {
-      var modal = this.shadowRoot.querySelector('.modal');
-      var focusable = [];
-      var slot = modal.querySelector('slot');
-      if (!slot) return focusable;
-      var assigned = slot.assignedElements({ flatten: true });
-      for (var i = 0; i < assigned.length; i++) {
-        this._collectFocusable(assigned[i], focusable);
-      }
-      return focusable;
-    }
-
-    _collectFocusable(el, list) {
-      if (this._isFocusable(el)) list.push(el);
-      if (el.shadowRoot) {
-        var shadowChildren = el.shadowRoot.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        for (var i = 0; i < shadowChildren.length; i++) {
-          if (this._isFocusable(shadowChildren[i])) list.push(shadowChildren[i]);
-        }
-      }
-      var children = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), canvas-button, canvas-input, canvas-dropdown, canvas-combobox, canvas-multi-select, canvas-menu-button, canvas-popover');
-      for (var i = 0; i < children.length; i++) {
-        this._collectFocusable(children[i], list);
-      }
-    }
-
-    _isFocusable(el) {
-      if (el.disabled) return false;
-      if (el.tabIndex < 0) return false;
-      return true;
-    }
-
-    _trapFocus(e) {
-      var focusable = this._getFocusable();
-      if (focusable.length === 0) return;
-      var first = focusable[0];
-      var last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first || (first.shadowRoot && first.shadowRoot.activeElement)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last || (last.shadowRoot && last.shadowRoot.activeElement)) {
-          e.preventDefault();
-          first.focus();
-        }
       }
     }
 
     _focusFirst() {
-      var focusable = this._getFocusable();
-      if (focusable.length > 0) focusable[0].focus();
+      var modal = this.shadowRoot.querySelector('.modal');
+      if (!modal) return;
+      var tabbables = _collectTabbable(modal);
+      if (tabbables.length > 0) {
+        try { tabbables[0].focus(); } catch (e) { modal.focus(); }
+      } else {
+        modal.focus();
+      }
     }
   }
 
@@ -3560,7 +4569,7 @@
   /* canvas-multi-select: multi-value select with chips, type-to-filter, and form association */
   class CanvasMultiSelect extends HTMLElement {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'disabled', 'required', 'error', 'name'];
+      return ['label', 'placeholder', 'disabled', 'required', 'error', 'name', 'empty-state', 'loading', 'loading-label'];
     }
 
     static get formAssociated() { return true; }
@@ -3573,6 +4582,12 @@
       this._selected = [];
       this._highlighted = -1;
       this._open = false;
+      this._pendingOpen = false;
+      this._inputId = cuid('ms-input');
+      this._labelId = cuid('ms-label');
+      this._listboxId = cuid('ms-list');
+      this._errorId = cuid('ms-err');
+      this._statusId = cuid('ms-status');
       this._onDocClick = this._onDocClick.bind(this);
     }
 
@@ -3592,7 +4607,33 @@
     }
 
     attributeChangedCallback(name) {
-      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled') {
+      if (name === 'loading') {
+        if (this.shadowRoot.querySelector('.multi-select')) {
+          var nowLoading = this.hasAttribute('loading');
+          if (nowLoading && this._open) {
+            this._pendingOpen = true;
+            this._close();
+          }
+          if (!nowLoading) this._readOptions();
+          this._render();
+          this._bindEvents();
+          if (!nowLoading && this._pendingOpen) {
+            this._pendingOpen = false;
+            this._openMenu();
+            var input = this.shadowRoot.querySelector('.input');
+            if (input) input.focus();
+          }
+        }
+        return;
+      }
+      if (name === 'loading-label') {
+        if (this.shadowRoot.querySelector('.multi-select') && this.hasAttribute('loading')) {
+          this._render();
+          this._bindEvents();
+        }
+        return;
+      }
+      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled' || name === 'empty-state') {
         if (this.shadowRoot.querySelector('.multi-select')) {
           this._render();
           this._bindEvents();
@@ -3622,7 +4663,8 @@
           value: val,
           label: opt.getAttribute('label') || opt.textContent.trim(),
           html: opt.innerHTML,
-          disabled: opt.hasAttribute('disabled')
+          disabled: opt.hasAttribute('disabled'),
+          domId: cuid('ms-opt')
         });
         if (opt.hasAttribute('selected') && this._selected.indexOf(val) === -1) {
           this._selected.push(val);
@@ -3635,12 +4677,15 @@
       var placeholder = this.getAttribute('placeholder') || '';
       var error = this.getAttribute('error');
       var disabled = this.hasAttribute('disabled');
+      var loading = this.hasAttribute('loading');
+      var loadingLabel = this.getAttribute('loading-label') || 'Loading options';
+      var emptyState = this.getAttribute('empty-state');
 
       var optionsHtml = '';
       for (var i = 0; i < this._options.length; i++) {
         var o = this._options[i];
         var sel = this._selected.indexOf(o.value) >= 0;
-        var attrs = 'role="option" data-value="' + o.value + '" data-index="' + i + '"';
+        var attrs = 'role="option" id="' + o.domId + '" data-value="' + o.value + '" data-index="' + i + '" title="' + o.label.replace(/"/g, '&quot;') + '" aria-selected="' + (sel ? 'true' : 'false') + '"';
         if (o.disabled) attrs += ' aria-disabled="true"';
         optionsHtml += '<li class="option' + (sel ? ' selected' : '') + '" ' + attrs + '>' + o.html + '</li>';
       }
@@ -3673,6 +4718,60 @@
             background: transparent; border: none; outline: none; margin: 0;
           }
           .input::placeholder { color: rgba(191, 191, 191, 0.87); }
+          :host([loading]) .input { display: none; }
+          :host([loading]) .trigger { cursor: progress; }
+          :host([loading][disabled]) .trigger { cursor: default; }
+          :host([loading]) .arrow { opacity: 0.4; }
+          .loading-state {
+            display: none;
+            flex: 1;
+            min-width: 0;
+            align-items: center;
+            gap: .5em;
+            padding: .25em .33em;
+            font-size: 1em;
+            font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+            line-height: 1.21428571em;
+            color: rgba(0, 0, 0, 0.55);
+            outline: none;
+            cursor: progress;
+          }
+          :host([loading]) .loading-state { display: inline-flex; }
+          .loading-spinner {
+            position: relative;
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            flex-shrink: 0;
+          }
+          .loading-spinner::before,
+          .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 500rem;
+            box-sizing: border-box;
+          }
+          .loading-spinner::before {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+          }
+          .loading-spinner::after {
+            border: 2px solid;
+            border-color: #767676 transparent transparent;
+            animation: canvas-multi-select-spin .6s linear infinite;
+          }
+          .loading-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          @keyframes canvas-multi-select-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
           .arrow { position: absolute; right: 1em; top: calc((1.21428571em + 2 * .67857143em + 2px) / 2); transform: translateY(-50%); width: 8px; height: 5px; pointer-events: none; }
           .chip {
             display: inline-flex; align-items: center; gap: .4em;
@@ -3695,7 +4794,7 @@
           .chip-dismiss svg { display: block; }
           .menu {
             display: none; position: absolute; top: calc(100% - 1px); left: 0; right: 0;
-            max-height: 16.02857143rem; overflow-y: auto;
+            max-height: 16.02857143rem; overflow-y: auto; overscroll-behavior: none;
             background: var(--color-surface, #FFFFFF);
             border: 1px solid #96c8da; border-top: none;
             border-radius: 0 0 var(--radius, .28571429rem) var(--radius, .28571429rem);
@@ -3710,32 +4809,69 @@
             box-shadow: 0 0px 3px 0 rgba(34, 36, 38, 0.06);
           }
           .option {
-            padding: .78571429rem 1.14285714rem; font-size: 1rem; line-height: 1.0625rem;
+            position: relative;
+            padding: .78571429rem 1.14285714rem .78571429rem 2.4em; font-size: 1rem; line-height: 1.0625rem;
             color: var(--color-text, rgba(0, 0, 0, 0.87)); cursor: pointer;
             border-top: 1px solid #fafafa; transition: background 0.1s ease;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           }
           .option:first-child { border-top: none; }
           .option:hover, .option.highlighted { background: rgba(0, 0, 0, 0.05); color: rgba(0, 0, 0, 0.95); }
-          .option.selected { display: none; }
+          .option.selected { color: rgba(0, 0, 0, 0.95); font-weight: 700; }
+          .option::before {
+            content: '';
+            position: absolute;
+            left: 1em;
+            top: 50%;
+            width: .85em;
+            height: .85em;
+            margin-top: -.43em;
+            border: 1px solid rgba(34, 36, 38, 0.4);
+            border-radius: 2px;
+            background: var(--color-surface, #FFFFFF);
+            box-sizing: border-box;
+          }
+          .option.selected::before {
+            background: #2185d0;
+            border-color: #2185d0;
+          }
+          .option.selected::after {
+            content: '';
+            position: absolute;
+            left: 1.2em;
+            top: 50%;
+            width: .25em;
+            height: .5em;
+            margin-top: -.32em;
+            border-right: 2px solid #FFFFFF;
+            border-bottom: 2px solid #FFFFFF;
+            transform: rotate(45deg);
+          }
           .option.hidden { display: none; }
           .option[aria-disabled="true"] { color: #767676; cursor: not-allowed; }
           .option[aria-disabled="true"]:hover { background: transparent; }
           .empty { padding: .78571429rem 1.14285714rem; font-size: 1rem; color: rgba(0, 0, 0, 0.4); display: none; }
           .empty.visible { display: block; }
           .error-text { margin-top: .28571429rem; font-size: .92857143em; font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif); color: #9f3a38; line-height: 1.4285em; }
+          ${SR_STATUS_CSS}
         </style>
-        ${label ? '<span class="label">' + label + '</span>' : ''}
-        <div class="multi-select">
+        ${label ? '<label class="label" id="' + this._labelId + '" for="' + this._inputId + '">' + label + '</label>' : ''}
+        <div class="multi-select"${loading ? ' aria-busy="true"' : ''}>
           <div class="trigger">
-            <input class="input" type="text" placeholder="${placeholder}" ${disabled ? 'disabled' : ''}>
+            <input class="input" id="${this._inputId}" type="text" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-autocomplete="list" aria-controls="${this._listboxId}"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}${error ? ' aria-describedby="' + this._errorId + '" aria-invalid="true"' : ''}${this.hasAttribute('required') ? ' aria-required="true"' : ''} placeholder="${placeholder}" autocomplete="off" ${disabled ? 'disabled' : ''}>
+            <div class="loading-state" tabindex="${disabled ? '-1' : '0'}" role="status" aria-live="polite">
+              <span class="loading-spinner" aria-hidden="true"></span>
+              <span class="loading-text">${loadingLabel}</span>
+            </div>
           </div>
           <svg class="arrow" viewBox="0 0 10 6" fill="#575757"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>
-          <ul class="menu" role="listbox" aria-multiselectable="true">
+          <ul class="menu" id="${this._listboxId}" role="listbox" aria-multiselectable="true"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}>
             ${optionsHtml}
-            <li class="empty">No results</li>
+            <li class="empty"><slot name="empty">${emptyState != null ? emptyState : 'No results'}</slot></li>
           </ul>
         </div>
-        ${error ? '<span class="error-text">' + error + '</span>' : ''}
+        ${error ? '<span class="error-text" id="' + this._errorId + '">' + error + '</span>' : ''}
+        <span class="sr-status" id="${this._statusId}" aria-live="polite" aria-atomic="true"></span>
       `;
       this._renderChips();
     }
@@ -3752,7 +4888,7 @@
         var chip = document.createElement('span');
         chip.className = 'chip';
         chip.dataset.value = opt.value;
-        chip.innerHTML = opt.label + '<button class="chip-dismiss" aria-label="Remove ' + opt.label + '"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
+        chip.innerHTML = opt.label + '<button type="button" class="chip-dismiss" aria-label="Remove ' + opt.label + '"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
         trigger.insertBefore(chip, input);
       }
       this._bindChipEvents();
@@ -3762,17 +4898,20 @@
       var items = this.shadowRoot.querySelectorAll('.option');
       for (var i = 0; i < items.length; i++) {
         var val = items[i].dataset.value;
-        if (this._selected.indexOf(val) >= 0) {
+        var sel = this._selected.indexOf(val) >= 0;
+        if (sel) {
           items[i].classList.add('selected');
+          items[i].setAttribute('aria-selected', 'true');
         } else {
           items[i].classList.remove('selected');
+          items[i].setAttribute('aria-selected', 'false');
         }
       }
       this._checkEmpty();
     }
 
     _checkEmpty() {
-      var visible = this.shadowRoot.querySelectorAll('.option:not(.selected):not(.hidden)');
+      var visible = this.shadowRoot.querySelectorAll('.option:not(.hidden)');
       var empty = this.shadowRoot.querySelector('.empty');
       if (visible.length === 0) empty.classList.add('visible');
       else empty.classList.remove('visible');
@@ -3793,6 +4932,7 @@
       var self = this;
       var trigger = this.shadowRoot.querySelector('.trigger');
       var input = this.shadowRoot.querySelector('.input');
+      var loadingState = this.shadowRoot.querySelector('.loading-state');
       var menu = this.shadowRoot.querySelector('.menu');
 
       trigger.addEventListener('click', function(e) {
@@ -3805,17 +4945,56 @@
         }
         var chip = e.target.closest('.chip');
         if (chip) return;
+        if (self.hasAttribute('loading')) {
+          if (e.target.closest('.loading-state')) return;
+          if (self._pendingOpen) self._cancelPending('toggle');
+          else self._pendingOpen = true;
+          if (loadingState) loadingState.focus();
+          return;
+        }
         if (!self._open) self._openMenu();
         input.focus();
       });
 
+      if (loadingState) {
+        loadingState.addEventListener('click', function() {
+          if (self.hasAttribute('disabled')) return;
+          if (!self.hasAttribute('loading')) return;
+          if (self._pendingOpen) self._cancelPending('toggle');
+          else self._pendingOpen = true;
+        });
+
+        loadingState.addEventListener('keydown', function(e) {
+          if (self.hasAttribute('disabled')) return;
+          if (!self.hasAttribute('loading')) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            self._cancelPending('escape');
+            return;
+          }
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!self._pendingOpen) self._pendingOpen = true;
+          }
+        });
+
+        loadingState.addEventListener('blur', function() {
+          if (!self.hasAttribute('loading')) return;
+          setTimeout(function() {
+            if (self.hasAttribute('loading')) self._cancelPending('blur');
+          }, 0);
+        });
+      }
+
       input.addEventListener('input', function() {
+        if (self.hasAttribute('loading')) return;
         if (!self._open) self._openMenu();
         self._filter(input.value);
       });
 
       input.addEventListener('keydown', function(e) {
         if (self.hasAttribute('disabled')) return;
+        if (self.hasAttribute('loading')) return;
         switch (e.key) {
           case 'ArrowDown':
             e.preventDefault();
@@ -3834,7 +5013,7 @@
             } else if (self._highlighted >= 0) {
               var visible = self._getVisibleOptions();
               if (visible[self._highlighted]) {
-                self._selectValue(visible[self._highlighted].dataset.value);
+                self._toggleValue(visible[self._highlighted].dataset.value);
                 input.value = '';
                 self._clearFilter();
                 self._highlighted = -1;
@@ -3876,11 +5055,16 @@
         var opt = e.target.closest('.option');
         if (!opt) return;
         if (opt.getAttribute('aria-disabled') === 'true') return;
-        self._selectValue(opt.dataset.value);
+        self._toggleValue(opt.dataset.value);
         input.value = '';
         self._clearFilter();
         input.focus();
       });
+    }
+
+    _toggleValue(val) {
+      if (this._selected.indexOf(val) >= 0) this._deselect(val);
+      else this._selectValue(val);
     }
 
     _selectValue(val) {
@@ -3889,6 +5073,7 @@
       this._renderChips();
       this._syncOptionVisibility();
       this._updateFormValue();
+      this._announce(val, 'added');
       this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
     }
 
@@ -3899,7 +5084,16 @@
       this._renderChips();
       this._syncOptionVisibility();
       this._updateFormValue();
+      this._announce(val, 'removed');
       this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
+    }
+
+    _announce(val, kind) {
+      var status = this.shadowRoot.getElementById(this._statusId);
+      if (!status) return;
+      var opt = this._options.find(function(o) { return o.value === val; });
+      var label = opt ? opt.label : val;
+      status.textContent = label + ' ' + kind;
     }
 
     _bindChipEvents() {
@@ -3919,8 +5113,10 @@
       this._highlighted = -1;
       var trigger = this.shadowRoot.querySelector('.trigger');
       var menu = this.shadowRoot.querySelector('.menu');
+      var input = this.shadowRoot.querySelector('.input');
       trigger.classList.add('open');
       menu.classList.add('visible');
+      if (input) input.setAttribute('aria-expanded', 'true');
       this._checkEmpty();
       this._checkFlip();
     }
@@ -3930,19 +5126,35 @@
       this._highlighted = -1;
       var trigger = this.shadowRoot.querySelector('.trigger');
       var menu = this.shadowRoot.querySelector('.menu');
+      var input = this.shadowRoot.querySelector('.input');
       trigger.classList.remove('open', 'flip');
       menu.classList.remove('visible', 'flip');
+      if (input) input.setAttribute('aria-expanded', 'false');
       this._clearHighlight();
     }
 
     _onDocClick(e) {
       if (!this.contains(e.target) && !this.shadowRoot.contains(e.target)) {
+        if (this.hasAttribute('loading') && this._pendingOpen) {
+          this._cancelPending('outside');
+          return;
+        }
         if (this._open) {
           this.shadowRoot.querySelector('.input').value = '';
           this._clearFilter();
           this._close();
         }
       }
+    }
+
+    _cancelPending(reason) {
+      if (!this._pendingOpen) return;
+      this._pendingOpen = false;
+      this.dispatchEvent(new CustomEvent('loading-cancel', {
+        detail: { reason: reason },
+        bubbles: true,
+        composed: true
+      }));
     }
 
     _filter(query) {
@@ -3978,7 +5190,7 @@
     }
 
     _getVisibleOptions() {
-      return this.shadowRoot.querySelectorAll('.option:not(.selected):not(.hidden):not([aria-disabled="true"])');
+      return this.shadowRoot.querySelectorAll('.option:not(.hidden):not([aria-disabled="true"])');
     }
 
     _highlightNext(dir) {
@@ -4000,14 +5212,19 @@
     _applyHighlight(opts) {
       this._clearHighlight();
       if (this._highlighted >= 0 && opts[this._highlighted]) {
-        opts[this._highlighted].classList.add('highlighted');
-        opts[this._highlighted].scrollIntoView({ block: 'nearest' });
+        var hot = opts[this._highlighted];
+        hot.classList.add('highlighted');
+        hot.scrollIntoView({ block: 'nearest' });
+        var input = this.shadowRoot.querySelector('.input');
+        if (input && hot.id) input.setAttribute('aria-activedescendant', hot.id);
       }
     }
 
     _clearHighlight() {
       var items = this.shadowRoot.querySelectorAll('.option.highlighted');
       for (var i = 0; i < items.length; i++) items[i].classList.remove('highlighted');
+      var input = this.shadowRoot.querySelector('.input');
+      if (input) input.removeAttribute('aria-activedescendant');
     }
   }
 
@@ -4017,7 +5234,7 @@
 
   class CanvasProgress extends HTMLElement {
     static get observedAttributes() {
-      return ['value', 'color', 'size', 'active', 'label'];
+      return ['value', 'color', 'size', 'active', 'label', 'indeterminate', 'aria-label'];
     }
 
     constructor() {
@@ -4031,9 +5248,20 @@
     }
 
     _render() {
-      var value = Math.max(0, Math.min(100, parseFloat(this.getAttribute('value')) || 0));
+      /* Indeterminate progress carries no aria-valuenow per WAI ARIA so AT
+         users hear that a process is underway without a misleading
+         percentage. Determinate progress clamps the parsed value to the
+         0 to 100 range. The ARIA label mirrors the host aria-label so a
+         consumer can name the bar specifically, and falls back to a
+         stable default otherwise. */
+      var indeterminate = this.hasAttribute('indeterminate');
+      var rawValue = this.getAttribute('value');
+      var value = indeterminate ? 0 : Math.max(0, Math.min(100, parseFloat(rawValue) || 0));
       var color = this.getAttribute('color') || 'blue';
-      var showLabel = this.hasAttribute('label');
+      var showLabel = this.hasAttribute('label') && !indeterminate;
+      var ariaLabel = this.getAttribute('aria-label') || 'Progress';
+      var ariaValueNow = indeterminate ? '' : ' aria-valuenow="' + value + '"';
+      var widthStyle = indeterminate ? '100%' : value + '%';
 
       var colorMap = {
         blue: '#2185d0',
@@ -4108,9 +5336,16 @@
             border-radius: var(--radius, .28571429rem);
             animation: progress-active 2s ease infinite;
           }
+
+          /* Indeterminate fills the track so the bar surface remains
+             visible. Visual motion is intentionally minimal so the
+             affordance does not compete with the loader spinner. */
+          :host([indeterminate]) .bar {
+            opacity: 0.6;
+          }
         </style>
         <div class="track">
-          <div class="bar" role="progressbar" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100" style="width: ${value}%">
+          <div class="bar" role="progressbar" aria-label="${ariaLabel}" aria-valuemin="0" aria-valuemax="100"${ariaValueNow} style="width: ${widthStyle}">
             ${showLabel ? '<span class="label">' + Math.round(value) + '%</span>' : ''}
           </div>
         </div>
@@ -4138,6 +5373,7 @@
           :host {
             display: inline-flex;
             align-items: center;
+            position: relative;
             min-height: var(--canvas-radio-min-height, auto);
             min-width: var(--canvas-radio-min-width, auto);
             padding: 4px 8px;
@@ -4214,18 +5450,33 @@
       `;
       this._input = this.shadowRoot.querySelector('input');
       this._labelText = this.shadowRoot.querySelector('.label-text');
+      this._inputId = cuid('rb');
+      this._labelId = cuid('rb-lbl');
+      this._input.id = this._inputId;
+      this._labelText.id = this._labelId;
+      this._input.setAttribute('aria-labelledby', this._labelId);
       this._boundOnChange = this._onChange.bind(this);
       this._boundOnClick = this._onClick.bind(this);
+      this._boundOnKeydown = this._onKeydown.bind(this);
+      this._boundOnFocus = this._onFocus.bind(this);
     }
 
     connectedCallback() {
+      var self = this;
       this._input.addEventListener('change', this._boundOnChange);
+      this._input.addEventListener('keydown', this._boundOnKeydown);
+      this._input.addEventListener('focus', this._boundOnFocus);
       this.addEventListener('click', this._boundOnClick);
       this._syncAll();
+      setTimeout(function () {
+        if (self.isConnected) self._initRadioGroup();
+      }, 0);
     }
 
     disconnectedCallback() {
       this._input.removeEventListener('change', this._boundOnChange);
+      this._input.removeEventListener('keydown', this._boundOnKeydown);
+      this._input.removeEventListener('focus', this._boundOnFocus);
       this.removeEventListener('click', this._boundOnClick);
     }
 
@@ -4237,9 +5488,11 @@
         case 'checked':
           this._input.checked = this.hasAttribute('checked');
           this._syncFormValue();
+          this._updateRoving();
           break;
         case 'disabled':
           this._input.disabled = this.hasAttribute('disabled');
+          this._updateRoving();
           break;
         case 'name':
           this._input.name = this.getAttribute('name') || '';
@@ -4302,7 +5555,114 @@
       this.setAttribute('checked', '');
       this._syncFormValue();
       this._uncheckSiblings();
+      this._updateRoving();
       this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+
+    _onFocus() {
+      this._setActiveRadio(this);
+    }
+
+    _onKeydown(e) {
+      var key = e.key;
+      if (key !== 'ArrowDown' && key !== 'ArrowUp' && key !== 'ArrowLeft' && key !== 'ArrowRight'
+          && key !== 'Home' && key !== 'End') {
+        return;
+      }
+      var peers = this._radioPeers();
+      if (peers.length <= 1) return;
+      var enabled = [];
+      for (var i = 0; i < peers.length; i++) {
+        if (!peers[i].hasAttribute('disabled')) enabled.push(peers[i]);
+      }
+      if (enabled.length === 0) return;
+      e.preventDefault();
+      var currentIdx = enabled.indexOf(this);
+      if (currentIdx === -1) currentIdx = 0;
+      var target;
+      if (key === 'Home') {
+        target = enabled[0];
+      } else if (key === 'End') {
+        target = enabled[enabled.length - 1];
+      } else if (key === 'ArrowDown' || key === 'ArrowRight') {
+        target = enabled[(currentIdx + 1) % enabled.length];
+      } else {
+        target = enabled[(currentIdx - 1 + enabled.length) % enabled.length];
+      }
+      if (!target) return;
+      if (target !== this) {
+        target.setAttribute('checked', '');
+        target._input.checked = true;
+        target._syncFormValue();
+        target._uncheckSiblings();
+        target._updateRoving();
+        target.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+      }
+      target._input.focus();
+    }
+
+    _radioPeers() {
+      var name = this.getAttribute('name');
+      if (!name) return [this];
+      var parent = this.parentElement;
+      if (!parent) return [this];
+      var nodes = parent.querySelectorAll('canvas-radio[name="' + name + '"]');
+      return Array.prototype.slice.call(nodes);
+    }
+
+    _initRadioGroup() {
+      var peers = this._radioPeers();
+      if (peers.length <= 1) {
+        if (this._input) this._input.tabIndex = this.hasAttribute('disabled') ? -1 : 0;
+        return;
+      }
+      var parent = this.parentElement;
+      if (parent && !parent.hasAttribute('role') && !parent.hasAttribute('data-canvas-radiogroup')) {
+        parent.setAttribute('role', 'radiogroup');
+        parent.setAttribute('data-canvas-radiogroup', '');
+      }
+      this._updateRoving();
+    }
+
+    _updateRoving() {
+      var peers = this._radioPeers();
+      if (peers.length === 0) return;
+      var i;
+      var activeRadio = null;
+      for (i = 0; i < peers.length; i++) {
+        if (!peers[i].hasAttribute('disabled') && peers[i].hasAttribute('checked')) {
+          activeRadio = peers[i];
+          break;
+        }
+      }
+      if (!activeRadio) {
+        for (i = 0; i < peers.length; i++) {
+          if (!peers[i].hasAttribute('disabled')) {
+            activeRadio = peers[i];
+            break;
+          }
+        }
+      }
+      for (i = 0; i < peers.length; i++) {
+        var p = peers[i];
+        if (!p._input) continue;
+        if (p.hasAttribute('disabled')) {
+          p._input.tabIndex = -1;
+        } else if (p === activeRadio) {
+          p._input.tabIndex = 0;
+        } else {
+          p._input.tabIndex = -1;
+        }
+      }
+    }
+
+    _setActiveRadio(target) {
+      var peers = this._radioPeers();
+      for (var i = 0; i < peers.length; i++) {
+        var p = peers[i];
+        if (!p._input) continue;
+        p._input.tabIndex = (p === target && !p.hasAttribute('disabled')) ? 0 : -1;
+      }
     }
 
     _uncheckSiblings() {
@@ -4327,7 +5687,7 @@
 
   class CanvasScrollArea extends HTMLElement {
     static get observedAttributes() {
-      return ['vertical', 'horizontal'];
+      return ['vertical', 'horizontal', 'aria-label', 'aria-labelledby'];
     }
 
     constructor() {
@@ -4344,17 +5704,27 @@
     }
 
     connectedCallback() {
-      this._syncTabindex();
+      this._syncScrollA11y();
     }
 
     attributeChangedCallback() {
-      this._syncTabindex();
+      this._syncScrollA11y();
     }
 
-    _syncTabindex() {
+    /* When the host actually scrolls, expose it as a focusable role region
+       so keyboard users can pan with arrow keys and AT users get a stable
+       landmark. The viewport needs an accessible name to make sense as a
+       region, so a missing name produces a console warning rather than a
+       silent failure. */
+    _syncScrollA11y() {
       var hasDirection = this.hasAttribute('vertical') || this.hasAttribute('horizontal');
-      if (hasDirection && !this.hasAttribute('tabindex')) {
-        this.setAttribute('tabindex', '0');
+      if (!hasDirection) return;
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'region');
+      var hasName = this.hasAttribute('aria-label') || this.hasAttribute('aria-labelledby');
+      if (!hasName && !this._warnedNoName && typeof console !== 'undefined' && typeof console.warn === 'function') {
+        this._warnedNoName = true;
+        console.warn('canvas-scroll-area: scrolling overflow is enabled but the host has no aria-label or aria-labelledby. Add a name so screen reader users can identify this region.');
       }
     }
   }
@@ -4393,7 +5763,7 @@
 
   class CanvasSidebar extends HTMLElement {
     static get observedAttributes() {
-      return ['variant'];
+      return ['variant', 'label'];
     }
 
     constructor() {
@@ -4420,10 +5790,12 @@
 
     connectedCallback() {
       this._applyVariant();
+      this._applyLandmark();
     }
 
     attributeChangedCallback(name) {
       if (name === 'variant') this._applyVariant();
+      if (name === 'label') this._applyLandmark();
     }
 
     _applyVariant() {
@@ -4431,11 +5803,27 @@
       var width = SIDEBAR_WIDTHS[variant] || SIDEBAR_WIDTHS['default'];
       this.style.setProperty('--canvas-sidebar-width', width);
     }
+
+    /* Default the host to the complementary landmark so AT users can jump
+       to the sidebar from a landmarks list. The optional label attribute
+       mirrors to aria-label so multiple sidebars on a page can be named
+       distinctly (for example, Filters and Patient list). */
+    _applyLandmark() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'complementary');
+      if (this.hasAttribute('label')) {
+        var label = this.getAttribute('label');
+        if (this.getAttribute('aria-label') !== label) this.setAttribute('aria-label', label);
+      }
+    }
   }
   CanvasUI.register('canvas-sidebar', CanvasSidebar);
 
   /* canvas-content: flexible right panel with white background */
   class CanvasContent extends HTMLElement {
+    static get observedAttributes() {
+      return ['label'];
+    }
+
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -4452,6 +5840,26 @@
         </style>
         <slot></slot>
       `;
+    }
+
+    connectedCallback() {
+      this._applyLandmark();
+    }
+
+    attributeChangedCallback(name) {
+      if (name === 'label') this._applyLandmark();
+    }
+
+    /* Default the host to the main landmark so AT users land here when
+       jumping to main content. Optional label attribute mirrors to
+       aria-label, useful when a page hosts multiple regions and the main
+       region needs an explicit name. */
+    _applyLandmark() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'main');
+      if (this.hasAttribute('label')) {
+        var label = this.getAttribute('label');
+        if (this.getAttribute('aria-label') !== label) this.setAttribute('aria-label', label);
+      }
     }
   }
   CanvasUI.register('canvas-content', CanvasContent);
@@ -4557,6 +5965,9 @@
       handle.setAttribute('role', 'button');
       handle.setAttribute('aria-label', 'Reorder');
       handle.setAttribute('aria-roledescription', 'sortable');
+      this._handle = handle;
+      this._sortableSlot = this.shadowRoot.querySelector('slot');
+      this._boundUpdateHandleLabel = this._updateHandleLabel.bind(this);
 
       var self = this;
       handle.addEventListener('keydown', function (e) {
@@ -4577,6 +5988,23 @@
           handle.focus();
         }
       });
+    }
+
+    connectedCallback() {
+      this._sortableSlot.addEventListener('slotchange', this._boundUpdateHandleLabel);
+      this._updateHandleLabel();
+    }
+
+    disconnectedCallback() {
+      this._sortableSlot.removeEventListener('slotchange', this._boundUpdateHandleLabel);
+    }
+
+    /* Update the handle aria-label to name the item being moved so AT
+       users hear which row they are about to reorder. Falls back to the
+       generic Reorder label when the item has no text content. */
+    _updateHandleLabel() {
+      var text = this.textContent.trim();
+      this._handle.setAttribute('aria-label', text ? 'Reorder ' + text : 'Reorder');
     }
 
     _keyboardReorder(list, direction) {
@@ -4718,11 +6146,24 @@
 
     connectedCallback() {
       this.addEventListener('pointerdown', this._onPointerDown);
+      this._warnIfNoLabel();
     }
 
     disconnectedCallback() {
       this.removeEventListener('pointerdown', this._onPointerDown);
       this._cleanup();
+    }
+
+    /* Sortable lists are interactive composites. AT users need a name to
+       distinguish one list from another, especially in kanban layouts
+       with multiple columns. A missing name produces a console warning
+       once per list so authors notice during development. */
+    _warnIfNoLabel() {
+      var hasName = this.hasAttribute('aria-label') || this.hasAttribute('aria-labelledby');
+      if (!hasName && !this._warnedNoName && typeof console !== 'undefined' && typeof console.warn === 'function') {
+        this._warnedNoName = true;
+        console.warn('canvas-sortable-list: no aria-label or aria-labelledby found. Add a name so screen reader users can identify this list.');
+      }
     }
 
     /* Public snapshot getter. Returns the live array of sortable items in
@@ -5403,6 +6844,11 @@
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
+      /* Role wrappers (head and body) use display contents so the accessible
+         tree is driven solely by the explicit ARIA roles set in their
+         connectedCallback. The visual table layout is preserved because rows
+         remain display table-row inside the host display table, and the
+         browser inserts the implicit row group boxes around them. */
       this.shadowRoot.innerHTML = `
         <style>
           :host {
@@ -5414,12 +6860,9 @@
             font-size: 1em;
           }
 
-          ::slotted(canvas-table-head) {
-            display: table-header-group;
-          }
-
+          ::slotted(canvas-table-head),
           ::slotted(canvas-table-body) {
-            display: table-row-group;
+            display: contents;
           }
         </style>
         <slot></slot>
@@ -5427,6 +6870,7 @@
     }
 
     connectedCallback() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'table');
       this._applyVariants();
     }
 
@@ -5447,13 +6891,15 @@
 
   class CanvasTableHead extends HTMLElement {
     connectedCallback() {
-      this.style.display = 'table-header-group';
+      this.style.display = 'contents';
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'rowgroup');
     }
   }
 
   class CanvasTableBody extends HTMLElement {
     connectedCallback() {
-      this.style.display = 'table-row-group';
+      this.style.display = 'contents';
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'rowgroup');
     }
   }
 
@@ -5464,6 +6910,7 @@
 
     connectedCallback() {
       this.style.display = 'table-row';
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'row');
 
       const inHead = this.parentElement && this.parentElement.tagName === 'CANVAS-TABLE-HEAD';
 
@@ -5555,7 +7002,7 @@
 
   class CanvasTableCell extends HTMLElement {
     static get observedAttributes() {
-      return ['actions', 'bold', 'colspan', 'width'];
+      return ['actions', 'bold', 'colspan', 'width', 'sort'];
     }
 
     connectedCallback() {
@@ -5565,6 +7012,10 @@
 
       const inHead = this._isInHead();
       const table = this._getTable();
+
+      if (!this.hasAttribute('role')) {
+        this.setAttribute('role', inHead ? 'columnheader' : 'cell');
+      }
 
       if (inHead) {
         this.style.fontWeight = '700';
@@ -5611,6 +7062,24 @@
           });
         }
       }
+
+      this._applySort();
+    }
+
+    attributeChangedCallback(name) {
+      if (name === 'sort') this._applySort();
+    }
+
+    /* Sortable header cells expose their current sort direction via aria-sort.
+       Accepted values match the WAI ARIA aria-sort enumeration, ascending,
+       descending, none, other. The attribute is mirrored verbatim, callers
+       are expected to pass a valid value. */
+    _applySort() {
+      if (this.hasAttribute('sort')) {
+        this.setAttribute('aria-sort', this.getAttribute('sort'));
+      } else {
+        this.removeAttribute('aria-sort');
+      }
     }
 
     _isInHead() {
@@ -5641,16 +7110,30 @@
 
   /* ======== canvas-tabs ======== */
 
-  /* canvas-tab-panel: simple content container, visibility managed by canvas-tabs */
+  /* canvas-tab-panel: simple content container, visibility managed by canvas-tabs.
+     Carries role tabpanel, and aria-labelledby is wired by the parent
+     canvas-tabs to the matching canvas-tab id. When the panel itself
+     contains no focusable descendants the parent calls _ensureTabindex so
+     keyboard users can still reach the panel content. */
   class CanvasTabPanel extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-      this.shadowRoot.innerHTML = '<style>:host{display:block}:host([hidden]){display:none}.panel-inner{overflow:auto;max-width:100%}</style><div class="panel-inner"><slot></slot></div>';
+      this.shadowRoot.innerHTML = '<style>:host{display:block;max-width:100%}:host([hidden]){display:none}</style><slot></slot>';
     }
     connectedCallback() {
       this.setAttribute('role', 'tabpanel');
       if (!this.hasAttribute('hidden')) this.setAttribute('hidden', '');
+    }
+    /* Set tabindex 0 on the host only when no focusable descendant exists.
+       Re evaluated on each activation because panel content may change at
+       runtime. */
+    _ensureTabindex() {
+      this.removeAttribute('tabindex');
+      var tabbables = _collectTabbable(this);
+      if (tabbables.length === 0) {
+        this.setAttribute('tabindex', '0');
+      }
     }
   }
   CanvasUI.register('canvas-tab-panel', CanvasTabPanel);
@@ -5662,13 +7145,37 @@
   }
   CanvasUI.register('canvas-tab-label', CanvasTabLabel);
 
-  /* canvas-tab: a single tab button inside canvas-tabs. Rich content via slot. */
+  /* canvas-tab: a single tab metadata element inside canvas-tabs. Hidden in
+     light DOM, the parent canvas-tabs synthesizes the visible tab button in
+     its shadow tree from the canvas-tab attributes and slotted label. The
+     canvas-tab carries role tab plus a stable cuid id that the matching
+     canvas-tab-panel references via aria-labelledby. The for attribute is
+     mirrored to aria-controls. */
   class CanvasTab extends HTMLElement {
+    static get observedAttributes() { return ['active', 'for']; }
     constructor() { super(); }
     connectedCallback() {
       this.style.display = 'none';
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'tab');
+      if (!this.id) this.id = cuid('canvas-tab');
+      this._syncSelected();
+      this._syncControls();
       if (!this.querySelector('canvas-tab-label')) {
         console.warn('canvas-tab: missing <canvas-tab-label>. Wrap your tab text in <canvas-tab-label> for truncation and tooltip support.');
+      }
+    }
+    attributeChangedCallback(name) {
+      if (name === 'active') this._syncSelected();
+      else if (name === 'for') this._syncControls();
+    }
+    _syncSelected() {
+      this.setAttribute('aria-selected', this.hasAttribute('active') ? 'true' : 'false');
+    }
+    _syncControls() {
+      if (this.hasAttribute('for')) {
+        this.setAttribute('aria-controls', this.getAttribute('for'));
+      } else {
+        this.removeAttribute('aria-controls');
       }
     }
   }
@@ -5700,6 +7207,7 @@
       var tabs = this.querySelectorAll(':scope > canvas-tab');
       for (var i = 0; i < tabs.length; i++) {
         var tab = tabs[i];
+        if (!tab.id) tab.id = cuid('canvas-tab');
         var labelEl = tab.querySelector('canvas-tab-label');
         var hasLabel = !!labelEl;
         var labelText = hasLabel ? labelEl.textContent.trim() : tab.textContent.trim();
@@ -5715,6 +7223,8 @@
         }
 
         this._tabs.push({
+          id: tab.id,
+          element: tab,
           panelId: tab.getAttribute('for'),
           badge: tab.getAttribute('badge'),
           active: tab.hasAttribute('active'),
@@ -5736,14 +7246,18 @@
           badgeHtml = '<span class="tab-badge">' + t.badge + '</span>';
         }
         var titleAttr = t.hasLabel ? ' title="' + t.labelText.replace(/"/g, '&quot;') + '"' : '';
+        /* The shadow button mirrors the canvas-tab id so the matching panel
+           can wire aria-labelledby to a stable, collision free id even when
+           multiple canvas-tabs instances coexist on the page. */
+        var openTag = '<button type="button" class="tab-button" id="' + t.id + '" role="tab" aria-selected="false" tabindex="-1" data-index="' + i + '" data-panel="' + (t.panelId || '') + '"' + (t.panelId ? ' aria-controls="' + t.panelId + '"' : '') + '>';
 
         if (t.hasLabel) {
-          buttonsHtml += '<button class="tab-button" role="tab" aria-selected="false" tabindex="-1" data-index="' + i + '" data-panel="' + (t.panelId || '') + '">'
+          buttonsHtml += openTag
             + '<span class="tab-label-text"' + titleAttr + '>' + t.labelText + '</span>'
             + t.trailingHtml + badgeHtml
             + '</button>';
         } else {
-          buttonsHtml += '<button class="tab-button" role="tab" aria-selected="false" tabindex="-1" data-index="' + i + '" data-panel="' + (t.panelId || '') + '">'
+          buttonsHtml += openTag
             + t.html + badgeHtml
             + '</button>';
         }
@@ -5942,10 +7456,17 @@
     }
 
     _activate(index) {
-      /* Deactivate all */
+      /* Deactivate all shadow buttons and clear the active state on the
+         matching canvas-tab elements so aria-selected stays in sync on both
+         the visible interactive proxy and the metadata host. */
       for (var i = 0; i < this._buttons.length; i++) {
         this._buttons[i].setAttribute('aria-selected', 'false');
         this._buttons[i].setAttribute('tabindex', '-1');
+      }
+      for (var i = 0; i < this._tabs.length; i++) {
+        if (this._tabs[i].element) {
+          this._tabs[i].element.removeAttribute('active');
+        }
       }
       /* Hide all panels */
       var panels = this.querySelectorAll(':scope > canvas-tab-panel');
@@ -5960,6 +7481,11 @@
       btn.setAttribute('aria-selected', 'true');
       btn.setAttribute('tabindex', '0');
 
+      var tabMeta = this._tabs[index];
+      if (tabMeta && tabMeta.element) {
+        tabMeta.element.setAttribute('active', '');
+      }
+
       var panelId = btn.dataset.panel;
       if (panelId) {
         var panel = this.querySelector(':scope > canvas-tab-panel[id="' + panelId + '"]');
@@ -5967,11 +7493,11 @@
           panel.removeAttribute('hidden');
           panel.setAttribute('visible', '');
           btn.setAttribute('aria-controls', panelId);
-          panel.setAttribute('aria-labelledby', 'tab-' + index);
+          if (tabMeta) panel.setAttribute('aria-labelledby', tabMeta.id);
+          if (typeof panel._ensureTabindex === 'function') panel._ensureTabindex();
         }
       }
 
-      btn.id = 'tab-' + index;
       this._focusIndex = index;
 
       this.dispatchEvent(new CustomEvent('tab-change', {
@@ -5993,9 +7519,14 @@
 
   /* ======== canvas-textarea ======== */
 
-  class CanvasTextarea extends HTMLElement {
+  class CanvasTextarea extends AriaProxy(HTMLElement) {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'rows', 'max-rows', 'required', 'error', 'disabled', 'value', 'name', 'maxlength', 'auto-resize', 'no-resize'];
+      var base = ['label', 'placeholder', 'rows', 'max-rows', 'required', 'error', 'disabled', 'value', 'name', 'maxlength', 'auto-resize', 'no-resize'];
+      var inherited = super.observedAttributes || [];
+      for (var i = 0; i < inherited.length; i++) {
+        if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
+      }
+      return base;
     }
 
     static formAssociated = true;
@@ -6147,6 +7678,11 @@
             color: var(--canvas-textarea-error-text, var(--canvas-input-error-text, #9f3a38));
             font-weight: 700;
           }
+
+          :host([required][label]) label::after {
+            content: " *";
+            color: var(--canvas-textarea-required-text, var(--canvas-input-required-text, var(--canvas-input-error-text, #9f3a38)));
+          }
         </style>
         <label part="label"></label>
         <div class="wrap">
@@ -6160,14 +7696,34 @@
       this._wrap = this.shadowRoot.querySelector('.wrap');
       this._counter = this.shadowRoot.querySelector('.counter');
       this._errorMsg = this.shadowRoot.querySelector('.error-msg');
+      this._inputId = cuid('textarea');
+      this._labelId = cuid('textarea-lbl');
+      this._errorId = cuid('err');
+      this._textarea.id = this._inputId;
+      this._label.id = this._labelId;
+      this._label.setAttribute('for', this._inputId);
+      this._errorMsg.id = this._errorId;
       this._boundOnInput = this._onInput.bind(this);
       this._boundOnChange = this._onChange.bind(this);
+    }
+
+    _ariaProxyTarget() { return this._textarea; }
+
+    _syncDescribedBy() {
+      var hostDesc = this.getAttribute('aria-describedby');
+      var errId = this.hasAttribute('error') ? this._errorId : '';
+      var combined = ((hostDesc || '') + ' ' + errId).replace(/\s+/g, ' ').trim();
+      if (combined) this._textarea.setAttribute('aria-describedby', combined);
+      else this._textarea.removeAttribute('aria-describedby');
     }
 
     connectedCallback() {
       this._textarea.addEventListener('input', this._boundOnInput);
       this._textarea.addEventListener('change', this._boundOnChange);
       this._syncAll();
+      this._syncAriaProxy();
+      this._syncDescribedBy();
+      if (this.hasAttribute('error')) this._textarea.setAttribute('aria-invalid', 'true');
     }
 
     disconnectedCallback() {
@@ -6176,6 +7732,17 @@
     }
 
     attributeChangedCallback(name, oldVal, newVal) {
+      if (typeof super.attributeChangedCallback === 'function') {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
+      if (name === 'aria-describedby') {
+        this._syncDescribedBy();
+        return;
+      }
+      if (name === 'aria-invalid') {
+        if (this.hasAttribute('error')) this._textarea.setAttribute('aria-invalid', 'true');
+        return;
+      }
       switch (name) {
         case 'label':
           this._label.textContent = newVal || '';
@@ -6274,13 +7841,15 @@
       if (err) {
         this._errorMsg.textContent = err;
         this._textarea.setAttribute('aria-invalid', 'true');
-        this._errorMsg.id = 'err';
-        this._textarea.setAttribute('aria-describedby', 'err');
       } else {
         this._errorMsg.textContent = '';
-        this._textarea.removeAttribute('aria-invalid');
-        this._textarea.removeAttribute('aria-describedby');
+        if (this.hasAttribute('aria-invalid')) {
+          this._textarea.setAttribute('aria-invalid', this.getAttribute('aria-invalid'));
+        } else {
+          this._textarea.removeAttribute('aria-invalid');
+        }
       }
+      this._syncDescribedBy();
     }
 
     _syncAutoResizeMode() {
@@ -6359,9 +7928,14 @@
 
   /* ======== canvas-toggle ======== */
 
-  class CanvasToggle extends HTMLElement {
+  class CanvasToggle extends AriaProxy(HTMLElement) {
     static get observedAttributes() {
-      return ['label', 'checked', 'disabled', 'label-position'];
+      var base = ['label', 'checked', 'disabled', 'label-position'];
+      var inherited = super.observedAttributes || [];
+      for (var i = 0; i < inherited.length; i++) {
+        if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
+      }
+      return base;
     }
 
     constructor() {
@@ -6434,30 +8008,54 @@
             color: rgba(0, 0, 0, 0.87);
           }
         </style>
-        <button class="track" role="switch" aria-checked="false" tabindex="0" part="track"></button>
+        <button type="button" class="track" role="switch" aria-checked="false" tabindex="0" part="track"></button>
         <span class="label-text" part="label"></span>
       `;
       this._track = this.shadowRoot.querySelector('.track');
       this._labelText = this.shadowRoot.querySelector('.label-text');
+      this._labelId = cuid('tg-lbl');
+      this._labelText.id = this._labelId;
       this._boundOnClick = this._onClick.bind(this);
+    }
+
+    _ariaProxyTarget() { return this._track; }
+
+    _syncLabelledBy() {
+      var hostLb = this.getAttribute('aria-labelledby');
+      if (hostLb) {
+        this._track.setAttribute('aria-labelledby', this._labelId + ' ' + hostLb);
+        this._track.removeAttribute('aria-label');
+      } else if (this.hasAttribute('label')) {
+        this._track.setAttribute('aria-labelledby', this._labelId);
+        this._track.removeAttribute('aria-label');
+      } else {
+        this._track.removeAttribute('aria-labelledby');
+      }
     }
 
     connectedCallback() {
       this.addEventListener('click', this._boundOnClick);
       this._syncAll();
+      this._syncAriaProxy();
+      this._syncLabelledBy();
     }
 
     disconnectedCallback() {
       this.removeEventListener('click', this._boundOnClick);
     }
 
-    attributeChangedCallback(name) {
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (typeof super.attributeChangedCallback === 'function') {
+        super.attributeChangedCallback(name, oldVal, newVal);
+      }
+      if (name === 'aria-labelledby') {
+        this._syncLabelledBy();
+        return;
+      }
       switch (name) {
         case 'label':
           this._labelText.textContent = this.getAttribute('label') || '';
-          if (this.getAttribute('label')) {
-            this._track.setAttribute('aria-label', this.getAttribute('label'));
-          }
+          this._syncLabelledBy();
           break;
         case 'checked':
           this._track.setAttribute('aria-checked', this.hasAttribute('checked') ? 'true' : 'false');
@@ -6488,9 +8086,6 @@
 
     _syncAll() {
       this._labelText.textContent = this.getAttribute('label') || '';
-      if (this.getAttribute('label')) {
-        this._track.setAttribute('aria-label', this.getAttribute('label'));
-      }
       this._track.setAttribute('aria-checked', this.hasAttribute('checked') ? 'true' : 'false');
       if (this.hasAttribute('disabled')) {
         this._track.setAttribute('disabled', '');
@@ -6524,8 +8119,12 @@
       this._arrow = null;
       this._currentTrigger = null;
       this._showTimeout = null;
+      this._tooltipId = cuid('tip');
+      this._priorDescribedBy = new WeakMap();
       this._boundEnter = this._onEnter.bind(this);
       this._boundLeave = this._onLeave.bind(this);
+      this._boundFocus = this._onEnter.bind(this);
+      this._boundBlur = this._onLeave.bind(this);
       this._boundScroll = this._onScroll.bind(this);
       this._trackedElements = new Set();
     }
@@ -6533,9 +8132,20 @@
     connectedCallback() {
       this._createTooltip();
       this._bindAll();
-      this._observer = new MutationObserver(() => this._bindAll());
-      this._observer.observe(document.body, { childList: true, subtree: true });
+      var self = this;
+      this._observer = new MutationObserver(function(mutations) {
+        self._handleMutations(mutations);
+      });
+      this._observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-canvas-tooltip'] });
       document.addEventListener('scroll', this._boundScroll, true);
+      this._boundKey = function(e) {
+        if (e.key === 'Escape' && self._currentTrigger) {
+          self._clearPending();
+          self._currentTrigger = null;
+          self._hide();
+        }
+      };
+      document.addEventListener('keydown', this._boundKey, true);
     }
 
     disconnectedCallback() {
@@ -6544,6 +8154,7 @@
         this._observer = null;
       }
       document.removeEventListener('scroll', this._boundScroll, true);
+      if (this._boundKey) document.removeEventListener('keydown', this._boundKey, true);
       this._unbindAll();
       if (this._tooltip && this._tooltip.parentNode) {
         this._tooltip.parentNode.removeChild(this._tooltip);
@@ -6554,19 +8165,64 @@
     _bindAll() {
       var elements = document.querySelectorAll('[data-canvas-tooltip]');
       elements.forEach(function(el) {
-        if (!this._trackedElements.has(el)) {
-          el.addEventListener('mouseenter', this._boundEnter);
-          el.addEventListener('mouseleave', this._boundLeave);
-          this._trackedElements.add(el);
-        }
+        this._trackElement(el);
       }, this);
     }
 
+    _trackElement(el) {
+      if (this._trackedElements.has(el)) return;
+      el.addEventListener('mouseenter', this._boundEnter);
+      el.addEventListener('mouseleave', this._boundLeave);
+      el.addEventListener('focusin', this._boundFocus);
+      el.addEventListener('focusout', this._boundBlur);
+      this._trackedElements.add(el);
+    }
+
+    _untrackElement(el) {
+      if (!this._trackedElements.has(el)) return;
+      el.removeEventListener('mouseenter', this._boundEnter);
+      el.removeEventListener('mouseleave', this._boundLeave);
+      el.removeEventListener('focusin', this._boundFocus);
+      el.removeEventListener('focusout', this._boundBlur);
+      this._trackedElements.delete(el);
+    }
+
+    _handleMutations(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var m = mutations[i];
+        if (m.type === 'childList') {
+          for (var j = 0; j < m.removedNodes.length; j++) {
+            this._cleanupSubtree(m.removedNodes[j]);
+          }
+        } else if (m.type === 'attributes' && m.attributeName === 'data-canvas-tooltip') {
+          var target = m.target;
+          if (target.hasAttribute('data-canvas-tooltip')) {
+            this._trackElement(target);
+          } else {
+            this._untrackElement(target);
+          }
+        }
+      }
+      this._bindAll();
+    }
+
+    _cleanupSubtree(node) {
+      if (!node || node.nodeType !== 1) return;
+      if (this._trackedElements.has(node)) this._untrackElement(node);
+      var nested = node.querySelectorAll ? node.querySelectorAll('[data-canvas-tooltip]') : [];
+      for (var i = 0; i < nested.length; i++) {
+        if (this._trackedElements.has(nested[i])) this._untrackElement(nested[i]);
+      }
+    }
+
     _unbindAll() {
+      var self = this;
       this._trackedElements.forEach(function(el) {
-        el.removeEventListener('mouseenter', this._boundEnter);
-        el.removeEventListener('mouseleave', this._boundLeave);
-      }, this);
+        el.removeEventListener('mouseenter', self._boundEnter);
+        el.removeEventListener('mouseleave', self._boundLeave);
+        el.removeEventListener('focusin', self._boundFocus);
+        el.removeEventListener('focusout', self._boundBlur);
+      });
       this._trackedElements.clear();
     }
 
@@ -6694,6 +8350,7 @@
       container.className = 'canvas-tooltip-container';
       container.setAttribute('role', 'tooltip');
       container.setAttribute('aria-hidden', 'true');
+      container.id = this._tooltipId;
 
       var inner = document.createElement('div');
       inner.className = 'canvas-tooltip-inner';
@@ -6775,6 +8432,12 @@
       this._tooltip.style.top = '-9999px';
       this._tooltip.classList.add('visible');
 
+      this._priorDescribedBy.set(trigger, trigger.getAttribute('aria-describedby'));
+      var existing = trigger.getAttribute('aria-describedby');
+      var ids = existing ? existing.split(/\s+/).filter(Boolean) : [];
+      if (ids.indexOf(this._tooltipId) === -1) ids.push(this._tooltipId);
+      trigger.setAttribute('aria-describedby', ids.join(' '));
+
       requestAnimationFrame(() => {
         var triggerRect = trigger.getBoundingClientRect();
         var tipRect = this._tooltip.getBoundingClientRect();
@@ -6833,6 +8496,23 @@
       if (!this._tooltip) return;
       this._tooltip.classList.remove('visible');
       this._tooltip.setAttribute('aria-hidden', 'true');
+      this._restoreDescribedBy();
+    }
+
+    _restoreDescribedBy() {
+      var self = this;
+      this._trackedElements.forEach(function(el) {
+        var existing = el.getAttribute('aria-describedby');
+        if (!existing) return;
+        var ids = existing.split(/\s+/).filter(function(id) { return id && id !== self._tooltipId; });
+        if (ids.length) el.setAttribute('aria-describedby', ids.join(' '));
+        else {
+          var prior = self._priorDescribedBy.get(el);
+          if (prior) el.setAttribute('aria-describedby', prior);
+          else el.removeAttribute('aria-describedby');
+        }
+        self._priorDescribedBy.delete(el);
+      });
     }
 
     _calcPosition(position, triggerRect, tipRect) {
@@ -6917,5 +8597,1568 @@
   }
 
   CanvasUI.register('canvas-tooltip', CanvasTooltip);
+
+  /* ======== canvas-calendar ======== */
+
+  /* Inline month-grid date picker. Designed standalone, inside cards, and to be
+     wrapped by a future canvas-date-input that hosts it inside canvas-popover.
+     The host stays display block with width 100 percent so popover sizing
+     works without overrides. The component manages a single visible month plus
+     a selected date. Range selection is intentionally out of scope for v1. */
+
+  class CanvasCalendar extends HTMLElement {
+    static get observedAttributes() {
+      return [
+        'value',
+        'min',
+        'max',
+        'disabled-dates',
+        'highlight-dates',
+        'week-start',
+        'size',
+        'fluid',
+        'disabled',
+        'name',
+        'selection-mode',
+        'picked-list',
+        'multi-add-granularity',
+        'multi-add-exclusive'
+      ];
+    }
+
+    static formAssociated = true;
+
+    constructor() {
+      super();
+      this._internals = this.attachInternals();
+      this.attachShadow({ mode: 'open', delegatesFocus: true });
+      this.shadowRoot.innerHTML = '<style>' +
+        ':host {' +
+          'display: block;' +
+          'width: 100%;' +
+          'box-sizing: border-box;' +
+          'font-family: var(--canvas-calendar-font-family, var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif));' +
+          'color: var(--canvas-calendar-day-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+        '}' +
+
+        '.root {' +
+          'display: inline-block;' +
+          'box-sizing: border-box;' +
+          'background: var(--canvas-calendar-bg, var(--color-surface, #ffffff));' +
+          'border: var(--canvas-calendar-border-width, 1px) solid var(--canvas-calendar-border, var(--color-border, rgba(34, 36, 38, 0.15)));' +
+          'border-radius: var(--canvas-calendar-radius, var(--radius, .28571429rem));' +
+          'overflow: hidden;' +
+          'user-select: none;' +
+        '}' +
+
+        ':host([fluid]) .root {' +
+          'display: block;' +
+          'width: 100%;' +
+        '}' +
+
+        '.header {' +
+          'background: var(--canvas-calendar-header-bg, #f0f0f0);' +
+          'border-bottom: 1px solid var(--canvas-calendar-header-border, var(--color-border, rgba(34, 36, 38, 0.15)));' +
+          'padding: var(--canvas-calendar-padding, .57142857rem) var(--canvas-calendar-padding, .57142857rem) 0;' +
+        '}' +
+
+        '.body {' +
+          'padding: var(--canvas-calendar-padding, .57142857rem);' +
+        '}' +
+
+        '.layout {' +
+          'position: relative;' +
+          'display: block;' +
+        '}' +
+
+        ':host([picked-list="right"]) .layout {' +
+          'padding-right: var(--canvas-calendar-picked-list-width, 12rem);' +
+        '}' +
+
+        '.picked-list {' +
+          'display: none;' +
+          'flex-direction: column;' +
+          'box-sizing: border-box;' +
+        '}' +
+
+        ':host([picked-list]) .picked-list {' +
+          'display: flex;' +
+        '}' +
+
+        ':host([picked-list="right"]) .picked-list {' +
+          'position: absolute;' +
+          'top: 0;' +
+          'right: 0;' +
+          'bottom: 0;' +
+          'width: var(--canvas-calendar-picked-list-width, 12rem);' +
+          'border-left: 1px solid var(--canvas-calendar-picked-list-divider, var(--color-border, rgba(34, 36, 38, 0.1)));' +
+        '}' +
+
+        ':host([picked-list="below"]) .picked-list {' +
+          'border-top: 1px solid var(--canvas-calendar-picked-list-divider, var(--color-border, rgba(34, 36, 38, 0.1)));' +
+        '}' +
+
+        '.picked-header {' +
+          'flex: 0 0 auto;' +
+          'display: flex;' +
+          'align-items: center;' +
+          'justify-content: space-between;' +
+          'gap: .57142857rem;' +
+          'padding: var(--canvas-calendar-padding, .57142857rem) calc(.28571429rem + var(--canvas-calendar-padding, .57142857rem)) .35714286rem;' +
+          'border-bottom: 1px solid var(--canvas-calendar-picked-list-divider, var(--color-border, rgba(34, 36, 38, 0.1)));' +
+          'font-size: .78571429em;' +
+          'font-weight: var(--font-weight-bold, 700);' +
+          'color: var(--canvas-calendar-day-name-color, var(--color-text-muted, #767676));' +
+        '}' +
+
+        '.picked-rows {' +
+          'flex: 1 1 auto;' +
+          'min-height: 0;' +
+          'box-sizing: border-box;' +
+          'overflow-y: auto;' +
+          'overscroll-behavior: none;' +
+        '}' +
+
+        ':host([picked-list="below"]) .picked-rows {' +
+          'max-height: var(--canvas-calendar-picked-list-max-height-below, 8.92857143rem);' +
+        '}' +
+
+        '.picked-clear {' +
+          'all: unset;' +
+          'cursor: pointer;' +
+          'font-size: .92857143em;' +
+          'color: var(--canvas-calendar-picked-clear-color, var(--color-text-muted, #767676));' +
+          'text-decoration: underline;' +
+          'font-weight: var(--font-weight-normal, 400);' +
+        '}' +
+
+        '.picked-clear:hover {' +
+          'color: var(--canvas-calendar-day-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+        '}' +
+
+        '.picked-clear:focus-visible {' +
+          'outline: 2px solid var(--canvas-calendar-focus-ring, var(--color-secondary, var(--palette-blue, #2185D0)));' +
+          'outline-offset: 1px;' +
+        '}' +
+
+        '.picked-empty {' +
+          'padding: var(--canvas-calendar-padding, .57142857rem) calc(.28571429rem + var(--canvas-calendar-padding, .57142857rem));' +
+          'font-size: .85714286em;' +
+          'color: var(--color-text-muted, #767676);' +
+          'font-style: italic;' +
+        '}' +
+
+        '.picked-row {' +
+          'all: unset;' +
+          'box-sizing: border-box;' +
+          'display: flex;' +
+          'align-items: center;' +
+          'justify-content: space-between;' +
+          'gap: .57142857rem;' +
+          'padding: .35714286rem .28571429rem .35714286rem .57142857rem;' +
+          'font-size: .85714286em;' +
+          'color: var(--canvas-calendar-day-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+          'transition: background 0.1s ease;' +
+        '}' +
+
+        '.picked-row + .picked-row {' +
+          'margin-top: 2px;' +
+        '}' +
+
+        '.picked-row:hover {' +
+          'background: var(--canvas-calendar-hover-bg, rgba(0, 0, 0, 0.05));' +
+        '}' +
+
+        '.picked-remove {' +
+          'all: unset;' +
+          'display: inline-flex;' +
+          'align-items: center;' +
+          'justify-content: center;' +
+          'width: 1.14285714rem;' +
+          'height: 1.14285714rem;' +
+          'border-radius: 999px;' +
+          'cursor: pointer;' +
+          'opacity: .6;' +
+          'transition: opacity 0.1s ease, background 0.1s ease;' +
+          'flex-shrink: 0;' +
+        '}' +
+
+        '.picked-remove:hover {' +
+          'opacity: 1;' +
+          'background: rgba(0, 0, 0, 0.08);' +
+        '}' +
+
+        '.picked-remove:focus-visible {' +
+          'outline: 2px solid var(--canvas-calendar-focus-ring, var(--color-secondary, var(--palette-blue, #2185D0)));' +
+          'outline-offset: 1px;' +
+          'opacity: 1;' +
+        '}' +
+
+        '.picked-remove svg {' +
+          'width: 9px;' +
+          'height: 9px;' +
+          'stroke: currentColor;' +
+        '}' +
+
+        ':host([embedded]) .root {' +
+          'border-color: transparent;' +
+        '}' +
+
+        ':host([embedded]) .header {' +
+          'background: transparent;' +
+          'border-bottom-color: transparent;' +
+        '}' +
+
+        ':host([embedded]) .body {' +
+          'padding: 0;' +
+        '}' +
+
+        '.header-slot::slotted(*),' +
+        '.footer-slot::slotted(*) {' +
+          'display: block;' +
+        '}' +
+
+        '.header-slot { display: contents; }' +
+        '.footer-slot { display: contents; }' +
+
+        '.nav {' +
+          'display: flex;' +
+          'align-items: center;' +
+          'justify-content: space-between;' +
+          'gap: .28571429rem;' +
+          'padding: 0;' +
+        '}' +
+
+        '.nav-btn {' +
+          'all: unset;' +
+          'display: inline-flex;' +
+          'align-items: center;' +
+          'justify-content: center;' +
+          'width: 1.71428571rem;' +
+          'height: 1.71428571rem;' +
+          'border-radius: var(--canvas-calendar-radius, var(--radius, .28571429rem));' +
+          'cursor: pointer;' +
+          'color: var(--canvas-calendar-nav-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+          'transition: background 0.1s ease;' +
+        '}' +
+
+        '.nav-btn:hover {' +
+          'background: var(--canvas-calendar-hover-bg, rgba(0, 0, 0, 0.05));' +
+        '}' +
+
+        '.nav-btn:focus-visible {' +
+          'outline: 2px solid var(--canvas-calendar-focus-ring, var(--color-secondary, var(--palette-blue, #2185D0)));' +
+          'outline-offset: 1px;' +
+        '}' +
+
+        '.nav-btn[disabled] {' +
+          'opacity: .35;' +
+          'cursor: default;' +
+          'pointer-events: none;' +
+        '}' +
+
+        '.nav-btn svg {' +
+          'width: 10px;' +
+          'height: 6px;' +
+          'fill: currentColor;' +
+        '}' +
+
+        '.nav-btn.prev svg { transform: rotate(90deg); }' +
+        '.nav-btn.next svg { transform: rotate(-90deg); }' +
+
+        '.month-label {' +
+          'flex: 1;' +
+          'text-align: center;' +
+          'font-weight: var(--canvas-calendar-month-label-font-weight, var(--font-weight-bold, 700));' +
+          'font-size: var(--canvas-calendar-month-label-font-size, .92857143em);' +
+          'color: var(--canvas-calendar-month-label-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+        '}' +
+
+        '.grid {' +
+          'display: grid;' +
+          'grid-template-columns: repeat(7, var(--canvas-calendar-cell-size, 2rem));' +
+          'gap: var(--canvas-calendar-cell-gap, 2px);' +
+          'justify-content: center;' +
+        '}' +
+
+        '.grid-row {' +
+          'display: contents;' +
+        '}' +
+
+        ':host([size="comfortable"]) .grid {' +
+          'grid-template-columns: repeat(7, var(--canvas-calendar-cell-size, 2.71428571rem));' +
+        '}' +
+
+        ':host([fluid]) .grid {' +
+          'grid-template-columns: repeat(7, 1fr);' +
+        '}' +
+
+        '.day-names {' +
+          'margin-top: var(--canvas-calendar-padding, .57142857rem);' +
+        '}' +
+
+        '.day-name {' +
+          'display: flex;' +
+          'align-items: center;' +
+          'justify-content: center;' +
+          'height: var(--canvas-calendar-cell-size, 2rem);' +
+          'font-size: .78571429em;' +
+          'font-weight: var(--canvas-calendar-day-name-font-weight, var(--font-weight-bold, 700));' +
+          'color: var(--canvas-calendar-day-name-color, var(--color-text-muted, #767676));' +
+        '}' +
+
+        ':host([size="comfortable"]) .day-name {' +
+          'height: var(--canvas-calendar-cell-size, 2.71428571rem);' +
+        '}' +
+
+        ':host([fluid]) .day-name { height: auto; aspect-ratio: 1; }' +
+        ':host([fluid]) .cell { aspect-ratio: 1; height: auto; }' +
+
+        '.cell {' +
+          'all: unset;' +
+          'display: flex;' +
+          'flex-direction: column;' +
+          'align-items: center;' +
+          'justify-content: center;' +
+          'box-sizing: border-box;' +
+          'height: var(--canvas-calendar-cell-size, 2rem);' +
+          'border-radius: var(--canvas-calendar-radius, var(--radius, .28571429rem));' +
+          'border: 1px solid transparent;' +
+          'font-size: .85714286em;' +
+          'cursor: pointer;' +
+          'color: var(--canvas-calendar-day-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+          'transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;' +
+          'text-align: center;' +
+          'line-height: 1;' +
+        '}' +
+
+        ':host([size="comfortable"]) .cell {' +
+          'height: var(--canvas-calendar-cell-size, 2.71428571rem);' +
+          'font-size: 1em;' +
+        '}' +
+
+        '.cell:hover:not(.disabled):not(.selected):not(.highlight):not(.in-range) {' +
+          'background: var(--canvas-calendar-hover-bg, rgba(0, 0, 0, 0.05));' +
+        '}' +
+
+        '.cell.in-range {' +
+          'background: var(--canvas-calendar-in-range-bg, rgba(33, 133, 208, 0.15));' +
+          'color: var(--canvas-calendar-in-range-color, var(--color-text, rgba(0, 0, 0, 0.87)));' +
+          'border-color: transparent;' +
+        '}' +
+
+        '.cell.in-range.today {' +
+          'border-color: var(--canvas-calendar-today-color, var(--color-primary, var(--palette-green, #22BA45)));' +
+        '}' +
+
+        '.cell:focus-visible {' +
+          'outline: 2px solid var(--canvas-calendar-focus-ring, var(--color-secondary, var(--palette-blue, #2185D0)));' +
+          'outline-offset: 1px;' +
+        '}' +
+
+        '.cell.outside {' +
+          'color: var(--canvas-calendar-outside-month-color, rgba(0, 0, 0, 0.45));' +
+        '}' +
+
+        '.cell.today {' +
+          'border-color: var(--canvas-calendar-today-color, var(--color-primary, var(--palette-green, #22BA45)));' +
+          'font-weight: var(--font-weight-bold, 700);' +
+        '}' +
+
+        '.cell.highlight {' +
+          'background: var(--canvas-calendar-highlight-bg, var(--palette-blue, #2185D0));' +
+          'color: var(--canvas-calendar-highlight-color, #ffffff);' +
+          'font-weight: var(--font-weight-bold, 700);' +
+        '}' +
+
+        '.cell.selected {' +
+          'background: var(--canvas-calendar-selected-bg, var(--color-secondary, var(--palette-blue, #2185D0)));' +
+          'color: var(--canvas-calendar-selected-color, #ffffff);' +
+          'border-color: transparent;' +
+          'font-weight: var(--font-weight-bold, 700);' +
+        '}' +
+
+        '.cell.selected.today {' +
+          'background: var(--canvas-calendar-today-selected-bg, var(--color-primary, var(--palette-green, #22BA45)));' +
+          'color: var(--canvas-calendar-today-selected-color, #ffffff);' +
+          'border-color: var(--canvas-calendar-today-selected-bg, var(--color-primary, var(--palette-green, #22BA45)));' +
+        '}' +
+
+        '.cell.disabled {' +
+          'color: var(--canvas-calendar-disabled-color, rgba(0, 0, 0, 0.25));' +
+          'cursor: default;' +
+          'pointer-events: none;' +
+        '}' +
+
+        '.cell .decoration {' +
+          'font-size: .71428571em;' +
+          'line-height: 1;' +
+          'margin-top: 2px;' +
+          'opacity: .85;' +
+        '}' +
+
+        ':host([disabled]) {' +
+          'opacity: .55;' +
+          'pointer-events: none;' +
+        '}' +
+
+        '.sr-status {' +
+          'position: absolute;' +
+          'width: 1px;' +
+          'height: 1px;' +
+          'padding: 0;' +
+          'margin: -1px;' +
+          'overflow: hidden;' +
+          'clip: rect(0, 0, 0, 0);' +
+          'white-space: nowrap;' +
+          'border: 0;' +
+        '}' +
+
+        '@media (prefers-reduced-motion: reduce) {' +
+          '.cell, .nav-btn, .picked-row, .picked-remove {' +
+            'transition: none;' +
+          '}' +
+        '}' +
+        '</style>' +
+
+        '<div class="root" part="root">' +
+          '<slot name="header" class="header-slot"></slot>' +
+          '<div class="layout" part="layout">' +
+            '<div class="header" part="header">' +
+              '<div class="nav" part="nav">' +
+                '<button type="button" class="nav-btn prev" part="nav-prev" aria-label="Previous month">' +
+                  '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>' +
+                '</button>' +
+                '<div class="month-label" part="month-label"></div>' +
+                '<button type="button" class="nav-btn next" part="nav-next" aria-label="Next month">' +
+                  '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>' +
+                '</button>' +
+              '</div>' +
+              '<div class="grid day-names" role="row"></div>' +
+            '</div>' +
+            '<div class="body" part="body">' +
+              '<div class="grid days" role="grid"></div>' +
+              '<slot name="footer" class="footer-slot"></slot>' +
+            '</div>' +
+            '<div class="picked-list" part="picked-list"></div>' +
+          '</div>' +
+          '<div class="sr-status" role="status" aria-live="polite" aria-atomic="true"></div>' +
+        '</div>';
+
+      this._monthLabel = this.shadowRoot.querySelector('.month-label');
+      this._dayNamesRow = this.shadowRoot.querySelector('.day-names');
+      this._daysGrid = this.shadowRoot.querySelector('.days');
+      this._prevBtn = this.shadowRoot.querySelector('.prev');
+      this._nextBtn = this.shadowRoot.querySelector('.next');
+      this._pickedList = this.shadowRoot.querySelector('.picked-list');
+      this._srStatus = this.shadowRoot.querySelector('.sr-status');
+
+      this._isDateDisabledFn = null;
+      this._dayContentFn = null;
+
+      this._onPrev = this._onPrev.bind(this);
+      this._onNext = this._onNext.bind(this);
+      this._onCellClick = this._onCellClick.bind(this);
+      this._onGridKeydown = this._onGridKeydown.bind(this);
+      this._onPickedClick = this._onPickedClick.bind(this);
+
+      var today = new Date();
+      this._viewYear = today.getFullYear();
+      this._viewMonth = today.getMonth();
+      this._focusedDate = null;
+    }
+
+    connectedCallback() {
+      this._prevBtn.addEventListener('click', this._onPrev);
+      this._nextBtn.addEventListener('click', this._onNext);
+      this._daysGrid.addEventListener('click', this._onCellClick);
+      this._daysGrid.addEventListener('keydown', this._onGridKeydown);
+      this._pickedList.addEventListener('click', this._onPickedClick);
+
+      var initial = this._initialFocusDate();
+      if (initial) {
+        this._viewYear = initial.getFullYear();
+        this._viewMonth = initial.getMonth();
+        this._focusedDate = initial;
+      } else {
+        this._focusedDate = new Date(this._viewYear, this._viewMonth, 1);
+      }
+
+      this._render();
+      this._syncFormValue();
+    }
+
+    disconnectedCallback() {
+      this._prevBtn.removeEventListener('click', this._onPrev);
+      this._nextBtn.removeEventListener('click', this._onNext);
+      this._daysGrid.removeEventListener('click', this._onCellClick);
+      this._daysGrid.removeEventListener('keydown', this._onGridKeydown);
+      this._pickedList.removeEventListener('click', this._onPickedClick);
+    }
+
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (oldVal === newVal) return;
+      if (name === 'value') {
+        var d = this._initialFocusDate();
+        if (d) {
+          this._viewYear = d.getFullYear();
+          this._viewMonth = d.getMonth();
+          this._focusedDate = d;
+        }
+        this._syncFormValue();
+      }
+      if (this.isConnected) this._render();
+    }
+
+    /* ---- Public API ---- */
+
+    get value() { return this.getAttribute('value'); }
+    set value(v) {
+      if (v == null || v === '') this.removeAttribute('value');
+      else this.setAttribute('value', String(v));
+    }
+
+    get valueAsDate() { return this._parseDate(this.getAttribute('value')); }
+    set valueAsDate(d) {
+      if (d instanceof Date && !isNaN(d.getTime())) this.value = this._formatISO(d);
+      else this.value = null;
+    }
+
+    get name() { return this.getAttribute('name'); }
+    set name(v) { this.setAttribute('name', v); }
+
+    get isDateDisabled() { return this._isDateDisabledFn; }
+    set isDateDisabled(fn) {
+      this._isDateDisabledFn = typeof fn === 'function' ? fn : null;
+      if (this.isConnected) this._render();
+    }
+
+    get dayContent() { return this._dayContentFn; }
+    set dayContent(fn) {
+      this._dayContentFn = typeof fn === 'function' ? fn : null;
+      if (this.isConnected) this._render();
+    }
+
+    focusGrid() {
+      if (!this.isConnected || !this._daysGrid) return;
+      var active = this._daysGrid.querySelector('.cell[tabindex="0"]') ||
+                   this._daysGrid.querySelector('.cell:not(.disabled):not(.outside)') ||
+                   this._daysGrid.querySelector('.cell:not(.disabled)') ||
+                   this._daysGrid.querySelector('.cell');
+      if (active) active.focus();
+    }
+
+    /* ---- Internal ---- */
+
+    _parseDate(s) {
+      if (!s) return null;
+      if (s instanceof Date) return isNaN(s.getTime()) ? null : new Date(s.getFullYear(), s.getMonth(), s.getDate());
+      var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return null;
+      var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    _formatISO(d) {
+      var y = d.getFullYear();
+      var mo = String(d.getMonth() + 1).padStart(2, '0');
+      var da = String(d.getDate()).padStart(2, '0');
+      return y + '-' + mo + '-' + da;
+    }
+
+    _parseDateList(s) {
+      if (!s) return [];
+      var out = [];
+      var parts = String(s).split(',');
+      for (var i = 0; i < parts.length; i++) {
+        var d = this._parseDate(parts[i].trim());
+        if (d) out.push(this._dateKey(d));
+      }
+      return out;
+    }
+
+    _dateKey(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    _sameDay(a, b) {
+      return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    _weekStartIndex() {
+      return this.getAttribute('week-start') === 'monday' ? 1 : 0;
+    }
+
+    _dayNames() {
+      var base = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+      var start = this._weekStartIndex();
+      var out = [];
+      for (var i = 0; i < 7; i++) out.push(base[(i + start) % 7]);
+      return out;
+    }
+
+    _dayFullNames() {
+      var base = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var start = this._weekStartIndex();
+      var out = [];
+      for (var i = 0; i < 7; i++) out.push(base[(i + start) % 7]);
+      return out;
+    }
+
+    _monthLabelText() {
+      var months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+      return months[this._viewMonth] + ' ' + this._viewYear;
+    }
+
+    _isDisabled(date) {
+      if (this.hasAttribute('disabled')) return true;
+      var min = this._parseDate(this.getAttribute('min'));
+      var max = this._parseDate(this.getAttribute('max'));
+      if (min && date < min) return true;
+      if (max && date > max) return true;
+      var list = this._parseDateList(this.getAttribute('disabled-dates'));
+      if (list.indexOf(this._dateKey(date)) !== -1) return true;
+      if (typeof this._isDateDisabledFn === 'function') {
+        try { if (this._isDateDisabledFn(new Date(date))) return true; }
+        catch (e) { /* swallow predicate errors so the grid still renders */ }
+      }
+      return false;
+    }
+
+    _isHighlighted(date) {
+      var list = this._parseDateList(this.getAttribute('highlight-dates'));
+      return list.indexOf(this._dateKey(date)) !== -1;
+    }
+
+    _render() {
+      this._monthLabel.textContent = this._monthLabelText();
+      this._daysGrid.setAttribute('aria-label', 'Calendar, ' + this._monthLabelText());
+
+      this._renderDayNames();
+      this._renderGrid();
+      this._renderPickedList();
+      this._syncNavDisabled();
+    }
+
+    _announce(msg) {
+      if (!this._srStatus || !msg) return;
+      this._srStatus.textContent = '';
+      var self = this;
+      requestAnimationFrame(function() { self._srStatus.textContent = msg; });
+    }
+
+    _renderDayNames() {
+      this._dayNamesRow.innerHTML = '';
+      var names = this._dayNames();
+      var fullNames = this._dayFullNames();
+      for (var i = 0; i < names.length; i++) {
+        var el = document.createElement('div');
+        el.className = 'day-name';
+        el.setAttribute('role', 'columnheader');
+        el.setAttribute('aria-label', fullNames[i]);
+        el.textContent = names[i];
+        this._dayNamesRow.appendChild(el);
+      }
+    }
+
+    _renderGrid() {
+      this._daysGrid.innerHTML = '';
+
+      var firstOfMonth = new Date(this._viewYear, this._viewMonth, 1);
+      var weekStart = this._weekStartIndex();
+      var leading = (firstOfMonth.getDay() - weekStart + 7) % 7;
+      var gridStart = new Date(this._viewYear, this._viewMonth, 1 - leading);
+
+      var today = new Date();
+      var mode = this._selectionMode();
+      var rawValue = this.getAttribute('value');
+      var singleSelected = mode === 'single' ? this._parseDate(rawValue) : null;
+      var rangeSel = mode === 'range' ? this._parseRangeValue(rawValue) : null;
+      var multiKeys = mode === 'multiple' ? this._parseMultipleValue(rawValue) : null;
+
+      var focused = this._focusedDate;
+      if (!focused) focused = singleSelected || (rangeSel && rangeSel.start) || today;
+
+      var hasFocusable = false;
+      var row = null;
+
+      for (var i = 0; i < 42; i++) {
+        if (i % 7 === 0) {
+          row = document.createElement('div');
+          row.className = 'grid-row';
+          row.setAttribute('role', 'row');
+          this._daysGrid.appendChild(row);
+        }
+        var d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+        var outside = d.getMonth() !== this._viewMonth;
+        var disabled = this._isDisabled(d);
+        var highlighted = this._isHighlighted(d);
+        var isToday = this._sameDay(d, today);
+        var isFocused = this._sameDay(d, focused);
+
+        var isSelected = false;
+        var isInRange = false;
+        if (mode === 'single') {
+          isSelected = !!singleSelected && this._sameDay(d, singleSelected);
+        } else if (mode === 'range' && rangeSel.start) {
+          var startMatch = this._sameDay(d, rangeSel.start);
+          var endMatch = !!rangeSel.end && this._sameDay(d, rangeSel.end);
+          if (startMatch || endMatch) isSelected = true;
+          else if (rangeSel.end && this._inRange(d, rangeSel.start, rangeSel.end)) isInRange = true;
+        } else if (mode === 'multiple' && multiKeys) {
+          isSelected = multiKeys.indexOf(this._dateKey(d)) !== -1;
+        }
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        var classes = ['cell'];
+        if (outside) classes.push('outside');
+        if (disabled) classes.push('disabled');
+        if (highlighted) classes.push('highlight');
+        if (isToday) classes.push('today');
+        if (isSelected) classes.push('selected');
+        if (isInRange) classes.push('in-range');
+        btn.className = classes.join(' ');
+        btn.setAttribute('role', 'gridcell');
+        btn.setAttribute('data-date', this._dateKey(d));
+        btn.tabIndex = -1;
+
+        if (isToday) btn.setAttribute('aria-current', 'date');
+        if (isSelected) btn.setAttribute('aria-selected', 'true');
+        if (disabled) btn.setAttribute('aria-disabled', 'true');
+
+        var rangeRole = null;
+        if (mode === 'range' && rangeSel && rangeSel.start) {
+          if (this._sameDay(d, rangeSel.start)) rangeRole = 'start';
+          else if (rangeSel.end && this._sameDay(d, rangeSel.end)) rangeRole = 'end';
+        }
+        btn.setAttribute('aria-label', this._cellAriaLabel(d, {
+          selected: isSelected,
+          today: isToday,
+          disabled: disabled,
+          inRange: isInRange,
+          rangeRole: rangeRole
+        }));
+
+        var dayNum = document.createElement('span');
+        dayNum.className = 'day-num';
+        dayNum.textContent = String(d.getDate());
+        btn.appendChild(dayNum);
+
+        if (typeof this._dayContentFn === 'function' && !outside) {
+          try {
+            var content = this._dayContentFn(new Date(d));
+            if (content != null && content !== '') {
+              var deco = document.createElement('span');
+              deco.className = 'decoration';
+              var optIn = (content instanceof Element) && content.getAttribute('data-aria') === 'expose';
+              if (!optIn) deco.setAttribute('aria-hidden', 'true');
+              if (content instanceof Node) deco.appendChild(content);
+              else deco.textContent = String(content);
+              btn.appendChild(deco);
+            }
+          } catch (e) { /* skip decoration on error */ }
+        }
+
+        if (!hasFocusable && isFocused) {
+          btn.tabIndex = 0;
+          hasFocusable = true;
+        }
+
+        row.appendChild(btn);
+      }
+
+      if (!hasFocusable) {
+        var firstEnabled = this._daysGrid.querySelector('.cell:not(.disabled):not(.outside)') ||
+                           this._daysGrid.querySelector('.cell:not(.disabled)') ||
+                           this._daysGrid.firstElementChild;
+        if (firstEnabled) firstEnabled.tabIndex = 0;
+      }
+    }
+
+    _syncNavDisabled() {
+      var min = this._parseDate(this.getAttribute('min'));
+      var max = this._parseDate(this.getAttribute('max'));
+
+      this._prevBtn.toggleAttribute('disabled', !!min && this._viewMonth === min.getMonth() && this._viewYear === min.getFullYear());
+      this._nextBtn.toggleAttribute('disabled', !!max && this._viewMonth === max.getMonth() && this._viewYear === max.getFullYear());
+    }
+
+    _changeMonth(delta) {
+      var d = new Date(this._viewYear, this._viewMonth + delta, 1);
+      this._viewYear = d.getFullYear();
+      this._viewMonth = d.getMonth();
+
+      if (this._focusedDate) {
+        var sameMonth = new Date(this._viewYear, this._viewMonth, 1);
+        var lastDay = new Date(this._viewYear, this._viewMonth + 1, 0).getDate();
+        var day = Math.min(this._focusedDate.getDate(), lastDay);
+        this._focusedDate = new Date(this._viewYear, this._viewMonth, day);
+        sameMonth = null;
+      }
+
+      this._render();
+      this._announce(this._monthLabelText());
+      this.dispatchEvent(new CustomEvent('month-change', {
+        bubbles: true,
+        composed: true,
+        detail: { year: this._viewYear, month: this._viewMonth }
+      }));
+    }
+
+    _onPrev(e) { e.preventDefault(); this._changeMonth(-1); }
+    _onNext(e) { e.preventDefault(); this._changeMonth(1); }
+
+    _onCellClick(e) {
+      var cell = e.target.closest('.cell');
+      if (!cell || cell.classList.contains('disabled')) return;
+      var iso = cell.getAttribute('data-date');
+      var mode = this._selectionMode();
+      if (mode === 'range') this._toggleRange(iso);
+      else if (mode === 'multiple') {
+        if (this._multiAddGranularity() === 'day') this._toggleMultiple(iso);
+        else this._toggleMultipleSet(this._parseDate(iso));
+      }
+      else this._select(iso);
+    }
+
+    _select(iso) {
+      var d = this._parseDate(iso);
+      if (!d || this._isDisabled(d)) return;
+
+      var monthChanged = d.getMonth() !== this._viewMonth || d.getFullYear() !== this._viewYear;
+      this._viewYear = d.getFullYear();
+      this._viewMonth = d.getMonth();
+      this._focusedDate = d;
+
+      this.setAttribute('value', iso);
+
+      this._announce(this._announceFormatDate(d) + ' selected.');
+
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true,
+        composed: true,
+        detail: { value: iso, date: new Date(d), mode: 'single' }
+      }));
+
+      if (monthChanged) {
+        this.dispatchEvent(new CustomEvent('month-change', {
+          bubbles: true,
+          composed: true,
+          detail: { year: this._viewYear, month: this._viewMonth }
+        }));
+      }
+    }
+
+    _toggleRange(iso) {
+      var d = this._parseDate(iso);
+      if (!d || this._isDisabled(d)) return;
+
+      var current = this._parseRangeValue(this.getAttribute('value'));
+      var next;
+      if (!current.start || (current.start && current.end)) {
+        next = { start: d, end: null };
+      } else if (d < current.start) {
+        next = { start: d, end: current.start };
+      } else {
+        next = { start: current.start, end: d };
+      }
+
+      var monthChanged = d.getMonth() !== this._viewMonth || d.getFullYear() !== this._viewYear;
+      this._viewYear = d.getFullYear();
+      this._viewMonth = d.getMonth();
+      this._focusedDate = d;
+
+      var newValue = this._formatRangeValue(next);
+      this.setAttribute('value', newValue);
+
+      if (next.start && !next.end) {
+        this._announce('Start date ' + this._announceFormatDate(next.start) + ' selected. Pick an end date.');
+      } else if (next.start && next.end) {
+        this._announce('Range ' + this._announceFormatDate(next.start) + ' to ' + this._announceFormatDate(next.end) + ' selected.');
+      }
+
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          value: newValue,
+          start: next.start ? this._formatISO(next.start) : null,
+          end: next.end ? this._formatISO(next.end) : null,
+          mode: 'range'
+        }
+      }));
+
+      if (monthChanged) {
+        this.dispatchEvent(new CustomEvent('month-change', {
+          bubbles: true,
+          composed: true,
+          detail: { year: this._viewYear, month: this._viewMonth }
+        }));
+      }
+    }
+
+    _toggleMultiple(iso) {
+      var d = this._parseDate(iso);
+      if (!d || this._isDisabled(d)) return;
+
+      var key = this._dateKey(d);
+      var keys = this._parseMultipleValue(this.getAttribute('value'));
+      var idx = keys.indexOf(key);
+      var added = idx === -1;
+      if (added) keys.push(key);
+      else keys.splice(idx, 1);
+      keys.sort();
+
+      var monthChanged = d.getMonth() !== this._viewMonth || d.getFullYear() !== this._viewYear;
+      this._viewYear = d.getFullYear();
+      this._viewMonth = d.getMonth();
+      this._focusedDate = d;
+
+      var newValue = keys.join(',');
+      if (newValue === '') this.removeAttribute('value');
+      else this.setAttribute('value', newValue);
+
+      var countMsg = keys.length === 1 ? '1 date selected.' : keys.length + ' dates selected.';
+      this._announce((added ? 'Added ' : 'Removed ') + this._announceFormatDate(d) + '. ' + countMsg);
+
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          value: newValue,
+          values: keys.slice(),
+          mode: 'multiple'
+        }
+      }));
+
+      if (monthChanged) {
+        this.dispatchEvent(new CustomEvent('month-change', {
+          bubbles: true,
+          composed: true,
+          detail: { year: this._viewYear, month: this._viewMonth }
+        }));
+      }
+    }
+
+    _selectionMode() {
+      var m = this.getAttribute('selection-mode');
+      if (m === 'range' || m === 'multiple') return m;
+      return 'single';
+    }
+
+    _multiAddGranularity() {
+      var g = this.getAttribute('multi-add-granularity');
+      if (g === 'week' || g === 'workweek') return g;
+      return 'day';
+    }
+
+    _expandKeysForGranularity(d) {
+      var g = this._multiAddGranularity();
+      if (g === 'day') return [this._dateKey(d)];
+      var keys = [];
+      var start;
+      var span;
+      if (g === 'week') {
+        var weekStart = this._weekStartIndex();
+        var offset = (d.getDay() - weekStart + 7) % 7;
+        start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset);
+        span = 7;
+      } else {
+        var offsetFromMon = (d.getDay() + 6) % 7;
+        start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offsetFromMon);
+        span = 5;
+      }
+      for (var i = 0; i < span; i++) {
+        var day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        keys.push(this._dateKey(day));
+      }
+      return keys;
+    }
+
+    _toggleMultipleSet(d) {
+      if (!d || this._isDisabled(d)) return;
+      var self = this;
+      var addKeys = this._expandKeysForGranularity(d).filter(function(iso) {
+        var dt = self._parseDate(iso);
+        return dt && !self._isDisabled(dt);
+      });
+      if (addKeys.length === 0) return;
+
+      var current = this._parseMultipleValue(this.getAttribute('value'));
+      var seen = {};
+      for (var i = 0; i < current.length; i++) seen[current[i]] = true;
+
+      var allSelected = addKeys.every(function(k) { return seen[k]; });
+      var exclusive = this.hasAttribute('multi-add-exclusive');
+      var next;
+      if (exclusive) {
+        var addSet = {};
+        for (var a = 0; a < addKeys.length; a++) addSet[addKeys[a]] = true;
+        var currentInSet = current.every(function(k) { return addSet[k]; });
+        if (allSelected && currentInSet) next = [];
+        else next = addKeys.slice();
+      } else if (allSelected) {
+        var removeSet = {};
+        for (var j = 0; j < addKeys.length; j++) removeSet[addKeys[j]] = true;
+        next = current.filter(function(k) { return !removeSet[k]; });
+      } else {
+        next = current.slice();
+        for (var k = 0; k < addKeys.length; k++) {
+          if (!seen[addKeys[k]]) next.push(addKeys[k]);
+        }
+      }
+      next.sort();
+
+      var monthChanged = d.getMonth() !== this._viewMonth || d.getFullYear() !== this._viewYear;
+      this._viewYear = d.getFullYear();
+      this._viewMonth = d.getMonth();
+      this._focusedDate = d;
+
+      var newValue = next.join(',');
+      if (newValue === '') this.removeAttribute('value');
+      else this.setAttribute('value', newValue);
+
+      var g = this._multiAddGranularity();
+      var unitLabel = g === 'workweek' ? 'work week' : (g === 'week' ? 'week' : 'day');
+      var firstAdd = this._parseDate(addKeys[0]);
+      var setCountMsg = next.length === 0 ? 'No dates selected.' : (next.length === 1 ? '1 date selected.' : next.length + ' dates selected.');
+      this._announce((allSelected ? 'Removed ' : 'Added ') + unitLabel + ' of ' + this._announceFormatDate(firstAdd) + '. ' + setCountMsg);
+
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          value: newValue,
+          values: next.slice(),
+          mode: 'multiple',
+          granularity: this._multiAddGranularity()
+        }
+      }));
+
+      if (monthChanged) {
+        this.dispatchEvent(new CustomEvent('month-change', {
+          bubbles: true,
+          composed: true,
+          detail: { year: this._viewYear, month: this._viewMonth }
+        }));
+      }
+    }
+
+    _parseRangeValue(s) {
+      if (!s) return { start: null, end: null };
+      var parts = String(s).split('..');
+      var start = this._parseDate((parts[0] || '').trim());
+      var end = parts.length > 1 ? this._parseDate((parts[1] || '').trim()) : null;
+      return { start: start, end: end };
+    }
+
+    _formatRangeValue(r) {
+      if (!r.start) return '';
+      var s = this._formatISO(r.start);
+      if (!r.end) return s;
+      return s + '..' + this._formatISO(r.end);
+    }
+
+    _parseMultipleValue(s) {
+      if (!s) return [];
+      var keys = this._parseDateList(s);
+      var seen = {};
+      var unique = [];
+      for (var i = 0; i < keys.length; i++) {
+        if (!seen[keys[i]]) { seen[keys[i]] = true; unique.push(keys[i]); }
+      }
+      unique.sort();
+      return unique;
+    }
+
+    _inRange(date, start, end) {
+      if (!start || !end) return false;
+      var t = date.getTime(), s = start.getTime(), e = end.getTime();
+      return t >= s && t <= e;
+    }
+
+    _initialFocusDate() {
+      var raw = this.getAttribute('value');
+      if (!raw) return null;
+      var mode = this._selectionMode();
+      if (mode === 'range') return this._parseRangeValue(raw).start;
+      if (mode === 'multiple') {
+        var keys = this._parseMultipleValue(raw);
+        return keys.length ? this._parseDate(keys[0]) : null;
+      }
+      return this._parseDate(raw);
+    }
+
+    _formatPickedDate(d) {
+      var weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var label = weekdays[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+      if (d.getFullYear() !== this._viewYear) label += ', ' + d.getFullYear();
+      return label;
+    }
+
+    _formatPickedDateFull(d) {
+      var weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+      return weekdays[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
+
+    _cellAriaLabel(d, ctx) {
+      var label = this._formatPickedDateFull(d);
+      if (ctx.today) label += ', today';
+      if (ctx.rangeRole === 'start') label += ', start of range';
+      else if (ctx.rangeRole === 'end') label += ', end of range';
+      else if (ctx.inRange) label += ', in range';
+      if (ctx.selected) label += ', selected';
+      if (ctx.disabled) label += ', unavailable';
+      return label;
+    }
+
+    _announceFormatDate(d) {
+      return this._formatPickedDateFull(d);
+    }
+
+    _renderPickedList() {
+      if (!this._pickedList) return;
+      this._pickedList.innerHTML = '';
+      if (this._selectionMode() !== 'multiple' || !this.hasAttribute('picked-list')) return;
+
+      var keys = this._parseMultipleValue(this.getAttribute('value'));
+
+      var header = document.createElement('div');
+      header.className = 'picked-header';
+      header.setAttribute('part', 'picked-header');
+      var count = document.createElement('span');
+      count.className = 'picked-count';
+      count.textContent = keys.length === 1 ? '1 date' : keys.length + ' dates';
+      header.appendChild(count);
+      var clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'picked-clear';
+      clearBtn.setAttribute('part', 'picked-clear');
+      clearBtn.dataset.action = 'clear';
+      clearBtn.textContent = 'Clear all';
+      if (keys.length === 0) clearBtn.style.visibility = 'hidden';
+      header.appendChild(clearBtn);
+      this._pickedList.appendChild(header);
+
+      if (keys.length === 0) {
+        var empty = document.createElement('div');
+        empty.className = 'picked-empty';
+        empty.textContent = 'No dates picked yet.';
+        this._pickedList.appendChild(empty);
+        return;
+      }
+
+      var rows = document.createElement('div');
+      rows.className = 'picked-rows';
+      rows.setAttribute('role', 'list');
+
+      for (var i = 0; i < keys.length; i++) {
+        var iso = keys[i];
+        var d = this._parseDate(iso);
+        if (!d) continue;
+        var row = document.createElement('div');
+        row.className = 'picked-row';
+        row.setAttribute('role', 'listitem');
+        row.setAttribute('part', 'picked-row');
+        row.dataset.iso = iso;
+
+        var label = document.createElement('span');
+        label.className = 'picked-date';
+        label.textContent = this._formatPickedDate(d);
+        row.appendChild(label);
+
+        var rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'picked-remove';
+        rm.setAttribute('part', 'picked-remove');
+        rm.setAttribute('aria-label', 'Remove ' + this._formatPickedDateFull(d));
+        rm.dataset.action = 'remove';
+        rm.dataset.iso = iso;
+        rm.innerHTML = '<svg viewBox="0 0 10 10" aria-hidden="true">' +
+          '<path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke-width="2" stroke-linecap="round" fill="none"/>' +
+        '</svg>';
+        row.appendChild(rm);
+
+        rows.appendChild(row);
+      }
+
+      this._pickedList.appendChild(rows);
+    }
+
+    _onPickedClick(e) {
+      var actionEl = e.target.closest('[data-action]');
+      if (!actionEl) return;
+      e.preventDefault();
+      var action = actionEl.dataset.action;
+      if (action === 'clear') {
+        if (!this.hasAttribute('value')) return;
+        this.removeAttribute('value');
+        this._announce('All dates cleared.');
+        this.dispatchEvent(new CustomEvent('change', {
+          bubbles: true,
+          composed: true,
+          detail: { value: '', values: [], mode: 'multiple' }
+        }));
+        return;
+      }
+      if (action === 'remove') {
+        var iso = actionEl.dataset.iso;
+        if (iso) this._toggleMultiple(iso);
+      }
+    }
+
+    _onGridKeydown(e) {
+      var key = e.key;
+      var nav = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Enter', ' '];
+      if (nav.indexOf(key) === -1) return;
+      e.preventDefault();
+
+      var current = this._focusedDate || this._parseDate(this.getAttribute('value')) || new Date();
+      var next = new Date(current);
+
+      if (key === 'ArrowLeft') next.setDate(current.getDate() - 1);
+      else if (key === 'ArrowRight') next.setDate(current.getDate() + 1);
+      else if (key === 'ArrowUp') next.setDate(current.getDate() - 7);
+      else if (key === 'ArrowDown') next.setDate(current.getDate() + 7);
+      else if (key === 'PageUp') next.setMonth(current.getMonth() - 1);
+      else if (key === 'PageDown') next.setMonth(current.getMonth() + 1);
+      else if (key === 'Home') {
+        var weekStart = this._weekStartIndex();
+        var diff = (current.getDay() - weekStart + 7) % 7;
+        next.setDate(current.getDate() - diff);
+      } else if (key === 'End') {
+        var weekStartEnd = this._weekStartIndex();
+        var diffEnd = (current.getDay() - weekStartEnd + 7) % 7;
+        next.setDate(current.getDate() + (6 - diffEnd));
+      } else if (key === 'Enter' || key === ' ') {
+        if (!this._isDisabled(current)) {
+          var iso = this._dateKey(current);
+          var mode = this._selectionMode();
+          if (mode === 'range') this._toggleRange(iso);
+          else if (mode === 'multiple') this._toggleMultiple(iso);
+          else this._select(iso);
+        }
+        return;
+      }
+
+      this._focusedDate = next;
+      var monthChanged = next.getMonth() !== this._viewMonth || next.getFullYear() !== this._viewYear;
+      if (monthChanged) {
+        this._viewYear = next.getFullYear();
+        this._viewMonth = next.getMonth();
+        this.dispatchEvent(new CustomEvent('month-change', {
+          bubbles: true,
+          composed: true,
+          detail: { year: this._viewYear, month: this._viewMonth }
+        }));
+      }
+      this._render();
+      if (monthChanged) this._announce(this._monthLabelText());
+
+      var sel = '.cell[data-date="' + this._dateKey(next) + '"]';
+      var target = this._daysGrid.querySelector(sel);
+      if (target) target.focus();
+    }
+
+    _syncFormValue() {
+      var v = this.getAttribute('value') || '';
+      if (this._internals && this._internals.setFormValue) this._internals.setFormValue(v);
+    }
+  }
+
+  CanvasUI.register('canvas-calendar', CanvasCalendar);
+
+  /* ======== canvas-date-input ========
+     Date input dropdown that wraps a canvas-calendar inside a combobox
+     style floating panel. The trigger is a read only text input that
+     looks identical to canvas-combobox and canvas-dropdown, so it slots
+     into form rows without breaking row height cohesion. The open state
+     reveals a panel with a light gray divider under the input and a
+     full canvas-calendar below, with the gray header strip suppressed
+     (the input row is the panel's white top, no gray needed) and the
+     outer calendar border suppressed (the panel border is the only
+     chrome). */
+
+  class CanvasDateInput extends HTMLElement {
+    static get observedAttributes() {
+      return [
+        'label',
+        'placeholder',
+        'value',
+        'min',
+        'max',
+        'disabled-dates',
+        'week-start',
+        'disabled',
+        'required',
+        'error',
+        'name',
+        'size'
+      ];
+    }
+
+    static get formAssociated() { return true; }
+
+    constructor() {
+      super();
+      this._internals = this.attachInternals();
+      this.attachShadow({ mode: 'open', delegatesFocus: true });
+      this._open = false;
+      this._panelId = cuid('di-panel');
+      this._labelId = cuid('di-lbl');
+      this._inputId = cuid('di-input');
+      this._onDocClick = this._onDocClick.bind(this);
+      this._onCalendarChange = this._onCalendarChange.bind(this);
+    }
+
+    connectedCallback() {
+      this._render();
+      this._bindEvents();
+      document.addEventListener('click', this._onDocClick);
+      var v = this.getAttribute('value') || '';
+      this._internals.setFormValue(v);
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('click', this._onDocClick);
+    }
+
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (oldVal === newVal) return;
+      if (!this.shadowRoot.querySelector('.field')) return;
+      if (name === 'value') {
+        this._internals.setFormValue(newVal || '');
+        this._syncDisplay();
+        var cal = this.shadowRoot.querySelector('canvas-calendar');
+        if (cal) {
+          if (newVal) cal.setAttribute('value', newVal);
+          else cal.removeAttribute('value');
+        }
+        return;
+      }
+      if (name === 'min' || name === 'max' || name === 'disabled-dates' || name === 'week-start' || name === 'size') {
+        var cal2 = this.shadowRoot.querySelector('canvas-calendar');
+        if (cal2) {
+          if (newVal == null) cal2.removeAttribute(name);
+          else cal2.setAttribute(name, newVal);
+        }
+        return;
+      }
+      this._render();
+      this._bindEvents();
+    }
+
+    get value() { return this.getAttribute('value') || ''; }
+    set value(v) {
+      var str = v == null ? '' : String(v);
+      if (str === '') this.removeAttribute('value');
+      else this.setAttribute('value', str);
+    }
+
+    get name() { return this.getAttribute('name'); }
+
+    _render() {
+      var label = this.getAttribute('label');
+      var placeholder = this.getAttribute('placeholder') || 'Pick a date';
+      var error = this.getAttribute('error');
+      var disabled = this.hasAttribute('disabled');
+      var value = this.getAttribute('value') || '';
+      var min = this.getAttribute('min');
+      var max = this.getAttribute('max');
+      var disabledDates = this.getAttribute('disabled-dates');
+      var weekStart = this.getAttribute('week-start');
+      var size = this.getAttribute('size');
+
+      var calAttrs = '';
+      if (value) calAttrs += ' value="' + this._escape(value) + '"';
+      if (min) calAttrs += ' min="' + this._escape(min) + '"';
+      if (max) calAttrs += ' max="' + this._escape(max) + '"';
+      if (disabledDates) calAttrs += ' disabled-dates="' + this._escape(disabledDates) + '"';
+      if (weekStart) calAttrs += ' week-start="' + this._escape(weekStart) + '"';
+      if (size) calAttrs += ' size="' + this._escape(size) + '"';
+
+      this.shadowRoot.innerHTML = '<style>' +
+        ':host { display: block; }' +
+        '.label { display: block; margin-bottom: .28571429rem; font-size: .92857143em; font-weight: 700; font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif); color: var(--color-text, rgba(0, 0, 0, 0.87)); line-height: 1em; }' +
+        ':host([error]) .label { color: #9f3a38; }' +
+        '.field { position: relative; width: 100%; }' +
+        '.input {' +
+          'width: 100%; margin: 0; padding: .67857143em 2.1em .67857143em 1em;' +
+          'font-size: 1em; font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);' +
+          'line-height: 1.21428571em; color: var(--color-text, rgba(0, 0, 0, 0.87));' +
+          'background: var(--color-surface, #FFFFFF);' +
+          'border: 1px solid rgba(34, 36, 38, 0.15);' +
+          'border-radius: var(--radius, .28571429rem);' +
+          'outline: none; box-sizing: border-box;' +
+          'caret-color: transparent;' +
+          'cursor: pointer;' +
+          'transition: border-color 0.1s ease, box-shadow 0.1s ease, border-radius 0.1s ease;' +
+        '}' +
+        '.input:focus { border-color: #96c8da; }' +
+        '.input.open { border-color: #96c8da; border-bottom-color: transparent; border-radius: var(--radius, .28571429rem) var(--radius, .28571429rem) 0 0; z-index: 10; }' +
+        '.input.open.flip { border-color: #96c8da; border-top-color: transparent; border-radius: 0 0 var(--radius, .28571429rem) var(--radius, .28571429rem); }' +
+        ':host([disabled]) .input { opacity: 0.45; cursor: default; pointer-events: none; }' +
+        ':host([error]) .input { background: #fff6f6; border-color: #e0b4b4; }' +
+        '.arrow { position: absolute; right: 1em; top: 50%; transform: translateY(-50%); width: 8px; height: 5px; pointer-events: none; }' +
+        '.panel {' +
+          'display: none; position: absolute; top: calc(100% - 1px); left: 0; right: 0;' +
+          'background: var(--color-surface, #FFFFFF);' +
+          'border: 1px solid #96c8da; border-top: none;' +
+          'border-radius: 0 0 var(--radius, .28571429rem) var(--radius, .28571429rem);' +
+          'box-shadow: 0 0px 3px 0 rgba(34, 36, 38, 0.06);' +
+          'z-index: 11; box-sizing: border-box;' +
+        '}' +
+        '.panel.visible { display: block; }' +
+        '.panel.flip {' +
+          'top: auto; bottom: calc(100% - 1px);' +
+          'border-top: 1px solid #96c8da; border-bottom: none;' +
+          'border-radius: var(--radius, .28571429rem) var(--radius, .28571429rem) 0 0;' +
+        '}' +
+        '.panel canvas-calendar {' +
+          '--canvas-calendar-border: transparent;' +
+          '--canvas-calendar-border-width: 0;' +
+          '--canvas-calendar-header-bg: transparent;' +
+          '--canvas-calendar-header-border: transparent;' +
+          'display: block;' +
+          'max-width: 255px;' +
+        '}' +
+        '.error-text { display: block; margin-top: .28571429rem; font-size: .92857143em; font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif); color: #9f3a38; line-height: 1.4285em; }' +
+      '</style>' +
+      (label ? '<span class="label" id="' + this._labelId + '">' + this._escape(label) + '</span>' : '') +
+      '<div class="field">' +
+        '<input class="input" type="text" readonly role="combobox"' +
+          ' id="' + this._inputId + '"' +
+          ' aria-haspopup="dialog" aria-expanded="false"' +
+          ' aria-controls="' + this._panelId + '"' +
+          (label ? ' aria-labelledby="' + this._labelId + '"' : '') +
+          ' placeholder="' + this._escape(placeholder) + '"' +
+          ' value="' + this._escape(this._formatDisplay(value)) + '"' +
+          (disabled ? ' disabled' : '') + '>' +
+        '<svg class="arrow" viewBox="0 0 10 6" fill="#575757"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>' +
+        '<div class="panel" id="' + this._panelId + '" role="dialog" aria-label="Choose date">' +
+          '<canvas-calendar fluid' + calAttrs + '></canvas-calendar>' +
+        '</div>' +
+      '</div>' +
+      (error ? '<span class="error-text">' + this._escape(error) + '</span>' : '');
+    }
+
+    _bindEvents() {
+      var self = this;
+      var input = this.shadowRoot.querySelector('.input');
+      var cal = this.shadowRoot.querySelector('canvas-calendar');
+
+      input.addEventListener('click', function() {
+        if (self.hasAttribute('disabled')) return;
+        if (self._open) self._close();
+        else self._openPanel();
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (self.hasAttribute('disabled')) return;
+        switch (e.key) {
+          case 'ArrowDown':
+          case 'Enter':
+          case ' ':
+            e.preventDefault();
+            if (!self._open) self._openPanel();
+            break;
+          case 'Escape':
+            if (self._open) {
+              e.preventDefault();
+              self._close();
+            }
+            break;
+        }
+      });
+
+      cal.addEventListener('change', this._onCalendarChange);
+    }
+
+    _onCalendarChange(e) {
+      var iso = e.detail && e.detail.value;
+      if (iso == null) return;
+      if (iso === '') this.removeAttribute('value');
+      else this.setAttribute('value', iso);
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true,
+        composed: true,
+        detail: { value: iso }
+      }));
+      this._close();
+    }
+
+    _openPanel() {
+      this._open = true;
+      var input = this.shadowRoot.querySelector('.input');
+      var panel = this.shadowRoot.querySelector('.panel');
+      input.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+      panel.classList.add('visible');
+      this._checkFlip();
+      var cal = this.shadowRoot.querySelector('canvas-calendar');
+      if (cal && typeof cal.focusGrid === 'function') {
+        requestAnimationFrame(function () { cal.focusGrid(); });
+      }
+    }
+
+    _close() {
+      this._open = false;
+      var input = this.shadowRoot.querySelector('.input');
+      var panel = this.shadowRoot.querySelector('.panel');
+      input.classList.remove('open', 'flip');
+      input.setAttribute('aria-expanded', 'false');
+      panel.classList.remove('visible', 'flip');
+    }
+
+    _checkFlip() {
+      var panel = this.shadowRoot.querySelector('.panel');
+      var input = this.shadowRoot.querySelector('.input');
+      var rect = panel.getBoundingClientRect();
+      if (rect.bottom > window.innerHeight) {
+        panel.classList.add('flip');
+        input.classList.add('flip');
+      }
+    }
+
+    _onDocClick(e) {
+      if (!this.contains(e.target) && !this.shadowRoot.contains(e.target)) {
+        if (this._open) this._close();
+      }
+    }
+
+    _syncDisplay() {
+      var input = this.shadowRoot.querySelector('.input');
+      if (!input) return;
+      input.value = this._formatDisplay(this.getAttribute('value') || '');
+    }
+
+    _formatDisplay(iso) {
+      if (!iso) return '';
+      var parts = String(iso).split('-');
+      if (parts.length !== 3) return '';
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10);
+      var d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d) || m < 1 || m > 12) return '';
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[m - 1] + ' ' + d + ', ' + y;
+    }
+
+    _escape(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  }
+
+  CanvasUI.register('canvas-date-input', CanvasDateInput);
 
 })();

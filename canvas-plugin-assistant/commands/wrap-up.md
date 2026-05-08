@@ -68,7 +68,7 @@ ls "$INNER"/static/*.html "$INNER"/templates/*.html 2>/dev/null
 **If HTML pages exist:**
 - Invoke the **plugin-ui** skill
 - Run the validation checklist (phases 0 through 6) from the skill's `references/validation-checklist.md`
-- This checks palette compliance, web component usage, toggle-submit prohibition, ARIA attributes, touch targets, right pane padding, and token usage
+- This checks palette compliance, web component usage, toggle and submit prohibition, ARIA mirroring, touch targets, right pane padding, token usage, banner voice and copy, loading and empty state handling, tab panel scroll wrapping, and date input usage
 - Report any violations found
 
 **If no HTML pages:** Mark UI validation as N/A.

@@ -21,7 +21,7 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 
 **Why.** Native inputs render with OS-level styling that does not match Canvas. Applying tokens by hand produces inconsistent output across browsers and platforms.
 
-**Fix.** Replace with `canvas-input` using the appropriate `type` attribute. The component styles native date and time pickers through the same border, radius, padding, and font as other inputs.
+**Fix.** For single date fields in forms, replace with `canvas-date-input`. For all other types (text, email, password, number, tel, url, datetime-local, month, week, time, and date range pairs in filter bars), replace with `canvas-input` using the appropriate `type` attribute. Both components style their pickers through the same border, radius, padding, and font as other inputs. See `component-usage.md` Date Inputs for the picker decision.
 
 **Rule home.** `component-usage.md` Text Inputs vs Textareas.
 **Validation check.** `validation-checklist.md` Phase 1, no native replacements.
@@ -85,6 +85,17 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 **Rule home.** `component-usage.md` Scroll Areas.
 **Validation check.** `validation-checklist.md` Phase 2, Cards.
 
+## Tab Panel Reliance on Implicit Scroll
+
+**Detection.** A `canvas-tab-panel` whose content is taller or wider than the surrounding layout, with no `canvas-scroll-area` wrapping the content. Pre 4.17.0 the panel silently scrolled on its own and clipped descendant focus rings against its box. From 4.17.0 the panel is not a scroll container, so overflowing content spills into the surrounding layout instead.
+
+**Why.** The implicit `overflow: auto` on the old panel inner wrapper clipped any descendant ink that paints outside its content box (focus rings, box shadows, popover surfaces). Removing the wrapper restores correct focus ring rendering for buttons flush against the panel edge but shifts the responsibility for scroll opt-in onto the consumer.
+
+**Fix.** Wrap the panel content in a `canvas-scroll-area vertical` (or `horizontal`) with an explicit `max-height` and `aria-label`. Same migration pattern as `canvas-card-body`.
+
+**Rule home.** `component-usage.md` Scroll Areas.
+**Validation check.** `validation-checklist.md` Phase 2, Tabs.
+
 ## Forbidden Popup Nesting in a Vertical Scroll Area
 
 **Detection.** `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` placed inside a `canvas-scroll-area[vertical]`.
@@ -117,6 +128,28 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 
 **Rule home.** `component-usage.md` Popover.
 **Validation check.** `validation-checklist.md` Phase 2, Popovers.
+
+## Modal With Duplicate Dismiss Paths
+
+**Detection.** A `canvas-modal` that renders both `dismissable` on `canvas-modal-header` (the X in the top right) and a Cancel, Close, or Dismiss button in `canvas-modal-footer`.
+
+**Why.** Two visible dismiss affordances for the same action force the user to choose between equivalent controls. The footer Cancel sits next to the primary action in the reading order the user already scans for the submit button, and is the dismiss path the skill prefers for confirmation and form modals. The header X becomes redundant once that pair is present, and the duplication suggests the two paths differ in behavior when they do not.
+
+**Fix.** Drop `dismissable` from `canvas-modal-header` and keep the footer Cancel, Close, or Dismiss button next to the primary action. If a modal has no footer actions at all and the user still needs a visible way out, keep the header X instead and do not add a duplicate footer dismiss button.
+
+**Rule home.** `component-usage.md` Modal Patterns, Header dismiss button.
+**Validation check.** `validation-checklist.md` Phase 2, Modals.
+
+## Open Trigger Without Panel Content
+
+**Detection.** Two signals. (1) A `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` enters its open visual state (flat bottom radius, menu border) with no visible content in the menu. Caused by consumer-built clones that gate the menu render on `items.length > 0`, or by custom CSS that forces the open styling on focus instead of on panel presence. (2) A real `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` mounted with zero `<canvas-option>` children whose options are populated by a fetch on first open or mid session, with no `loading` attribute toggled around the call. The trigger opens against an empty slot, the empty state row paints, then a second flip lands once the loaded list reflows the menu.
+
+**Why.** The open styling is a visual promise that a panel is attached below. An empty or unmounted panel breaks that promise in the same frame. Users read it as a broken control, look for results below the fold, or doubt that the search ran. The deferred fetch variant produces the same broken impression in the loading window plus an extra reflow when the panel grows into its final size.
+
+**Fix.** Two paths matched to the two detection signals. (1) For hand rolled clones, replace with the built in `canvas-dropdown`, `canvas-combobox`, and `canvas-multi-select`. All three render a visible empty state row inside the menu whenever the filtered or total option count is zero, so the open trigger always has content. Override the default copy with the `empty-state` attribute or a `<div slot="empty">` child. Never hand roll a dropdown that hides the panel when results are zero. (2) For deferred fetch consumers, set the `loading` attribute on the component when the fetch begins, inject `<canvas-option>` children when the response resolves, then remove `loading`. The component swaps the trigger for a spinner row, holds the panel closed until `loading` clears, and opens once against the final list. Listen for the `loading-cancel` event to abort the in flight request when the user disengages.
+
+**Rule home.** `web-components.md` canvas-dropdown, canvas-combobox, canvas-multi-select Empty state and Loading state.
+**Validation check.** `validation-checklist.md` Phase 2, Dropdowns and Comboboxes.
 
 ## Empty State During Loading
 
@@ -162,11 +195,33 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 **Rule home.** `writing-style.md`.
 **Validation check.** `validation-checklist.md` Phase 3, Writing Style.
 
+## Banner For Expected Success
+
+**Detection.** A `canvas-banner variant="success"` rendered after a save, submit, create, or confirm action where the surface itself already changes. Modal closes, form resets, row appears, badge flips. Phrases like "Saved successfully", "Patient created", "Changes applied" are the giveaway.
+
+**Why.** Canvas reserves banners for outcomes the user did not expect, errors, warnings, and risk surfaces. A green banner on top of a state change the user just performed is noise. The clinician has to dismiss or scroll past it to keep working.
+
+**Fix.** Drop the banner. Let the UI state change carry the confirmation. Modal close, form reset, new row, updated count, badge flip. Keep `variant="success"` only for the rare case where the user stays on the same surface and nothing else visually changes.
+
+**Rule home.** `component-usage.md` Feedback and Status and Banner Variant Guide.
+**Validation check.** `validation-checklist.md` Phase 3, Writing Style.
+
+## Technical Error Code in Banner Copy
+
+**Detection.** Banner text containing HTTP status numbers (`400`, `404`, `500`), exception class names (`ValidationError`, `KeyError`, `IntegrityError`), stack frame fragments, raw backend field identifiers (`user_name`, `dose_unit`, `payer_id`), or null and undefined tokens. `Error 400 user_name`, `404 Not Found /api/patients`, `null returned from coverage lookup`.
+
+**Why.** Banner copy is read by a clinician under time pressure. Protocol noise forces them to translate machine output into a clinical fact before they can act. Status codes and field names belong in console logs, error reports, and developer tooling.
+
+**Fix.** Rewrite the banner in plain language. Name the entity that failed using the value the user supplied or selected, wrapped in `<b>` so it stands out. `Could not find user with name <b>John</b>`, `Patient <b>Emma Wright</b> is not in this clinic`, `<b>Dose unit</b> is not recognized. Use mg, mcg, or g.`
+
+**Rule home.** `writing-style.md` Banner copy voice.
+**Validation check.** `validation-checklist.md` Phase 3, Writing Style.
+
 ## Global CSS Reset Overriding Component Styles
 
-**Detection.** Any universal selector rule (`* { margin: 0; padding: 0; box-sizing: border-box; }` or similar), bare `html`, `body`, `button`, `input`, `a` rules without a plugin scope class, linked reset libraries (`normalize.css`, `reset.css`, `sanitize.css`, `modern-normalize.css`), or Tailwind Preflight in the plugin head.
+**Detection.** Any universal selector rule (`* { margin: 0; padding: 0; box-sizing: border-box; }` or similar), bare `html`, `body`, `button`, `input`, `a` rules without a plugin scope class (a frequent offender is `body { -webkit-font-smoothing: antialiased }`, which silently thins Lato strokes), linked reset libraries (`normalize.css`, `reset.css`, `sanitize.css`, `modern-normalize.css`), or Tailwind Preflight in the plugin head.
 
-**Why.** Three things break. Light DOM components in the `canvas-accordion` family lose their intended padding and margins because universal rules match them directly. Typography (`font-family`, `line-height`, `color`) inherits across the Shadow DOM boundary and replaces Lato inside every component. The custom element host itself picks up the reset's box sizing and margin, shifting layout on every `<canvas-*>` tag.
+**Why.** Four things break. Light DOM components in the `canvas-accordion` family lose their intended padding and margins because universal rules match them directly. Typography (`font-family`, `line-height`, `color`) inherits across the Shadow DOM boundary and replaces Lato inside every component. The custom element host itself picks up the reset's box sizing and margin, shifting layout on every `<canvas-*>` tag. A bare body rule setting `-webkit-font-smoothing: antialiased` switches Chrome and Safari from the default subpixel rendering to grayscale, which visibly thins Lato 700 strokes so plugin text looks lighter than the Canvas home app.
 
 **Fix.** When scanning an existing plugin for refactor, flag any reset pattern and offer to remove it or scope it to a plugin root class before touching canvas markup. The Google Fonts Lato link must stay, do not suppress `font-family` on `html` or `body`.
 

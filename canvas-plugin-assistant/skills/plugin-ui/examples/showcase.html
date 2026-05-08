@@ -125,6 +125,7 @@
       <a href="#banner">Banner</a>
       <a href="#button">Button</a>
       <a href="#button-group">Button Group</a>
+      <a href="#calendar">Calendar</a>
       <a href="#card">Card</a>
       <a href="#checkbox">Checkbox</a>
       <a href="#chip">Chip</a>
@@ -263,6 +264,42 @@
         <canvas-accordion-item>
           <canvas-accordion-title>Review of Systems</canvas-accordion-title>
           <canvas-accordion-content><p>General: no fever, no weight change. All other systems negative.</p></canvas-accordion-content>
+        </canvas-accordion-item>
+      </canvas-accordion>
+    </div>
+
+    <!-- Scrollable content via canvas-scroll-area -->
+    <div class="sample-card">
+      <h3>Scrollable content (canvas-scroll-area)</h3>
+      <p style="margin-bottom: .75em; color: #767676">Long content stays bounded by wrapping it in <code>canvas-scroll-area vertical</code> with an explicit <code>max-height</code> and <code>aria-label</code>. The accordion content itself does not scroll, the scroll area does.</p>
+      <canvas-accordion>
+        <canvas-accordion-item open>
+          <canvas-accordion-title>
+            <span class="flex-grow">Encounter History</span>
+            <canvas-badge color="blue" size="tiny">12 visits</canvas-badge>
+          </canvas-accordion-title>
+          <canvas-accordion-content>
+            <canvas-scroll-area vertical aria-label="Encounter history" style="max-height: 200px">
+              <ul style="margin: 0; padding-left: 1.25em">
+                <li>Mar 28, 2026. Office visit, Dr. Magee.</li>
+                <li>Mar 14, 2026. Lab draw, fasting glucose.</li>
+                <li>Feb 27, 2026. Telehealth, medication review.</li>
+                <li>Feb 06, 2026. Office visit, Dr. Magee.</li>
+                <li>Jan 22, 2026. Lab draw, lipid panel.</li>
+                <li>Jan 09, 2026. Office visit, Dr. Magee.</li>
+                <li>Dec 18, 2025. Telehealth, refill consult.</li>
+                <li>Dec 04, 2025. Office visit, Dr. Magee.</li>
+                <li>Nov 20, 2025. Lab draw, HbA1c.</li>
+                <li>Nov 06, 2025. Office visit, Dr. Magee.</li>
+                <li>Oct 23, 2025. Telehealth, medication review.</li>
+                <li>Oct 09, 2025. Office visit, Dr. Magee.</li>
+              </ul>
+            </canvas-scroll-area>
+          </canvas-accordion-content>
+        </canvas-accordion-item>
+        <canvas-accordion-item>
+          <canvas-accordion-title>Care Plan Summary</canvas-accordion-title>
+          <canvas-accordion-content><p>Patient is stable on current regimen. Continue current medications and re-evaluate at the next visit.</p></canvas-accordion-content>
         </canvas-accordion-item>
       </canvas-accordion>
     </div>
@@ -794,6 +831,236 @@
 
   </section>
 
+  <!-- Calendar -->
+  <section class="component-section" id="calendar">
+    <h2>Calendar</h2>
+    <hr class="section-divider">
+
+    <!-- 1. Default standalone -->
+    <div class="sample-card">
+      <h3>Default standalone</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">Inline month grid with default border and compact cells. Selecting a day fires <code>change</code>.</p>
+      <canvas-calendar id="cal-default" value="2026-05-04"></canvas-calendar>
+      <div class="height-readout" id="cal-default-readout">No selection yet.</div>
+    </div>
+
+    <!-- 2. In a card via embedded attribute -->
+    <div class="sample-card">
+      <h3>Inside canvas-card (embedded mode)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">The <code>embedded</code> attribute drops the outer border, the gray header strip, and the body padding so the calendar fits flush inside any chrome the parent already provides (card, popover, custom panel).</p>
+      <canvas-card raised style="display: inline-block">
+        <canvas-card-body>
+          <canvas-calendar embedded value="2026-05-12"></canvas-calendar>
+        </canvas-card-body>
+      </canvas-card>
+    </div>
+
+    <!-- 3. Availability with disabled dates -->
+    <div class="sample-card">
+      <h3>Availability (disabled weekends, May 6 closed, no past dates)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">Combines <code>min</code>, <code>disabled-dates</code> attribute, and the JS <code>isDateDisabled</code> property for the weekend rule.</p>
+      <canvas-calendar
+        id="cal-availability"
+        value="2026-05-07"
+        min="2026-05-04"
+        disabled-dates="2026-05-06,2026-05-25">
+      </canvas-calendar>
+      <div class="height-readout" id="cal-availability-readout">Pick an open weekday.</div>
+    </div>
+
+    <!-- 4. Highlighted week (schedule sidebar pattern) -->
+    <div class="sample-card">
+      <h3>Highlighted week (schedule sidebar pattern)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>highlight-dates</code> paints the visible week. Mirrors how the home-app schedule sidebar shows the active week-view range.</p>
+      <canvas-calendar
+        value="2026-05-04"
+        highlight-dates="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08">
+      </canvas-calendar>
+    </div>
+
+    <!-- 5. Header slot -->
+    <div class="sample-card">
+      <h3>With header slot</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">Anything in <code>slot="header"</code> renders above the month nav.</p>
+      <canvas-calendar value="2026-05-12">
+        <div slot="header" style="padding: 8px 12px;">
+          <div style="font-weight: 700; font-size: .92857143em">Availability for Dr. Smith</div>
+          <div class="text-sm text-muted">Family Medicine, San Francisco</div>
+        </div>
+      </canvas-calendar>
+    </div>
+
+    <!-- 6. Footer slot -->
+    <div class="sample-card">
+      <h3>With footer slot (legend)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">Use <code>slot="footer"</code> for legends, summary counts, or action buttons.</p>
+      <canvas-calendar
+        value="2026-05-04"
+        highlight-dates="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08">
+        <div slot="footer" style="padding-top: 10px; margin-top: 8px; border-top: 1px solid rgba(34, 36, 38, 0.1); display: flex; gap: 12px; align-items: center; font-size: .85714286em;">
+          <span style="display: inline-flex; align-items: center; gap: 6px;">
+            <span style="display: inline-block; width: 10px; height: 10px; background: #2185D0; border-radius: 2px;"></span>
+            <span>Visible week</span>
+          </span>
+          <span class="text-muted">12 open slots this month</span>
+        </div>
+      </canvas-calendar>
+    </div>
+
+    <!-- 7. Comfortable size -->
+    <div class="sample-card">
+      <h3>Comfortable size</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>size="comfortable"</code> uses larger cells. Useful when the calendar is the focal element.</p>
+      <canvas-calendar size="comfortable" value="2026-05-04"></canvas-calendar>
+    </div>
+
+    <!-- 8. Fluid in a wide card -->
+    <div class="sample-card">
+      <h3>Fluid (stretches to fill parent width)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">The <code>fluid</code> attribute switches the grid to seven equal columns. Cells become square via aspect-ratio.</p>
+      <canvas-card>
+        <canvas-card-body>
+          <canvas-calendar
+            fluid
+            value="2026-05-04"
+            highlight-dates="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08">
+          </canvas-calendar>
+        </canvas-card-body>
+      </canvas-card>
+    </div>
+
+    <!-- 9. Day decoration -->
+    <div class="sample-card">
+      <h3>Day decoration (slot count per day)</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px">Set the <code>dayContent</code> property to a function that returns a string or Node per date. Used to surface availability counts, status dots, or any per-day signal.</p>
+      <canvas-calendar id="cal-decoration" size="comfortable" value="2026-05-04"></canvas-calendar>
+    </div>
+
+    <!-- 10. Range selection -->
+    <div class="sample-card">
+      <h3>Range selection</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>selection-mode="range"</code>. First click sets the start, second sets the end. Pattern for report filters, insurance coverage periods, hospitalization spans, episodes of care.</p>
+      <canvas-calendar id="cal-range" selection-mode="range" value="2026-05-04..2026-05-08"></canvas-calendar>
+      <div class="height-readout" id="cal-range-readout">May 4 to May 8.</div>
+    </div>
+
+    <!-- 11. Multiple dates -->
+    <div class="sample-card">
+      <h3>Multiple dates</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>selection-mode="multiple"</code> tracks a chronological set of dates as the value (comma separated ISO keys). The optional <code>picked-list</code> attribute renders a built in column with a Clear all link and per row remove buttons. Default is no list (the day grid alone communicates the selection). Set <code>picked-list="right"</code> when there is room beside the calendar, or <code>picked-list="below"</code> for narrower contexts. Pattern for recurring appointments, medication adherence views, days a service was rendered.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px">Default, no <code>picked-list</code></div>
+          <canvas-calendar selection-mode="multiple" value="2026-05-06,2026-05-08,2026-05-13,2026-05-20"></canvas-calendar>
+        </div>
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px"><code>picked-list="right"</code></div>
+          <canvas-calendar id="cal-multi" selection-mode="multiple" picked-list="right" value="2026-05-06,2026-05-08,2026-05-12,2026-05-13,2026-05-18,2026-05-19,2026-05-20,2026-05-21,2026-06-05"></canvas-calendar>
+        </div>
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px"><code>picked-list="below"</code></div>
+          <canvas-calendar selection-mode="multiple" picked-list="below" value="2026-05-06,2026-05-13,2026-05-20"></canvas-calendar>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Multiple dates, week granularity -->
+    <div class="sample-card">
+      <h3>Multiple dates, week granularity</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>multi-add-granularity</code> on top of <code>selection-mode="multiple"</code> expands a single click into a set of dates. Value <code>workweek</code> expands to Monday through Friday of the clicked date's week. Value <code>week</code> expands to all seven days, respecting the <code>week-start</code> attribute. Set toggle semantics, click any day in a fully selected set to remove the set, click any day in a partial or empty set to add the missing dates. Disabled dates inside the set are skipped without aborting the rest. Add <code>multi-add-exclusive</code> when only one set should be selected at a time, the click replaces the current selection and clicking the same set again clears it. The <code>picked-list</code> attribute is independent of granularity, every variant supports it. Pattern for shift planning, weekly availability blocks, and recurring clinical protocols.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px"><code>multi-add-granularity="workweek"</code></div>
+          <canvas-calendar selection-mode="multiple" multi-add-granularity="workweek" value="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08"></canvas-calendar>
+        </div>
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px"><code>multi-add-granularity="week"</code> with <code>picked-list="right"</code></div>
+          <canvas-calendar selection-mode="multiple" multi-add-granularity="week" week-start="monday" picked-list="right" value="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08,2026-05-09,2026-05-10"></canvas-calendar>
+        </div>
+        <div>
+          <div class="text-sm text-muted" style="margin-bottom: 8px"><code>multi-add-granularity="workweek"</code> with <code>multi-add-exclusive</code> and <code>picked-list="below"</code></div>
+          <canvas-calendar selection-mode="multiple" multi-add-granularity="workweek" multi-add-exclusive picked-list="below" value="2026-05-04,2026-05-05,2026-05-06,2026-05-07,2026-05-08"></canvas-calendar>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13. Date input dropdown -->
+    <div class="sample-card">
+      <h3>Date input dropdown</h3>
+      <p class="text-sm text-muted" style="margin-bottom: 12px"><code>canvas-date-input</code> wraps <code>canvas-calendar</code> in a combobox style trigger. The closed state looks identical to <code>canvas-dropdown</code> and <code>canvas-combobox</code>, so it slots into form rows without breaking row height cohesion. Click the field or press ArrowDown, Enter, or Space to open the panel. The open panel shares the blue active border on three sides, with a thin gray divider between the input row and the calendar grid. The panel flips above the input when there is no room below. Selecting a date fills the field and closes the panel. Forwards <code>min</code>, <code>max</code>, <code>disabled-dates</code>, <code>week-start</code>, <code>size</code>, <code>disabled</code>, <code>error</code>, <code>name</code>, <code>label</code>, <code>placeholder</code>, <code>required</code>, and the form value is the ISO date string.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
+        <div>
+          <canvas-date-input label="Date of birth" placeholder="Pick a date" value="1985-08-12"></canvas-date-input>
+        </div>
+        <div>
+          <canvas-date-input label="Visit date" placeholder="Pick a date"></canvas-date-input>
+        </div>
+        <div>
+          <canvas-date-input label="Follow up" placeholder="Pick a date" min="2026-05-01" max="2026-08-31" value="2026-06-15" week-start="monday"></canvas-date-input>
+        </div>
+      </div>
+      <div class="text-sm text-muted" style="margin-top: 16px">Try the third field, only May through August 2026 are selectable. Try opening near the bottom of the viewport to see the upward flip.</div>
+    </div>
+
+    <script>
+      (function() {
+        var defaultCal = document.getElementById('cal-default');
+        var defaultReadout = document.getElementById('cal-default-readout');
+        if (defaultCal) {
+          defaultCal.addEventListener('change', function(e) {
+            defaultReadout.textContent = 'Selected ' + e.detail.value + '.';
+          });
+        }
+
+        var availabilityCal = document.getElementById('cal-availability');
+        var availabilityReadout = document.getElementById('cal-availability-readout');
+        if (availabilityCal) {
+          availabilityCal.isDateDisabled = function(d) {
+            var day = d.getDay();
+            return day === 0 || day === 6;
+          };
+          availabilityCal.addEventListener('change', function(e) {
+            availabilityReadout.textContent = 'Booked ' + e.detail.value + '.';
+          });
+        }
+
+        var decorationCal = document.getElementById('cal-decoration');
+        if (decorationCal) {
+          decorationCal.dayContent = function(d) {
+            var day = d.getDay();
+            if (day === 0 || day === 6) return '';
+            var deterministic = (d.getDate() * 7) % 13;
+            if (deterministic === 0) return 'full';
+            return deterministic + ' open';
+          };
+        }
+
+        function fmtDate(iso) {
+          if (!iso) return '';
+          var parts = iso.split('-');
+          var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return months[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10);
+        }
+
+        var rangeCal = document.getElementById('cal-range');
+        var rangeReadout = document.getElementById('cal-range-readout');
+        if (rangeCal && rangeReadout) {
+          rangeCal.addEventListener('change', function(e) {
+            if (e.detail.start && e.detail.end) {
+              rangeReadout.textContent = fmtDate(e.detail.start) + ' to ' + fmtDate(e.detail.end) + '.';
+            } else if (e.detail.start) {
+              rangeReadout.textContent = fmtDate(e.detail.start) + ', click another day to set the end.';
+            } else {
+              rangeReadout.textContent = 'No range selected.';
+            }
+          });
+        }
+
+      })();
+    </script>
+
+  </section>
+
   <!-- Card -->
   <section class="component-section" id="card">
     <h2>Card</h2>
@@ -1135,6 +1402,7 @@
       <!-- Long list -->
       <div class="sample-card">
         <h3>Long list (scroll and flip testing)</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px">15 providers. The menu caps at <code>max-height: 16.02857143rem</code> (about 256 px), so the list scrolls inside the menu rather than growing past the viewport. Type to filter, the visible window stays the same and matches scroll into view.</p>
         <canvas-combobox label="Provider" placeholder="Search providers">
           <canvas-option value="magee">Steven Magee MD</canvas-option>
           <canvas-option value="athale">Ninad Athale MD</canvas-option>
@@ -1146,6 +1414,11 @@
           <canvas-option value="oconnor">Siobhan O'Connor PA</canvas-option>
           <canvas-option value="garcia">Maria Garcia MD</canvas-option>
           <canvas-option value="johnson">David Johnson DO</canvas-option>
+          <canvas-option value="brooks">Aiden Brooks MD</canvas-option>
+          <canvas-option value="ramanathan">Priya Ramanathan NP</canvas-option>
+          <canvas-option value="mendez">Carlos Mendez DO</canvas-option>
+          <canvas-option value="lindquist">Hannah Lindquist PA</canvas-option>
+          <canvas-option value="ferreira">Tomas Ferreira MD</canvas-option>
         </canvas-combobox>
       </div>
 
@@ -1197,6 +1470,54 @@
           <canvas-option value="sj">Canvas Clinic San Jose</canvas-option>
         </canvas-combobox>
         <div id="combobox-change-log"></div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="sample-card">
+        <h3>Loading state (dynamic options)</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px">
+          Same contract as <code>canvas-dropdown</code>. The click on the combobox starts the fetch, while <code>loading</code> is set the editable input is replaced with a spinner row, typing is suppressed, and the panel does not open. The two comboboxes below share the same duration input, the left one ignores <code>loading-cancel</code>, the right one aborts the in flight request and clears the loading state immediately so the user can retry.
+        </p>
+        <div style="margin-bottom: 16px; max-width: 200px">
+          <canvas-input label="Fetch duration (ms)" type="number" value="1500" id="combobox-loading-duration"></canvas-input>
+        </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Lets request finish</div>
+            <canvas-combobox placeholder="Search providers" id="combobox-loading-keep"></canvas-combobox>
+            <div id="combobox-loading-keep-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Aborts on cancel</div>
+            <canvas-combobox placeholder="Search providers" id="combobox-loading-abort"></canvas-combobox>
+            <div id="combobox-loading-abort-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Narrow container option truncation -->
+      <div class="sample-card">
+        <h3>Narrow container, option text truncates</h3>
+        <p style="margin: 0 0 12px; color: rgba(0, 0, 0, 0.6); font-size: .92857143em">
+          When the parent container is narrower than the option text, options truncate with an ellipsis instead of overflowing. Hover an option to see the full label via the native browser tooltip. This is a signal to widen the container at the layout level, the component does not second guess the author.
+        </p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end">
+          <div style="width: 120px">
+            <canvas-combobox placeholder="Search">
+              <canvas-option value="apap325">Acetaminophen 325mg tablet</canvas-option>
+              <canvas-option value="apap500">Acetaminophen 500mg tablet</canvas-option>
+              <canvas-option value="ibu200">Ibuprofen 200mg tablet</canvas-option>
+              <canvas-option value="amx500">Amoxicillin 500mg capsule</canvas-option>
+            </canvas-combobox>
+          </div>
+          <div style="width: 160px">
+            <canvas-combobox label="Provider" placeholder="Search">
+              <canvas-option value="magee">Dr Steven Magee, Internal Medicine</canvas-option>
+              <canvas-option value="hines">Annalies Worthington-Hines NP, Pediatrics</canvas-option>
+              <canvas-option value="rodriguez">Dr Maria Rodriguez, Cardiology</canvas-option>
+            </canvas-combobox>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1310,6 +1631,29 @@
         </canvas-dropdown>
       </div>
 
+      <!-- Long list -->
+      <div class="sample-card">
+        <h3>Long list (scroll and flip testing)</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px">15 specialties. The menu caps at <code>max-height: 16.02857143rem</code> (about 256 px), so the list scrolls inside the menu rather than overflowing the page. ArrowDown past the visible window scrolls the highlight into view.</p>
+        <canvas-dropdown label="Specialty" placeholder="Select specialty">
+          <canvas-option value="cardiology">Cardiology</canvas-option>
+          <canvas-option value="dermatology">Dermatology</canvas-option>
+          <canvas-option value="endocrinology">Endocrinology</canvas-option>
+          <canvas-option value="family">Family Medicine</canvas-option>
+          <canvas-option value="gastroenterology">Gastroenterology</canvas-option>
+          <canvas-option value="internal">Internal Medicine</canvas-option>
+          <canvas-option value="nephrology">Nephrology</canvas-option>
+          <canvas-option value="neurology">Neurology</canvas-option>
+          <canvas-option value="obgyn">Obstetrics and Gynecology</canvas-option>
+          <canvas-option value="oncology">Oncology</canvas-option>
+          <canvas-option value="ophthalmology">Ophthalmology</canvas-option>
+          <canvas-option value="orthopedics">Orthopedics</canvas-option>
+          <canvas-option value="pediatrics">Pediatrics</canvas-option>
+          <canvas-option value="psychiatry">Psychiatry</canvas-option>
+          <canvas-option value="pulmonology">Pulmonology</canvas-option>
+        </canvas-dropdown>
+      </div>
+
       <!-- Pre-selected -->
       <div class="sample-card">
         <h3>Pre-selected value</h3>
@@ -1324,11 +1668,67 @@
       <!-- Small size -->
       <div class="sample-card">
         <h3>Small size</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px"><code>size="sm"</code> shrinks the trigger font to .75em while keeping the default padding, so the rendered height is slightly shorter than the default. Menu items always render at 16px regardless of trigger size.</p>
+
+        <div class="label">Basic</div>
         <canvas-dropdown label="Location" size="sm" placeholder="Select location">
           <canvas-option value="sf">Canvas Clinic San Francisco</canvas-option>
           <canvas-option value="oak">Canvas Clinic Oakland</canvas-option>
           <canvas-option value="sj">Canvas Clinic San Jose</canvas-option>
         </canvas-dropdown>
+
+        <div class="label" style="margin-top: 16px">Pre-selected value</div>
+        <canvas-dropdown label="Coverage Type" size="sm" placeholder="Select type">
+          <canvas-option value="commercial">Commercial</canvas-option>
+          <canvas-option value="medicare" selected>Medicare</canvas-option>
+          <canvas-option value="medicaid">Medicaid</canvas-option>
+          <canvas-option value="self-pay">Self-pay</canvas-option>
+        </canvas-dropdown>
+
+        <div class="label" style="margin-top: 16px">Rich content</div>
+        <canvas-dropdown label="Coverage" size="sm" placeholder="Select coverage">
+          <canvas-option value="bcbs" label="Blue Cross Blue Shield PPO">
+            <span style="display: flex; justify-content: space-between; align-items: center">
+              <span>Blue Cross Blue Shield PPO</span>
+              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
+            </span>
+          </canvas-option>
+          <canvas-option value="aetna" label="Aetna HMO">
+            <span style="display: flex; justify-content: space-between; align-items: center">
+              <span>Aetna HMO</span>
+              <canvas-badge color="green" size="mini" style="margin-left: 8px; flex-shrink: 0">Active</canvas-badge>
+            </span>
+          </canvas-option>
+        </canvas-dropdown>
+
+        <div class="label" style="margin-top: 16px">Disabled</div>
+        <canvas-dropdown label="Plan" size="sm" placeholder="Select plan" disabled>
+          <canvas-option value="basic">Basic</canvas-option>
+          <canvas-option value="premium">Premium</canvas-option>
+        </canvas-dropdown>
+
+        <div class="label" style="margin-top: 16px">Error state</div>
+        <canvas-dropdown label="Priority" size="sm" placeholder="Select priority" error="Priority is required">
+          <canvas-option value="low">Low</canvas-option>
+          <canvas-option value="normal">Normal</canvas-option>
+          <canvas-option value="high">High</canvas-option>
+        </canvas-dropdown>
+
+        <div class="label" style="margin-top: 16px">Default vs small, side by side</div>
+        <div style="display: flex; gap: 12px; align-items: flex-end">
+          <div style="flex: 1">
+            <canvas-dropdown label="Default" placeholder="Select">
+              <canvas-option value="a">Option A</canvas-option>
+              <canvas-option value="b">Option B</canvas-option>
+            </canvas-dropdown>
+          </div>
+          <div style="flex: 1">
+            <canvas-dropdown label="Small" size="sm" placeholder="Select">
+              <canvas-option value="a">Option A</canvas-option>
+              <canvas-option value="b">Option B</canvas-option>
+            </canvas-dropdown>
+          </div>
+        </div>
       </div>
 
       <!-- Disabled options -->
@@ -1372,6 +1772,54 @@
           <canvas-option value="60">60 min</canvas-option>
         </canvas-dropdown>
         <div id="dropdown-change-log"></div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="sample-card">
+        <h3>Loading state (dynamic options)</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px">
+          When options are fetched on first open, set <code>loading</code> on the dropdown the moment the user opens it and clear it once the data is in the slot. The trigger swaps the value for a spinner with a default <code>Loading options</code> label, the cursor goes to <code>progress</code>, and the panel stays closed until <code>loading</code> clears, so the auto flip lands once against the final content. Disengaging while loading (outside click, Escape, blur, or a second trigger click) cancels the queued open and dispatches <code>loading-cancel</code> with a <code>reason</code> in <code>event.detail</code>. The two dropdowns below share the same duration input, the left one ignores <code>loading-cancel</code> so the fetch keeps running, the right one aborts the in flight request when the user disengages.
+        </p>
+        <div style="margin-bottom: 16px; max-width: 200px">
+          <canvas-input label="Fetch duration (ms)" type="number" value="1500" id="dropdown-loading-duration"></canvas-input>
+        </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Lets request finish</div>
+            <canvas-dropdown placeholder="Select a date" id="dropdown-loading-keep"></canvas-dropdown>
+            <div id="dropdown-loading-keep-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Aborts on cancel</div>
+            <canvas-dropdown placeholder="Select a date" id="dropdown-loading-abort"></canvas-dropdown>
+            <div id="dropdown-loading-abort-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Narrow container option truncation -->
+      <div class="sample-card">
+        <h3>Narrow container, option text truncates</h3>
+        <p style="margin: 0 0 12px; color: rgba(0, 0, 0, 0.6); font-size: .92857143em">
+          When the parent container is narrower than the option text, options truncate with an ellipsis instead of overflowing. Hover an option to see the full label via the native browser tooltip. This is a signal to widen the container at the layout level, the component does not second guess the author.
+        </p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end">
+          <div style="width: 90px">
+            <canvas-dropdown placeholder="Sort">
+              <canvas-option value="az">A to Z</canvas-option>
+              <canvas-option value="new">Newest first</canvas-option>
+              <canvas-option value="old">Oldest first</canvas-option>
+              <canvas-option value="rel">Most relevant</canvas-option>
+            </canvas-dropdown>
+          </div>
+          <div style="width: 140px">
+            <canvas-dropdown label="Provider" placeholder="Any">
+              <canvas-option value="magee">Dr Steven Magee, Internal Medicine</canvas-option>
+              <canvas-option value="chen">Dr Lisa Chen, Family Practice</canvas-option>
+              <canvas-option value="rodriguez">Dr Maria Rodriguez, Cardiology</canvas-option>
+            </canvas-dropdown>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -2043,6 +2491,29 @@
         </canvas-multi-select>
         <div id="multi-change-log"></div>
       </div>
+
+      <!-- Loading state -->
+      <div class="sample-card">
+        <h3>Loading state (dynamic options)</h3>
+        <p class="text-sm text-muted" style="margin-bottom: 12px">
+          Same loading contract as <code>canvas-dropdown</code> and <code>canvas-combobox</code>. The click on the trigger row starts the fetch, while <code>loading</code> is set the input row is replaced with a spinner row, typing is suppressed, and the panel does not open. Already selected chips remain visible so the user can still remove them. The two multi selects below share the same duration input, the left one lets the request finish, the right one aborts on <code>loading-cancel</code>.
+        </p>
+        <div style="margin-bottom: 16px; max-width: 200px">
+          <canvas-input label="Fetch duration (ms)" type="number" value="1500" id="multi-loading-duration"></canvas-input>
+        </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Lets request finish</div>
+            <canvas-multi-select placeholder="Search diagnoses" id="multi-loading-keep"></canvas-multi-select>
+            <div id="multi-loading-keep-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+          <div style="flex: 1; min-width: 220px">
+            <div class="label">Aborts on cancel</div>
+            <canvas-multi-select placeholder="Search diagnoses" id="multi-loading-abort"></canvas-multi-select>
+            <div id="multi-loading-abort-log" class="text-sm text-muted" style="margin-top: 8px; min-height: 2.8em"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2490,7 +2961,7 @@
       <h3>With canvas-sortable-list</h3>
       <p class="text-sm text-muted" style="margin: 0 0 12px">Constrain a long reorderable list to a fixed height. The scroll area scrolls, items stay draggable inside.</p>
       <canvas-scroll-area vertical aria-label="Care plan order" style="max-height: 200px; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem;">
-        <canvas-sortable-list>
+        <canvas-sortable-list aria-label="Care plan tasks">
           <canvas-sortable-item>Review medications</canvas-sortable-item>
           <canvas-sortable-item>Verify insurance coverage</canvas-sortable-item>
           <canvas-sortable-item>Order metabolic panel</canvas-sortable-item>
@@ -2609,7 +3080,7 @@
           </div>
           <div style="margin-top: 12px; font-size: .85em; color: rgba(0,0,0,0.4);">4 clinicians total</div>
         </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
+        <canvas-content style="--canvas-content-padding: 16px;" role="region" aria-label="Default sidebar demo content">
           <div style="font-weight: 700; margin-bottom: 12px;">Week of March 24, 2026</div>
           <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
             <div style="text-align: center; font-size: .85em; font-weight: 700; padding-bottom: 8px; border-bottom: 2px solid rgba(34,36,38,0.15);">Mon</div>
@@ -2664,7 +3135,7 @@
             </div>
           </div>
         </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
+        <canvas-content style="--canvas-content-padding: 16px;" role="region" aria-label="Narrow sidebar demo content">
           <div style="font-weight: 700; margin-bottom: 12px;">Claims Queue</div>
           <canvas-table aria-label="Claims">
             <canvas-table-head>
@@ -2721,7 +3192,7 @@
             </div>
           </div>
         </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
+        <canvas-content style="--canvas-content-padding: 16px;" role="region" aria-label="Wide sidebar demo content">
           <div style="font-weight: 700; margin-bottom: 12px;">Clinical Notes</div>
           <canvas-card style="margin-bottom: 12px;">
             <canvas-card-body>
@@ -2753,7 +3224,7 @@
           <div style="font-weight: 700; margin-bottom: 8px;">Custom 320px sidebar</div>
           <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">The <code style="background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px;">--canvas-sidebar-width</code> CSS custom property overrides any variant value for one-off sizing needs.</p>
         </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
+        <canvas-content style="--canvas-content-padding: 16px;" role="region" aria-label="Custom width sidebar demo content">
           <div style="font-weight: 700; margin-bottom: 8px;">Content area</div>
           <p style="font-size: .92857143em; color: rgba(0,0,0,0.6); margin: 0;">Takes up the remaining space with flex: 1.</p>
         </canvas-content>
@@ -2779,7 +3250,7 @@
             <div style="padding: 6px 8px;">Help Center</div>
           </div>
         </canvas-sidebar>
-        <canvas-content style="--canvas-content-padding: 16px;">
+        <canvas-content style="--canvas-content-padding: 16px;" role="region" aria-label="Independent scrolling demo content">
           <div style="font-weight: 700; margin-bottom: 12px;">Dashboard</div>
           <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Appointments today:</strong> 12</canvas-card-body></canvas-card>
           <canvas-card style="margin-bottom: 8px;"><canvas-card-body><strong>Pending tasks:</strong> 5</canvas-card-body></canvas-card>
@@ -2800,7 +3271,7 @@
     <!-- Basic reorderable list -->
     <div class="sample-card">
       <h3>Basic reorderable list</h3>
-      <canvas-sortable-list id="sortable-basic">
+      <canvas-sortable-list id="sortable-basic" aria-label="Basic reorderable list">
         <canvas-sortable-item>First item</canvas-sortable-item>
         <canvas-sortable-item>Second item</canvas-sortable-item>
         <canvas-sortable-item>Third item</canvas-sortable-item>
@@ -2814,7 +3285,7 @@
       <h3>Auto scroll in a scrollable container</h3>
       <p style="margin: 0 0 8px 0; font-size: .85rem; color: #767676;">Drag an item toward the top or bottom edge of the bordered pane. The pane auto scrolls while the pointer sits in the edge hotspot, stops when the pointer leaves the hotspot, and pins at the content boundary.</p>
       <div style="border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem; padding: 8px; max-height: 220px; overflow-y: auto;">
-        <canvas-sortable-list>
+        <canvas-sortable-list aria-label="Visit checklist">
           <canvas-sortable-item>Review medications</canvas-sortable-item>
           <canvas-sortable-item>Verify insurance coverage</canvas-sortable-item>
           <canvas-sortable-item>Order metabolic panel</canvas-sortable-item>
@@ -2838,7 +3309,7 @@
         <canvas-checkbox label="Clinicians (7 visible)" checked></canvas-checkbox>
       </div>
       <div style="border: 1px solid rgba(34, 36, 38, 0.15); border-radius: .28571429rem; padding: 8px; max-height: 300px; overflow-y: auto;">
-        <canvas-sortable-list>
+        <canvas-sortable-list aria-label="Visible clinicians">
           <canvas-sortable-item>
             <canvas-checkbox label="Steven Magee, MD" checked></canvas-checkbox>
           </canvas-sortable-item>
@@ -2867,7 +3338,7 @@
     <!-- With badges -->
     <div class="sample-card">
       <h3>With badges (priority ordering)</h3>
-      <canvas-sortable-list>
+      <canvas-sortable-list aria-label="Tickets by priority">
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; gap: 8px">
             <canvas-badge color="red" size="mini">P1</canvas-badge>
@@ -2898,7 +3369,7 @@
     <!-- With toggles -->
     <div class="sample-card">
       <h3>With toggles (notification preferences)</h3>
-      <canvas-sortable-list>
+      <canvas-sortable-list aria-label="Notification preferences">
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
             <span>Email notifications</span>
@@ -3580,6 +4051,38 @@
       </canvas-tabs>
     </div>
 
+    <!-- Scrollable content via canvas-scroll-area -->
+    <div class="sample-card">
+      <h3>Scrollable content (canvas-scroll-area)</h3>
+      <p style="margin-bottom: .75em; color: #767676">A <code>canvas-tab-panel</code> is not a scroll container. When panel content needs to scroll, wrap it in <code>canvas-scroll-area vertical</code> with an explicit <code>max-height</code> and <code>aria-label</code>. The panel itself flows naturally, the scroll area handles the bounded scroll.</p>
+      <canvas-tabs>
+        <canvas-tab for="showcase-scroll-history" active><canvas-tab-label>History</canvas-tab-label></canvas-tab>
+        <canvas-tab for="showcase-scroll-summary"><canvas-tab-label>Summary</canvas-tab-label></canvas-tab>
+
+        <canvas-tab-panel id="showcase-scroll-history">
+          <canvas-scroll-area vertical aria-label="Encounter history" style="max-height: 200px">
+            <ul style="margin: 0; padding-left: 1.25em">
+              <li>Mar 28, 2026. Office visit, Dr. Magee.</li>
+              <li>Mar 14, 2026. Lab draw, fasting glucose.</li>
+              <li>Feb 27, 2026. Telehealth, medication review.</li>
+              <li>Feb 06, 2026. Office visit, Dr. Magee.</li>
+              <li>Jan 22, 2026. Lab draw, lipid panel.</li>
+              <li>Jan 09, 2026. Office visit, Dr. Magee.</li>
+              <li>Dec 18, 2025. Telehealth, refill consult.</li>
+              <li>Dec 04, 2025. Office visit, Dr. Magee.</li>
+              <li>Nov 20, 2025. Lab draw, HbA1c.</li>
+              <li>Nov 06, 2025. Office visit, Dr. Magee.</li>
+              <li>Oct 23, 2025. Telehealth, medication review.</li>
+              <li>Oct 09, 2025. Office visit, Dr. Magee.</li>
+            </ul>
+          </canvas-scroll-area>
+        </canvas-tab-panel>
+        <canvas-tab-panel id="showcase-scroll-summary">
+          <p>Patient is stable on current regimen. Continue current medications and re-evaluate at the next visit.</p>
+        </canvas-tab-panel>
+      </canvas-tabs>
+    </div>
+
     <!-- Change event -->
     <div class="sample-card">
       <h3>Change event</h3>
@@ -3890,6 +4393,125 @@ document.getElementById('multi-tags').addEventListener('change', function(e) {
   document.getElementById('multi-change-log').textContent = 'Selected: ' + e.target.value.join(', ');
 });
 
+// Loading state demos (dropdown, combobox, multi-select)
+function readDurationFrom(input) {
+  var raw = input && input.value;
+  var n = parseInt(raw, 10);
+  if (isNaN(n) || n < 0) return 1500;
+  return n;
+}
+
+function wireLoadingInstance(config) {
+  var el = document.getElementById(config.elId);
+  var durationInput = document.getElementById(config.durationId);
+  var log = document.getElementById(config.logId);
+  var pending = null;
+
+  el.addEventListener('click', function() {
+    if (el.hasAttribute('loading')) return;
+    if (pending) return;
+    var duration = readDurationFrom(durationInput);
+    log.textContent = 'Fetching options for ' + duration + 'ms, panel will open when data arrives.';
+    el.innerHTML = '';
+    el.setAttribute('loading', '');
+    pending = setTimeout(function() {
+      pending = null;
+      el.innerHTML = config.optionsHtml;
+      el.removeAttribute('loading');
+      log.textContent = 'Loaded ' + config.optionsCount + ' options.';
+    }, duration);
+  });
+
+  el.addEventListener('loading-cancel', function(e) {
+    if (config.abort && pending) {
+      clearTimeout(pending);
+      pending = null;
+      el.removeAttribute('loading');
+      log.textContent = 'loading-cancel reason="' + e.detail.reason + '", request aborted. Click again to refetch.';
+      return;
+    }
+    log.textContent = 'loading-cancel reason="' + e.detail.reason + '", request keeps running, panel will not auto open. Click the trigger again to refetch.';
+  });
+}
+
+var dropdownOptions =
+  '<canvas-option value="2026-05-06">May 6, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-07">May 7, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-08">May 8, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-09">May 9, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-10">May 10, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-11">May 11, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-12">May 12, 2026</canvas-option>' +
+  '<canvas-option value="2026-05-13">May 13, 2026</canvas-option>';
+
+wireLoadingInstance({
+  elId: 'dropdown-loading-keep',
+  durationId: 'dropdown-loading-duration',
+  logId: 'dropdown-loading-keep-log',
+  optionsCount: 8,
+  optionsHtml: dropdownOptions,
+  abort: false
+});
+wireLoadingInstance({
+  elId: 'dropdown-loading-abort',
+  durationId: 'dropdown-loading-duration',
+  logId: 'dropdown-loading-abort-log',
+  optionsCount: 8,
+  optionsHtml: dropdownOptions,
+  abort: true
+});
+
+var comboboxOptions =
+  '<canvas-option value="magee">Dr Steven Magee, Internal Medicine</canvas-option>' +
+  '<canvas-option value="chen">Dr Lisa Chen, Family Practice</canvas-option>' +
+  '<canvas-option value="rodriguez">Dr Maria Rodriguez, Cardiology</canvas-option>' +
+  '<canvas-option value="patel">Dr Raj Patel, Pediatrics</canvas-option>' +
+  '<canvas-option value="kim">Dr Min Kim, Dermatology</canvas-option>' +
+  '<canvas-option value="nguyen">Dr Tran Nguyen, Neurology</canvas-option>';
+
+wireLoadingInstance({
+  elId: 'combobox-loading-keep',
+  durationId: 'combobox-loading-duration',
+  logId: 'combobox-loading-keep-log',
+  optionsCount: 6,
+  optionsHtml: comboboxOptions,
+  abort: false
+});
+wireLoadingInstance({
+  elId: 'combobox-loading-abort',
+  durationId: 'combobox-loading-duration',
+  logId: 'combobox-loading-abort-log',
+  optionsCount: 6,
+  optionsHtml: comboboxOptions,
+  abort: true
+});
+
+var multiOptions =
+  '<canvas-option value="diabetes">Type 2 Diabetes</canvas-option>' +
+  '<canvas-option value="htn">Hypertension</canvas-option>' +
+  '<canvas-option value="copd">COPD</canvas-option>' +
+  '<canvas-option value="asthma">Asthma</canvas-option>' +
+  '<canvas-option value="ckd">Chronic Kidney Disease</canvas-option>' +
+  '<canvas-option value="chf">Congestive Heart Failure</canvas-option>' +
+  '<canvas-option value="depression">Major Depressive Disorder</canvas-option>';
+
+wireLoadingInstance({
+  elId: 'multi-loading-keep',
+  durationId: 'multi-loading-duration',
+  logId: 'multi-loading-keep-log',
+  optionsCount: 7,
+  optionsHtml: multiOptions,
+  abort: false
+});
+wireLoadingInstance({
+  elId: 'multi-loading-abort',
+  durationId: 'multi-loading-duration',
+  logId: 'multi-loading-abort-log',
+  optionsCount: 7,
+  optionsHtml: multiOptions,
+  abort: true
+});
+
 // Tabs change
 document.getElementById('tabs-event-tabs').addEventListener('tab-change', function(e) {
   document.getElementById('tabs-change-log').textContent = 'Switched to: ' + e.detail.panel + ' (index ' + e.detail.index + ')';
@@ -4075,6 +4697,114 @@ document.getElementById('gated-locked').addEventListener('beforemove', function 
     restoreAndReveal();
   } else {
     window.addEventListener('load', restoreAndReveal);
+  }
+})();
+</script>
+
+<script>
+(function () {
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'a11y-scan-btn';
+  btn.textContent = 'Run a11y scan';
+  Object.assign(btn.style, {
+    position: 'fixed', bottom: '16px', right: '16px', zIndex: '99999',
+    padding: '10px 16px', background: '#1976d2', color: '#fff',
+    border: '0', borderRadius: '6px', fontFamily: 'inherit',
+    fontSize: '14px', fontWeight: '700', cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  });
+
+  var panel = document.createElement('div');
+  panel.id = 'a11y-scan-panel';
+  Object.assign(panel.style, {
+    position: 'fixed', bottom: '64px', right: '16px',
+    width: 'min(520px, calc(100vw - 32px))',
+    maxHeight: 'calc(100vh - 96px)', overflow: 'auto', zIndex: '99998',
+    background: '#fff', border: '1px solid rgba(0,0,0,0.15)',
+    borderRadius: '6px', padding: '16px', fontFamily: 'inherit',
+    fontSize: '13px', lineHeight: '1.45',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.15)', display: 'none'
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function setPanel(html) { panel.innerHTML = html; panel.style.display = 'block'; }
+
+  function loadAxe() {
+    return new Promise(function (resolve, reject) {
+      if (window.axe) return resolve(window.axe);
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js';
+      s.onload = function () { resolve(window.axe); };
+      s.onerror = function () { reject(new Error('Could not load axe-core. Check internet connection.')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function renderResults(r) {
+    var lines = [];
+    lines.push('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">');
+    lines.push('<b>Scan results</b>');
+    lines.push('<button type="button" id="a11y-scan-close" style="background:none;border:0;font-size:18px;cursor:pointer;padding:0 4px;">×</button>');
+    lines.push('</div>');
+    lines.push('<div>Passes, ' + r.passes.length + ' rules</div>');
+    var color = r.violations.length === 0 ? '#1B5E20' : '#B71C1C';
+    lines.push('<div>Violations, <b style="color:' + color + '">' + r.violations.length + ' rules</b></div>');
+    lines.push('<div>Incomplete, ' + r.incomplete.length + ' rules need manual review</div>');
+    lines.push('<hr style="margin:12px 0;border:0;border-top:1px solid #eee;">');
+    if (r.violations.length === 0) {
+      lines.push('<div style="color:#1B5E20;font-weight:700;">No WCAG 2.0 / 2.1 / 2.2 AA violations found.</div>');
+    } else {
+      r.violations.forEach(function (v, i) {
+        lines.push('<div style="margin-bottom:14px;">');
+        lines.push('<div style="font-weight:700;">' + (i + 1) + '. ' + escapeHtml(v.id) + ' (' + escapeHtml(v.impact || 'unknown') + ')</div>');
+        lines.push('<div style="color:#555;">' + escapeHtml(v.help) + '</div>');
+        lines.push('<div><a href="' + escapeHtml(v.helpUrl) + '" target="_blank" rel="noopener" style="color:#1976d2;">' + escapeHtml(v.helpUrl) + '</a></div>');
+        lines.push('<div style="color:#555;">Affected nodes, ' + v.nodes.length + '</div>');
+        v.nodes.slice(0, 5).forEach(function (n) {
+          var t = Array.isArray(n.target) ? n.target.join(' ') : String(n.target);
+          lines.push('<div style="margin-top:4px;color:#777;font-family:monospace;font-size:11px;word-break:break-all;">' + escapeHtml(t) + '</div>');
+        });
+        lines.push('</div>');
+      });
+    }
+    setPanel(lines.join(''));
+    var close = document.getElementById('a11y-scan-close');
+    if (close) close.addEventListener('click', function () { panel.style.display = 'none'; });
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    var prev = btn.textContent;
+    btn.textContent = 'Loading axe-core';
+    setPanel('<div>Loading axe-core from CDN.</div>');
+    loadAxe().then(function (axe) {
+      btn.textContent = 'Scanning';
+      return axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] });
+    }).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = prev;
+      renderResults(r);
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = prev;
+      setPanel('<div style="color:#B71C1C;font-weight:700;">Scan failed</div><div>' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>');
+    });
+  });
+
+  function mount() {
+    document.body.appendChild(btn);
+    document.body.appendChild(panel);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
   }
 })();
 </script>

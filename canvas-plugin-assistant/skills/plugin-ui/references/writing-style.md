@@ -67,6 +67,23 @@ The rule is contextual, not lexical. The table names the word, when to keep it, 
 
 Canvas domain terms that are always safe. Encounter, episode, encounter note, problem list, chief complaint, chart, order, prescription, allergy, intolerance, medication, dose, signature, reconciliation, refill, referral. Use these without hesitation.
 
+## Banner copy voice
+
+Banner text speaks to the clinician, not to the developer. Two rules.
+
+- **No protocol noise.** Do not echo HTTP status codes, exception class names, stack tokens, or backend field identifiers in banner copy. `Error 400 user_name`, `ValidationError on field user_name`, `500 Internal Server Error`, `null returned from /patients/lookup` belong in console logs, not in user facing strings.
+- **Name the entity in plain language.** When a banner reports a failure tied to a specific value the user typed or selected, say which value. Wrap the user supplied value in `<b>` so the eye lands on the term. The clinician scans the banner and knows which row to fix without parsing a sentence.
+
+Examples.
+
+- Avoid, `Error 400 user_name`. Prefer, `Could not find user with name <b>John</b>`.
+- Avoid, `404 Not Found /api/patients/12345`. Prefer, `Patient <b>Emma Wright</b> is not in this clinic.`
+- Avoid, `ValidationError, dose_unit must be one of [mg, mcg, g]`. Prefer, `<b>Dose unit</b> is not recognized. Use mg, mcg, or g.`
+- Avoid, `500 Internal Server Error`. Prefer, `Could not save the order. Try again in a moment.`
+- Avoid, `null returned from coverage lookup`. Prefer, `No active coverage on file for <b>Marcus Lee</b>.`
+
+The decision rule for when to render a banner at all (only for unexpected outcomes, never for confirmed success) lives in [component-usage.md](component-usage.md) Feedback and Status and Banner Variant Guide.
+
 ## Structural patterns to avoid
 
 - **Negative parallelism.** Patterns like "Not just X, but Y" and "Not X, but Y" read as marketing microcopy. Name the thing once. Avoid, "Not just a confirmation, but a safety check". Prefer, "Confirm this action."
