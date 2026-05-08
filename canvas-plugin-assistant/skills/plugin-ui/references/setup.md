@@ -80,11 +80,11 @@ Start every plugin HTML page from this shell. Replace `{plugin_name}` with the n
 Before touching any `<canvas-*>` markup in an existing plugin, scan the plugin style tag for CSS resets. Flag any of the following patterns and offer to remove or scope them before proceeding.
 
 - Universal selector rules, `* { margin: 0; padding: 0; box-sizing: border-box; }` or similar
-- Bare `html`, `body`, `button`, `input`, `a` rules without a plugin scope class
+- Bare `html`, `body`, `button`, `input`, `a` rules without a plugin scope class (a frequent offender is `body { -webkit-font-smoothing: antialiased }`, which silently thins Lato strokes)
 - Linked reset libraries, `normalize.css`, `reset.css`, `sanitize.css`, `modern-normalize.css`
 - Tailwind Preflight in the plugin head
 
-Three things break when a reset is present. Light DOM components in the `canvas-accordion` family lose their intended padding and margins because universal rules match them directly. Typography (`font-family`, `line-height`, `color`) inherits across the Shadow DOM boundary and replaces Lato inside every component. The custom element host itself picks up the reset's box sizing and margin, shifting layout on every `<canvas-*>` tag.
+Four things break when a reset is present. Light DOM components in the `canvas-accordion` family lose their intended padding and margins because universal rules match them directly. Typography (`font-family`, `line-height`, `color`) inherits across the Shadow DOM boundary and replaces Lato inside every component. The custom element host itself picks up the reset's box sizing and margin, shifting layout on every `<canvas-*>` tag. A bare body rule setting `-webkit-font-smoothing: antialiased` switches Chrome and Safari from the default subpixel rendering to grayscale, which visibly thins Lato 700 strokes so plugin text looks lighter than the Canvas home app.
 
 The Google Fonts Lato link must stay. Do not suppress `font-family` on `html` or `body`.
 

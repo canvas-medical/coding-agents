@@ -17,8 +17,7 @@ These rules describe when to use each component. Per-component API and keyboard 
 
 - Use an **accordion** when sections are independent and the user may only need one or two at a time. Good for long forms with many sections (demographics, contacts, consents), settings pages, and FAQ-style content. Multiple sections can be open simultaneously.
 - Use **tabs** when the user is switching between parallel views of the same data and only one view makes sense at a time. Good for content categories (coverages, claims, authorizations) where the sections are mutually exclusive.
-- Use the **basic accordion** (transparent, borderless) as a bare content divider on a page. It sits directly in the content area without a card wrapper, matching the Canvas patient profile edit page. Do not wrap the basic accordion inside a card.
-- Use the **styled accordion** (white background, shadow, borders between items) when the accordion needs to be a standalone elevated container on a gray background.
+- `canvas-accordion` is transparent by design. It sits directly on the white plugin page as a bare content divider, matching the Canvas patient profile edit page. If a section needs a visibly bounded elevated surface, wrap the accordion in a `canvas-card`. There is no separate "styled" accordion variant.
 - The accordion title row has a fixed layout. The caret arrow is always first and never moves. To the left of the row (between the caret and any right-aligned content) you may place text, badges, or custom elements. Never a toggle or checkbox on the left side. To the right of the row (inside `.accordion-actions` with `margin-left: auto`) you may place badges, text, toggles, or checkboxes. When a toggle or checkbox is present on the right, it is always the outermost right element. Badges and text sit to its left. Badges can also be placed next to the title text on the left (omit `flex-grow` on the title span) for a tighter grouping.
 - Buttons, toggles, checkboxes, radios, dropdowns, inputs, and other interactive elements can be placed directly inside `canvas-accordion-title`. Clicks and keyboard activations on those children run the child's own handler and do not toggle the surrounding accordion item. Authors do not need to add `event.stopPropagation` on buttons or other interactive descendants of the title slot.
 - The default title height is ~34.58px. Do not add `min-height` or extra padding to accordion titles. If a larger trigger height is needed, the user must explicitly request it. When toggles or checkboxes sit in the actions area, they naturally expand the row through their own height.
@@ -39,7 +38,17 @@ These rules describe when to use each component. Per-component API and keyboard 
 - Use `canvas-textarea` for multi-line content like notes, descriptions, comments, and free-form text.
 - Always include a visible label above the input. Do not rely on placeholder text as the only label. Placeholders disappear once the user starts typing, leaving a filled form with no visible field names.
 - Use placeholder text to show an example value or format hint, not to describe the field's purpose.
-- **Do not use native `<input>` elements.** Use `canvas-input` for every input type including text, email, password, number, tel, url, date, datetime-local, month, week, and time. The `canvas-input` component styles the native date and time pickers through the same border, radius, padding, and font as other inputs. Using a raw `<input>` produces output that does not match Canvas even when CSS tokens are applied by hand. This rule is parallel to the native `<select>` prohibition in Dropdown vs Combobox vs Native Select.
+- **Do not use native `<input>` elements.** Use `canvas-input` for text, email, password, number, tel, url, datetime-local, month, week, and time, and `canvas-date-input` for single date entries inside a form. Both components style their native pickers through the same border, radius, padding, and font as other inputs. A raw `<input>` produces output that does not match Canvas even when CSS tokens are applied by hand. See Date Inputs below for the full picker decision. This rule is parallel to the native `<select>` prohibition in Dropdown vs Combobox vs Native Select.
+
+## Date Inputs
+
+Three components handle dates, pick by interaction weight.
+
+- **`canvas-date-input`** for any single date inside a form (date of birth, appointment date, prescription start, follow-up). Welded combobox panel, Canvas native picker chrome on every OS, closed display reads `MMM D, YYYY` so it matches the date display rule. Form associated, the form value is the ISO date string. This is the default pick for clinical date fields.
+- **`canvas-input` with `type="date"`** for date range pairs in filter bars where two compact native fields read lighter than two welded panels in the same row. Also for the temporal types `canvas-date-input` does not cover (`time`, `datetime-local`, `month`, `week`), and for utility, admin, or audit fields where the OS picker is acceptable.
+- **`canvas-calendar`** when the calendar itself is the focal interaction (scheduling surfaces, availability blocks, multi date selection, weekly shift planning, recurring protocols). Use `selection-mode="range"` for ranges, `selection-mode="multiple"` with `picked-list` and `multi-add-granularity` for week or workweek selection.
+
+Never display dates as `MM/DD/YYYY`. The display format rule lives in [DESIGN.md](../DESIGN.md) Date and Time Display. `canvas-date-input` already renders the correct format. Keep the same format wherever a stored ISO date is rendered as text.
 
 ## Textarea Variants
 
@@ -176,7 +185,7 @@ When the user needs to pick multiple values from a set.
 
 ## Cards and Content Containers
 
-- Use `canvas-card` as the default elevated content container on a gray page background. White surface, soft border, standard shadow. Good for summary panels, detail views, note blocks, and any grouping that needs visual separation from the page.
+- Use `canvas-card` as the default elevated content container. White surface, soft border, standard shadow. The card reads as elevated on a white plugin page through its own border and shadow, no gray canvas required. Good for summary panels, detail views, note blocks, and any grouping that needs visual separation from the page. If the page's whole purpose is a peer card collection (masonry, grid, gallery) and you need gaps between cards to do the grouping, opt the page background into `--color-bg` gray. See DESIGN.md Plugin Background.
 - **The four property signature is the primary card imitation detector.** Any element combining background, border, border-radius, and box-shadow on itself is a `canvas-card` imitation, regardless of class name. When a CSS rule or inline style puts those four properties on one element, stop and use `canvas-card` instead. The component handles all four automatically and stays aligned with Canvas visual updates.
 - **Class names are secondary signals.** Names historically used for card styling include `card`, `panel`, `box`, `tile`, `container`, `filters`, `filter-bar`, `toolbar`, `section`, `wrapper`, `wrap`, `header`. Flag these when they appear with the four property signature. Do not restrict the detector to a fixed class name list. Exception, class names where a word refers to something unrelated, for example `card-number-input` is a payment input, not a card container.
 - **Adjacent region pattern.** Two adjacent containers where one has `border-top: none` and visually connects to another through a shared `border-radius` are always a multi region card. Replace the pair with `canvas-card` containing `canvas-card-body` for the upper region and `canvas-card-footer` for the lower region, or stacked `canvas-card-body` elements when the second region is still content.
@@ -206,7 +215,7 @@ Rules that apply to every inline form row.
 - Wrap the row in `canvas-inline-row`. The component handles `display: flex`, `gap`, `align-items: flex-end`, `flex-wrap: wrap`, and the per child flex rules that let inputs grow while buttons keep natural width.
 - Use default size on every form element in the row. No `size="sm"` anywhere. See Same Row Height Cohesion for why mixing sizes breaks alignment.
 - Label every form element through the component `label` prop. Do not mix component labels with external `<label for>` tags. The component label ships with the correct spacing and semantics.
-- Use `canvas-input` for every input including `type="date"`, `type="time"`, and `type="number"`. Never use native `<input>` tags. See the native input prohibition in Text Inputs vs Textareas.
+- Use `canvas-input` for every input including `type="time"` and `type="number"`. For single date entries inside the row use `canvas-date-input`. For date range pairs (From / To) keep `canvas-input type="date"` because two compact native fields read lighter than two welded panels in the same row. Never use native `<input>` tags. See the native input prohibition in Text Inputs vs Textareas and the picker decision in Date Inputs.
 - Use `canvas-dropdown` for fixed option lists, `canvas-combobox` for searchable long lists, `canvas-multi-select` for multi pick rows.
 
 Use cases. Each extends the primitive with ingredients specific to that pattern.
@@ -233,6 +242,7 @@ Use `canvas-scroll-area` whenever content needs to scroll inside a bounded regio
 - Do not add `overflow-y: auto` or `overflow-x: auto` on plugin level divs. If a raw div needs to scroll, replace it with a `canvas-scroll-area`. The component is the single canonical way to opt into scrolling.
 - Do not place `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` inside a `canvas-scroll-area[vertical]`. The menu surface of these components gets clipped by the scroll area's overflow. Place them outside the scroll area, or restructure the layout so the scroll is further out. Tooltips are exempt because they hide on scroll. This restriction is lifted in a later release when popup components move to the browser top layer.
 - For scrolling inside a `canvas-card-body`, put the scroll area inside the body. The body no longer scrolls on its own. See the canvas-scroll-area section in [web-components.md](web-components.md) for the migration pattern.
+- For scrolling inside a `canvas-tab-panel`, put the scroll area inside the panel. The panel is not a scroll container. Same contract as `canvas-card-body`. Setting `overflow: auto` on the panel or on a raw div inside it clips focus rings, box shadows, and dropdown menus that paint outside the box.
 
 ## Buttons
 
@@ -268,8 +278,8 @@ See Same Row Height Cohesion above for the baseline rule that applies to every r
 ## Feedback and Status
 
 - Use inline validation messages directly below the field that has the error. Do not show all errors in a single banner at the top.
-- Use an inline banner for success feedback after a save or submit. Show a `canvas-banner` with `variant="success"` at the top of the form or content area. Never silently succeed. Canvas does not use floating toast notifications. All feedback is inline.
-- Use a banner at the top of the content area for warnings or informational messages that apply to the whole screen.
+- Do not show a banner for an expected outcome. A successful save, a confirmed action, a created record. The UI state change is the confirmation. Modal closes, form resets, row appears, badge updates. Adding a green banner on top of that is noise. Reserve banners for the unexpected, errors, warnings, and risk surfaces the user has to see.
+- Use a banner at the top of the content area for warnings or informational messages that apply to the whole screen. Canvas does not use floating toast notifications, all feedback is inline.
 - Disable the submit button until all required fields are filled. Show inline validation errors when the user leaves a field, not only after they hit submit.
 
 ## Banner Variant Guide
@@ -289,7 +299,7 @@ Do not show a success banner after every save. Do not show multiple banners stac
 
 **Dismiss behavior.** By default, Escape and backdrop click close the modal. Add `persistent` when the user must explicitly choose an action (destructive confirmations, required data entry).
 
-**Header dismiss button.** Add `dismissable` on `canvas-modal-header` only when the header is present and the user has no other visible dismiss path. Most confirmation modals have Cancel and Confirm buttons, so no X button is needed.
+**Header dismiss button.** Add `dismissable` on `canvas-modal-header` only when the header is present and the user has no other visible dismiss path. Confirmation and form modals already carry a Cancel, Close, or Dismiss button in `canvas-modal-footer`, which is the dismiss path the skill prefers. Do not ship both a footer dismiss button and a `dismissable` header on the same modal, pick one. See [anti-patterns.md](anti-patterns.md) Modal With Duplicate Dismiss Paths.
 
 **Confirmation pattern for destructive actions.**
 
@@ -374,6 +384,10 @@ One line only empty states are acceptable inside tight containers like card bodi
 
 For the four-state gating rules (loading, populated, empty, error), see [patterns.md](patterns.md) Loading, Empty, Error State Machine.
 
+### Menu components
+
+Empty state for `canvas-dropdown`, `canvas-combobox`, and `canvas-multi-select` is a component-level concern, not a data-container concern. The components render a visible empty row inside the menu whenever the filtered or total option count is zero, so the open trigger always has content below it. Override the default copy with the `empty-state` attribute for plain text, or with a light DOM `<div slot="empty">` for rich content. API details in [web-components.md](web-components.md) canvas-dropdown, canvas-combobox, canvas-multi-select Empty state. Anti-pattern in [anti-patterns.md](anti-patterns.md) Open Trigger Without Panel Content.
+
 ### Accessibility
 
 - Use a semantic heading element inside the empty container (`<h3>` or the appropriate level for the surrounding page) so screen readers announce the state transition.
@@ -404,6 +418,7 @@ See [patterns.md](patterns.md) Empty State for markup per type, and [anti-patter
 - If a specific section is loading while the rest of the page is ready, show the loader only in that section rather than blocking the whole screen.
 - Do not leave the screen blank during loads.
 - There is no skeleton component. Skeleton placeholders require layout-specific shapes (line widths, column counts, card dimensions) that vary per view. An AI agent generating plugins cannot guarantee that a skeleton preview will match the actual content layout, which creates visual inconsistency when the real content arrives. Use `canvas-loader` instead.
+- For `canvas-dropdown`, `canvas-combobox`, and `canvas-multi-select` whose options are fetched on first open or mid session, set the `loading` attribute on the component itself rather than mounting it with an empty `<canvas-option>` slot. The component renders a spinner row inside the trigger and holds the panel closed until loading clears, so the auto flip lands once against the final list. Listen for the `loading-cancel` event to abort the in flight request when the user disengages. See [web-components.md](web-components.md) Loading state on each component for the full contract.
 
 ## Form Layout
 
