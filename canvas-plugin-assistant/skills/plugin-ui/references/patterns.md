@@ -84,7 +84,7 @@ Use in modals or standalone pages where the patient chart is not visible. See `s
 
 ## Filter Bar
 
-A horizontal row of form elements above a table. Wrap in `canvas-card` plus `canvas-card-body` plus `canvas-inline-row`. Use `canvas-input type="date"` for date range fields. Decision rules for this pattern live in `component-usage.md` Inline Form Rows.
+A horizontal row of form elements above a table. Wrap in `canvas-card` plus `canvas-card-body` plus `canvas-inline-row`. Use `canvas-input type="date"` for date range fields (two compact native fields read lighter than two welded panels in this row context). For a single date entry inside a content form use `canvas-date-input`. Decision rules for this pattern live in `component-usage.md` Inline Form Rows and Date Inputs.
 
 ```html
 <canvas-card>

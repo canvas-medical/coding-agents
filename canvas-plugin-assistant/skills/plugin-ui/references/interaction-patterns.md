@@ -1,6 +1,6 @@
 # Interaction Patterns
 
-Cross-cutting interaction rules that apply across components. Focus management for modals, the toggle and submit prohibition, shared ARIA essentials, scrollable container contract, form submission behavior, touch targets, and patient context safety. Per-component keyboard, focus return, and ARIA contracts live with each component in [web-components.md](web-components.md). When-to-use rules live in [component-usage.md](component-usage.md). Visual specification rules (hierarchy, density, truncation, date formatting) live in [DESIGN.md](../DESIGN.md).
+Cross-cutting interaction rules that apply across components. Focus management for modals, the toggle and submit prohibition, shared ARIA essentials, scrollable container contract, form submission behavior, the accessibility helper primitives the component bundle ships, touch targets, and patient context safety. Per-component keyboard, focus return, and ARIA contracts live with each component in [web-components.md](web-components.md). When-to-use rules live in [component-usage.md](component-usage.md). Visual specification rules (hierarchy, density, truncation, date formatting) live in [DESIGN.md](../DESIGN.md).
 
 ## Focus Management
 
@@ -47,6 +47,96 @@ Minimum ARIA attributes for common plugin UI elements. Do not over-apply ARIA. U
 - The submit button must be reachable by tabbing from the last form field.
 - Tab order must follow the visual layout: top to bottom, left to right for side-by-side fields.
 - After a successful submission, move focus to the success message or back to the top of the form. Do not leave focus on the disabled submit button.
+
+## Accessibility Helpers
+
+The skill ships six reusable accessibility primitives near the top of `assets/canvas-plugin-ui.js`. Component classes consume them so that ARIA contracts, focus management, motion preferences, and screen reader text follow the same pattern across the bundle. New components and forks should reach for these helpers before reinventing the contract.
+
+### cuid
+
+Per element unique id generator. Returns a string of the form `prefix_<timestamp>_<counter>` so two instances of the same component on the same page never collide on the same id. Use it wherever a component needs a stable id that an ARIA reference such as `aria-describedby`, `aria-labelledby`, or `aria-controls` can point to.
+
+`canvas-input` is the canonical pattern. The component generates three ids on construction, one for the inner `<input>`, one for the visible label, and one for the error span. The `<label>` element's `for` attribute points at the input id, the input's `aria-labelledby` points at the label id, and the input's `aria-describedby` points at the error span id when the `error` attribute is set. Multiple `canvas-input` instances on the same form no longer collide on the literal id `err`, which was the duplicate id collision the audit caught.
+
+```javascript
+this._inputId = cuid('input');
+this._labelId = cuid('label');
+this._errorId = cuid('error');
+```
+
+### reduceMotion
+
+Runtime `matchMedia('(prefers-reduced-motion: reduce)')` query. Returns true when the user has requested reduced motion at the OS level. Use it to swap an animation for a static affordance at component construction time when CSS `@media (prefers-reduced-motion: reduce)` cannot reach into shadow DOM keyframes.
+
+`canvas-loader` is the canonical pattern. When `reduceMotion()` returns true, the spinner stops, the spinning arc renders as a static partial circle, and the `aria-label` text remains the only signal that work is in flight. When the helper returns false, the spinning animation runs as before. Pair this runtime check with the `PREFERS_REDUCED_MOTION_CSS` shadow style block for the CSS only path.
+
+```javascript
+if (reduceMotion()) {
+  this._spinner.style.animationName = 'none';
+}
+```
+
+### trapFocus
+
+Shadow DOM aware focus trap. Takes a root element, returns a release function. The trap descends `composedPath` and open shadow roots when collecting tabbables, so it traps focus correctly even when the focusable target lives several shadow boundaries deep. The release function removes the listener and optionally restores focus to the element that was focused before the trap started.
+
+`canvas-modal` is the canonical pattern. The component calls `trapFocus(this)` in `open()` and stores the release function. On `dismiss()`, the release function runs, focus returns to the trigger, and the listener is removed. Tab and Shift Tab cycle through the focusable elements inside the modal even when one of those targets lives inside a `canvas-input` or a `canvas-button` shadow root. Escape calls `dismiss()` so the same release path runs on keyboard close.
+
+```javascript
+open() {
+  this._releaseFocusTrap = trapFocus(this);
+}
+dismiss() {
+  if (this._releaseFocusTrap) this._releaseFocusTrap();
+  this._releaseFocusTrap = null;
+}
+```
+
+### AriaProxy
+
+Class mixin that mirrors a configurable list of ARIA attributes from the host onto an inner control. The default attribute list is `required`, `aria-invalid`, `disabled`, `aria-describedby`, `aria-labelledby`, `aria-controls`, `aria-expanded`, and `aria-activedescendant`. Components extend the mixin via `class extends AriaProxy(HTMLElement)` and implement `_ariaProxyTarget()` which returns the inner element that should receive the mirrored attributes. The mixin also extends `observedAttributes` so the mirroring runs automatically inside `attributeChangedCallback`.
+
+`canvas-input` is the canonical default attribute pattern. The component returns the inner shadow `<input>` from `_ariaProxyTarget()`. Setting `aria-describedby` on the host forwards it onto the inner input so screen readers announce the description when the input takes focus.
+
+`canvas-button` is the canonical custom attribute list pattern. The component passes a custom list including `aria-label`, `aria-pressed`, `aria-expanded`, `aria-controls`, and `aria-disabled`. Disabled buttons use `aria-disabled="true"` rather than the native `disabled` attribute so the inner `<button>` stays in the focus order and screen readers can still announce the disabled affordance.
+
+```javascript
+class CanvasInput extends AriaProxy(HTMLElement) {
+  _ariaProxyTarget() { return this._innerInput; }
+}
+
+class CanvasButton extends AriaProxy(HTMLElement, {
+  attributes: ['aria-label', 'aria-pressed', 'aria-expanded', 'aria-controls', 'aria-disabled']
+}) {
+  _ariaProxyTarget() { return this._innerButton; }
+}
+```
+
+### SR_STATUS_CSS
+
+Visually hidden CSS template for screen reader only text. The template defines a `.sr-status` class that absolutely positions the element off screen with zero width and height, hidden overflow, and clipped rect, the standard pattern for visually hidden text that screen readers still read aloud. Components concatenate this template into their shadow style block and render text inside a `<span class="sr-status">` for any signal the visible UI conveys through color or icon alone.
+
+`canvas-badge` is the canonical severity word pattern. The visible badge shows the colored swatch and the visible label such as `Active`. The component appends a `<span class="sr-status">` carrying the severity word such as `Active status` so screen reader users hear the severity alongside the badge label rather than only seeing the colored swatch. `canvas-loader` uses the same template for the loading status text the spinner conveys visually.
+
+```javascript
+this.shadowRoot.innerHTML = '<style>' + SR_STATUS_CSS + '</style>' +
+  '<span class="sr-status">Active status</span>' +
+  '<slot></slot>';
+```
+
+### PREFERS_REDUCED_MOTION_CSS
+
+Shadow style block that gates animation duration, animation iteration count, transition duration, and scroll behavior under `prefers-reduced-motion: reduce`. The block uses the universal selector with the `::before` and `::after` pseudo elements so every animated descendant of the shadow root drops to a 0.01ms duration, single iteration, and instant scroll on reduced motion. Components concatenate this block into their shadow style block once, and every animated rule under that root respects the user's preference.
+
+`canvas-loader` is the canonical pattern. The shadow style block carries the spinner keyframes plus `PREFERS_REDUCED_MOTION_CSS` so users who request reduced motion see the arc render once at its starting position rather than rotating. Pair this with the `reduceMotion` runtime helper for the path that needs to swap the affordance entirely rather than just stop the animation.
+
+```javascript
+this.shadowRoot.innerHTML = '<style>' +
+  '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
+  '.spinner { animation: spin 1s linear infinite; }' +
+  PREFERS_REDUCED_MOTION_CSS +
+'</style>' + ...;
+```
 
 ## Clinical Environment
 

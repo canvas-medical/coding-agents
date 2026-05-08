@@ -52,6 +52,9 @@ Decision rules in [component-usage.md](component-usage.md) Dropdown vs Combobox.
 
 1. `canvas-dropdown` for fixed lists, `canvas-combobox` for searchable, `canvas-multi-select` for 8+ multi value.
 2. No `canvas-dropdown` used for action lists. See [anti-patterns.md](anti-patterns.md) Action Menu Built as a Dropdown.
+3. No custom `empty-state` override uses generic copy. "No results" default is only acceptable when the consumer has no more specific message. See [anti-patterns.md](anti-patterns.md) Open Trigger Without Panel Content and Generic Empty Copy.
+4. No light DOM `<div slot="empty">` that contradicts the `empty-state` attribute on the same element. Pick one path.
+5. Components whose options are fetched on first open or mid session toggle the `loading` attribute around the fetch call. See [anti-patterns.md](anti-patterns.md) Open Trigger Without Panel Content.
 
 ### Menu Buttons
 
@@ -80,6 +83,12 @@ Rules in [component-usage.md](component-usage.md) Popover. API in [web-component
 8. Body stays within one logical group and up to four focused controls. Five or more escalates to `canvas-modal`.
 9. Never used for destructive confirmations or blocking flows. Those belong in `canvas-modal`. See [anti-patterns.md](anti-patterns.md) Anchored Content Surface Built as a Modal.
 
+### Modals
+
+Rules in [component-usage.md](component-usage.md) Modal Patterns.
+
+1. No modal ships both `dismissable` on `canvas-modal-header` and a Cancel, Close, or Dismiss button in `canvas-modal-footer`. Pick one dismiss path. See [anti-patterns.md](anti-patterns.md) Modal With Duplicate Dismiss Paths.
+
 ### Tables
 
 1. Table has `aria-label`.
@@ -90,6 +99,7 @@ Rules in [component-usage.md](component-usage.md) Popover. API in [web-component
 
 1. Each `canvas-tab` has a `for` matching a `canvas-tab-panel` `id`.
 2. Each `canvas-tab` contains a `canvas-tab-label`.
+3. No `overflow: auto` or `overflow-y: auto` set on a `canvas-tab-panel` or on a raw div inside a panel. Scrolling content uses `canvas-scroll-area vertical` instead. See [anti-patterns.md](anti-patterns.md) Tab Panel Reliance on Implicit Scroll.
 
 ### Accordions
 
@@ -176,6 +186,8 @@ Run on every user facing string.
 10. No weasel wording (studies show, experts agree).
 11. No negative parallelism (Not just X, but Y).
 12. Clinical carve out honored. Check phrase context before flagging vital, critical, significant, active, acute, pivotal, present, presenting, underlying.
+13. Banners reserved for the unexpected. No `canvas-banner variant="success"` after a save, submit, or confirm action where the surface state already changes (modal closes, form resets, row appears). See [anti-patterns.md](anti-patterns.md) Banner For Expected Success.
+14. Banner copy in human voice, no protocol noise. No HTTP status codes (`400`, `404`, `500`), no exception class names (`ValidationError`, `KeyError`), no raw backend field identifiers (`user_name`, `dose_unit`), no null or undefined tokens in banner text. Name the entity using the user supplied value, wrapped in `<b>`. See [anti-patterns.md](anti-patterns.md) Technical Error Code in Banner Copy.
 
 ### Loading and Patient Context
 

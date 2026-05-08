@@ -1,12 +1,12 @@
 # Web Components
 
-Reference for the Canvas plugin web component system. The system registers 28 components spanning 47 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
+Reference for the Canvas plugin web component system. The system registers 30 components spanning 49 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
 
 ## Contents
 
 [Layout](#layout) | [Components](#components)
 
-**Components.** [canvas-button](#canvas-button) | [canvas-button-group](#canvas-button-group) | [canvas-badge](#canvas-badge) | [canvas-chip](#canvas-chip) | [canvas-input](#canvas-input) | [canvas-textarea](#canvas-textarea) | [canvas-radio](#canvas-radio) | [canvas-checkbox](#canvas-checkbox) | [canvas-toggle](#canvas-toggle) | [canvas-banner](#canvas-banner) | [canvas-card](#canvas-card) | [canvas-inline-row](#canvas-inline-row) | [canvas-scroll-area](#canvas-scroll-area) | [canvas-dropdown](#canvas-dropdown) | [canvas-combobox](#canvas-combobox) | [canvas-multi-select](#canvas-multi-select) | [canvas-menu-button](#canvas-menu-button) | [canvas-popover](#canvas-popover) | [canvas-tabs](#canvas-tabs) | [canvas-accordion](#canvas-accordion) | [canvas-modal](#canvas-modal) | [canvas-table](#canvas-table) | [canvas-sortable-list](#canvas-sortable-list) | [canvas-sidebar-layout](#canvas-sidebar-layout) | [canvas-loader](#canvas-loader) | [canvas-progress](#canvas-progress) | [canvas-tooltip](#canvas-tooltip) | [canvas-divider](#canvas-divider)
+**Components.** [canvas-button](#canvas-button) | [canvas-button-group](#canvas-button-group) | [canvas-badge](#canvas-badge) | [canvas-chip](#canvas-chip) | [canvas-input](#canvas-input) | [canvas-date-input](#canvas-date-input) | [canvas-calendar](#canvas-calendar) | [canvas-textarea](#canvas-textarea) | [canvas-radio](#canvas-radio) | [canvas-checkbox](#canvas-checkbox) | [canvas-toggle](#canvas-toggle) | [canvas-banner](#canvas-banner) | [canvas-card](#canvas-card) | [canvas-inline-row](#canvas-inline-row) | [canvas-scroll-area](#canvas-scroll-area) | [canvas-dropdown](#canvas-dropdown) | [canvas-combobox](#canvas-combobox) | [canvas-multi-select](#canvas-multi-select) | [canvas-menu-button](#canvas-menu-button) | [canvas-popover](#canvas-popover) | [canvas-tabs](#canvas-tabs) | [canvas-accordion](#canvas-accordion) | [canvas-modal](#canvas-modal) | [canvas-table](#canvas-table) | [canvas-sortable-list](#canvas-sortable-list) | [canvas-sidebar-layout](#canvas-sidebar-layout) | [canvas-loader](#canvas-loader) | [canvas-progress](#canvas-progress) | [canvas-tooltip](#canvas-tooltip) | [canvas-divider](#canvas-divider)
 
 ## Loading Components
 
@@ -88,6 +88,8 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 - **xs** for floating utility actions not paired with an input. Normal weight (400), no min-height.
 
 **Form submission.** A button with `type="submit"` finds the closest `<form>` ancestor and calls `requestSubmit()` on click. The component crosses the shadow DOM boundary to find the form.
+
+**ARIA.** The component extends the `AriaProxy` mixin with a custom attribute list of `aria-label`, `aria-pressed`, `aria-expanded`, `aria-controls`, and `aria-disabled`. Setting any of these on the host mirrors onto the inner `<button>` automatically. Disabled buttons use `aria-disabled="true"` rather than the native `disabled` attribute so the inner `<button>` stays in the focus order, screen readers still announce the disabled affordance, and tooltips can still anchor to the trigger. Pair `aria-pressed` with toggle buttons that hold an on or off state, pair `aria-expanded` and `aria-controls` with buttons that act as triggers for `canvas-popover`, `canvas-menu-button`, or `canvas-modal`. Icon only buttons must carry `aria-label` so screen readers announce a meaningful name. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy mixin contract.
 
 **Component tokens**
 
@@ -217,6 +219,8 @@ A status indicator with 13 colors, 4 sizes, a basic (outlined) variant, and a ci
 
 **Color tokens.** Badge colors use the raw palette layer directly, not the semantic layer. Changing `--palette-green` shifts green badges. Changing `--color-primary` does not affect badges.
 
+**ARIA.** Color alone does not convey state in WCAG 2.2 AA, so the badge appends a visually hidden severity word inside the host using the `SR_STATUS_CSS` template. Screen readers read both the visible text and the severity word, for example `Active status` for a green badge and `Denied status` for a red badge. The severity word follows the color attribute, so `color="green"` produces `Active status`, `color="red"` produces `Denied status`, `color="blue"` produces `Submitted status`, `color="yellow"` produces `Pending status`, and so on. Sighted users see only the visible label and the colored swatch, the severity word is for assistive technology only. Badges with no `color` attribute do not append a severity word because the gray default carries no semantic meaning. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the SR_STATUS_CSS template.
+
 **Component tokens**
 
 | Token | What it controls | Fallback chain |
@@ -317,6 +321,8 @@ container.appendChild(chip);
 
 **Asymmetric padding.** The right padding is 15% less than the left to optically balance the dismiss icon. The X button adds visual weight to the right side, so reduced padding compensates. When overriding `--canvas-chip-padding`, keep the right value about 15% smaller than the left (e.g., if left is `1em`, right should be about `.85em`).
 
+**Keyboard and ARIA.** The dismiss button carries an `aria-label` that names the chip rather than a generic `Remove`, so a `Provider: Dr. Magee` chip exposes `Remove Provider Dr Magee` to assistive technology. When the chip itself is interactive, for example a filter chip that the user can activate to edit the filter, the host carries `tabindex="0"` and listens for the Delete and Backspace keys, both of which fire the same `dismiss` event the X button fires. The chip becomes a single Tab stop in this case, with the dismiss button reachable through the Enter or Space activation rather than as a second Tab stop, matching the WAI ARIA tag pattern. Static, non interactive chips do not carry `tabindex` and the dismiss button is the only focusable element inside.
+
 **File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-input
@@ -386,6 +392,8 @@ document.querySelector('canvas-input').removeAttribute('error');
 
 When in error state, the label turns red (`#9f3a38`), the input background turns pink (`#fff6f6`), the border turns pink (`#e0b4b4`), and the error text appears. The input gets `aria-invalid="true"` and `aria-describedby` linking to the error message.
 
+**ARIA.** The component extends the `AriaProxy` mixin with the default attribute list, so `required`, `aria-invalid`, `disabled`, `aria-describedby`, `aria-labelledby`, `aria-controls`, `aria-expanded`, and `aria-activedescendant` set on the host mirror onto the inner shadow `<input>` automatically. Three ids are generated via the `cuid` helper on construction, one for the inner `<input>`, one for the visible label, and one for the error span. The label's `for` attribute points at the input id, the inner input's `aria-labelledby` points at the label id, and the inner input's `aria-describedby` points at the error span id when the `error` attribute is set. Multiple `canvas-input` instances on the same form no longer collide on a literal id, which was the duplicate id collision the audit caught. Setting the `required` attribute on the host mirrors `required` onto the inner `<input>` so the native HTML constraint and `aria-required` semantics both apply. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy and cuid contracts.
+
 **Spacing.** The component does not add outer margin. Vertical spacing between stacked inputs is handled by the consumer.
 
 ```html
@@ -418,6 +426,131 @@ When in error state, the label turns red (`#9f3a38`), the input background turns
 | `--canvas-input-error-text` | Error text and label color | `#9f3a38` |
 | `--canvas-input-error-bg` | Error input background | `#fff6f6` |
 | `--canvas-input-error-border` | Error border and placeholder color | `#e0b4b4` |
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-date-input
+
+A single-date picker that wraps `canvas-calendar` in a combobox style floating panel. The closed state is a read only text input styled identically to `canvas-dropdown` and `canvas-combobox`. The open state expands into a welded panel with a full chrome calendar inside. Form associated, the form value is the ISO date string (`YYYY-MM-DD`), the displayed value is `MMM D, YYYY` (e.g. May 4, 2026) so the input matches the date display rule in [DESIGN.md](../DESIGN.md). Use for any single date entry in a form (date of birth, appointment date, prescription start, follow-up). For ranges, time, datetime-local, month, or week values use `canvas-input` with the appropriate `type`. For multi date or range selection where the calendar is the focal interaction use `canvas-calendar` directly. See `component-usage.md` Date Inputs.
+
+**Usage**
+
+```html
+<canvas-date-input label="Date of Birth" name="dob"></canvas-date-input>
+<canvas-date-input label="Appointment" value="2026-05-04" required></canvas-date-input>
+<canvas-date-input label="Follow-up" min="2026-05-06" max="2026-12-31" week-start="monday"></canvas-date-input>
+<canvas-date-input label="End" error="End date is required"></canvas-date-input>
+<canvas-date-input label="Locked" value="2026-05-04" disabled></canvas-date-input>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `label` | string | none |
+| `placeholder` | string | `Pick a date` |
+| `value` | ISO date `YYYY-MM-DD` | empty |
+| `min` | ISO date | none |
+| `max` | ISO date | none |
+| `disabled-dates` | comma-separated ISO dates | none |
+| `week-start` | `sunday`, `monday` | `sunday` |
+| `size` | `comfortable` | none |
+| `required` | boolean | false |
+| `disabled` | boolean | false |
+| `error` | string | none (shows error state when set, value becomes error message) |
+| `name` | string | none (form field name for ElementInternals) |
+
+**Properties**
+
+| Property | Type | Description |
+|---|---|---|
+| `value` | string | Get or set the ISO date. Setting empty string clears. |
+| `name` | string | Form field name (reads from attribute). |
+
+**Events**
+
+| Event | When |
+|---|---|
+| `change` | When the user selects a date. `event.detail.value` is the ISO date string. Bubbles and composes through shadow DOM. |
+
+**Form participation.** Uses `ElementInternals` with `formAssociated: true`. The ISO date string is included in `FormData` on submission.
+
+**Display format.** Closed input shows `MMM D, YYYY` (e.g. May 4, 2026). The numeric `MM/DD/YYYY` format is never shown, this matches the date display rule in [DESIGN.md](../DESIGN.md) Date and Time Display.
+
+**Forwarded attributes.** `min`, `max`, `disabled-dates`, `week-start`, and `size` are forwarded to the inner `canvas-calendar`. Set them on the date input, not on the inner calendar.
+
+**Viewport flip.** If the panel would overflow below the viewport, it flips to open above the input, mirroring `canvas-combobox`. The input border radius mirrors the flip so the welded edge reads correctly in both directions.
+
+**Keyboard.** ArrowDown, Enter, or Space opens the panel. Escape closes without changing the value. Tab moves focus to the next element. Inside the open panel, calendar arrow keys, Home, End, PageUp, and PageDown navigate days as documented under `canvas-calendar`. On open, the component calls the inner calendar's `focusGrid()` public method so focus lands on the active cell rather than reaching across shadow boundaries by hand.
+
+**ARIA.** The trigger input carries `role="combobox"`, `aria-haspopup="dialog"`, `aria-expanded` reflecting open state, and `aria-controls` pointing at the popover id generated via the `cuid` helper. The panel carries `role="dialog"` with `aria-label="Choose date"` and an id that the trigger's `aria-controls` references so screen readers announce the trigger to popover relationship. The component extends the `AriaProxy` mixin so `required`, `aria-invalid`, `disabled`, and `aria-describedby` set on the host mirror onto the inner trigger combobox.
+
+**Error state.** Same visual treatment as `canvas-input`. Setting the `error` attribute shows a red label, pink input background, pink border, and error message below the input.
+
+**File.** `assets/canvas-plugin-ui.js`
+
+### canvas-calendar
+
+A standalone month grid for date selection. Single date, range, or multi-date modes, with optional picked list, week or workweek granularity, disabled dates, and highlighted dates. Use directly when the calendar itself is the focal interaction (scheduling surfaces, availability blocks, multi-day protocols, weekly shift planning). For a single date entry inside a form, prefer `canvas-date-input`, which wraps `canvas-calendar` in a combobox style panel and matches other Canvas inputs. See `component-usage.md` Date Inputs.
+
+**Usage**
+
+```html
+<canvas-calendar value="2026-05-04"></canvas-calendar>
+<canvas-calendar selection-mode="range" value="2026-05-04..2026-05-08"></canvas-calendar>
+<canvas-calendar selection-mode="multiple" picked-list="right" value="2026-05-06,2026-05-08"></canvas-calendar>
+<canvas-calendar selection-mode="multiple" multi-add-granularity="workweek" picked-list="below"></canvas-calendar>
+<canvas-calendar size="comfortable" min="2026-05-01" max="2026-12-31" week-start="monday"></canvas-calendar>
+<canvas-calendar fluid value="2026-05-04"></canvas-calendar>
+```
+
+**Attributes**
+
+| Attribute | Values | Default |
+|---|---|---|
+| `value` | ISO date, range `YYYY-MM-DD..YYYY-MM-DD`, or comma-separated ISO dates | empty |
+| `selection-mode` | `single`, `range`, `multiple` | `single` |
+| `min` | ISO date | none |
+| `max` | ISO date | none |
+| `disabled-dates` | comma-separated ISO dates | none |
+| `highlight-dates` | comma-separated ISO dates | none |
+| `week-start` | `sunday`, `monday` | `sunday` |
+| `size` | `comfortable` | none (default picker size) |
+| `fluid` | boolean (calendar fills container width) | false |
+| `picked-list` | `right`, `below` (multiple mode only) | none |
+| `multi-add-granularity` | `day`, `workweek`, `week` | `day` |
+| `multi-add-exclusive` | boolean (granularity click replaces selection instead of merging) | false |
+| `disabled` | boolean | false |
+| `name` | string | none (form field name) |
+
+**Events**
+
+| Event | When |
+|---|---|
+| `change` | After the user selects a date or set. `event.detail.value` is the serialized value, plus `mode`, and `start` / `end` for range or `values` for multiple. `event.detail.granularity` is set when the change came from a granularity click. Bubbles and composes through shadow DOM. |
+| `month-change` | When navigation moves to a new month. `event.detail` is `{ year, month }` with zero-indexed month. Bubbles and composes through shadow DOM. |
+
+**Form participation.** Uses `ElementInternals` with `formAssociated: true`. The serialized value matches the `value` attribute format for the active selection mode.
+
+**Picked list.** Set `picked-list="right"` to render selected dates as a list to the right of the grid, or `picked-list="below"` to render them under the grid with a fixed scroll viewport. Each row has a remove button. The header carries the count and a Clear all button. Below variant scrolls only the row list, the header and grid stay fixed during scroll. Right variant uses the calendar height as the scroll viewport.
+
+**Granularity.** With `selection-mode="multiple"`, `multi-add-granularity="workweek"` expands one click into Monday through Friday of that week, and `"week"` expands into all seven days respecting `week-start`. Set toggle semantics, click on a fully selected set removes it, click on a partial or empty set adds the missing days. Disabled dates inside the expanded set are skipped without aborting the rest. Add `multi-add-exclusive` to make the click replace the current selection rather than merging, useful for single workweek or single week pickers.
+
+**Sizing.** Default is the picker size used inside `canvas-date-input`. Set `size="comfortable"` for a larger grid suited to standalone scheduling surfaces. Set `fluid` to make the seven cell row fill the container width, which `canvas-date-input` uses internally so the calendar tracks the trigger width.
+
+**Keyboard.** Arrow keys move between days. Home and End jump to the start and end of the row. PageUp and PageDown move months. Enter or Space selects the focused day. Disabled cells stay reachable through arrow navigation so focus is never lost at min and max boundaries, Enter and Space silently no-op on disabled cells. The grid uses a roving tabindex, the grid container itself is not a Tab stop.
+
+**ARIA.** The grid is `role="grid"` with six `role="row"` wrappers, each containing seven `role="gridcell"` buttons. The day-name header row is `role="row"` with seven `role="columnheader"` cells, each named with the full weekday (`Sunday`, `Monday`, etc) so screen readers do not pronounce the visible two-letter abbreviation. Day cells carry an `aria-label` of `"Wednesday, June 15, 2026"` followed in order by `, today`, range role (`, start of range` / `, end of range` / `, in range`), `, selected`, `, unavailable`. Today carries `aria-current="date"`. Selected cells carry `aria-selected="true"`. Disabled cells carry `aria-disabled="true"`. The grid `aria-label` is `"Calendar, <Month> <Year>"`. The month header is plain text, not a heading, so it does not pollute the document outline.
+
+**Live region.** A visually hidden `role="status" aria-live="polite"` region inside the calendar announces month changes (after navigation buttons or PageUp / PageDown), single selection, range start vs range complete, and multi-select count changes including granular adds. Picked list clear announces "All dates cleared." Range pick after the first click announces "Start date <date> selected. Pick an end date." After the second click announces "Range <start> to <end> selected."
+
+**Today indicator.** Today cells carry a 1px border in the `--canvas-calendar-today-color` token color and a 4px dot below the day number in the same color. The dot keeps the today signal visible to users with color vision deficiency since the border alone cannot meet 3:1 non-text contrast. When today is also selected, the foreground switches to a near-black green (`#0A2A12` token default) to pass 4.5:1 against the green background, and an outer ring in the today color reinforces the today identity.
+
+**Reduced motion.** All cell, nav button, and picked-list transitions are removed when `prefers-reduced-motion: reduce` is active.
+
+**Public API.** The element exposes `value`, `valueAsDate`, `name`, `isDateDisabled` (a date predicate function), `dayContent` (a function returning a Node, string, or number rendered as a decoration below the day number), and `focusGrid()` which moves focus into the active cell. Use `focusGrid()` from a host component (such as a custom date popover) when the calendar's panel becomes visible.
+
+**`dayContent` accessibility.** The decoration element is hidden from assistive technology by default with `aria-hidden="true"` so screen readers do not concatenate the day number and the decoration. To expose decoration content to AT, return an Element with `data-aria="expose"` set, the calendar then omits `aria-hidden` and the consumer is responsible for adding any context the decoration needs.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -492,6 +625,8 @@ A multi-line text area with integrated label, error state, optional auto-resize,
 ```
 
 **Error state.** Same visual treatment as `canvas-input`. Red label, pink background, pink border, error message below.
+
+**ARIA.** Same contract as `canvas-input`. The component extends the `AriaProxy` mixin with the default attribute list so the host attributes mirror onto the inner shadow `<textarea>`. Label, textarea, and error ids are generated via `cuid`, the label's `for` points at the textarea id, the textarea's `aria-labelledby` points at the label id, and the textarea's `aria-describedby` points at the error span id when `error` is set. The character counter sits in the same `aria-describedby` chain when both `maxlength` and `error` are present so screen readers announce both pieces of context after the textarea takes focus. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy and cuid contracts.
 
 **Spacing.** The component does not add outer margin. Use the consumer layout for spacing between fields.
 
@@ -580,6 +715,8 @@ A locked radio button matching the Canvas home-app. No visual customization. Gro
 
 **Vertical spacing.** Stacked radios need `gap: 4px` on the container. The component does not add outer margin.
 
+**Keyboard and ARIA.** Radios sharing a `name` attribute form a real composite. The first sibling on connect carries `role="radiogroup"` semantics on the host wrapper, every radio inside carries `role="radio"` and `aria-checked` reflecting its checked state. Roving tabindex applies, the checked radio is the only Tab stop into the group, ArrowUp and ArrowLeft move the selection to the previous radio, ArrowDown and ArrowRight move to the next, with wrap at the ends. Selection follows focus, so arrow keys both move focus and check the new radio, matching the WAI ARIA radio group pattern. The implementation mirrors the `focusGrid` template `canvas-calendar` uses for its day grid. Disabled radios are skipped during arrow navigation.
+
 **Locked component.** No visual customization tokens beyond touch targets. Focus border uses `#85b7d9` matching canvas-input for consistency across form elements.
 
 **File.** `assets/canvas-plugin-ui.js`
@@ -649,6 +786,8 @@ A locked checkbox matching the Canvas home-app. White box with a dark checkmark,
 
 **Vertical spacing.** Stacked checkboxes need `gap: 4px` on the container. The component does not add outer margin.
 
+**ARIA.** The component extends the `AriaProxy` mixin with the default attribute list so the host attributes mirror onto the inner shadow `<input type="checkbox">`. The visible label and the inner input both carry `cuid` generated ids so the label's `for` points at the input and the input's `aria-labelledby` points at the label, redundantly wiring the association from both sides. The native `<input type="checkbox">` already exposes `aria-checked` semantics through the browser, the component does not duplicate that attribute on the host. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy and cuid contracts.
+
 **Locked component.** No visual customization tokens beyond touch targets. Focus border uses `#85b7d9` matching canvas-input and canvas-radio.
 
 **File.** `assets/canvas-plugin-ui.js`
@@ -703,6 +842,8 @@ A locked toggle switch matching the Canvas home-app. Blue active track (#0D71BC,
 **Touch targets.** Override via `--canvas-toggle-min-height` and `--canvas-toggle-min-width`. Defaults to `auto`.
 
 **Vertical spacing.** Stacked toggles need `gap: 4px` on the container.
+
+**ARIA.** The inner switch control carries `role="switch"` and `aria-checked` reflecting state, matching the WAI ARIA switch pattern. The visible label text span carries a `cuid` generated id and the inner switch points `aria-labelledby` at that id so screen readers announce the label whether `label-position` is `start` or `end`. The component extends the `AriaProxy` mixin so `disabled` and `aria-describedby` set on the host mirror onto the inner switch. Toggles still must not appear on screens with a Save or Submit button, see Toggle and Submit Prohibition above.
 
 **Locked component.** No visual customization tokens beyond touch targets. Active track is always blue #0D71BC. Focus border uses `#85b7d9`.
 
@@ -793,7 +934,7 @@ Body only (simple inline messages).
 
 **Spacing.** The component does not add outer margin. Vertical spacing between stacked banners is handled by the consumer.
 
-**Locked component.** No visual customization tokens. The four variant colors are fixed to match the Canvas home-app. The neutral default (no variant) uses gray.
+**ARIA.** The host role is split by variant. `info` and `success` render `role="status"`, both polite live regions where new banners announce without interrupting the user. `error` and `warning` render `role="alert"`, both assertive live regions where new banners interrupt to make sure the user hears the failure or risk. The neutral default with no variant carries `role="status"`. The header text receives a `cuid` generated id, and when `dismissible` is set the dismiss button carries `aria-controls` pointing at the banner host id and an `aria-label` of the form `Dismiss <header text>` so screen readers know which banner the button closes. When the banner has no header, the dismiss button falls back to a generic `Dismiss banner` label. Keep banners reserved for the unexpected, see [component-usage.md](component-usage.md) Banner Variant Guide for the variant choice and [writing-style.md](writing-style.md) for banner copy voice.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -997,7 +1138,7 @@ A declarative, opt in scroll container. Use it anywhere content needs to scroll.
 
 **Dimensions.** Consumers set `max-height`, `max-width`, or any other CSS length via `style=` or an external stylesheet. The component does not accept size attributes. This keeps the API minimal and lets consumers use any CSS length.
 
-**Accessibility.** When either `vertical` or `horizontal` is present and the element has no consumer supplied `tabindex`, the component sets `tabindex="0"` so keyboard users can focus the region and scroll with arrow keys. Always provide `aria-label` or `aria-labelledby` describing what is scrolling. Consumer supplied `tabindex` is never overridden.
+**Accessibility.** When either `vertical` or `horizontal` is present, the component carries `role="region"` and sets `tabindex="0"` so keyboard users can focus the region and scroll with arrow keys. Always provide `aria-label` or `aria-labelledby` describing what is scrolling, the region needs an accessible name to be useful in the screen reader landmark list. Consumer supplied `tabindex` is never overridden, but `role="region"` is always set when scrolling is enabled. Without `vertical` or `horizontal`, the component is a transparent block with no role and no `tabindex`, since there is nothing to scroll.
 
 **Clipping caveat.** A scroll area is itself a clipping boundary. Popups placed inside a vertical scroll area (such as a `canvas-dropdown` or `canvas-combobox` menu) get clipped by the scroll area even when the outer card or modal does not clip. Current usage rule, do not place `canvas-dropdown`, `canvas-combobox`, or `canvas-multi-select` inside a `canvas-scroll-area[vertical]`. Tooltips are exempt because they hide on scroll. The restriction is lifted in a later release when popup components move to the browser top layer.
 
@@ -1049,6 +1190,9 @@ A non-searchable select dropdown matching the Canvas home-app. Click to open a m
 | `disabled` | boolean | false |
 | `required` | boolean | false |
 | `error` | string | none (shows error state when set) |
+| `empty-state` | string | `No options` |
+| `loading` | boolean | false |
+| `loading-label` | string | `Loading options` |
 
 **Options via `<canvas-option>` children.** The component reads `<canvas-option>` elements from its light DOM on connect. Each option has a `value` attribute and optional `label` attribute (used for trigger display text, falls back to textContent). Pre-select with the `selected` attribute. Disable with `disabled`.
 
@@ -1086,6 +1230,7 @@ A non-searchable select dropdown matching the Canvas home-app. Click to open a m
 | Event | When |
 |---|---|
 | `change` | When a new option is selected. Bubbles and composes through shadow DOM. |
+| `loading-cancel` | When the user disengages while `loading` is set and a click had queued an open. Bubbles and composes through shadow DOM. `event.detail.reason` is one of `outside`, `escape`, `blur`, `toggle`. |
 
 **Form participation.** Uses `ElementInternals` with `formAssociated: true`. The selected value is included in FormData.
 
@@ -1112,7 +1257,53 @@ When a dropdown shares a row with inputs, buttons, or other dropdowns, follow th
 
 **Keyboard navigation.** Click, Enter, or Space on the trigger opens the dropdown. ArrowUp and ArrowDown open the dropdown when closed and move the highlight through options when open. Enter selects the currently highlighted option and closes. Type-ahead, typing a letter jumps to the first option starting with that letter, typing multiple letters in quick succession narrows the match. Home and End jump to first and last when open. Tab closes the dropdown (selecting the highlighted option if any) and moves focus to the next focusable element. Escape closes without selecting and returns focus to the trigger. Clicking outside closes without selecting. Disabled options are skipped.
 
+**ARIA.** The trigger carries `role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded` reflecting open state, and `aria-controls` pointing at the listbox id generated via the `cuid` helper. The listbox carries `role="listbox"`, each option inside carries `role="option"` and a `cuid` generated id, and the trigger's `aria-activedescendant` points at the highlighted option's real id. The previous `opt-N` literal token is gone, screen readers now follow the highlight as it moves through the menu. The selected option carries `aria-selected="true"`. Disabled options carry `aria-disabled="true"` and are skipped during arrow navigation. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the cuid contract.
+
 **Menu behavior.** The dropdown menu must not exceed the viewport. If the menu would overflow below the trigger, it flips to open above. If it would overflow on the right, it aligns to the right edge of the trigger. Long option lists scroll within the menu rather than growing the menu beyond the viewport.
+
+**Empty state.** When no `<canvas-option>` children are present, opening the dropdown renders the empty state row inside the menu. The trigger never enters its open styling without visible panel content. Override the default "No options" copy with the `empty-state` attribute for plain text, or with a light DOM `<div slot="empty">` for rich content. Attribute wins over slot content when both are set.
+
+```html
+<canvas-dropdown label="Location" empty-state="No locations configured">
+</canvas-dropdown>
+
+<canvas-dropdown label="Location">
+  <div slot="empty">
+    <strong>No locations configured.</strong>
+    <a href="/settings/locations">Add a location</a>
+  </div>
+</canvas-dropdown>
+```
+
+**Loading state.** When options are fetched on first open or mid session, set the `loading` attribute while the fetch is in flight. The trigger swaps the value for an inline spinner and the `loading-label` copy (default `Loading options`), the cursor goes to `progress`, and `aria-busy="true"` is set on the trigger. The panel will not open while `loading` is set. A click on the trigger queues an internal pending open, a second click toggles it off. When `loading` flips to false the component re-reads `<canvas-option>` light DOM children, re-renders, and opens the panel only if a click was queued. Setting `loading` to true while the panel is already open captures the queued open, so the click then fetch flow opens automatically when data lands.
+
+The component dispatches a `loading-cancel` event when the user disengages while a click was queued. Disengagement means an outside click, Escape, blur, or a second trigger click, and `event.detail.reason` carries the cause as `outside`, `escape`, `blur`, or `toggle`. Blur is deferred by a microtask so an outside click reports `outside` rather than being preempted by `blur`. Tab away still reports `blur`. The component does not abort fetches itself, the consumer listens for the event and aborts its own request.
+
+```html
+<canvas-dropdown id="provider" placeholder="Select a provider"></canvas-dropdown>
+<script>
+  var dropdown = document.getElementById('provider');
+  var controller;
+  dropdown.addEventListener('click', function () {
+    if (dropdown.hasAttribute('loading')) return;
+    dropdown.setAttribute('loading', '');
+    controller = new AbortController();
+    fetch('/api/providers', { signal: controller.signal })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        dropdown.innerHTML = rows.map(function (row) {
+          return '<canvas-option value="' + row.id + '">' + row.name + '</canvas-option>';
+        }).join('');
+        dropdown.removeAttribute('loading');
+      })
+      .catch(function () { /* aborted or failed */ });
+  });
+  dropdown.addEventListener('loading-cancel', function () {
+    if (controller) controller.abort();
+    dropdown.removeAttribute('loading');
+  });
+</script>
+```
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
@@ -1144,6 +1335,9 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 | `disabled` | boolean | false |
 | `required` | boolean | false |
 | `error` | string | none (shows error state when set) |
+| `empty-state` | string | `No results` |
+| `loading` | boolean | false |
+| `loading-label` | string | `Loading options` |
 
 **Options via `<canvas-option>` children.** Same as `canvas-dropdown`. Each option has a `value` attribute and optional `label` attribute (falls back to textContent). Pre-select with `selected`. Disable with `disabled`. HTML content inside options is preserved in the menu.
 
@@ -1159,10 +1353,24 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 | Event | When |
 |---|---|
 | `change` | When a new option is selected. Bubbles and composes through shadow DOM. |
+| `loading-cancel` | When the user disengages while `loading` is set and a click had queued an open. Bubbles and composes through shadow DOM. `event.detail.reason` is one of `outside`, `escape`, `blur`, `toggle`. |
 
 **Form participation.** Uses `ElementInternals` with `formAssociated: true`. The selected value is included in FormData.
 
-**Type-ahead filtering.** Typing in the input filters options by case-insensitive substring match. A "No results" message appears when no options match. Filtering clears on selection or Escape.
+**Type-ahead filtering.** Typing in the input filters options by case-insensitive substring match. The empty state row appears when no options match the filter, or when the combobox opens with zero `<canvas-option>` children. Filtering clears on selection or Escape. Override the default "No results" copy with the `empty-state` attribute for plain text, or with a light DOM `<div slot="empty">` for rich content. Attribute wins over slot content when both are set.
+
+```html
+<canvas-combobox label="Patient" placeholder="Search patient by name or MRN"
+  empty-state="No patients found. Check spelling or try MRN.">
+</canvas-combobox>
+
+<canvas-combobox label="Patient" placeholder="Search patient by name or MRN">
+  <div slot="empty">
+    <strong>No patients found.</strong>
+    Check spelling or try MRN, or <a href="/patients/new">register a new patient</a>.
+  </div>
+</canvas-combobox>
+```
 
 **Viewport flip.** If the menu would overflow below the viewport, it flips to open above the input. Border radius adjusts automatically.
 
@@ -1170,9 +1378,11 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 
 **Keyboard navigation.** Click, Enter, or Space on the input opens the dropdown. ArrowUp and ArrowDown navigate through filtered options, Enter selects the highlighted option and closes, Escape restores the previous value and closes, Home and End jump to first and last, Tab selects the highlighted option and moves focus to the next element. Disabled options are skipped. Clicking outside closes without selecting.
 
-**ARIA.** The input carries `role="combobox"`, `aria-expanded` reflecting dropdown state, `aria-controls` pointing to the listbox id, and `aria-activedescendant` pointing to the currently highlighted option.
+**ARIA.** The input carries `role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded` reflecting dropdown state, `aria-controls` pointing at the listbox id, and `aria-activedescendant` pointing at the currently highlighted option. Listbox id and option ids are generated via the `cuid` helper so multiple combobox instances on the same page do not collide on the same id. The error span uses a `cuid` id and the inner input's `aria-describedby` points at it when `error` is set, matching the contract on `canvas-input`. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the cuid contract.
 
 **Menu behavior.** Same contract as `canvas-dropdown`. The menu must not exceed the viewport. If it would overflow below the input, it flips to open above. Long filtered lists scroll within the menu rather than growing beyond the viewport.
+
+**Loading state.** Same contract as `canvas-dropdown`. The editable input row is replaced with the spinner row while `loading` is set, so filtering as the user types is suppressed during loading. Same `loading`, `loading-label`, and `loading-cancel` API. See `canvas-dropdown` Loading state for the full contract and the copy paste sample.
 
 **Locked component.** No visual customization tokens. Border, focus border (#96c8da), shadow, item hover, and item selected styling are fixed to match the Canvas home-app.
 
@@ -1202,8 +1412,11 @@ A multi-value combobox with chip rendering, inline checkbox indicators, and sear
 | `disabled` | boolean | false |
 | `required` | boolean | false |
 | `error` | string | none (shows error state when set) |
+| `empty-state` | string | `No results` |
+| `loading` | boolean | false |
+| `loading-label` | string | `Loading options` |
 
-**Options via `<canvas-option>` children.** Same element as dropdown and combobox. Pre-select with `selected` attribute. Disable with `disabled`. Selected options are hidden from the menu and shown as chips in the trigger.
+**Options via `<canvas-option>` children.** Same element as dropdown and combobox. Pre-select with `selected` attribute. Disable with `disabled`. Selected options stay in the listbox tree and carry `aria-selected="true"` while also rendering as chips in the trigger area. The pre 4.29.0 behavior of hiding selected options via `display: none` is gone, screen readers now traverse the full option set and can hear selected state announced as the user moves through the list.
 
 **Properties**
 
@@ -1217,16 +1430,23 @@ A multi-value combobox with chip rendering, inline checkbox indicators, and sear
 | Event | When |
 |---|---|
 | `change` | When an option is selected or deselected. Bubbles and composes through shadow DOM. |
+| `loading-cancel` | When the user disengages while `loading` is set and a click had queued an open. Bubbles and composes through shadow DOM. `event.detail.reason` is one of `outside`, `escape`, `blur`, `toggle`. |
 
 **Form participation.** Uses `ElementInternals` with `formAssociated: true`. Each selected value is appended as a separate FormData entry under the same name.
 
 **Chip behavior.** Selected values render as chips with dismiss buttons in the trigger area. Clicking the X on a chip deselects that value. Chips have `aria-label="Remove [label]"` for accessibility.
+
+**ARIA.** The trigger carries `role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded` reflecting open state, and `aria-controls` pointing at the listbox id generated via the `cuid` helper. The listbox carries `role="listbox"` with `aria-multiselectable="true"`, each option inside carries `role="option"`, a `cuid` generated id, and `aria-selected` reflecting selected state. The trigger's `aria-activedescendant` points at the highlighted option's real id. Selected options stay in the listbox tree, the listbox is the source of truth for what is selected and the chip row is a visual mirror. Error span ids are generated via `cuid` and the input's `aria-describedby` points at the error span when `error` is set.
 
 **Keyboard navigation.** Same as combobox plus Backspace on an empty input deselects the last selected value. Arrow keys navigate visible options. Enter toggles the highlighted option. Escape closes the menu.
 
 **Viewport flip.** Same as combobox. Menu flips above if it would overflow the viewport.
 
 **Error state.** Same visual treatment as canvas-input and canvas-combobox.
+
+**Empty state.** Same contract as `canvas-combobox`. Shown when zero options remain unselected and unfiltered, when a filter matches nothing, or when the component has no `<canvas-option>` children. Override with the `empty-state` attribute or a light DOM `<div slot="empty">`. Attribute wins over slot content when both are set.
+
+**Loading state.** Same contract as `canvas-combobox`. Selected chips remain visible inside the trigger so the user can still remove them, only the input row swaps for the spinner row while `loading` is set. Same `loading`, `loading-label`, and `loading-cancel` API. See `canvas-dropdown` Loading state for the full contract.
 
 **Locked component.** No visual customization tokens.
 
@@ -1292,7 +1512,7 @@ Icon only triggers must carry their own `aria-label`. The default ghost trigger 
 
 **Focus return.** After a `select` event fires, the component calls `focus()` on the trigger. For the default trigger, this puts focus on the internal Actions button. For a slotted `canvas-button` trigger, focus lands on the slotted element's host, which forwards to the inner button via `delegatesFocus`. This focus return matches the Menu Button pattern and prevents focus from becoming orphaned on the closed menu. Code that listens for `select` should not call `focus()` on unrelated elements during that handler, the return is automatic.
 
-**ARIA.** Trigger, `aria-haspopup="menu"` and `aria-expanded="true"` or `aria-expanded="false"` are set automatically on the default trigger. Slotted triggers inherit this through the component, authors only supply `aria-label` when the trigger is icon only. Menu container, `role="menu"` and `tabindex="-1"` so it is reachable by programmatic focus but not part of the tab order. Option, `role="menuitem"` and `aria-disabled="true"` when the `disabled` attribute is set on the `canvas-option`. Divider, `role="separator"` on the `<li>` rendered for each `<hr>` child.
+**ARIA.** Trigger, `aria-haspopup="menu"` and `aria-expanded="true"` or `aria-expanded="false"` are set automatically on the default trigger. Slotted triggers inherit this through the component, authors only supply `aria-label` when the trigger is icon only. The trigger also carries `aria-controls` pointing at the menu container id generated via the `cuid` helper, and `aria-activedescendant` pointing at the highlighted menu item's real id when the menu is open. Menu container, `role="menu"` with a `cuid` generated id and `tabindex="-1"` so it is reachable by programmatic focus but not part of the tab order. Option, `role="menuitem"` with a `cuid` generated id and `aria-disabled="true"` when the `disabled` attribute is set on the `canvas-option`. Divider, `role="separator"` on the `<li>` rendered for each `<hr>` child. Selected highlight follows `aria-activedescendant`, the highlighted option does not actually take focus, focus stays on the menu container while the visual highlight and the activedescendant pointer move together. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the cuid contract.
 
 **Auto placement.** On open, the component measures the trigger position and the menu dimensions against the viewport. If the menu would clip the viewport bottom and more room exists above, `direction` computes to up, and `data-placement-direction="up"` is set on the inner root. If the menu would clip the viewport right and room exists to the left, `align` computes to end, and `data-placement-align="end"` is set. Explicit `direction` or `align` attributes disable auto flipping on the matching axis.
 
@@ -1424,9 +1644,9 @@ Popover is not modal. Outside click and Escape always dismiss. When the content 
 - `open()`, adds the `open` attribute.
 - `close()`, removes the `open` attribute.
 
-**Keyboard navigation.** On the trigger, Enter or Space opens the popover through native button activation. Focus moves to the first focusable element inside the popover, or to the surface itself when the body has no focusable content, so Escape and screen reader announcements still work. Escape closes the popover, returns focus to the trigger, and dispatches a `cancel` event before the `close` event. Tab escapes the popover to the next document tab stop, no focus trap. Content that needs modality and focus trap belongs in `canvas-modal`. Outside click closes the popover and dispatches `cancel`.
+**Keyboard navigation.** On the trigger, Enter or Space opens the popover through native button activation. Focus moves to the first focusable element inside the popover, or to the surface itself when the body has no focusable content, so Escape and screen reader announcements still work. Escape closes the popover, returns focus to the trigger that opened it, and dispatches a `cancel` event before the `close` event. Tab escapes the popover to the next document tab stop, no focus trap. Content that needs modality and focus trap belongs in `canvas-modal`. Outside click closes the popover, returns focus to the trigger, and dispatches `cancel`.
 
-**ARIA.** Trigger, `aria-haspopup="dialog"` and `aria-expanded="true"` or `aria-expanded="false"` are wired automatically on the slotted trigger element when open state changes. Icon only triggers must supply `aria-label` themselves. Surface, `role="dialog"`, `aria-modal="false"`, `aria-label` set from the component's `label` attribute. Without `label` the dialog has no accessible name, which is why the attribute is required.
+**ARIA.** Trigger, `aria-haspopup="dialog"` and `aria-expanded="true"` or `aria-expanded="false"` are wired automatically on the slotted trigger element when open state changes. The trigger also carries `aria-controls` pointing at the surface id generated via the `cuid` helper. Icon only triggers must supply `aria-label` themselves. Surface, `role="dialog"`, `aria-modal="false"`, and either `aria-label` set from the component's `label` attribute or `aria-labelledby` pointing at an id inside the surface body when the consumer has authored a visible heading. Without an accessible name the dialog has no meaningful announcement, which is why `label` is required when no `aria-labelledby` target exists. Focus is restored to the trigger on close, whether by attribute removal, outside click, Escape, or `close()` method call.
 
 **Placement.** On open, the component measures the trigger rectangle and the popover content against the viewport. Direction defaults to `down` when the content fits below the trigger. When it does not fit below, direction picks the side with more room. After the direction is chosen, `max-height` caps at the available space in that direction and the surface becomes scrollable when content exceeds the cap. Alignment defaults to `start` and flips to `end` when the start edge would clip the viewport. Explicit `direction` or `align` disable the corresponding axis auto flip. The surface is rendered with `position: fixed` so it escapes ancestor `overflow: hidden` and appears above normal stacking contexts.
 
@@ -1536,6 +1756,8 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 
 **Panel visibility.** Only one panel is visible at a time. Inactive panels get the `hidden` attribute. Active panels get the `visible` attribute for CSS targeting.
 
+**Panel overflow.** `canvas-tab-panel` is not a scroll container. Content flows naturally and is allowed to paint outside the panel's box (focus rings, box shadows, dropdown menus). When panel content needs to scroll inside a bounded region, wrap it in `canvas-scroll-area vertical` with an explicit `max-height` and `aria-label`. Same contract as `canvas-card-body` and `canvas-popover`. Do not place `overflow: auto` on the panel or on a raw div inside it. See [component-usage.md](component-usage.md) Scroll Areas.
+
 **Bold-shift prevention.** The component handles this internally. Tab buttons reserve width for the bold (700) state so sibling tabs do not shift when the active tab changes weight.
 
 **Badge support.** Set the `badge` attribute on a `canvas-tab` to show a count indicator next to the label.
@@ -1546,9 +1768,9 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 
 **Overflow fade.** When tabs overflow horizontally, CSS mask gradients fade the edges to indicate scrollable content.
 
-**Keyboard navigation.** Left and Right arrow keys move focus between tab items within the tab menu. Home jumps to the first tab, End jumps to the last tab. Enter or Space activates the focused tab and shows its panel. Focus follows selection.
+**Keyboard navigation.** Roving tabindex applies on the tab list. Tab from the document moves focus to the active tab, the inactive tabs carry `tabindex="-1"` so they are not Tab stops. Left and Right arrow keys move focus between tab items within the tablist with wrap at the ends. Home jumps to the first tab, End jumps to the last tab. Enter or Space activates the focused tab and shows its panel. The component runs in automatic activation mode by default, focus follows selection so arrow keys both move focus and show the matching panel. Tab from the active tab moves focus into the active panel.
 
-**ARIA.** Tab items use `role="tab"`, the container uses `role="tablist"`, and panels use `role="tabpanel"`. Active tab has `aria-selected="true"`, inactive tabs have `aria-selected="false"`. Each tab has `aria-controls` pointing to its panel ID. Each panel has `aria-labelledby` pointing to its tab ID.
+**ARIA.** Tab items use `role="tab"`, the container uses `role="tablist"`, and panels use `role="tabpanel"`. Active tab has `aria-selected="true"`, inactive tabs have `aria-selected="false"`. Each tab has a `cuid` generated id and `aria-controls` pointing at its panel id. Each panel has `aria-labelledby` pointing back at its tab id so screen readers announce the tab label as the panel name. The tablist container carries `tabindex="-1"` so it is not a separate Tab stop, the active tab is the only roving Tab stop into the group.
 
 **Initial selection.** The first tab with the `active` attribute becomes selected on mount. If no tab has `active`, the first tab is selected.
 
@@ -1622,9 +1844,9 @@ A collapsible section container with chevron animation, ARIA, and keyboard suppo
 
 **Multiple open.** Multiple items can be open simultaneously. There is no exclusive mode.
 
-**Keyboard.** Enter or Space on a focused title toggles that item. Focus is managed via `tabindex="0"` on the title element.
+**Keyboard.** The shadow trigger is a native `<button>` element, so Enter, Space, and click activate the same toggle path with no custom keyboard handling needed. Focus lands on the trigger button via the standard Tab order, no roving tabindex on the accordion group.
 
-**Accessibility.** Title has `role="button"` and `aria-expanded`. Content has `role="region"`.
+**Accessibility.** The shadow trigger renders as a native `<button>` rather than a `div role="button"`, so the browser handles role, focus, and keyboard activation natively. The button toggles `aria-expanded` between `true` and `false` and points `aria-controls` at the content id generated via the `cuid` helper. `canvas-accordion-content` carries `role="region"` and `aria-labelledby` pointing back at the trigger button id, so screen readers announce the title as the region name. `canvas-accordion` accepts an optional `aria-label` attribute that mirrors onto the group container so screen readers announce the accordion's purpose, useful when a page has multiple accordions side by side. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the cuid contract.
 
 **Container padding.** `canvas-accordion` and `canvas-accordion-item` carry no horizontal padding of their own. Top level accordions sit flush with the edges of their container and rely on the container to supply horizontal inset, the same way `h1` through `h5`, `<p>`, and `canvas-button` rely on their parent. This matches the `padding: 0` rule applied to heading elements in `canvas-plugin-ui.css` and keeps the accordion from double padding when it lives inside a `canvas-card`, a `sample-card`, or any shell that already pads its children. See DESIGN.md Container Padding Responsibility for the full rule.
 
@@ -1706,7 +1928,9 @@ The modal does not render on page load. Call `modal.open()` to show it and `moda
 - **medium** (52.5rem). Form dialogs, data entry, edit screens. Use when the modal has 4 or more form fields or needs multi-column rows.
 - **full** (calc(100vw - 6rem) width, min-height calc(100vh - 6rem)). Complex views needing maximum space. Document viewers, scheduling interfaces, data import screens.
 
-**Focus management.** On open, focus moves to the first focusable element. On dismiss, focus returns to the element that triggered the modal. Tab/Shift+Tab cycle within the modal. The component knows about canvas-button, canvas-input, canvas-dropdown, canvas-combobox, and canvas-multi-select for focus trapping.
+**Focus management.** On open, focus moves to the first focusable element inside the modal. On dismiss, focus returns to the element that triggered the modal. Tab and Shift Tab cycle within the modal. Focus trapping uses the shared `trapFocus` helper from [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers, which descends `composedPath` and open shadow roots when collecting tabbables, so focus traps correctly even when the focusable target lives inside a `canvas-input`, a `canvas-dropdown`, or any other web component shadow root. Escape calls `dismiss()` so the same release path runs on keyboard close.
+
+**ARIA.** The modal carries `role="dialog"` and `aria-modal="true"`. When `canvas-modal-header` is present, the header receives a `cuid` generated id and the modal's `aria-labelledby` points at it so screen readers announce the header text as the dialog name. Without a header, set `aria-label` on the modal directly. While the modal is open, the component sets `inert` on every sibling of the modal under the `<body>` element, hiding the background from assistive technology and the keyboard until the modal closes. `canvas-modal-content` exposes the scroll region with an accessible name when the body content is long enough to overflow. `canvas-modal-footer` carries `role="group"` and either inherits an accessible name from the modal or accepts an explicit `aria-label` such as `Form actions`.
 
 **Backdrop.** Two-layer backdrop prevents overscroll bounce. The dark overlay is fixed at z-index 1000. The scroll layer sits at z-index 1001 with `overflow-y: auto`. Background scroll is disabled while the modal is open.
 
@@ -1786,6 +2010,8 @@ Combine modifier attributes on the same `canvas-table` element as needed.
 ```
 
 **Row state colors.** Add `positive`, `warning`, or `negative` to individual rows for clinical status indication (lab results, claim outcomes). States are mutually exclusive with priority order: positive, warning, negative, active.
+
+**ARIA.** The component synthesizes the native HTML table role tree on top of its shadow DOM layout. `canvas-table` carries `role="table"`, `canvas-table-head` and `canvas-table-body` carry `role="rowgroup"`, `canvas-table-row` carries `role="row"`, and `canvas-table-cell` carries `role="columnheader"` when it sits inside `canvas-table-head` or `role="cell"` when it sits inside `canvas-table-body`. The role wrappers use `display: contents` so the existing visual layout, padding, and row state colors keep rendering through, the same pattern `canvas-calendar` uses for its grid rows. Always provide `aria-label` or `aria-labelledby` on `canvas-table` so screen readers announce the table's purpose. Sortable column headers carry `aria-sort` of `ascending`, `descending`, or `none` reflecting the current sort state. Row state colors (`positive`, `warning`, `negative`) cannot be the only signal of state, pair them with a visible badge or text label inside the row, since color alone fails WCAG 2.2 AA. See [component-usage.md](component-usage.md) for the badge plus row state pattern.
 
 **Inline actions.** Use the `actions` attribute on the last cell in a row to right-align action buttons and prevent wrapping.
 
@@ -1889,7 +2115,7 @@ The `change` event is a single listener path when you do not care to distinguish
 
 **Cross list cancel.** `beforemove`, `beforereorder`, and `beforechange` are cancelable. Calling `e.preventDefault()` in a handler snaps the item back to its source position and suppresses the success events. Always pair a cancel with visible user feedback, a toast or inline message. A silent cancel reads as a visual glitch to the user.
 
-**ARIA.** A shared polite live region announces every move. Label lists explicitly so announcements read naturally. Give each participating list an `aria-labelledby` pointing at its column heading, or an `aria-label` with the column name. Without a label, the announcer falls back to the list's `id`, then to the generic word "list". Within list moves announce "Moved item to position N of M in `<label>`.". Cross list moves announce "Moved item from `<source label>` to `<destination label>`, position N of M.".
+**ARIA.** A shared polite live region announces every move. Label lists explicitly so announcements read naturally. Give each `canvas-sortable-list` an `aria-labelledby` pointing at its column heading, or an `aria-label` with the column name. Without a label, the announcer falls back to the list's `id`, then to the generic word "list", which reads poorly in cross list announcements, so always provide a real label. Within list moves announce "Moved item to position N of M in `<label>`.". Cross list moves announce "Moved item from `<source label>` to `<destination label>`, position N of M.". Each `canvas-sortable-item` exposes the drag handle with an `aria-label` that names the item, so screen readers say "drag handle, Update coverage form" rather than the generic "drag handle". Items inherit the list's label for the announcement context, so the handle alone names the item and the live region adds the list and position.
 
 **Single drop vs bulk changes.** For small lists and fast backends, fire an API call on every `move` or `reorder`. For larger boards, accumulate `change` events in a `Map` keyed by id and flush on Save or after a debounced timer. The Map collapses repeated moves of the same item so only the final position ships in one payload.
 
@@ -1943,6 +2169,8 @@ A two-column layout with a fixed-width sidebar and flexible content area. Regist
 - **wide** (400px). Expanded sidebar for content-heavy navigation.
 
 **Slots.** All three elements have default slots accepting any content.
+
+**ARIA.** `canvas-sidebar` defaults to `role="complementary"` so screen readers list it as a sidebar landmark. `canvas-content` defaults to `role="main"` so it appears as the main landmark in the document outline. Both elements accept an optional `aria-label` for the multi region case where the page hosts more than one sidebar or more than one main, for example a multi pane tool with a shared sidebar plus a per pane sidebar. When a page has exactly one main and one sidebar, the default labels read fine without an explicit `aria-label`. When the consumer needs a different role, for example `role="navigation"` on a sidebar that holds primary navigation, set the `role` attribute on the host element directly and the default does not apply.
 
 **Overflow.** Both sidebar and content areas scroll vertically independently. The sidebar has custom webkit scrollbar styling (8px, semi-transparent thumb).
 
@@ -2012,6 +2240,8 @@ A loading spinner matching the Canvas home-app. Renders a spinning circular bord
 
 **Inverted mode.** For use on dark or colored backgrounds. Switches the track to rgba(255, 255, 255, 0.15) and the arc to white. The dark backdrop automatically inverts colors without needing the `inverted` attribute.
 
+**ARIA.** The host carries `role="status"`, `aria-live="polite"`, and `aria-busy="true"` so screen readers announce the loading state without interrupting the user. The default `aria-label` is `Loading`, override it with the `aria-label` attribute or set the `text` attribute to render a visible label that doubles as the accessible name. The component also reads the `reduceMotion` helper at construction time, when the helper returns true the spinning arc renders as a static partial circle rather than animating, and the `aria-label` text remains the only signal that work is in flight. The shadow style block concatenates `PREFERS_REDUCED_MOTION_CSS` so users who request reduced motion through CSS only see the same static affordance. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the reduceMotion and PREFERS_REDUCED_MOTION_CSS contracts.
+
 **Events.** None.
 
 **Component tokens**
@@ -2069,7 +2299,7 @@ A horizontal fill bar matching the Canvas home-app. Shows completion percentages
 
 **Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Canvas home-app active progress animation.
 
-**ARIA.** The bar element has `role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, and `aria-valuemax="100"`.
+**ARIA.** The bar element carries `role="progressbar"`, `aria-valuemin="0"`, and `aria-valuemax="100"`. `aria-valuenow` is set to the numeric value when the value is determinate and is omitted when the value is indeterminate, so screen readers announce an indeterminate progressbar correctly rather than reading a stale or default zero. Always provide an accessible name via `aria-label` or `aria-labelledby` so screen readers announce what is in progress, for example `Upload progress`. When `label` is set, the visible percentage text doubles as a sighted progress indicator but does not replace the accessible name, screen readers still need the `aria-label` since the visible text is rendered inside the bar fill.
 
 **Component tokens**
 
@@ -2114,7 +2344,9 @@ An infrastructure component that activates a global tooltip system. Place it onc
 | `data-canvas-tooltip-inverted` | boolean | false (dark background with white text) |
 | `data-canvas-tooltip-delay` | number (ms) | 0 |
 
-**How it works.** On connect, the component queries all `[data-canvas-tooltip]` elements and attaches `mouseenter`/`mouseleave` listeners to each one. A MutationObserver watches for dynamically added elements. On hover, it reads the text and attributes, positions a shared floating div relative to the trigger, and shows it. On leave, hides it. Only one tooltip is visible at a time.
+**How it works.** On connect, the component queries all `[data-canvas-tooltip]` elements and attaches `mouseenter`, `mouseleave`, `focus`, and `blur` listeners to each one. A MutationObserver watches for dynamically added elements. On hover or keyboard focus, the component reads the text and attributes, positions a shared floating div relative to the trigger, and shows it. On leave or blur, hides it. Only one tooltip is visible at a time. On `disconnectedCallback`, the component disconnects the MutationObserver and removes every event listener it attached, fixing the listener stacking leak from prior versions where re inserting the tooltip stacked observers without cleanup.
+
+**ARIA.** Tooltips show on keyboard focus as well as hover, so users who navigate by Tab see the same surface sighted users see on hover. Each trigger receives an `aria-describedby` pointing at the shared tooltip surface id, so screen readers announce the tooltip text after the trigger's own accessible name. Escape hides the tooltip without dismissing the underlying focus or hover state, matching the WAI ARIA tooltip pattern. Tooltip text is for supplementary context only, never put critical information that the trigger needs to convey on its own into a tooltip alone, since touch users on tablets cannot hover.
 
 **Viewport flipping.** If the tooltip would overflow the viewport edge on the requested side, it flips to the opposite side automatically.
 

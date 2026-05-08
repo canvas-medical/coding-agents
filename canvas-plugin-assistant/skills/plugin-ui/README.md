@@ -8,7 +8,7 @@ The skill activates automatically when the task involves plugin HTML or CSS. You
 
 The skill produces complete HTML pages ready to serve from a Canvas plugin. All UI is built from native web components with Shadow DOM scoped styles. Plugin-specific CSS goes in a `<style>` tag using token references. For the full loading pattern and SimpleAPI routes, see [references/setup.md](references/setup.md).
 
-Canvas ships a closed component set covering button, button-group, badge, chip, input, textarea, radio, checkbox, toggle, banner, card, inline-row, dropdown, combobox, multi-select, menu-button, popover, tabs, accordion, modal, table, sortable-list, sidebar-layout, scroll-area, loader, progress, tooltip, and divider. The authoritative component list lives in [references/web-components.md](references/web-components.md).
+Canvas ships a closed component set covering button, button-group, badge, chip, input, date-input, calendar, textarea, radio, checkbox, toggle, banner, card, inline-row, dropdown, combobox, multi-select, menu-button, popover, tabs, accordion, modal, table, sortable-list, sidebar-layout, scroll-area, loader, progress, tooltip, and divider. The authoritative component list lives in [references/web-components.md](references/web-components.md).
 
 ## Getting Good Results
 
