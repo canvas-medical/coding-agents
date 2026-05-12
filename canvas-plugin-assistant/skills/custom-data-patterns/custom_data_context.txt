@@ -740,7 +740,68 @@ If a production namespace has orphaned columns from removed fields, or tables fr
 
 ---
 
-## 14. Using `db_index=True` on Fields
+## 14. CustomModels Defined in `models.py` Instead of a `models/` Directory
+
+CustomModel subclasses **must** be placed inside a `models/` directory (a Python package) under the plugin's top-level directory. If they are placed in a single `models.py` file instead, database migrations will not be generated and the tables will not be created. The plugin will fail at runtime when it tries to query a table that doesn't exist.
+
+This does **not** apply to ModelExtension proxy classes (e.g., `CustomPatient(Patient, ModelExtension)`), which don't create tables and can be defined anywhere.
+
+### BAD — Single `models.py` file
+
+```
+my_plugin/
+├── CANVAS_MANIFEST.json
+├── models.py              # ← WRONG: migrations will not be applied
+├── protocols/
+│   └── my_handler.py
+└── tests/
+```
+
+```python
+# models.py — this file will be ignored by the migration system
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import TextField
+
+class TaskLog(CustomModel):
+    status = TextField()
+    description = TextField()
+```
+
+### GOOD — `models/` directory with `__init__.py`
+
+```
+my_plugin/
+├── CANVAS_MANIFEST.json
+├── models/
+│   ├── __init__.py        # re-exports model classes
+│   └── task_log.py        # one model per file (recommended)
+├── protocols/
+│   └── my_handler.py
+└── tests/
+```
+
+```python
+# models/task_log.py
+from canvas_sdk.v1.data.base import CustomModel
+from django.db.models import TextField
+
+class TaskLog(CustomModel):
+    status = TextField()
+    description = TextField()
+```
+
+```python
+# models/__init__.py
+from my_plugin.models.task_log import TaskLog
+```
+
+### How to detect
+
+If the plugin uses CustomModel and you see a `models.py` file (not a `models/` directory), flag it immediately — the plugin will fail to install.
+
+---
+
+## 15. Using `db_index=True` on Fields
 
 Do not use `db_index=True` as a field parameter — it is not supported and **will not create an index**. The field attribute is silently ignored, so the developer may believe their column is indexed when it is not. Instead, declare indexes explicitly in `class Meta` using `Index`.
 
@@ -769,3 +830,37 @@ class TaskLog(CustomModel):
 ```
 
 All indexes should be declared in one place (`Meta.indexes`), making it easy to see the full indexing strategy at a glance.
+
+---
+
+## 16. Importing from Internal SDK Modules
+
+Always import SDK classes from the public package path (`canvas_sdk.v1.data`), not from internal submodules. Importing from internal modules like `canvas_sdk.v1.data.custom_attribute` creates a hard coupling to the SDK's current file layout. If the SDK moves a class to a different file — which is a non-breaking change when the public re-export stays the same — plugins using internal paths will break.
+
+This applies to `AttributeHub`, `CustomModel`, and any other class the SDK re-exports from `canvas_sdk.v1.data` or `canvas_sdk.v1.data.base`.
+
+### BAD — Importing from internal module
+
+```python
+from canvas_sdk.v1.data.custom_attribute import AttributeHub
+```
+
+### GOOD — Importing from public package
+
+```python
+from canvas_sdk.v1.data import AttributeHub
+```
+
+### Other common internal paths to avoid
+
+```python
+# BAD
+from canvas_sdk.v1.data.patient import Patient
+from canvas_sdk.v1.data.note import Note
+from canvas_sdk.v1.data.condition import Condition
+
+# GOOD
+from canvas_sdk.v1.data import Patient, Note, Condition
+```
+
+The rule is simple: if `canvas_sdk.v1.data` re-exports it, import it from there.

@@ -1,0 +1,598 @@
+# Canvas Provider Companion Application Patterns — Detailed Reference
+
+This document is the long-form companion to `SKILL.md`. It collects conventions
+for building Canvas **provider companion** plugins. Provider companion plugins
+render inside an iframe modal on a mobile-oriented surface launched from the
+companion harness.
+
+The three available `ApplicationScope` values for these plugins:
+
+| Scope | Surface | Event context available |
+|---|---|---|
+| `provider_companion_global` | companion main page | (none) |
+| `provider_companion_patient_specific` | patient detail page | `patient.id` |
+| `provider_companion_note_specific` | inside an expanded note | `patient.id`, `note.id` |
+
+Do NOT document scopes a plugin doesn't use in that plugin's README.
+
+---
+
+## 1. Layout and Structure
+
+### Inner-package convention
+
+```
+extensions/<plugin_name>/
+├── <plugin_name>/                  # inner package (snake_case, matches manifest name)
+│   ├── CANVAS_MANIFEST.json
+│   ├── README.md                   # leads with end-user usage, then dev content
+│   ├── LICENSE                     # MIT (or matching the target repo)
+│   ├── applications/
+│   │   └── <name>_app.py           # Application subclass; on_open → LaunchModalEffect
+│   ├── handlers/
+│   │   └── <name>_api.py           # SimpleAPI subclass
+│   ├── static/
+│   │   ├── index.html              # SPA shell
+│   │   ├── main.js                 # vanilla JS, no framework
+│   │   └── styles.css              # mobile-first, Material-style cards
+│   └── assets/
+│       ├── icon.png                # 256×256 PNG
+│       └── <name>.svg              # source SVG (committed alongside PNG)
+└── tests/                          # at container level; NOT inside the inner package
+    ├── conftest.py                 # adds container dir to sys.path
+    ├── applications/
+    │   └── test_<name>_app.py
+    └── handlers/
+        └── test_<name>_api.py
+```
+
+Rules:
+- `tests/` MUST be at the plugin container level, sibling to the inner package
+  (not inside it). Otherwise the inner package's sandbox-relevant imports and
+  the test file imports collide.
+- `tests/` subdirectories MUST NOT contain `__init__.py`. When more than one
+  plugin's tests are collected in a single pytest run, those `__init__.py`
+  files cause `ImportPathMismatchError` on `tests.conftest`.
+- One plugin = one purpose. Do not bundle a schedule view and a task list in
+  the same plugin because they both happen to be companion-scope.
+
+### Manifest essentials
+
+```json
+{
+  "sdk_version": "0.1.4",
+  "plugin_version": "0.0.1",
+  "name": "provider_my_thing_companion",
+  "description": "…end-user-oriented one-liner…",
+  "url_permissions": [],
+  "components": {
+    "applications": [
+      {
+        "class": "provider_my_thing_companion.applications.my_thing_app:MyThingApp",
+        "name": "My Thing",
+        "description": "…",
+        "scope": "provider_companion_global",
+        "icon": "assets/icon.png"
+      }
+    ],
+    "handlers": [
+      {
+        "class": "provider_my_thing_companion.handlers.my_thing_api:MyThingAPI",
+        "description": "…",
+        "data_access": { "event": "", "read": [], "write": [] }
+      }
+    ],
+    "commands": [], "content": [], "effects": [], "views": []
+  },
+  "secrets": [],
+  "tags": {},
+  "references": [],
+  "license": "MIT",
+  "diagram": false,
+  "readme": "./README.md"
+}
+```
+
+Companion plugins typically have empty `data_access` lists because reads go
+through the SDK ORM surface (not event subscriptions) and writes go through
+effects (not direct ORM).
+
+---
+
+## 2. Application → Handler Wiring
+
+### The `Application` class is a one-liner that emits `LaunchModalEffect`
+
+```python
+# applications/my_thing_app.py
+from canvas_sdk.effects import Effect
+from canvas_sdk.effects.launch_modal import LaunchModalEffect
+from canvas_sdk.handlers.application import Application
+
+
+class MyThingApp(Application):
+    """Global companion app."""
+
+    def on_open(self) -> Effect:
+        return LaunchModalEffect(
+            url="/plugin-io/api/provider_my_thing_companion/app/",
+            target=LaunchModalEffect.TargetType.DEFAULT_MODAL,
+        ).apply()
+```
+
+For patient-scoped and note-scoped plugins, read the relevant keys off
+`self.event.context` and include them in the URL query string so the
+`SimpleAPI` can pick them up from `self.request.query_params`:
+
+```python
+patient_id = self.event.context.get("patient", {}).get("id", "")
+return LaunchModalEffect(
+    url=f"/plugin-io/api/my_thing/app/?patient_id={patient_id}",
+    target=LaunchModalEffect.TargetType.DEFAULT_MODAL,
+).apply()
+```
+
+DO NOT read context keys your scope doesn't provide. A global-scope plugin
+that tries `self.event.context["patient"]["id"]` will raise `KeyError`.
+
+### The `SimpleAPI` serves the shell + JSON
+
+Provider companion handlers MUST inherit from `StaffSessionAuthMixin`. Do NOT
+write a custom `authenticate` that only checks `credentials.logged_in_user is
+not None` — that predicate is true for both staff and patient sessions, so a
+patient with a valid Canvas session could call the endpoint directly. The
+mixin raises `InvalidCredentialsError` when the session isn't staff.
+
+```python
+from canvas_sdk.handlers.simple_api import (
+    SimpleAPI, StaffSessionAuthMixin, api,
+)
+
+class MyThingAPI(StaffSessionAuthMixin, SimpleAPI):
+    PREFIX = "/app"
+
+    # No authenticate() override — the mixin provides staff-only auth.
+
+    @api.get("/")
+    def index(self) -> list[Response | Effect]:
+        return [HTMLResponse(render_to_string("static/index.html", {}))]
+
+    @api.get("/data")
+    def data(self) -> list[Response | Effect]:
+        staff_id = self.request.headers["canvas-logged-in-user-id"]
+        # query + serialize + return JSONResponse
+        ...
+
+    @api.get("/main.js")
+    def main_js(self) -> list[Response | Effect]:
+        return [Response(render_to_string("static/main.js").encode(),
+                         status_code=HTTPStatus.OK, content_type="text/javascript")]
+
+    @api.get("/styles.css")
+    def styles_css(self) -> list[Response | Effect]:
+        return [Response(render_to_string("static/styles.css").encode(),
+                         status_code=HTTPStatus.OK, content_type="text/css")]
+```
+
+`StaffSessionAuthMixin` comes first in the MRO so its `authenticate` wins over
+`SimpleAPI`'s default. Don't rely on a per-row `mine` filter as a substitute
+for auth — a filter that can be toggled off (for example `mine=0` to browse the
+practice-wide list) exposes every row in the table to whoever is logged in.
+
+For tests, assert both cases explicitly:
+
+```python
+from canvas_sdk.handlers.simple_api.exceptions import InvalidCredentialsError
+
+def test_staff_session_passes():
+    api = _make_api()
+    creds = MagicMock(logged_in_user={"id": STAFF_UUID, "type": "Staff"})
+    assert api.authenticate(creds) is True
+
+def test_patient_session_rejected():
+    api = _make_api()
+    creds = MagicMock(logged_in_user={"id": STAFF_UUID, "type": "Patient"})
+    with pytest.raises(InvalidCredentialsError):
+        api.authenticate(creds)
+```
+
+The logged-in staff UUID is always in the `canvas-logged-in-user-id` header
+on requests into `/plugin-io/`. Prefer that over `Staff.objects.get(...)`
+unless you need other fields from the Staff record.
+
+---
+
+## 3. Data Access
+
+### Use `fk__id=<uuid>` (double underscore) when filtering by public UUID
+
+Canvas SDK models use an integer `dbid` as the primary key and a separate
+`id` UUID. `<fk>_id=<value>` (single underscore, the Django shortcut) targets
+`dbid` and raises at query evaluation:
+
+    ValueError: Field 'dbid' expected a number but got '<uuid-string>'
+
+Use the explicit traversal form instead:
+
+```python
+# GOOD
+Appointment.objects.filter(provider__id=staff_uuid)
+Task.objects.filter(assignee__id=staff_uuid)
+
+# BAD — expects integer dbid, blows up on UUID
+Appointment.objects.filter(provider_id=staff_uuid)
+```
+
+If you need the integer PK, fetch first: `Staff.objects.get(id=staff_uuid).dbid`.
+
+### N+1 discipline
+
+- `select_related("patient", "note_type")` on any list that renders FK fields.
+- `prefetch_related("labels")` for reverse-M2M or reverse-FK relations.
+- `.annotate(comment_count=Count("comments"))` when the list renders a count
+  (like "💬 3"); never call `task.comments.count()` per row.
+
+### Mutations via SDK effects, never `.save()`
+
+The plugin sandbox forbids direct ORM writes. All state changes must go
+through SDK effect classes:
+
+```python
+from canvas_sdk.effects.task import AddTaskComment, UpdateTask
+from canvas_sdk.effects.task import TaskStatus as EffectTaskStatus
+
+return [
+    UpdateTask(id=str(task.id), status=EffectTaskStatus.COMPLETED).apply(),
+    JSONResponse({"status": "COMPLETED"}, status_code=HTTPStatus.ACCEPTED),
+]
+```
+
+Effects are applied **asynchronously** by the platform. If the client re-fetches
+immediately after a mutation it may still see pre-change state. Prefer an
+optimistic client update plus a later refetch rather than blocking the UI.
+
+### Server is the source of truth for permissions
+
+Serialize server-side booleans like `is_mine`, `can_complete`,
+`can_assign_to_me`. The client uses those flags to show or hide buttons;
+the mutating endpoint re-verifies before emitting the effect (e.g., return 403
+if the caller isn't the assignee). Do not trust client-sent intent.
+
+---
+
+## 4. Client UI
+
+### One HTML shell + one `main.js` + one `styles.css`
+
+No framework, no bundler, no build step. The HTML shell contains a minimal
+structure (header chrome, filter bar, content slot) and the JS module handles
+state and rendering by innerHTML'ing into the content slot.
+
+### Material-style cards
+
+- `border-radius: 4px` (not 10px — cards look more UI-library and less "toy").
+- Layered `box-shadow` for elevation (at rest and an elevated state on
+  expand/active).
+- White background on a light gray page background.
+- Consistent neutral + single accent color per plugin.
+- No borders on cards — elevation alone defines boundaries.
+
+Baseline card style:
+
+```css
+.card {
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 12px 14px;
+  box-shadow:
+    0 2px 1px -1px rgba(0, 0, 0, 0.10),
+    0 1px 1px 0 rgba(0, 0, 0, 0.08),
+    0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  transition: box-shadow 150ms ease;
+}
+
+.card.expanded {
+  box-shadow:
+    0 3px 3px -2px rgba(0, 0, 0, 0.12),
+    0 3px 4px 0 rgba(0, 0, 0, 0.08),
+    0 1px 8px 0 rgba(0, 0, 0, 0.08);
+}
+```
+
+### Expand affordance is visible
+
+Tap-to-expand cards MUST have a visible chevron (or equivalent affordance)
+that rotates 180° on expand. Do not rely on "users will figure it out."
+
+```html
+<svg class="expand-caret" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+```
+
+```css
+.expand-caret { width: 20px; height: 20px; transition: transform 150ms ease; }
+.card.expanded .expand-caret { transform: rotate(180deg); }
+```
+
+### Scroll isolation
+
+Only the content region scrolls; header, filter bar, and action chrome stay
+pinned. Achieve this with a full-height flex `body`:
+
+```css
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-header, .filter-bar, .date-nav { flex-shrink: 0; }
+.content { flex: 1; min-height: 0; overflow-y: auto; }
+```
+
+Consequence: `scrollIntoView` on a content child scrolls only `#content`,
+leaving top chrome visible.
+
+### Empty states are explicit; zero-counts are suppressed
+
+- Write "No appointments" / "No comments yet" as italicized empty-state text.
+- Do NOT render "0 comments" or similar zero-count placeholders. A task with
+  no comments shows no comment indicator at all.
+
+### Deep links break out of the iframe
+
+Navigating to any other Canvas surface (patient page, note, chart) MUST use
+`target="_top"`:
+
+```html
+<a class="patient-link" target="_top"
+   href="/companion/patient/<uuid>/">Jane Doe</a>
+```
+
+For tap-to-expand cards that contain such a link, stop propagation on the
+link click so tapping it doesn't also toggle the card expansion:
+
+```javascript
+row.querySelectorAll(".patient-link").forEach((a) => {
+    a.addEventListener("click", (e) => e.stopPropagation());
+});
+```
+
+### Timezone handling
+
+Client:
+
+```javascript
+const range = { start: stripTime(new Date()), end: ... };
+fetch(API_BASE + "/data?start=" +
+    encodeURIComponent(range.start.toISOString()) +
+    "&end=" + encodeURIComponent(range.end.toISOString()));
+```
+
+Server:
+
+```python
+from datetime import datetime
+
+def _parse_iso(value: str) -> datetime:
+    """Accepts trailing 'Z' as UTC."""
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+start = _parse_iso(self.request.query_params["start"])
+```
+
+Do NOT import `django.utils.timezone` — not allowed in the plugin sandbox.
+Use `datetime.fromisoformat` + timezone-aware datetimes from the client.
+
+---
+
+## 5. Icons
+
+- Author as SVG. Check in both the `.svg` source and the rendered `.png`.
+- Render at **256×256**, not the `icon-generation` skill's 48×48 default —
+  the 48×48 output looks fuzzy in the launcher. Invoke cairosvg directly:
+  `uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(
+  bytestring=open(SVG,'rb').read(), write_to=PNG,
+  output_width=256, output_height=256)"`
+- Manifest still points at the PNG (`assets/icon.png`).
+- Use a distinct accent color per plugin so adjacent icons in the launcher
+  don't visually blur together.
+- **Nice to carry the icon's accent color through the UI.** The launcher
+  icon is the user's first impression; when they open the modal, reusing
+  the icon's primary color as the plugin's primary UI accent (active filter
+  chips, primary buttons, link underlines, status pills for the default/
+  primary state, focus rings, native `accent-color`) makes the modal feel
+  like the same thing they tapped. It's a polish touch, not a hard
+  requirement — but shipping a blue icon with an amber UI (or vice versa)
+  reads as visually inconsistent.
+
+---
+
+## 6. Testing
+
+Follow the `testing` skill's discipline (100% coverage target, mock
+verification). Companion-plugin specifics:
+
+- Instantiate `SimpleAPI` / `Application` subclasses with `Cls.__new__(Cls)`
+  to bypass pydantic init, then attach `.request` manually as a
+  `SimpleNamespace`.
+- Use `SimpleNamespace` for data-model stand-ins (Task, Appointment,
+  Patient, Staff, label, comment). Avoid MagicMock for plain data because
+  `name=` is a reserved MagicMock kwarg and `.configure_mock(name=...)` is a
+  foot-gun.
+- For `Task.DoesNotExist` / equivalent, patch `Task.objects` (not the Task
+  class) so the real exception class is still available to
+  `.side_effect = Task.DoesNotExist` and `except Task.DoesNotExist`.
+- Inspect emitted effects via `effect.type` (an `EffectType` enum) and
+  `json.loads(effect.payload)["data"]` — that's the `{ "data": values }`
+  dict `_BaseEffect.apply()` serializes.
+- Run tests from `canvas-plugins`'s uv env — it already has Django configured
+  via `pytest-django` auto-discovery and all `canvas_sdk` deps installed:
+  `cd ~/src/canvas-plugins && uv run pytest <plugin>/tests --cov=<pkg>
+  --cov-branch`. For multiple plugins in one run, pass
+  `--import-mode=importlib` and keep the `tests/` subdirectories free of
+  `__init__.py`.
+
+---
+
+## 7. Realtime Push via WebSocket
+
+Companion apps often want the modal's view to update without a poll (new
+message, task assigned, appointment checked in, etc.). Canvas supports
+this through a pair of SDK primitives:
+
+- `canvas_sdk.handlers.simple_api.websocket.WebSocketAPI` — a `BaseHandler`
+  subclass your plugin registers; its `authenticate()` decides whether to
+  accept a client WebSocket connection.
+- `canvas_sdk.effects.simple_api.Broadcast(channel, message)` — an effect
+  any handler in the plugin can emit to deliver a JSON message to every
+  client connected on the given channel.
+
+### URL and channel naming
+
+The server's routing for plugin WebSocket connections is a strict
+regex:
+
+```
+plugin-io/ws/<plugin_name>/<channel_name>/$
+```
+
+- The trailing `/` is **required**. Without it the platform responds
+  `ValueError: No route found for path` and the connection never opens.
+- `plugin_name` matches `\w+` (letters, digits, underscore — no hyphens).
+- `channel_name` matches `[\w-]+` (word chars plus hyphens; no dots,
+  colons, slashes).
+
+The client picks the channel name via the URL path — the platform does
+not assign one. That makes the channel name deterministic and side-steps
+the need for a channel registry: pick a scheme like `staff-<uuid>` or
+`team-<id>` that both the client (building the URL) and the broadcasting
+handler (emitting `Broadcast(channel=...)`) can independently compute
+from data they already have.
+
+### Authentication
+
+`WebSocketAPI.authenticate()` returns `True` to accept (`AcceptConnection`)
+or `False` to reject (`DenyConnection`). Combine a staff-session check
+with a channel-name match so a client can only subscribe to their own
+channel:
+
+```python
+from canvas_sdk.handlers.simple_api.websocket import WebSocketAPI
+
+class MyWebSocket(WebSocketAPI):
+    def authenticate(self) -> bool:
+        user = self.websocket.logged_in_user
+        if not user or user.get("type") != "Staff":
+            return False
+        return self.websocket.channel == f"staff-{user.get('id', '')}"
+```
+
+The WebSocketAPI handler is registered in the manifest's `handlers` list
+like any other.
+
+### Broadcasting
+
+A separate handler — typically a `BaseHandler` subscribed to a data event
+(`MESSAGE_CREATED`, `TASK_COMPLETED`, `APPOINTMENT_CHECKED_IN`, …) — emits
+`Broadcast(channel, message)` effects:
+
+```python
+from canvas_sdk.effects.simple_api import Broadcast
+from canvas_sdk.events import EventType
+from canvas_sdk.handlers.base import BaseHandler
+
+class NewMessageNotifier(BaseHandler):
+    RESPONDS_TO = [EventType.Name(EventType.MESSAGE_CREATED)]
+
+    def compute(self) -> list[Effect]:
+        # load the created Message, figure out the staff recipient, then:
+        return [Broadcast(
+            channel=f"staff-{staff_uuid}",
+            message={"type": "new_message", "patient_id": "..."},
+        ).apply()]
+```
+
+### Client unwraps the envelope
+
+The `Broadcast` effect's `message` dict is NOT delivered to the browser
+as-is. The platform's `PluginWsConsumer` wraps it under a `"message"` key
+on the wire:
+
+```json
+{"message": {"type": "new_message", "patient_id": "..."}}
+```
+
+So the client's `onmessage` handler must unwrap before inspecting:
+
+```javascript
+socket.addEventListener("message", (e) => {
+    const envelope = JSON.parse(e.data);
+    const payload = envelope && envelope.message;
+    if (!payload || payload.type !== "new_message") return;
+    // now use payload.patient_id, etc.
+});
+```
+
+Symptom of forgetting to unwrap: the WebSocket connects, broadcasts
+arrive, but your `payload.type` check silently fails because
+`payload.type` is undefined (you were reading `envelope.type`).
+
+### Rendering the URL
+
+Build the WebSocket URL server-side when rendering the HTML shell so
+the client doesn't need to know its own UUID. Pass it into the template
+context:
+
+```python
+context = {
+    "ws_url": f"/plugin-io/ws/{PLUGIN_NAME}/staff-{staff_uuid}/",
+}
+```
+
+```html
+<meta name="ws-url" content="{{ws_url}}">
+```
+
+```javascript
+const path = document.querySelector('meta[name="ws-url"]').getAttribute("content");
+const scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
+const socket = new WebSocket(scheme + "//" + window.location.host + path);
+```
+
+### Reconnect
+
+Browsers eventually drop idle WebSockets. Reconnect on `close` with a
+short backoff so the modal survives network blips:
+
+```javascript
+socket.addEventListener("close", () => {
+    setStatus("Reconnecting…");
+    setTimeout(connectWebSocket, 4000);
+});
+```
+
+Surface the live state in the UI (a small pill is sufficient) so the
+user knows whether they're seeing live data or a stale snapshot.
+
+---
+
+## 8. Open Source / Packaging
+
+- Each plugin ships with its own `README.md` and `LICENSE`. Do not share
+  READMEs or licenses across plugins in the same repo.
+- `CANVAS_MANIFEST.json` `license` field is set (e.g., `"MIT"`).
+- README leads with end-user content (what providers see, how to use,
+  installation), then developer content (architecture, request flow, data
+  access, endpoints), then testing and license. Don't start with a dev-only
+  directory tree.
+- Don't reference other plugins from within a plugin's README. If the
+  knowledge is worth sharing, put it in this skill instead.
+- No env vars, no secrets, no optional config unless the plugin genuinely
+  requires them. Companion apps should be install-and-go.
+- One commit per reference plugin submission, clean history. Keep unrelated
+  `.venv/`, `.cpa-workflow-artifacts/`, or sibling in-progress plugins out
+  of the commit.

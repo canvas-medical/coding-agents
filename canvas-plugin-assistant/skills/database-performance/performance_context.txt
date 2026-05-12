@@ -221,25 +221,64 @@ patients = Patient.objects.only('first_name', 'last_name')
 names = [f"{p.first_name} {p.last_name}" for p in patients]
 ```
 
+### 5. Materializing Large Querysets with list()
+
+Wrapping a large queryset in `list()` forces Django to load every row into memory at once. For tables like Patient that can have thousands of rows, this causes memory spikes and slow responses. Use `.iterator(chunk_size=N)` to stream results instead.
+
+```python
+# BAD - loads ALL patients into memory at once
+patients = list(Patient.objects.all().order_by('-modified').prefetch_related('coverages'))
+for patient in patients:
+    process(patient)
+
+# GOOD - streams patients in chunks, constant memory usage
+patients = Patient.objects.all().order_by('-modified').prefetch_related('coverages').iterator(chunk_size=100)
+for patient in patients:
+    process(patient)
+```
+
+**Note:** `.iterator()` disables Django's queryset cache, so each iteration is a fresh database read. This is the right trade-off for large one-pass iterations. If you need to access the results multiple times, consider processing in a single pass or using a dict to index the results you need.
+
+**Note:** When switching from `list()` to `.iterator()`, any logging that referenced `len(results)` will need to be updated since iterators don't have a length. Log the chunk_size or count processed after iteration instead.
+
+### 6. Missing .iterator() on Unbounded .all() Queries
+
+Even without `list()`, iterating over a bare `.all()` queryset caches every row in the queryset's internal result cache. Always add `.iterator(chunk_size=N)` when looping over potentially large or unbounded querysets.
+
+```python
+# BAD - Django caches all rows in the queryset object
+for patient in Patient.objects.all():
+    key = build_lookup_key(patient.first_name, patient.last_name)
+    index[key] = patient
+
+# GOOD - streams rows without caching the full result set
+for patient in Patient.objects.only('id', 'first_name', 'last_name').iterator(chunk_size=200):
+    key = build_lookup_key(patient.first_name, patient.last_name)
+    index[key] = patient
+```
+
+Combine `.only()` with `.iterator()` when you only need a few fields — this reduces both memory and network overhead per row.
+
 ---
 
 ## Detection Checklist
 
 When reviewing plugin code, look for:
 
-### High Priority (Likely N+1)
+### High Priority (Likely N+1 or Memory Issues)
 - [ ] `for` loops that call `.objects.get()` or `.objects.filter()` inside
 - [ ] Accessing `.related_name` or reverse relations inside loops without prefetch
 - [ ] Accessing ForeignKey attributes inside loops without select_related
+- [ ] `list()` wrapping large or unbounded querysets (e.g., `list(Model.objects.all()...)`)
+- [ ] `.all()` iterations without `.iterator()` on large tables (Patient, Note, Appointment, etc.)
 
 ### Medium Priority (Potential Issues)
 - [ ] Multiple queries that could be combined with `Q` objects
 - [ ] `.count()` or `.exists()` called inside loops
 - [ ] Fetching full objects when only IDs or counts are needed
+- [ ] `.all()` or broad `.filter()` without `.only()` when only a few fields are used
 
 ### Low Priority (Optimization Opportunities)
-- [ ] Large querysets without `.only()` or `.defer()`
-- [ ] Missing `.iterator()` for very large result sets
 - [ ] Queries that could benefit from database indexes
 
 ---

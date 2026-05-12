@@ -116,6 +116,7 @@ Without `CPA_RUNNING=1`, these hooks are skipped and session data is not tracked
 - **database-performance**: N+1 query detection and Django ORM optimization
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
+- **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
 
 ### Slash Commands
 
@@ -307,7 +308,8 @@ automatically.
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth
 │   ├── fhir-api-client-security/    # FHIR API token security
 │   ├── database-performance/  # N+1 query detection
-│   └── testing/               # Test authoring & coverage
+│   ├── testing/               # Test authoring & coverage
+│   └── companion-app-patterns/ # Provider companion (mobile) plugin conventions
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
