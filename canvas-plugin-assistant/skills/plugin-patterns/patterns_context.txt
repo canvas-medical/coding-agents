@@ -16,14 +16,14 @@ example-plugin-name/              # Container folder (kebab-case)
 ├── tests/                        # Container level - mirrors inner structure
 │   ├── __init__.py
 │   ├── conftest.py
-│   └── protocols/
-│       └── test_handler.py       # Mirrors inner/protocols/handler.py
+│   └── handlers/
+│       └── test_handler.py       # Mirrors inner/handlers/handler.py
 └── example_plugin_name/          # Inner folder (snake_case, same name converted)
     ├── CANVAS_MANIFEST.json      # MUST be inside inner folder
     ├── README.md                 # Plugin documentation
-    └── protocols/
+    └── handlers/
         ├── __init__.py
-        └── my_protocol.py
+        └── my_handler.py
 ```
 
 ### Key Rules
@@ -81,7 +81,7 @@ test -f pyproject.toml && echo "OK: pyproject.toml present" || echo "ERROR: pypr
 Best for: Single event → single effect workflows
 
 **Characteristics:**
-- Single protocol handler
+- Single handler
 - 20-100 lines of code
 - Direct event → effect mapping
 - No external API calls
@@ -97,7 +97,7 @@ Best for: Single event → single effect workflows
 ```
 simple-plugin/
 ├── CANVAS_MANIFEST.json
-├── protocols/
+├── handlers/
 │   └── handler.py
 └── README.md
 ```
@@ -107,9 +107,9 @@ simple-plugin/
 from canvas_sdk.effects import Effect
 from canvas_sdk.effects.banner_alert import AddBannerAlert
 from canvas_sdk.events import EventType
-from canvas_sdk.protocols import BaseProtocol
+from canvas_sdk.handlers import BaseHandler
 
-class BPAlertProtocol(BaseProtocol):
+class BPAlertHandler(BaseHandler):
     RESPONDS_TO = [
         EventType.Name(EventType.VITALS_COMMAND__POST_COMMIT)
     ]
@@ -145,7 +145,7 @@ class BPAlertProtocol(BaseProtocol):
 Best for: Multi-handler workflows or API-based plugins
 
 **Characteristics:**
-- Multiple protocol handlers with different responsibilities
+- Multiple handlers with different responsibilities
 - API endpoints (SimpleAPI routes)
 - Utility modules for shared logic
 - 500-2000 lines total
@@ -161,7 +161,7 @@ Best for: Multi-handler workflows or API-based plugins
 ```
 medium-plugin/
 ├── CANVAS_MANIFEST.json
-├── protocols/
+├── handlers/
 │   ├── __init__.py
 │   ├── event_handler.py
 │   └── webhook_handler.py
@@ -181,7 +181,7 @@ Best for: Full-featured applications with UI
 
 **Characteristics:**
 - Application handler for UI
-- Multiple protocols and API endpoints
+- Multiple handlers and API endpoints
 - Static assets (JS, CSS)
 - HTML templates
 - Possibly LLM integration
@@ -202,7 +202,7 @@ complex-plugin/
 │   └── my_app.py
 ├── assets/                  # Required for Application icons
 │   └── icon.png            # 48x48 PNG icon
-├── protocols/
+├── handlers/
 │   ├── __init__.py
 │   └── listener.py
 ├── api/
@@ -232,7 +232,7 @@ complex-plugin/
 The simplest and most common pattern.
 
 ```python
-class MyProtocol(BaseProtocol):
+class MyHandler(BaseHandler):
     RESPONDS_TO = [EventType.Name(EventType.SOME_EVENT__POST_COMMIT)]
 
     def compute(self) -> list[Effect]:
@@ -337,9 +337,9 @@ class MyAPI(SimpleAPI):
     "name": "my_plugin",
     "description": "Brief description of what the plugin does",
     "components": {
-        "protocols": [
+        "handlers": [
             {
-                "class": "my_plugin.protocols.handler:MyProtocol",
+                "class": "my_plugin.handlers.handler:MyHandler",
                 "description": "Handles X events and creates Y effects"
             }
         ]
@@ -357,9 +357,9 @@ class MyAPI(SimpleAPI):
     "name": "my_plugin",
     "description": "Full description",
     "components": {
-        "protocols": [
+        "handlers": [
             {
-                "class": "my_plugin.protocols.listener:EventListener",
+                "class": "my_plugin.handlers.listener:EventListener",
                 "description": "Listens for events"
             },
             {
@@ -483,7 +483,7 @@ LaunchModalEffect(
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.protocols.handler import MyHandler
+from my_plugin_name.handlers.handler import MyHandler
 from my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
@@ -493,7 +493,7 @@ from ...utils.helpers import format_date
 
 The package name in the import must match the inner folder name (snake_case):
 - Inner folder: `vitals_alert/`
-- Import: `from vitals_alert.protocols.handler import ...`
+- Import: `from vitals_alert.handlers.handler import ...`
 
 ### 2. Let Exceptions Propagate
 **Do NOT wrap handler code in try-except blocks.** Exceptions must bubble up so they appear in Canvas logs with full tracebacks for debugging.
@@ -661,7 +661,7 @@ def test_bp_alert_triggers_on_high_bp():
     mock_event.target.instance.blood_pressure_diastolic = 95
 
     # Create handler with mocked event
-    handler = BPAlertProtocol()
+    handler = BPAlertHandler()
     handler.event = mock_event
 
     # Execute
@@ -725,7 +725,7 @@ uv run canvas install [plugin_name] --host [target]
 ## Quick Decision Guide
 
 **Need to react to a clinical event?**
-→ Simple plugin with BaseProtocol
+→ Simple plugin with BaseHandler
 
 **Need to receive data from external system?**
 → Medium plugin with SimpleAPI webhook
@@ -737,7 +737,7 @@ uv run canvas install [plugin_name] --host [target]
 → Use CronTask handler
 
 **Need to customize search dropdowns?**
-→ Use search result filter protocols
+→ Use search result filter handlers
 
 **Need to add buttons to notes?**
 → Use ActionButton handler
@@ -749,7 +749,7 @@ uv run canvas install [plugin_name] --host [target]
 The number of handlers in a plugin is the best proxy for complexity.
 Always start with `echo "plugin_name" | uv run canvas init` and adapt from there.
 
-### Single Handler Plugins (1 protocol)
+### Single Handler Plugins (1 handler)
 
 **When:** One trigger, one response, no user interaction
 
@@ -760,14 +760,14 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 - Webhook receiver (external system posts data)
 
 **Architecture decisions:**
-- One file in `protocols/`
+- One file in `handlers/`
 - No `api/` directory needed
 - No `applications/` directory needed
 - 0-2 secrets (maybe API key for webhook auth)
 
 ---
 
-### Multi-Handler Plugins (2-5 protocols)
+### Multi-Handler Plugins (2-5 handlers)
 
 **When:** Multiple triggers OR trigger + UI display OR inbound + outbound integration
 
@@ -778,16 +778,16 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 - Scheduled task + event-driven updates
 
 **Architecture decisions:**
-- Multiple files in `protocols/` or separate into `handlers/`
+- Multiple files in `handlers/`, optionally grouped into subdirectories by responsibility
 - May need `api/` for HTTP endpoints
 - Consider `utils/` for shared logic
 - 2-5 secrets typical
 
 **Handler combinations:**
-- BaseProtocol + BaseProtocol (multiple events)
-- BaseProtocol + SimpleAPI (event + webhook)
+- BaseHandler + BaseHandler (multiple events)
+- BaseHandler + SimpleAPI (event + webhook)
 - ActionButton + SimpleAPI (button + display)
-- CronTask + BaseProtocol (scheduled + reactive)
+- CronTask + BaseHandler (scheduled + reactive)
 
 ---
 
@@ -810,7 +810,7 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 
 **Handler combinations:**
 - Application + SimpleAPI (minimum for UI app)
-- Application + SimpleAPI + BaseProtocol (UI + background processing)
+- Application + SimpleAPI + BaseHandler (UI + background processing)
 
 ---
 
@@ -837,7 +837,7 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 
 ### Extreme Complexity (10+ handlers)
 
-**Real-world example:** Hyperscribe (12 protocols, 1 application, 123 files, 26 secrets)
+**Real-world example:** Hyperscribe (12 handlers, 1 application, 123 files, 26 secrets)
 
 **When:** Full-featured product, not a simple integration
 
@@ -850,7 +850,6 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 - Custom tuning and configuration UIs
 
 **Architecture decisions:**
-- `handlers/` instead of `protocols/` (semantic clarity at scale)
 - `commands/` for domain-specific command builders
 - `structures/` for data models
 - `libraries/` for shared utilities
@@ -884,13 +883,13 @@ As plugins grow, directory structure evolves:
 ```
 Simple (1 handler):
 plugin/
-├── protocols/handler.py
+├── handlers/handler.py
 ├── CANVAS_MANIFEST.json
 └── README.md
 
 Medium (3-5 handlers):
 plugin/
-├── protocols/
+├── handlers/
 │   ├── event_handler.py
 │   ├── webhook.py
 │   └── cron_task.py
@@ -902,7 +901,7 @@ Complex (Application + handlers):
 plugin/
 ├── applications/app.py
 ├── api/routes.py
-├── protocols/listener.py
+├── handlers/listener.py
 ├── templates/index.html
 ├── static/css/, js/
 ├── utils/
