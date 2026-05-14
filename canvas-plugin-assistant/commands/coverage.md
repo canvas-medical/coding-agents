@@ -106,7 +106,7 @@ If the user just wants a quick summary, show:
 ```
 Coverage: 87% (target: 90%)
 Files needing attention:
-  - protocols/handler.py: 82% (lines 34-38, 67)
+  - handlers/handler.py: 82% (lines 34-38, 67)
   - api/routes.py: 91% (line 23)
 ```
 

@@ -361,7 +361,7 @@ When reviewing, report findings as:
 |----------|-------|----------|----------------|
 | HIGH | Admin token in patient portal | api/portal.py:45 | Use SMART launch patient-scoped token |
 | HIGH | Over-scoped: user/*.* | manifest.json | Reduce to specific resources needed |
-| MEDIUM | Token logged | protocols/sync.py:23 | Remove token from log statement |
+| MEDIUM | Token logged | handlers/sync.py:23 | Remove token from log statement |
 | LOW | Token existence not checked | api/fhir.py:12 | Add validation before use |
 
 ### Summary

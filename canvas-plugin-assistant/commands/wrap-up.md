@@ -183,7 +183,7 @@ Check that all test files test code that still exists:
 - Remove `test_models.py` if it's just scaffolding
 
 **Common dead code from scaffolding:**
-- `protocols/my_protocol.py` - default placeholder if you renamed your protocol
+- `handlers/my_handler.py` - default placeholder if you renamed your handler
 - `test_models.py` - often unused scaffolding
 - Unused effect imports (e.g., `AddTask` if you only use `AddBannerAlert`)
 - Empty or stub methods that were never implemented

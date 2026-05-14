@@ -218,7 +218,7 @@ cd {plugin_name}
 
 The `canvas init` command creates the correct structure. Only AFTER it completes should you proceed to edit the generated files.
 
-You will likely need to remove some unused placeholder files (e.g., `protocols/my_protocol.py`, `test_models.py`) - that's fine.
+You will likely need to remove some unused placeholder files (e.g., `handlers/my_handler.py`, `test_models.py`) - that's fine.
 
 ### Step 1.5: Verify Structure
 
@@ -243,7 +243,7 @@ Expected structure:
 └── {plugin_name_snake}/          # Inner (snake_case)
     ├── CANVAS_MANIFEST.json
     ├── README.md
-    └── protocols/
+    └── handlers/
 ```
 
 **If any errors appear, investigate before proceeding.** Do NOT continue with implementation until the structure is correct.
@@ -254,11 +254,11 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 
 | Spec says... | Pattern | Handlers |
 |--------------|---------|----------|
-| Single event → alert/task | Single Handler | 1 BaseProtocol |
+| Single event → alert/task | Single Handler | 1 BaseHandler |
 | External webhook | Single Handler | 1 SimpleAPI |
-| Questionnaire processing | Single Handler | 1 BaseProtocol |
+| Questionnaire processing | Single Handler | 1 BaseHandler |
 | Scheduled/periodic | Single Handler | 1 CronTask |
-| Multiple events | Multi-Handler | 2-5 BaseProtocol |
+| Multiple events | Multi-Handler | 2-5 BaseHandler |
 | Interactive UI | Application | Application + SimpleAPI |
 | LLM/AI processing | LLM-Integrated | Multiple + llms/ |
 
@@ -266,7 +266,7 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 
 **Edit the files created by `canvas init` - do NOT create new files unless and until necessary.**
 
-1. **Edit the protocol handler** created by `canvas init` (typically `protocols/my_protocol.py`)
+1. **Edit the handler** created by `canvas init` (typically `handlers/my_handler.py`)
 2. **Use the canvas-sdk skill** to look up:
    - Exact EventType enum values
    - Effect class parameters
@@ -456,7 +456,7 @@ When invoked to **update an existing plugin** (not create a new one), follow thi
 Read and summarize the existing plugin:
 
 1. Read the `CANVAS_MANIFEST.json` to get name, version, components, secrets
-2. Read all handler files (protocols/, applications/, api/)
+2. Read all handler files (handlers/, applications/, api/)
 3. Read tests
 4. Read `plugin-spec.md` from `.cpa-workflow-artifacts/` if it exists
 

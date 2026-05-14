@@ -128,7 +128,7 @@ $CPA_WORKSPACE_DIR/
     └── {plugin_name_snake}/          # Snake_case inner directory
         ├── CANVAS_MANIFEST.json
         ├── README.md
-        └── protocols/
+        └── handlers/
 ```
 
 #### Step 4: Verify Project Structure
@@ -154,7 +154,7 @@ $CPA_WORKSPACE_DIR/
     └── {plugin_name_snake}/          # Inner (snake_case)
         ├── CANVAS_MANIFEST.json
         ├── README.md
-        └── protocols/
+        └── handlers/
 ```
 
 **If any checks fail:** Report errors to the user and investigate before proceeding.
