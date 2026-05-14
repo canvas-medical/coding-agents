@@ -528,7 +528,7 @@ class CareTaskService:
             )
         return None
 
-# protocols/on_lab_result.py
+# handlers/on_lab_result.py
 class OnLabResult(BaseHandler):
     RESPONDS_TO = EventType.Name(EventType.LAB_REPORT__POST_UPDATE)
 
@@ -752,7 +752,7 @@ This does **not** apply to ModelExtension proxy classes (e.g., `CustomPatient(Pa
 my_plugin/
 ├── CANVAS_MANIFEST.json
 ├── models.py              # ← WRONG: migrations will not be applied
-├── protocols/
+├── handlers/
 │   └── my_handler.py
 └── tests/
 ```
@@ -775,7 +775,7 @@ my_plugin/
 ├── models/
 │   ├── __init__.py        # re-exports model classes
 │   └── task_log.py        # one model per file (recommended)
-├── protocols/
+├── handlers/
 │   └── my_handler.py
 └── tests/
 ```

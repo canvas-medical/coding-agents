@@ -14,14 +14,14 @@ Use this skill when you need information about:
 - Event types and their context structures
 - Effect types and their payloads
 - Data models (Patient, Condition, Medication, etc.)
-- Handler types (BaseProtocol, SimpleAPI, Application, CronTask)
+- Handler types (BaseHandler, SimpleAPI, Application, CronTask)
 - Canvas CLI commands
 - Plugin manifest structure
 
 ## Key Documentation Sections
 
 ### Handlers
-- **BaseProtocol**: Event-driven handlers responding to Canvas events
+- **BaseHandler**: Event-driven handlers responding to Canvas events
 - **SimpleAPI**: HTTP endpoints and WebSocket handlers
 - **Application**: UI applications launched from the app drawer
 - **CronTask**: Scheduled task execution

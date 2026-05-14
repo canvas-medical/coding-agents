@@ -102,7 +102,7 @@ def test_high_bp(mock_event):
 ```
 plugin_name/
 ├── plugin_name/
-│   ├── protocols/
+│   ├── handlers/
 │   │   ├── vitals_handler.py
 │   │   └── lab_handler.py
 │   ├── api/
@@ -113,7 +113,7 @@ plugin_name/
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py                   # Shared fixtures only
-│   ├── protocols/
+│   ├── handlers/
 │   │   ├── __init__.py
 │   │   ├── test_vitals_handler.py    # tests vitals_handler.py
 │   │   └── test_lab_handler.py       # tests lab_handler.py
@@ -205,7 +205,7 @@ def test_handler_with_patient(mock_event, mock_patient):
         mock_objects.get.return_value = mock_patient
 
         # Test handler logic
-        handler = MyProtocol()
+        handler = MyHandler()
         handler.event = mock_event
         effects = handler.compute()
 
@@ -241,7 +241,7 @@ def test_bad_example(mock_event, mock_patient):
     with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
         mock_objects.get.return_value = mock_patient
 
-        handler = MyProtocol()
+        handler = MyHandler()
         handler.event = mock_event
         effects = handler.compute()
 
@@ -253,7 +253,7 @@ def test_good_example(mock_event, mock_patient):
     with patch("canvas_sdk.v1.data.patient.Patient.objects") as mock_objects:
         mock_objects.get.return_value = mock_patient
 
-        handler = MyProtocol()
+        handler = MyHandler()
         handler.event = mock_event
         effects = handler.compute()
 
@@ -689,7 +689,7 @@ uv run pytest --cov=plugin_name --cov-fail-under=90  --cov-branch
 Name                              Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------
 plugin_name/__init__.py               0      0   100%
-plugin_name/protocols/handler.py     45      5    89%   34-38
+plugin_name/handlers/handler.py     45      5    89%   34-38
 plugin_name/api/routes.py            32      2    94%   67, 89
 ---------------------------------------------------------------
 TOTAL                                77      7    91%
@@ -734,7 +734,7 @@ def test_missing_patient_context(self, mock_event):
     """Cover lines 34-38: missing patient handling."""
     mock_event.context = {}  # No patient in context
 
-    handler = MyProtocol()
+    handler = MyHandler()
     handler.event = mock_event
     effects = handler.compute()
 
@@ -821,7 +821,7 @@ When reporting coverage results:
 
 | File | Coverage | Missing Lines |
 |------|----------|---------------|
-| protocols/handler.py | 89% | 34-38 |
+| handlers/handler.py | 89% | 34-38 |
 | api/routes.py | 94% | 67, 89 |
 
 ### Recommended Tests to Add

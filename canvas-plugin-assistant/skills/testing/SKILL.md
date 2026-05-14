@@ -28,9 +28,9 @@ my-plugin-name/                       # Container folder (kebab-case)
 ├── pyproject.toml                    # Container level
 ├── tests/                            # Container level - NOT inside inner folder!
 │   ├── conftest.py
-│   ├── protocols/
-│   │   ├── test_vitals_handler.py    # mirrors inner/protocols/vitals_handler.py
-│   │   └── test_lab_handler.py       # mirrors inner/protocols/lab_handler.py
+│   ├── handlers/
+│   │   ├── test_vitals_handler.py    # mirrors inner/handlers/vitals_handler.py
+│   │   └── test_lab_handler.py       # mirrors inner/handlers/lab_handler.py
 │   ├── api/
 │   │   └── test_routes.py            # mirrors inner/api/routes.py
 │   └── helpers/
@@ -38,7 +38,7 @@ my-plugin-name/                       # Container folder (kebab-case)
 └── my_plugin_name/                   # Inner folder (snake_case)
     ├── CANVAS_MANIFEST.json
     ├── README.md
-    ├── protocols/
+    ├── handlers/
     │   ├── vitals_handler.py
     │   └── lab_handler.py
     ├── api/
@@ -56,7 +56,7 @@ my-plugin-name/                       # Container folder (kebab-case)
 ```
 my-plugin-name/
 └── my_plugin_name/
-    ├── protocols/
+    ├── handlers/
     │   └── handler.py
     └── tests/                        # WRONG - tests inside inner folder!
         └── test_handler.py
@@ -71,7 +71,7 @@ mv my_plugin_name/tests ./tests
 
 - Each source file gets exactly ONE test file
 - Test file name = `test_` + source file name
-- Example: `protocols/handler.py` → `tests/protocols/test_handler.py`
+- Example: `handlers/handler.py` → `tests/handlers/test_handler.py`
 
 ### 3. Use Mocks for Isolation
 

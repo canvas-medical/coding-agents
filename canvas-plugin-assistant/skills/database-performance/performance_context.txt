@@ -294,10 +294,10 @@ When reviewing, report findings as:
 
 | Severity | Issue | Location | Recommendation |
 |----------|-------|----------|----------------|
-| HIGH | N+1 query in patient loop | protocols/handler.py:45 | Add prefetch_related('conditions') |
-| HIGH | Query inside for loop | protocols/handler.py:67 | Move query outside loop, use filter(id__in=) |
+| HIGH | N+1 query in patient loop | handlers/handler.py:45 | Add prefetch_related('conditions') |
+| HIGH | Query inside for loop | handlers/handler.py:67 | Move query outside loop, use filter(id__in=) |
 | MEDIUM | Missing select_related | api/routes.py:23 | Add select_related('patient') |
-| LOW | Fetching all fields | protocols/handler.py:12 | Consider .only() for needed fields |
+| LOW | Fetching all fields | handlers/handler.py:12 | Consider .only() for needed fields |
 
 ### Query Analysis
 
