@@ -37169,7 +37169,8 @@ Applications with the `full_chart` scope appear as navigation tabs at the top of
       "scope": "full_chart"
     }
     ```
-##  Note Applications 
+##  Note Applications
+> **Aliases:** Users may call these "Charting apps", "Charting applications", "note tabs", or refer to them generically as "EmbeddedApplication" — they all mean a note-scoped embedded application. `NoteApplication` is the concrete class to use (it is a thin subclass of `EmbeddedApplication` that presets `SCOPE = ApplicationScope.NOTE`).
 Note Applications appear as tabs within a patient's note, allowing you to embed custom interfaces directly in the clinical documentation workflow.
 ###  Implementing a Note Application 
 To create a Note Application, your handler class should inherit from `NoteApplication` and define two required class attributes:
@@ -37199,7 +37200,49 @@ Your class must implement the `on_open()` method, which is called when the user 
             ).apply()
     ```
 ![note applications](/assets/images/note-application-tabs.png)
-###  Context and Event Data 
+###  Auto-resizing the Note Application iframe
+**REQUIRED for all Note Application HTML templates unless the user explicitly opts out.** Note Applications render inside an iframe whose default height is small. Without auto-resize, content overflows and the iframe shows its own scrollbar inside the note — duplicating the note's scroll and making the UX feel broken.
+
+To prevent this, every Note Application template must:
+1. Hide the iframe's own scroll with `overflow: hidden` on `html`/`body`.
+2. Listen for the `INIT_CHANNEL` message from Canvas to obtain a `MessagePort`.
+3. Post `{ type: 'RESIZE', height }` (and optionally `width`) through the port whenever the content size changes, using a `ResizeObserver` on `document.body`.
+4. Send the initial size as soon as the port is received, so the iframe sizes correctly on first paint.
+
+Canonical template snippet (adapted from `canvas-plugins/dev/example_chart_app/templates/custom-ui.html`):
+    ```html
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+      body { box-sizing: border-box; }
+    </style>
+    <script>
+      let messagePort = null;
+
+      function sendHeight() {
+        if (!messagePort) return;
+        messagePort.postMessage({
+          type: 'RESIZE',
+          height: document.body.offsetHeight,
+          width: document.body.offsetWidth,
+        });
+      }
+
+      window.addEventListener('message', (event) => {
+        if (event.data?.type === 'INIT_CHANNEL' && event.ports?.[0]) {
+          messagePort = event.ports[0];
+          messagePort.start();
+          sendHeight();  // initial size — do not debounce
+        }
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        new ResizeObserver(sendHeight).observe(document.body);
+      });
+    </script>
+    ```
+> **Only skip this pattern if the user explicitly says they want a fixed-height iframe with its own scroll.** Do not ask them to confirm — apply this pattern by default for every Note Application template you generate.
+
+###  Context and Event Data
 Both `on_open()` and `handle()` have access to context data through `self.event.context`:
 Key | Description  
 ---|---  
@@ -38593,6 +38636,108 @@ The following example shows a complete plugin with a custom section that display
       }
     }
     ```
+##  Real-Time Updates for Custom Sections
+`PatientChartSummaryCustomSectionHandler.handle()` only runs when Canvas first requests the section. If the underlying data changes while the chart is open (a new order, a webhook payload, a command being committed, etc.) the section will be stale until the user reloads the chart.
+
+> **Always ask the user whether the custom section needs real-time updates** before implementing one. If they answer yes, use the WebSocket pattern below. If they answer no, just render the static section and stop — do not add WebSocket plumbing speculatively.
+
+###  Pattern: Patient-scoped WebSocket
+When real-time is required, the canonical pattern is:
+  1. **Define a `WebSocketAPI`** on a channel whose name includes the patient id (e.g. `chart-summary-{plugin_name}-{patient_id}`). Authenticate against the logged-in staff user — see [WebSocket API](/sdk/handlers-simple-api-websocket/).
+  2. **Broadcast on data-change events** from a `BaseHandler` that listens to the relevant Canvas events. The `Broadcast` effect must target the channel for the affected patient only.
+  3. **Subscribe from the section template.** Render the patient id into the HTML at server-side render time, then open the WebSocket from JavaScript and re-fetch / re-render on each message.
+
+> **⚠️ Always include the patient id in the channel name.** Never broadcast on a global channel like `chart-summary-updates`. Reasons:
+> - **PHI isolation:** providers may have other patient charts open. A global broadcast would leak updates across patients.
+> - **Performance:** every connected client would receive every event; the iframe would re-render constantly.
+> - **HIPAA-aligned minimum disclosure:** only the chart for the affected patient should receive the signal.
+
+###  Example: vitals section that refreshes when new vitals are committed
+**`handlers/vitals_section.py`** — section handler renders the template with the patient id and a cache-bust token:
+    ```python
+    from datetime import datetime, timezone
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.patient_chart_summary_custom_section import PatientChartSummaryCustomSection
+    from canvas_sdk.handlers.patient_chart_summary_custom_section_handler import (
+        PatientChartSummaryCustomSectionHandler,
+    )
+    from canvas_sdk.templates import render_to_string
+
+    _CACHE_BUST = str(int(datetime.now(timezone.utc).timestamp()))
+
+    class VitalsSectionHandler(PatientChartSummaryCustomSectionHandler):
+        SECTION_KEY = "live_vitals"
+        def handle(self) -> list[Effect]:
+            patient_id = self.target
+            return [
+                PatientChartSummaryCustomSection(
+                    content=render_to_string(
+                        "templates/live_vitals.html",
+                        {"patient_id": patient_id, "cache_bust": _CACHE_BUST},
+                    ),
+                    icon="❤️",
+                ).apply()
+            ]
+    ```
+**`handlers/vitals_ws.py`** — WebSocketAPI authenticates the connection. The channel name carries the patient id, so authorisation can be enforced per patient if needed.
+    ```python
+    from canvas_sdk.handlers.simple_api.websocket import WebSocketAPI
+
+    class VitalsWebSocket(WebSocketAPI):
+        def authenticate(self) -> bool:
+            user = self.websocket.logged_in_user
+            return bool(user) and user.get("type") == "Staff"
+    ```
+**`handlers/vitals_broadcaster.py`** — BaseHandler listens for vitals commits and broadcasts to that patient's channel only:
+    ```python
+    from canvas_sdk.effects import Effect
+    from canvas_sdk.effects.simple_api import Broadcast
+    from canvas_sdk.events import EventType
+    from canvas_sdk.handlers import BaseHandler
+
+    class VitalsBroadcaster(BaseHandler):
+        RESPONDS_TO = [EventType.Name(EventType.VITALS_COMMAND__POST_COMMIT)]
+        def compute(self) -> list[Effect]:
+            patient_id = self.event.context.get("patient", {}).get("id")
+            if not patient_id:
+                return []
+            return [
+                Broadcast(
+                    channel=f"chart-summary-my_plugin-{patient_id}",
+                    message={"type": "vitals_updated"},
+                ).apply()
+            ]
+    ```
+**`templates/live_vitals.html`** — subscribes to the patient-specific channel and refreshes on message:
+    ```html
+    <div id="vitals-root">Loading…</div>
+    <script>
+      const patientId = "{{ patient_id }}";
+      const channel = `chart-summary-my_plugin-${patientId}`;
+      const wsUrl = `wss://${location.host}/plugin-io/ws/my_plugin/${channel}/`;
+
+      function connect() {
+        const ws = new WebSocket(wsUrl);
+        ws.onmessage = () => refresh();
+        ws.onclose = () => setTimeout(connect, 2000);  // gentle reconnect
+      }
+      function refresh() {
+        fetch(`/plugin-io/api/my_plugin/vitals/${patientId}?v={{ cache_bust }}`)
+          .then(r => r.text())
+          .then(html => { document.getElementById("vitals-root").innerHTML = html; });
+      }
+      refresh();
+      connect();
+    </script>
+    ```
+**Manifest entries** — register the section handler, the configuration handler, the WebSocketAPI, and the BaseHandler in `CANVAS_MANIFEST.json` under `components.handlers`. The WebSocket channel name format is plugin-defined; standardise on `<purpose>-<plugin_name>-<patient_id>` to make it obvious that broadcasts are patient-scoped.
+
+###  Checklist for real-time chart summary sections
+  - [ ] Asked the user whether real-time is required (don't assume).
+  - [ ] Channel name includes the patient id — verified by grepping the broadcaster and the template for the same template variable.
+  - [ ] `Broadcast` is only called when `patient_id` is present in the event context.
+  - [ ] `WebSocketAPI.authenticate()` rejects unauthenticated/external connections unless an API key flow is intentionally exposed.
+  - [ ] Template reconnects on `onclose` so the section stays live across transient network drops.
 ----- END PAGE https://docs.canvasmedical.com/sdk/patient-chart-summary-custom-section-handler/
 
 

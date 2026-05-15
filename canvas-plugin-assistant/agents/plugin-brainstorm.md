@@ -261,6 +261,36 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 | Multiple events | Multi-Handler | 2-5 BaseHandler |
 | Interactive UI | Application | Application + SimpleAPI |
 | LLM/AI processing | LLM-Integrated | Multiple + llms/ |
+| Custom chart summary section | Chart Summary Section | `PatientChartSummaryCustomSectionHandler` + `PatientChartSummaryConfiguration` BaseHandler (+ optional WebSocketAPI for real-time, see Step 2.5) |
+
+### Step 2.5: Real-time Decision (Chart Summary Sections only)
+
+**Only run this step if the spec describes a custom chart summary section** (anything served via `PatientChartSummaryCustomSectionHandler`).
+
+Before scaffolding, ask the user whether the section needs to refresh while the chart is open:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Should this chart summary section update in real time when the underlying data changes?",
+      "header": "Real-time",
+      "options": [
+        {"label": "Yes — push live updates", "description": "Re-render when relevant events fire (e.g. a new order, a webhook arrives). Requires WebSocketAPI + Broadcast."},
+        {"label": "No — render once per chart load", "description": "Section content is fetched only when Canvas first requests it; user must reload the chart to see changes."}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**If the user picks "Yes":**
+- Add a `WebSocketAPI` handler and a broadcaster `BaseHandler` to the spec's component list.
+- **Patient-scope the channel name.** The channel string MUST include the patient id (e.g. `chart-summary-{plugin_name_snake}-{patient_id}`). Never broadcast on a global channel — it leaks PHI across charts and causes spurious re-renders for every connected client.
+- Use the canvas-sdk skill's "Real-Time Updates for Custom Sections" page for the canonical implementation (broadcaster pattern, WebSocket auth, template subscription).
+
+**If the user picks "No":** scaffold a plain `PatientChartSummaryCustomSectionHandler` with no WebSocket plumbing.
 
 ### Step 3: Implement
 
