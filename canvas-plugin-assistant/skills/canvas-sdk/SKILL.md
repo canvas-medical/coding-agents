@@ -18,12 +18,40 @@ Use this skill when you need information about:
 - Canvas CLI commands
 - Plugin manifest structure
 
+## Terminology / Aliases
+
+Users describe Canvas surfaces with different names. Map them to SDK classes before
+deciding which handler to scaffold:
+
+- **"Note Application", "NoteApplication", "Charting app", "Charting application", "note tab", "tab inside a note"** → an embedded application scoped to a note. Implement with `NoteApplication` (subclass of `EmbeddedApplication`, with `SCOPE = ApplicationScope.NOTE` preset). Located in `canvas_sdk.handlers.application`.
+- **"Embedded app", "embedded application"** → `EmbeddedApplication` directly. Use this when the scope is something other than note, or when the user wants to set `SCOPE` explicitly.
+- **"Full chart app", "chart tab"** → an `Application` registered with `"scope": "full_chart"` in `CANVAS_MANIFEST.json` (appears alongside the default "Chart" and "Profile" tabs).
+- **"App drawer application"** → a plain `Application` launched from the app drawer.
+
+When a user says "Charting app" or "NoteApplication", do not ask them to clarify — assume they mean a note-scoped embedded application (`NoteApplication`) unless they describe behavior that doesn't fit (e.g. "appears at the top of the chart" → full_chart scope).
+
+### Note Application templates: always auto-resize
+
+Every HTML template rendered by a `NoteApplication` must wire up the Canvas `RESIZE` message pattern so the iframe grows to fit its content instead of showing its own scrollbar inside the note. Apply this by default — do not ask the user to confirm. Only omit it if the user explicitly says they want a fixed-height iframe with its own scroll.
+
+The canonical pattern (full snippet in `coding_agent_context.txt`, under "Auto-resizing the Note Application iframe"):
+- `html, body { overflow: hidden; margin: 0; padding: 0; }`
+- Listen for `INIT_CHANNEL` → grab the `MessagePort`
+- Post `{ type: 'RESIZE', height: document.body.offsetHeight }` on connect and on every `ResizeObserver` tick
+
+### Custom chart summary sections: always ask about real-time
+
+When building a custom patient chart summary section (`PatientChartSummaryCustomSectionHandler`), **ask the user whether the section needs real-time updates** before scaffolding. If yes, implement it with a `WebSocketAPI` + `Broadcast` from a `BaseHandler` listening for the relevant Canvas events.
+
+**The WebSocket channel name MUST include the patient id** (e.g. `chart-summary-{plugin_name}-{patient_id}`). Never broadcast on a global channel — it leaks updates across patient charts and causes every connected client to re-render on every event. Full pattern + example in `coding_agent_context.txt`, under "Real-Time Updates for Custom Sections".
+
 ## Key Documentation Sections
 
 ### Handlers
 - **BaseHandler**: Event-driven handlers responding to Canvas events
 - **SimpleAPI**: HTTP endpoints and WebSocket handlers
 - **Application**: UI applications launched from the app drawer
+- **EmbeddedApplication / NoteApplication**: Embedded UI shown inside the chart or note (see Terminology above)
 - **CronTask**: Scheduled task execution
 - **ActionButton**: UI buttons in notes and patient headers
 
