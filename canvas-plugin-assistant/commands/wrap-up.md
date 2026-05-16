@@ -425,13 +425,14 @@ The plugin changes will be automatically committed and pushed when you exit this
 This command is the **final step** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
-/cpa:new-plugin       →  Create plugin from requirements
-/cpa:deploy           →  Deploy to Canvas instance for UAT
-/cpa:coverage         →  Check test coverage (aim for 90%)
-/cpa:security-review  →  Comprehensive security audit
-/cpa:database-performance-review  →  Database query optimization
-/cpa:wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
+/cpa:check-setup                 →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin                  →  Create plugin from requirements
+/cpa:deploy                      →  Deploy to Canvas instance for UAT
+/cpa:coverage                    →  Check test coverage (aim for 90%)
+/cpa:security-review             →  Engineering security audit
+/cpa:product-review              →  Product / regulatory / norms review
+/cpa:database-performance-review →  Database query optimization
+/cpa:wrap-up                     →  Final checklist before delivery  ← YOU ARE HERE
 ```
 
 After wrap-up passes, the plugin is ready to ship!
