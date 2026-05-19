@@ -86,12 +86,19 @@ Run these checks before deploying:
 # Verify manifest is valid
 uv run canvas validate-manifest .
 
+# Sandbox lint — catches disallowed imports, augmented-assignment on
+# subscripts, and unprefixed internal imports BEFORE the install reaches
+# the runner. Cheaper than a failed deploy.
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
+
 # Run tests
 uv run pytest
 
 # Run type checking
 uv run mypy --config-file=mypy.ini .
 ```
+
+If `lint_sandbox.py` reports violations, **fix them before running `canvas install`** — the runner will reject the same violations and the deploy will fail. The script's output names the file, line, and remediation for each violation; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the full set of allowed imports and names.
 
 **Also verify cache busting is in place:**
 
@@ -242,24 +249,74 @@ For production deployments, always confirm:
 2. Check SDK version compatibility
 3. Verify all referenced classes exist
 
-### Restricted Module Errors
+### Sandbox Violations
 
-If deployment fails with module restriction errors like:
+Most deploy failures fall into one of four sandbox-violation patterns. Match the runner's error message to the recipe below and fix the specific construct it names — don't guess.
 
+**`ImportError: '<name>' is not an allowed import.`** The module or specific name is not on the Canvas sandbox allowlist. The most common offenders we see in real failures:
+
+| Error fragment | Fix |
+|---|---|
+| `'csv' is not an allowed import` | Split lines yourself (`text.split("\n")` + `line.split(",")`) or restructure to JSON. |
+| `'yaml' is not an allowed import` | PyYAML isn't available. Use JSON for config, or hard-code values. |
+| `'os' is not an allowed import` | Whatever you wanted (paths, env, fs) is also blocked. Restructure to not depend on it. |
+| `'subprocess' is not an allowed import` | Plugins cannot spawn processes. Use Canvas effects, webhooks, or third-party APIs via `requests`. |
+| `'pathlib' is not an allowed import` | No filesystem access at runtime. Embed any static data directly in Python source. |
+| `'pickle' is not an allowed import` | Use `json.dumps` / `json.loads`. |
+| `'httpx' is not an allowed import` | Use `requests` (allowed) for HTTP. |
+| `'urllib.request' is not an allowed import` | Use `requests`. |
+| `'urllib.error' is not an allowed import` | Catch `requests.RequestException` instead. |
+| `'parse_qs' is not an allowed import from 'urllib.parse'` | Only `urlencode` / `quote` are exposed from `urllib.parse`. Parse query strings manually with `split('&')` and `split('=')`. |
+| `'ZoneInfoNotFoundError' is not an allowed import from 'zoneinfo'` | Only `ZoneInfo` is exposed. Catch generic `Exception` around the `ZoneInfo(name)` construction. |
+| `'logging' is not an allowed import` | Use `from logger import log` (the runner injects this). |
+
+If the offender is a bare local module name (`thresholds`, `models.cache`, `utils.helpers`), the agent is missing the plugin-namespace prefix — see the next section.
+
+**`'<plugin>.<sub>.<NAME>' is an invalid attribute name (not in ALLOWED_MODULES).`** The runner rejects deep getattr chains through dotted module paths. The fix is to import the name explicitly at the top of the file:
+
+```python
+# BAD
+import my_plugin.services.session
+def make() -> my_plugin.services.session.Session: ...
+
+# GOOD
+from my_plugin.services.session import Session
+def make() -> Session: ...
 ```
-RestrictedPython error: Module 'os' is not allowed
+
+**`Code is invalid: Augmented assignment of object items and slices is not allowed.`** RestrictedPython rejects `d[k] += v`, `arr[i] += v`, `arr[i:j] += [...]`. Rewrite as explicit reassignment:
+
+```python
+# BAD
+counts["users"] += 1
+
+# GOOD
+counts["users"] = counts["users"] + 1
 ```
 
-Common disallowed modules and alternatives:
-| Disallowed | Alternative |
-|------------|-------------|
-| `os` | Use `pathlib` for paths, avoid system calls |
-| `subprocess` | Not available - use Canvas effects or external webhooks |
-| `socket` | Use `httpx` for HTTP requests |
-| `pickle` | Use `json` for serialization |
-| `importlib` | Static imports only |
+Often there are multiple offenders in the same file — search the source for `[*] +=`, `[*] -=`, `[*] *=`, `[*] /=`.
 
-Fix by removing or replacing the restricted imports and redeploy.
+**Relative or bare internal imports.** If the runner says `'X' is not an allowed import` and `X` looks like one of your plugin's own modules, you're missing the namespace prefix. Always use the full plugin-namespace path:
+
+```python
+# BAD — sandbox doesn't see these as your plugin's modules
+import thresholds
+from models.cache import get
+from .handler import MyHandler
+
+# GOOD — full plugin-namespace path (matches the inner snake_case folder name)
+from my_plugin.thresholds import HIGH_BP
+from my_plugin.models.cache import get
+from my_plugin.handler import MyHandler
+```
+
+**Before running `canvas install`** for a redeploy, run the sandbox lint to catch all of these locally:
+
+```bash
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
+```
+
+For the complete allowlist (which stdlib modules are accepted, which names from each, which third-party libraries are exposed), consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md`.
 
 ### Unclear Logs / Can't Tell What's Happening
 

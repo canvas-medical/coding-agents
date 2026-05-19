@@ -36,6 +36,61 @@ The package name must match the inner folder name:
 - Inner folder: `vitals_alert/`
 - Import: `from vitals_alert.protocols.handler import ...`
 
+## Sandbox: Imports and RestrictedPython
+
+**CRITICAL: Canvas plugins run inside a strict RestrictedPython sandbox. Code that fails the sandbox loads cleanly locally but breaks at deploy time. The runner accepts only a fixed allowlist of imports and rejects a handful of normal-looking Python constructs.**
+
+Before writing ANY import or new code, internalize these rules:
+
+### Imports — what the sandbox accepts
+
+- **Standard library:** only a narrow allowlist (`datetime`, `json`, `re`, `hashlib`, `hmac`, `base64`, `uuid`, `decimal`, `collections`, `functools`, `enum`, `dataclasses`, `typing`, `time` — and a few more). Many "obviously safe" stdlib modules are **NOT** available: `csv`, `pickle`, `os`, `subprocess`, `socket`, `pathlib`, `importlib`, `urllib.error`, `urllib.request`, `yaml` (not stdlib anyway).
+- **Specific names only.** Several allowed modules only expose specific names: from `urllib.parse` use ONLY `urlencode` / `quote` (not `parse_qs`, not `urlparse`). From `zoneinfo` use ONLY `ZoneInfo` (not `ZoneInfoNotFoundError`). From `random` use ONLY `choices` / `uniform` / `randint`.
+- **HTTP:** use `requests` (third-party, allowed) — not `urllib.request`, not `http.client`, not `httpx` inside the runner.
+- **Third-party:** `requests`, `arrow`, `pydantic`, `jwt`, `rapidfuzz`, parts of `django.db.models`. Anything not on the list is blocked.
+- **See `@sandbox-allowlist.md` for the complete list.** When in doubt, look it up before writing the import.
+
+### Imports — internal plugin modules
+
+When importing your own plugin's modules, use the FULL plugin-namespace prefix:
+
+```python
+# GOOD
+from my_plugin.utils.helpers import format_date
+from my_plugin.services.session import Session
+
+# BAD — sandbox rejects these as unknown modules
+import thresholds
+from models.cache import get
+from utils.helpers import format_date
+```
+
+The package name must match the inner snake_case folder name. See "Imports: Use Absolute Paths Only" below.
+
+### Imports — no deep attribute access
+
+The sandbox rejects deep getattr chains like `my_plugin.services.session.Session` at the use site. Import the name at the top of the file instead:
+
+```python
+# GOOD
+from my_plugin.services.session import Session
+def make() -> Session: ...
+
+# BAD — sandbox raises "X.Y.Z is an invalid attribute name (not in ALLOWED_MODULES)"
+import my_plugin.services.session
+def make(): return my_plugin.services.session.Session()
+```
+
+### RestrictedPython features that are banned
+
+- **No augmented assignment on subscripts or slices.** `d["k"] += 1`, `arr[i] += 1`, `arr[i:j] += [...]` all error with "Augmented assignment of object items and slices is not allowed." Rewrite as explicit reassignment: `d["k"] = d["k"] + 1`.
+- **No filesystem access.** `open()`, `pathlib.Path(...).read_text()`, `json.load(f)` are all blocked. Use `json.loads(string_value)` if you have the content in memory; otherwise restructure to not touch disk.
+- **No `exec` / `eval` / `compile` / `__import__`.**
+
+### When the runner gives you a sandbox error
+
+Read the error literally. The runner reports the offending module name, the offending attribute, or the offending construct. Fix the specific thing it names — do not guess. If unsure which allowlist applies, consult `@sandbox-allowlist.md`.
+
 ## Error Handling: Let Exceptions Propagate
 
 **CRITICAL: Do NOT use try-except blocks in Canvas plugin code.**
