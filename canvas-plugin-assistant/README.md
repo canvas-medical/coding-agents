@@ -179,8 +179,7 @@ passes them to the `canvas install` command — secret values are never exposed 
 }
 ```
 
-On each deployment, CPA automatically syncs the file with the secrets declared in `CANVAS_MANIFEST.json`: missing entries are added with empty values
-and stale entries are removed. Fill in the values before deploying.
+On each deployment, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
 
 **Custom file path:**
 

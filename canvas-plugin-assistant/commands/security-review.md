@@ -94,18 +94,18 @@ grep -n "scope" */CANVAS_MANIFEST.json 2>/dev/null || grep -n "scope" CANVAS_MAN
 
 ---
 
-### 4. Secrets Declaration Review
+### 4. Variables Declaration Review
 
-Check that all tokens/keys are declared in the manifest:
+Check that all tokens/keys/configurable values are declared in the manifest's modern `variables` array:
 
 ```bash
-grep -n "secrets" */CANVAS_MANIFEST.json 2>/dev/null || grep -n "secrets" CANVAS_MANIFEST.json 2>/dev/null
+grep -nE '"(variables|secrets)"' */CANVAS_MANIFEST.json 2>/dev/null || grep -nE '"(variables|secrets)"' CANVAS_MANIFEST.json 2>/dev/null
 grep -rn "self\.secrets\[" --include="*.py" .
 ```
 
 **Verify:**
-- Every `self.secrets['X']` usage has 'X' declared in manifest
-- No hardcoded tokens (grep for long base64-like strings)
+- Every `self.secrets['X']` usage has 'X' declared in the manifest's `variables` array (or, for unmigrated plugins, the deprecated `secrets` array — flag it; the modern form is required and the pre-deploy lint rejects legacy-only manifests).
+- No hardcoded tokens (grep for long base64-like strings).
 
 ```bash
 grep -rn "eyJ\|['\"][A-Za-z0-9_-]\{30,\}['\"]" --include="*.py" .

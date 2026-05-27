@@ -17,12 +17,30 @@ class CanvasInstallerMcp:
     """
 
     @classmethod
-    def _parse_secret_names(cls, raw_value: object) -> list[str]:
-        """Parse secret names from the CANVAS_MANIFEST.json secrets field."""
-        if isinstance(raw_value, list):
-            return [str(item).strip() for item in raw_value if str(item).strip()]
-        if isinstance(raw_value, str):
-            result = [item.strip() for item in raw_value.replace("\n", ",").split(",")]
+    def _parse_variable_names(cls, manifest: dict) -> list[str]:
+        """Return the list of variable names declared in a manifest.
+
+        Reads the modern `variables: [{name, sensitive?, default?}, ...]`
+        schema. Falls back to the legacy `secrets: [name, ...]` array
+        for unmigrated plugins, but emits no values for it — the
+        deprecated form is rejected by `lint_manifest.py` before any
+        install reaches Canvas.
+        """
+        variables = manifest.get("variables")
+        if isinstance(variables, list) and variables:
+            names: list[str] = []
+            for entry in variables:
+                if not isinstance(entry, dict):
+                    continue
+                name = entry.get("name")
+                if isinstance(name, str) and name.strip():
+                    names.append(name.strip())
+            return names
+        raw_secrets = manifest.get("secrets")
+        if isinstance(raw_secrets, list):
+            return [str(item).strip() for item in raw_secrets if str(item).strip()]
+        if isinstance(raw_secrets, str):
+            result = [item.strip() for item in raw_secrets.replace("\n", ",").split(",")]
             return [item for item in result if item]
         return []
 
@@ -74,7 +92,7 @@ class CanvasInstallerMcp:
             return f"Error: manifest not found: {manifest_file}"
 
         manifest: dict = json.loads(manifest_file.read_text(encoding="utf-8"))
-        secret_names = cls._parse_secret_names(manifest.get("secrets") or [])
+        secret_names = cls._parse_variable_names(manifest)
 
         values: dict[str, str] = {}
         if secret_names:
