@@ -274,7 +274,9 @@ class SandboxLinter(ast.NodeVisitor):
     # ── Augmented assignment on subscripts / slices ──
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         target = node.target
-        if isinstance(target, ast.Subscript):
+        if isinstance(target, (ast.Subscript,)):
+            # Subscripts AND slice targets (which are Subscript nodes with
+            # a Slice value) both fail in RestrictedPython.
             self.violations.append(Violation(
                 self.file_path, node.lineno, "augmented-subscript",
                 "Augmented assignment on a dict item / list item / slice "
@@ -283,6 +285,67 @@ class SandboxLinter(ast.NodeVisitor):
                 "`d[k] = d[k] + v`.",
             ))
         # Recurse in case the RHS contains nested issues.
+        self.generic_visit(node)
+
+    # ── @dataclass(frozen=True) / @dataclass(slots=True) ──
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for deco in node.decorator_list:
+            # @dataclass(frozen=True, ...) shape — ast.Call wrapping a name
+            # that resolves to `dataclass`. Decorators can also be a bare
+            # ast.Name (e.g. @dataclass) which is fine.
+            if not isinstance(deco, ast.Call):
+                continue
+            func = deco.func
+            deco_name = ""
+            if isinstance(func, ast.Name):
+                deco_name = func.id
+            elif isinstance(func, ast.Attribute):
+                deco_name = func.attr
+            if deco_name != "dataclass":
+                continue
+            for kw in deco.keywords:
+                if kw.arg in ("frozen", "slots") and isinstance(kw.value, ast.Constant) and kw.value.value is True:
+                    self.violations.append(Violation(
+                        self.file_path, deco.lineno, "dataclass-restricted",
+                        f"`@dataclass({kw.arg}=True)` uses exec() internally "
+                        "and is rejected by the sandbox. For immutable "
+                        "records use `typing.NamedTuple`; for plain ones "
+                        "drop the kwarg.",
+                    ))
+        self.generic_visit(node)
+
+    # ── setattr / delattr / bytearray / 3-arg type() calls ──
+    def visit_Call(self, node: ast.Call) -> None:
+        func = node.func
+        name = ""
+        if isinstance(func, ast.Name):
+            name = func.id
+        if name == "setattr":
+            self.violations.append(Violation(
+                self.file_path, node.lineno, "setattr-blocked",
+                "`setattr()` is blocked by the sandbox. Use direct attribute "
+                "assignment (`obj.attr = value`) instead.",
+            ))
+        elif name == "delattr":
+            self.violations.append(Violation(
+                self.file_path, node.lineno, "delattr-blocked",
+                "`delattr()` is blocked by the sandbox. Use `del obj.attr` "
+                "or rethink the abstraction.",
+            ))
+        elif name == "bytearray":
+            self.violations.append(Violation(
+                self.file_path, node.lineno, "bytearray-blocked",
+                "`bytearray` is blocked by the sandbox. Use `bytes` for "
+                "binary data, or build a string and encode.",
+            ))
+        elif name == "type" and len(node.args) >= 3:
+            # type(name, bases, dict) — dynamic class creation. type(x) for
+            # type introspection is fine.
+            self.violations.append(Violation(
+                self.file_path, node.lineno, "type-3arg-blocked",
+                "`type(name, bases, dict)` dynamic class creation is "
+                "blocked. Declare the class normally with `class … :`.",
+            ))
         self.generic_visit(node)
 
 
@@ -306,11 +369,37 @@ def lint(plugin_dir: Path) -> list[Violation]:
         # internal-import prefixes.
         plugin_name = ""
 
+    # Scope the scan to the inner snake_case plugin folder when we can
+    # identify it. The plugin's actual source lives inside
+    # `<plugin_dir>/<plugin_name>/`; everything outside that (build
+    # caches, test scratch, .venv, .uv, icon-gen artifacts, .cache/uv,
+    # cookiecutter leftovers) is never the user's plugin code and was
+    # the single biggest source of bogus "thousands of violations"
+    # lint reports observed during real-customer use. Skip-list
+    # below still applies for anything weird inside the inner folder.
+    scan_root = plugin_dir
+    if plugin_name:
+        inner = plugin_dir / plugin_name
+        if inner.is_dir():
+            scan_root = inner
+
+    # Directories whose .py files are never the plugin's own source —
+    # don't scan them even if they live inside the inner folder. .cache
+    # / .canvas / .npm get populated by cookiecutter, canvas-cli, and
+    # Studio's runtime; .git is just git plumbing.
+    SKIP_DIRS = {
+        "__pycache__", "tests", ".venv", ".cache", ".canvas",
+        ".npm", ".git", "node_modules", "site-packages",
+        ".pytest_cache", ".mypy_cache", ".uv", "build", "dist",
+    }
     violations: list[Violation] = []
-    for py_file in sorted(plugin_dir.rglob("*.py")):
-        # Skip tests, __pycache__, and venv-style dirs.
+    for py_file in sorted(scan_root.rglob("*.py")):
         parts = set(py_file.parts)
-        if "__pycache__" in parts or "tests" in parts or ".venv" in parts:
+        if parts & SKIP_DIRS:
+            continue
+        # Also skip any path under a hidden directory anywhere in the
+        # chain (`.local/`, `.foo-cache/`, etc.) — always build scratch.
+        if any(p.startswith(".") and p not in (".", "..") for p in py_file.parts[:-1]):
             continue
         try:
             source = py_file.read_text(encoding="utf-8")

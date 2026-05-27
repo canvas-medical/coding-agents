@@ -91,13 +91,41 @@ Plus RestrictedPython's safe basics: `bool`, `int`, `float`, `str`, `bytes`, `tu
 
 ## RestrictedPython feature limits
 
-Even with the right imports, the sandbox rejects several normal Python constructs:
+Even with the right imports, the sandbox rejects several normal Python constructs. These were the single largest source of failed deploys in real-customer use — every entry here cost at least one project at least one failed deploy to discover.
 
-- **Augmented assignment on subscripts / slices.** `d["k"] += 1`, `arr[i] += 1`, `arr[i:j] += [...]` all fail with `Code is invalid: Augmented assignment of object items and slices is not allowed.` Rewrite as explicit reassignment: `d["k"] = d["k"] + 1`.
-- **No deep attribute access through dotted module paths.** Reading `pkg.sub.NAME` at the use site after `import pkg` may raise `AttributeError: "pkg.sub.NAME" is an invalid attribute name (not in ALLOWED_MODULES)`. Import the name explicitly: `from pkg.sub import NAME`.
-- **No filesystem reads.** `open(path)`, `Path(...).read_text()`, `json.load(f)` are blocked. Use `json.loads(string)` and embed content into Python source if you genuinely need static data.
+- **Augmented assignment on subscripts / slices.** `d["k"] += 1`, `arr[i] += 1`, `arr[i:j] += [...]` all fail with `Code is invalid: Augmented assignment of object items and slices is not allowed.` Rewrite as explicit reassignment: `d["k"] = d["k"] + 1`. Search your code for `[*] +=`, `[*] -=`, `[*] *=`, `[*] /=` — there are usually several offenders in the same file.
+- **No `@dataclass(frozen=True)`** (uses `exec()` internally, which the sandbox blocks). `@dataclass(slots=True)` is also out. For immutable records use `typing.NamedTuple`. Plain `@dataclass` (mutable) is fine.
+- **No deep attribute access through dotted module paths.** Reading `pkg.sub.NAME` at the use site after `import pkg` may raise `AttributeError: "pkg.sub.NAME" is an invalid attribute name (not in ALLOWED_MODULES)`. Import the name explicitly: `from pkg.sub import NAME`. This applies to YOUR OWN plugin's modules too — always `from my_plugin.x import Y`, never `import my_plugin.x` then `my_plugin.x.Y(...)`.
+- **No `setattr()` / `delattr()`.** These are blocked entirely. Re-design to use direct attribute assignment (`obj.attr = value`) or rethink the abstraction.
+- **No `type(...)` as a callable on a class** for purposes other than introspection. `type(x)` to compare against a class is allowed; `type("NewClass", ...)` to create a class is blocked.
+- **No `__slots__` on classes.** Plain classes work; just omit slots.
+- **No underscore-prefixed string keys in dictionaries that the sandbox inspects** (e.g. `_debug_step`). Rename without the prefix.
+- **No `bytearray`.** Blocked. Use `bytes` if you need binary, or build a string and encode.
+- **No `random.Random()` class** (and `random` requires specific names). Only `from random import choices, uniform, randint` are exposed.
+- **No bare `import datetime` / `import random` / `import uuid`.** Always `from datetime import datetime, timedelta, timezone` etc. The bare module import is rejected even though the names inside are allowed.
+- **No relative imports** (`from .x import Y`). Always use the full plugin-namespace path.
 - **No `exec` / `eval` / `compile` / `__import__`.**
 - **No `del` on subscripts** in some restricted forms — prefer `dict.pop(k, None)`.
+- **No filesystem reads.** `open(path)`, `Path(...).read_text()`, `json.load(f)` are blocked. Use `json.loads(string)` and embed content into Python source if you genuinely need static data.
+
+### Django field types
+
+The sandbox exposes Django's *query builders* (`Q`, `Count`, `Sum`, `Avg`, `Prefetch`, `Case`, `When`, `Exists`, `Subquery`, `OuterRef`, `Value`) but NOT the model *field types* (`CharField`, `TextField`, `IntegerField`, `BigIntegerField`, `DateTimeField`, `BooleanField`, `JSONField`, `UUIDField`). If you're declaring a `CustomModel` subclass, use Canvas SDK's field declarations from `canvas_sdk.v1.data` instead.
+
+## Custom Data model gotchas
+
+For plugins that declare a `custom_data` block and define `CustomModel` subclasses:
+
+- **`CustomModel` uses `dbid` (NOT `id`) as the primary key.** `.filter(id=…)` / `.get(id=…)` will FieldError at runtime. Always `.filter(dbid=…)`. This was responsible for ~8 of the failed deploys in real-customer use.
+- **Models MUST live in `<plugin>/models/`.** A flat `models.py`, a `data_models/` directory, or any other layout will silently produce no tables. The Canvas loader only scans the `models/` subdirectory.
+- **`CustomModel` subclasses without a `custom_data` block in the manifest produce no tables.** The plugin loads cleanly but every query returns empty. Always declare in the manifest:
+  ```json
+  "custom_data": {
+    "namespace": "<org>__<plugin_name>",
+    "access": "read_write"
+  }
+  ```
+- **Avoid lazy string ForeignKey refs** (`models.ForeignKey("OtherModel", ...)`). They can silently fail at table-creation time, dropping the table without an error. Use direct class refs when possible.
 
 ## Internal-import rules
 
