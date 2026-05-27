@@ -127,6 +127,26 @@ For plugins that declare a `custom_data` block and define `CustomModel` subclass
   ```
 - **Avoid lazy string ForeignKey refs** (`models.ForeignKey("OtherModel", ...)`). They can silently fail at table-creation time, dropping the table without an error. Use direct class refs when possible.
 
+## Manifest configuration variables — modern `variables` schema only
+
+Declare every configurable value in the manifest's `variables` array. The legacy `"secrets": [...]` array is **deprecated** and is the leading cause of misrendered Configuration panels — without per-variable `sensitive` metadata, Studio falls back to masking every input (URLs and IDs included), making the form unusable.
+
+```json
+"variables": [
+  {"name": "SENDGRID_API_KEY", "sensitive": true},
+  {"name": "DIGEST_FROM_ADDRESS"},
+  {"name": "DIGEST_FROM_NAME"},
+  {"name": "POLL_INTERVAL_SECONDS", "default": "60"}
+]
+```
+
+Rules:
+- `sensitive: true` for credentials/tokens/passwords/API keys (masked input).
+- Omit `sensitive` (or set `false`) for URLs, IDs, durations, display names, file paths, etc. (plain text — user must be able to see what they're typing).
+- `default` is allowed only on non-sensitive variables.
+- NEVER write a bare `"secrets": [...]` array on its own. The pre-deploy `lint_manifest.py` rejects manifests that have `secrets` and no `variables`.
+- Some pieces of Canvas SDK reference documentation still show the legacy `secrets` form in older examples — ignore them; the runner accepts both, but Studio's UI cannot render the legacy form correctly.
+
 ## Internal-import rules
 
 Imports within your own plugin must always use the full plugin-namespace prefix:

@@ -79,6 +79,49 @@ def _walk_py(root: Path):
 def lint(outer_dir: Path, inner_dir: Path, manifest: dict) -> list[Violation]:
     violations: list[Violation] = []
 
+    # Pass 0 — manifest must use the modern `variables` schema for
+    # configuration values, not the legacy `secrets` array. The legacy
+    # form carries no sensitivity metadata, so Studio's Configuration
+    # panel can't tell which fields to mask (it falls back to masking
+    # everything, even URLs and IDs the user needs to see).
+    legacy_secrets = manifest.get("secrets")
+    modern_vars = manifest.get("variables")
+    if (
+        isinstance(legacy_secrets, list)
+        and legacy_secrets
+        and not (isinstance(modern_vars, list) and modern_vars)
+    ):
+        sample_lines = ["      \"variables\": ["]
+        for s in legacy_secrets[:6]:
+            if not isinstance(s, str):
+                continue
+            up = s.upper()
+            is_sensitive = any(
+                m in up for m in ("KEY", "TOKEN", "SECRET", "PASSWORD")
+            )
+            entry = f"        {{\"name\": \"{s}\""
+            if is_sensitive:
+                entry += ", \"sensitive\": true"
+            entry += "},"
+            sample_lines.append(entry)
+        if len(legacy_secrets) > 6:
+            sample_lines.append("        ...")
+        sample_lines.append("      ]")
+        violations.append(Violation(
+            Path("CANVAS_MANIFEST.json"), 0, "legacy-secrets-array",
+            "Plugin uses the deprecated `\"secrets\": [...]` array. "
+            "Migrate to the modern `\"variables\": [...]` schema, which "
+            "carries per-variable `sensitive` and `default` metadata. "
+            "Without it Studio's Configuration panel cannot tell which "
+            "inputs to mask and renders EVERY field as a password — "
+            "even URLs and IDs the user needs to see while typing. "
+            "Replace with:\n"
+            + "\n".join(sample_lines)
+            + "\nMark only credentials (API keys, tokens, passwords) "
+            "as `sensitive: true`. Plain values (URLs, IDs, durations, "
+            "display names) MUST be left non-sensitive.",
+        ))
+
     # Pass 1 — find CustomModel subclasses and check directory location.
     custom_model_class_names: set[str] = set()
     custom_model_definition_files: list[Path] = []
