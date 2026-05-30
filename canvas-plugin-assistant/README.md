@@ -78,9 +78,10 @@ When `CPA_RUNNING=1`, the following actions run automatically when you `/exit`:
 
 1. **Cost Logger** - Saves session cost data (tokens, duration, model) to `.cpa-workflow-artifacts/costs/`
 2. **User Input Logger** - Saves user prompts to `.cpa-workflow-artifacts/user_inputs/`
-3. **Git Commit Plugin** - Auto-commits plugin changes (if in a plugin directory)
 
 Without `CPA_RUNNING=1`, these hooks are skipped and session data is not tracked.
+
+Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively and cannot inspect untracked files or ask for consent, so a blind `git add`/commit risks staging secrets. The `:wrap-up` command commits interactively instead, where untracked files are reviewed (and scanned for secrets) and pushing is confirmed with you first.
 
 ## What This Assistant Does
 
@@ -236,7 +237,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 5. **Wrap Up** (`:wrap-up`)
     - Final checklist: security, DB performance, coverage, README
-    - Git commit and push
+    - Interactive commit: stages tracked changes only, reviews/secret-scans any untracked files before including them, and confirms before pushing
 
 ## Icon Generation
 
@@ -428,7 +429,6 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `cost_logger.py`              | Session cost tracking                       |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `git_commit_plugin.py`        | Git commit automation for plugins           |
 | `hook_information.py`         | Hook data structures                        |
 | `mcp_canvas_installer.py`     | MCP server for plugin install with secrets  |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |

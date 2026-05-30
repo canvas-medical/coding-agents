@@ -414,11 +414,104 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 12. Wrap-Up Complete
+### 12. Commit Changes (Interactive)
 
-**After all checks pass (or issues are resolved), the plugin is ready.**
+**After all checks pass (or issues are resolved), commit the plugin changes.**
 
-The plugin changes will be automatically committed and pushed when you exit this Claude Code session (via a SessionEnd hook that detects the wrap-up report).
+This is done here, in the live session, on purpose — so untracked files can be reviewed and you are asked before anything is staged or pushed. **Never blindly `git add -A` and never push without explicit confirmation.**
+
+**Step 12a — Show what changed:**
+
+```bash
+cd "$CPA_PLUGIN_DIR"
+git status --porcelain .
+```
+
+Split the output into:
+- **Tracked changes** (lines starting with ` M`, `M `, `MM`, ` D`, `D `, `R `, etc.) — modifications and deletions of files git already tracks.
+- **Untracked files** (lines starting with `??`) — new files git does not yet track.
+
+**Step 12b — Stage tracked changes only:**
+
+```bash
+git add -u .
+```
+
+`-u` stages modifications and deletions of already-tracked files and **never** picks up untracked files. This is the safe default: a stray secrets dump, `.env`, or scratch file written during the session is not swept in.
+
+**Step 12c — Review untracked files before including any:**
+
+If there are untracked files, do NOT add them automatically. For each one, read it and decide whether it is safe and intended for the repo:
+
+```bash
+# inspect each untracked file
+git status --porcelain . | awk '/^\?\?/ {print $2}'
+```
+
+Read each untracked file and **flag any that look like they contain secrets or are local-only scratch**, in particular:
+- filenames matching `*.env`, `*secret*`, `*credential*`, `*install*`, `*.key`, `*.pem`, `*token*`
+- contents containing high-entropy strings or substrings like `token`, `api_key`, `apikey`, `password`, `secret`, `Bearer `, `-----BEGIN`
+
+Present the untracked files to the user and ask which (if any) to include. Default to **none**, and never pre-select a flagged file:
+
+```json
+{
+  "questions": [
+    {
+      "question": "There are untracked files in the plugin directory. Which should be included in this commit? (Files that look like secrets are flagged — leave them out unless you are sure.)",
+      "header": "Untracked files",
+      "options": [
+        {"label": "None — commit tracked only", "description": "Recommended. Leaves every untracked file out of the commit."},
+        {"label": "Select specific files", "description": "I'll tell you which untracked files are safe to add"},
+        {"label": "All untracked", "description": "Add every untracked file (only if none are flagged and you've reviewed them)"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Only `git add` the specific untracked files the user explicitly approves. If a flagged (possible-secret) file is among them, confirm a second time and suggest adding it to `.gitignore` instead.
+
+**Step 12d — Show the staged diff and commit:**
+
+```bash
+git diff --cached --stat
+```
+
+If there is nothing staged, report "no changes to commit" and skip to Step 13. Otherwise commit (replace `{plugin_name}` with the actual name):
+
+```bash
+git commit -m "complete {plugin_name} wrap-up
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+**Step 12e — Ask before pushing:**
+
+Pushing is outward-facing and irreversible, so confirm first:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Committed locally. Push to the remote now?",
+      "header": "Push?",
+      "options": [
+        {"label": "Push now", "description": "Run git push to the upstream branch"},
+        {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Only run `git push` if the user chooses to push.
+
+### 13. Wrap-Up Complete
+
+**After the commit step, the plugin is ready for this version.**
 
 ## CPA Workflow
 
