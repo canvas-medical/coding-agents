@@ -38,12 +38,10 @@ Why the SDK is the default:
 
 ### Writes
 
-The SDK data models are **read-only**. Mutations happen one of two ways, and that is the whole decision:
+The SDK data models are **read-only**. Mutations happen one of two ways, and the only question is whether an Effect exists for the write you need:
 
-- **SDK Effects** — if there is an Effect for the change you want (e.g. `AddBannerAlert`, `AddTask`, command effects, chart writes), use it. This is the default for writes and is only available when your handler is responding to an event.
-- **FHIR API** — use it to create or update data when **either**:
-  - there is **no Effect** for the write you need, or
-  - you need to write **outside an event/effect context** (e.g. a `CronTask`, a `SimpleAPI` endpoint, or an external webhook handler that isn't returning effects to an event).
+- **SDK Effects** — if there is an Effect for the change you want (e.g. `AddBannerAlert`, `AddTask`, command effects, chart writes), use it. This is the default for writes. Effects are **not** tied to event handlers: a `BaseHandler` returns them from `compute()`, a `CronTask` returns them from `execute()` (`-> list[Effect]`), and a `SimpleAPI` route returns them from its method (`-> list[Response | Effect]`). So a scheduled job or an API endpoint can write via Effects just like an event handler.
+- **FHIR API** — use it to create or update data when there is **no Effect** for the write you need. (A handful of effects are contextual to the in-flight command — e.g. `*__PRE_COMMIT` overrides — and only make sense from the handler responding to that event; those are command overrides, not general data writes.)
 
 ### Quick reference
 
@@ -51,9 +49,8 @@ The SDK data models are **read-only**. Mutations happen one of two ways, and tha
 |-----------|-----|
 | Read a model exposed in `canvas_sdk.v1.data` | **SDK data module** |
 | Read data not exposed in the SDK | **FHIR** |
-| Write and an Effect exists for it (in an event handler) | **SDK Effect** |
+| Write and an Effect exists for it | **SDK Effect** (works from `BaseHandler`, `CronTask`, or `SimpleAPI`) |
 | Write with no matching Effect | **FHIR** |
-| Write from a CronTask / SimpleAPI / webhook (no event to attach effects to) | **FHIR** |
 | Plugin is itself a FHIR-shaped integration with an external system | **FHIR** |
 
 When in doubt, check the **canvas-sdk** skill for whether a data model or Effect exists before reaching for FHIR. Most "we need FHIR" instincts are covered by an existing model or Effect.
