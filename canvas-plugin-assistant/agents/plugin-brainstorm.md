@@ -124,7 +124,11 @@ Once you have answers from AskUserQuestion:
    - Identify the specific EventType (e.g., `VITALS_COMMAND__POST_COMMIT`)
    - Identify the Effects needed (e.g., `AddBannerAlert`, `AddTask`)
    - Determine complexity: Simple (1-2 files), Medium (API needed), Complex (UI app)
-3. **Write the spec file immediately** - don't ask more questions
+3. **Decide the data access strategy** using the **data-access-strategy** skill:
+   - For every read and write, choose **SDK vs FHIR** — default to the SDK, use FHIR only when the SDK can't do it (data not in the data module, or a write with no matching Effect).
+   - Choose **existing Canvas models vs Custom Data** — default to existing models, add Custom Data only when nothing in Canvas represents the data.
+   - Record the choices **and the reason** for the spec's `Data Access Strategy` section.
+4. **Write the spec file immediately** - don't ask more questions
 
 ## Specification Format
 
@@ -160,6 +164,13 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 ## Data Requirements
 - **Read**: [Data models needed]
 - **Write**: [Data to create/update]
+
+## Data Access Strategy
+[From the data-access-strategy skill. State the choice AND why — one line each.]
+- **Reads**: [SDK data module / FHIR — and why]
+- **Writes**: [SDK Effect <name> / FHIR — and why]
+- **FHIR used**: [No, SDK covers it / Yes — what the SDK couldn't do; note patient-scoped token + secret]
+- **Custom Data**: [No, maps to existing Canvas models / Yes — what has no Canvas model; custom-data-patterns skill applied]
 
 ## Effects
 - [Effect 1 with specific SDK class name]
