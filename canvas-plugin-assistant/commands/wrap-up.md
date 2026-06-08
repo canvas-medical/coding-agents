@@ -231,7 +231,45 @@ ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py"
 
 **If no HTML content:** Mark as N/A.
 
-### 8. README Review
+### 8. WebSocket Deploy Resilience
+
+**If the plugin uses a WebSocket** (a `WebSocketAPI` handler, a `Broadcast` effect, or client-side `new WebSocket(...)`), verify it's built to survive Canvas's daytime blue/green deploys. A deploy closes every live socket mid-session and clients reconnect onto a freshly booted process, so a socket that works in testing can silently lose updates or hammer the new container in production.
+
+Check whether the plugin uses WebSockets:
+
+```bash
+grep -rn "WebSocketAPI\|Broadcast(" --include="*.py" .
+grep -rn "new WebSocket(" --include="*.html" --include="*.js" .
+```
+
+**If a WebSocket exists, verify all four:**
+
+1. **Re-fetch the snapshot on every (re)connect**, wired to the socket's `open` event — not only on initial page load. Broadcasts are ephemeral, so anything sent during the gap is lost; the reconnect must reconcile by pulling current state:
+   ```bash
+   grep -rn "addEventListener(\"open\"\|addEventListener('open'\|\.onopen" --include="*.html" --include="*.js" .
+   ```
+   The `open` handler must call the same "load current state" fetch the page uses on first load.
+
+2. **Reconnect with exponential backoff + jitter + a cap** — never a fixed delay. Every client drops at once at cutover, so a fixed delay is a thundering herd against the single container that just booted:
+   ```bash
+   grep -rn "setTimeout\|reconnect\|Math.random" --include="*.html" --include="*.js" .
+   ```
+   Flag any fixed-delay reconnect (e.g. `setTimeout(connect, 4000)`).
+
+3. **Reconnect immediately on the browser `online` event** instead of waiting out a backoff timer:
+   ```bash
+   grep -rn "\"online\"\|'online'" --include="*.html" --include="*.js" .
+   ```
+
+4. **Mutating `POST`s are idempotent** — they re-check current state and no-op if the desired state already holds, since a cutover can drop the response and the client will retry. Review each mutating SimpleAPI route (assign-to-me, mark-complete, originate-command, etc.) for a state pre-check before it emits its effect.
+
+Full rationale and worked client code are in the **canvas-sdk** skill ("WebSockets must survive blue/green deploys") and the **companion-app-patterns** skill's context file ("Surviving deploys & reconnection").
+
+**If any requirement is missing:** Fix it before proceeding.
+
+**If no WebSocket:** Mark as N/A.
+
+### 9. README Review
 
 Read the plugin's README.md and verify:
 
@@ -255,7 +293,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 9. Application Icon Check
+### 10. Application Icon Check
 
 **If the plugin has an Application component, verify it has an icon.**
 
@@ -287,7 +325,7 @@ ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 
 **If no applications:** Mark as N/A.
 
-### 10. License Check
+### 11. License Check
 
 Check for any license file or license mentions:
 
@@ -318,7 +356,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 11. Final Verdict
+### 12. Final Verdict
 
 After all checks, present a summary:
 
@@ -336,6 +374,7 @@ After all checks, present a summary:
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
 | Cache Busting | ✅ Pass / ⚠️ Fixed / N/A | ... |
+| WebSocket Resilience | ✅ Pass / ⚠️ Fixed / N/A | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
 | Application Icon | ✅ Present / ⚠️ Created / N/A | ... |
 | License | ✅ None / ⚠️ Removed / ✅ Intentional | ... |
@@ -380,6 +419,7 @@ cat > "$REPORT_FILE" <<'REPORT_END'
 | Debug Logs | {status} | {notes} |
 | Dead Code | {status} | {notes} |
 | Cache Busting | {status} | {notes} |
+| WebSocket Resilience | {status} | {notes} |
 | README | {status} | {notes} |
 | Application Icon | {status} | {notes} |
 | License | {status} | {notes} |
@@ -414,7 +454,7 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 12. Wrap-Up Complete
+### 13. Wrap-Up Complete
 
 **After all checks pass (or issues are resolved), the plugin is ready.**
 
