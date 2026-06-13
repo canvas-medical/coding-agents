@@ -1,22 +1,36 @@
 ---
 name: canvas-sdk
-description: Canvas SDK reference and documentation access for Canvas platform capabilities, API usage, implementation patterns, and testing
+description: Canvas SDK reference and documentation. Use whenever a question, claim, or piece of code touches Canvas SDK capabilities, API usage, implementation patterns, or testing — including quick conversational questions ("how do I ingest ADTs?", "what's the import for X?", "does Canvas support Y?"). The bundled docs are the source of truth; do not answer Canvas SDK questions from memory.
 ---
 
 # Canvas SDK Reference
 
 This skill provides comprehensive documentation for the Canvas Medical SDK, enabling development of Canvas plugins.
 
+## Grounding Rule — Read Before Answering
+
+**Never answer a Canvas SDK question from memory.** Canvas's SDK surface (effects, events, data models, handlers, manifest fields, import paths) is Canvas-specific and changes often; the model's prior is frequently wrong or out of date. Confidently-wrong answers about Canvas APIs are worse than no answer.
+
+Before stating any specific class name, import path, effect/event name, field name, method, or supported value:
+1. Read `coding_agent_context.txt` from this skill's directory (see Usage below) and `grep`/search it for the relevant term.
+2. Base your answer on what the bundled docs actually say.
+3. **Cite the source doc page URL** (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` line that contains the content) so the user can verify it — the same way a high-quality grounded answer always links its source.
+
+This applies to a one-line verbal question just as much as to code generation. If a question is even partially about an SDK capability and you have not yet consulted this skill in the current conversation, consult it first, then answer.
+
 ## When to Use This Skill
 
-Use this skill when you need information about:
+Use this skill whenever a question, claim, or piece of code involves — even in passing — any of:
 - Canvas SDK classes, methods, and APIs
 - Event types and their context structures
-- Effect types and their payloads
+- Effect types and their payloads (e.g. creating external events / ADT ingestion, banner alerts, tasks)
 - Data models (Patient, Condition, Medication, etc.)
 - Handler types (BaseHandler, SimpleAPI, Application, CronTask)
 - Canvas CLI commands
 - Plugin manifest structure
+- Whether Canvas "supports" some capability, and how it is modeled
+
+This includes short conversational questions, not just plugin-building work. Examples that REQUIRE consulting this skill before answering: "how do I ingest ADTs?", "what's the import path for the external event effect?", "what fields does X take?", "does Canvas have a built-in HL7 parser?". Do not answer any of these from memory.
 
 ## Terminology / Aliases
 
@@ -105,6 +119,7 @@ To use this skill:
 1. **Read `coding_agent_context.txt` from this skill's directory** - it already exists locally
 2. Search the file for specific class names, event types, or effect types
 3. Use the documentation to understand Canvas SDK capabilities
+4. **Cite the source doc page URL** in your answer (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` URL whose section you used), so the answer is verifiable and grounded rather than asserted from memory
 
 The context file contains ~20000 lines of comprehensive SDK documentation including all handlers, events, effects, and data models.
 
