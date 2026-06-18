@@ -59,6 +59,17 @@ When building a custom patient chart summary section (`PatientChartSummaryCustom
 
 **The WebSocket channel name MUST include the patient id** (e.g. `chart-summary-{plugin_name}-{patient_id}`). Never broadcast on a global channel — it leaks updates across patient charts and causes every connected client to re-render on every event. Full pattern + example in `coding_agent_context.txt`, under "Real-Time Updates for Custom Sections".
 
+### WebSockets must survive blue/green deploys
+
+This applies to **any** plugin WebSocket — custom chart summary sections, real-time note-restriction updates (`NoteRestrictionsUpdatedEffect`), companion-app surfaces, anything built on `WebSocketAPI` + `Broadcast`. Canvas runs blue/green deploys during the working day, so a live socket is closed mid-session and the client reconnects onto a freshly booted process. Build every WebSocket client to survive that gap:
+
+- **Push is a hint, pull is the truth.** `Broadcast` is fire-and-forget and ephemeral — anything sent while the socket was down is gone, and the plugin process keeps no durable state across a restart (module globals reset every deploy). Treat the socket as a "something changed" nudge and re-fetch the authoritative snapshot from your `SimpleAPI` endpoint to learn *what*.
+- **Re-fetch on every (re)connect, not just initial load.** Wire the snapshot fetch to the socket's `open` event so the initial load and every reconnect run identical reconciliation — anything missed during the gap is picked up immediately.
+- **Reconnect with exponential backoff + jitter + a cap, never a fixed delay.** A deploy drops every client at the same instant, so a fixed delay is a thundering herd against the single container that just booted. Also reconnect immediately on the browser `online` event.
+- **Make mutating `POST`s idempotent.** A cutover can drop the response to an in-flight mutation, and the client cannot tell "never applied" from "applied, response lost," so it retries. Re-check current state server-side and no-op if the desired state already holds rather than blindly emitting a second effect.
+
+Full worked client code (backoff/jitter, `online` handling, half-open heartbeat, idempotent mutations) is in the `companion-app-patterns` skill's `companion_app_patterns_context.txt`, under "Surviving deploys & reconnection" — the pattern is identical for any WebSocket surface, not just companion apps.
+
 ## Key Documentation Sections
 
 ### Handlers
