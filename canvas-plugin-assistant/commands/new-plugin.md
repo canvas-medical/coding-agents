@@ -344,10 +344,33 @@ fi
 
 This is the standard resume flow. The **plugin-brainstorm** agent will handle implementation.
 
+#### Step 3: Set Up UI Design System (if needed)
+
+Before building any UI, check if the plugin spec requires a user interface. The plugin needs UI when it uses any of these: HTMLResponse, ActionButton, Application class, SimpleAPI with HTML-serving routes, or LaunchModalEffect with a URL.
+
+If UI is needed, copy the design system files into the plugin's static directory:
+
+```bash
+plugin_name_snake=$(basename "$CPA_PLUGIN_DIR" | tr '-' '_')
+static_dir="$CPA_PLUGIN_DIR/$plugin_name_snake/static"
+mkdir -p "$static_dir"
+cp ./skills/plugin-ui/assets/canvas-plugin-ui.js "$static_dir/"
+cp ./skills/plugin-ui/assets/canvas-plugin-ui.css "$static_dir/"
+```
+
+This places the two design system files in the plugin's static directory. The plugin's HTML head needs three tags: a Google Fonts link for Lato, a stylesheet link to canvas-plugin-ui.css, and a script tag for canvas-plugin-ui.js. See `skills/plugin-ui/assets/head.html` for the exact snippet.
+
+After copying, invoke the **plugin-ui** skill. The skill's DESIGN.md documents the visual specification. The skill's references document how to create the SimpleAPI asset-serving routes and wire the design system files into HTML templates. Follow the workflow in `references/workflow.md` for building page content.
+
+If the plugin does not need UI, skip this step entirely.
+
+#### Step 4: Implement Plugin
+
 The agent will:
 - Edit the generated protocol handler
 - Create Application class if needed
 - Generate icon for Applications (mandatory)
+- Build UI pages following the plugin-ui skill and DESIGN.md visual specification (if UI was set up in Step 3)
 - Write tests following the testing skill guidelines
 - Deploy for UAT
 
