@@ -4,14 +4,18 @@ SessionEnd hook orchestrator that runs all session end actions in order.
 This script ensures all SessionEnd hooks run in the correct sequence:
 1. CostsLogger - Log session costs
 2. UserInputsLogger - Log user inputs
-3. GitCommitPlugin - Commit and push plugin changes (must run last)
+
+Git commit/push is intentionally NOT done here: a SessionEnd hook runs
+non-interactively and cannot inspect untracked files or ask for consent, so a
+blind commit risks staging secrets. Committing is handled interactively by the
+`:wrap-up` command instead, where Claude can review changes and confirm with the
+user.
 """
 
 import sys
 
 from base_logger import BaseLogger
 from cost_logger import CostsLogger
-from git_commit_plugin import GitCommitPlugin
 from user_input_logger import UserInputsLogger
 from hook_information import HookInformation
 
@@ -21,8 +25,8 @@ class SessionEndOrchestrator:
     """
     Orchestrates all SessionEnd hook actions in the correct order.
 
-    This class ensures hooks run sequentially, with git commit always running last.
-    If any hook fails, it logs the error but continues with the next hook.
+    This class ensures hooks run sequentially. If any hook fails, it logs the error
+    but continues with the next hook.
     """
 
     @classmethod
@@ -40,7 +44,6 @@ class SessionEndOrchestrator:
         hooks = [
             (CostsLogger, "Cost Logger"),
             (UserInputsLogger, "User Input Logger"),
-            (GitCommitPlugin, "Git Commit Plugin"),
         ]
 
         # Run each hook in sequence

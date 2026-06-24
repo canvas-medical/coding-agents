@@ -161,12 +161,18 @@ def fetch_external_data(self, patient_id: str) -> dict:
         raise RuntimeError(f"Failed to fetch data for patient {patient_id}") from e
 ```
 
-## Git Operations: Scope to Current Directory
+## Git Operations: Scope to Current Directory, Never Stage Untracked Files in Automation
 
 **CRITICAL: All git add commands MUST be scoped to the current directory.**
 
+**CRITICAL: Any automated/unattended commit (e.g. a SessionEnd hook) MUST stage tracked changes only — use `git add -u .`, never `git add -A .`.**
+Staging untracked files without a human reviewing risks sweeping a stray secrets dump, `.env`, or scratch file into the commit.
+
 ```bash
-# CORRECT - scoped to current directory
+# CORRECT for unattended automation - tracked changes only, scoped to current dir
+git add -u .
+
+# CORRECT for interactive use where you intend to add new files - scoped to current dir
 git add -A .
 
 # WRONG - stages changes across entire repository
@@ -175,13 +181,17 @@ git add -A
 git add .   # This is also risky if not in the right directory
 ```
 
-The `-A .` flag combination ensures:
+The `-u .` flag combination:
 
-- `-A` stages all changes (new, modified, deleted files)
+- `-u` stages modifications and deletions of already-tracked files only (skips untracked files)
 - `.` limits the scope to the current directory and below
+
+The `-A .` combination additionally stages *new untracked* files. Only use it interactively, when a human is reviewing what gets committed — never in a hook.
 
 **Never use `git add --all` or `git add -A` without a path.** These commands can accidentally stage and commit files outside the plugin directory,
 which is extremely difficult to unwind.
+
+**Automated commits must not push.** A SessionEnd or similar hook may commit locally, but pushing is outward-facing and must stay a deliberate user action.
 
 ## Cache Busting: Version-Stamp HTML and JavaScript Content
 
