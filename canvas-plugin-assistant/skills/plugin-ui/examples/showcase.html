@@ -56,6 +56,15 @@
     .component-section {
       margin-bottom: 48px;
       scroll-margin-top: 16px;
+      /* Skip rendering and animating sections that are scrolled offscreen, so
+         the many infinite CSS animations on this page (spinners, the active
+         progress bar) only run while their section is on screen. The a11y scan
+         forces these back to visible for the duration of a run, see runScan. */
+      content-visibility: auto;
+      contain-intrinsic-size: auto 600px;
+    }
+    html.a11y-scanning .component-section {
+      content-visibility: visible;
     }
     .component-section h2 {
       font-size: 1.71428571rem;
@@ -180,19 +189,19 @@
 
     <!-- Badges right-aligned -->
     <div class="sample-card">
-      <h3>Badges right-aligned (canvas-badge)</h3>
+      <h3>Badge in title (canvas-badge)</h3>
       <canvas-accordion>
         <canvas-accordion-item open>
           <canvas-accordion-title>
-            <span class="flex-grow">Active Medications</span>
-            <canvas-badge color="blue" size="tiny">4 active</canvas-badge>
+            <span>Active Medications</span>
+            <canvas-badge color="blue" size="tiny" style="--canvas-badge-blue-bg: #15689e">4 active</canvas-badge>
           </canvas-accordion-title>
           <canvas-accordion-content><p>Metformin 500mg twice daily. Lisinopril 10mg once daily. Atorvastatin 20mg at bedtime. Amlodipine 5mg once daily.</p></canvas-accordion-content>
         </canvas-accordion-item>
         <canvas-accordion-item>
           <canvas-accordion-title>
-            <span class="flex-grow">Pending Orders</span>
-            <canvas-badge color="orange" size="tiny">2 pending</canvas-badge>
+            <span>Pending Orders</span>
+            <canvas-badge color="orange" size="tiny" style="--canvas-badge-orange-bg: #b85c00">2 pending</canvas-badge>
           </canvas-accordion-title>
           <canvas-accordion-content><p>CBC with differential, ordered Mar 20, 2026. Lipid panel, ordered Mar 20, 2026.</p></canvas-accordion-content>
         </canvas-accordion-item>
@@ -201,27 +210,27 @@
 
     <!-- With toggles -->
     <div class="sample-card">
-      <h3>With toggles in title</h3>
+      <h3>With toggles in actions slot</h3>
       <canvas-accordion>
         <canvas-accordion-item open>
-          <canvas-accordion-title>
-            <span class="flex-grow">Email Notifications</span>
-            <canvas-toggle checked></canvas-toggle>
-          </canvas-accordion-title>
+          <canvas-accordion-title>Email Notifications</canvas-accordion-title>
+          <canvas-accordion-actions>
+            <canvas-toggle checked aria-label="Email Notifications"></canvas-toggle>
+          </canvas-accordion-actions>
           <canvas-accordion-content><p>Receive email notifications for appointment reminders, lab results, and prescription refills.</p></canvas-accordion-content>
         </canvas-accordion-item>
         <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">SMS Alerts</span>
-            <canvas-toggle checked></canvas-toggle>
-          </canvas-accordion-title>
+          <canvas-accordion-title>SMS Alerts</canvas-accordion-title>
+          <canvas-accordion-actions>
+            <canvas-toggle checked aria-label="SMS Alerts"></canvas-toggle>
+          </canvas-accordion-actions>
           <canvas-accordion-content><p>Text message alerts for urgent results and appointment changes.</p></canvas-accordion-content>
         </canvas-accordion-item>
         <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">Portal Messages</span>
-            <canvas-toggle></canvas-toggle>
-          </canvas-accordion-title>
+          <canvas-accordion-title>Portal Messages</canvas-accordion-title>
+          <canvas-accordion-actions>
+            <canvas-toggle aria-label="Portal Messages"></canvas-toggle>
+          </canvas-accordion-actions>
           <canvas-accordion-content><p>In-app messaging with your care team. Currently disabled.</p></canvas-accordion-content>
         </canvas-accordion-item>
       </canvas-accordion>
@@ -229,21 +238,21 @@
 
     <!-- With buttons -->
     <div class="sample-card">
-      <h3>With buttons in title</h3>
+      <h3>With buttons in actions slot</h3>
       <canvas-accordion>
         <canvas-accordion-item open>
-          <canvas-accordion-title>
-            <span class="flex-grow">Active Medications</span>
+          <canvas-accordion-title>Active Medications</canvas-accordion-title>
+          <canvas-accordion-actions>
             <canvas-button size="xs" variant="ghost">Edit</canvas-button>
-            <canvas-button size="xs" variant="primary">Add</canvas-button>
-          </canvas-accordion-title>
+            <canvas-button size="xs" variant="primary" style="--canvas-button-primary-bg: #16802e">Add</canvas-button>
+          </canvas-accordion-actions>
           <canvas-accordion-content><p>Metformin 500mg twice daily. Lisinopril 10mg once daily.</p></canvas-accordion-content>
         </canvas-accordion-item>
         <canvas-accordion-item>
-          <canvas-accordion-title>
-            <span class="flex-grow">Allergies</span>
+          <canvas-accordion-title>Allergies</canvas-accordion-title>
+          <canvas-accordion-actions>
             <canvas-button size="xs" variant="ghost">Review</canvas-button>
-          </canvas-accordion-title>
+          </canvas-accordion-actions>
           <canvas-accordion-content><p>Penicillin (rash). Sulfa drugs (anaphylaxis).</p></canvas-accordion-content>
         </canvas-accordion-item>
       </canvas-accordion>
@@ -275,8 +284,8 @@
       <canvas-accordion>
         <canvas-accordion-item open>
           <canvas-accordion-title>
-            <span class="flex-grow">Encounter History</span>
-            <canvas-badge color="blue" size="tiny">12 visits</canvas-badge>
+            <span>Encounter History</span>
+            <canvas-badge color="blue" size="tiny" style="--canvas-badge-blue-bg: #15689e">12 visits</canvas-badge>
           </canvas-accordion-title>
           <canvas-accordion-content>
             <canvas-scroll-area vertical aria-label="Encounter history" style="max-height: 200px">
@@ -1920,7 +1929,10 @@
               </canvas-dropdown>
             </div>
             <div class="row">
+              <canvas-input label="Phone" name="phone" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
               <canvas-input label="Notes" name="notes" placeholder="Optional notes"></canvas-input>
+            </div>
+            <div class="row">
               <canvas-button type="submit">Schedule</canvas-button>
             </div>
           </div>
@@ -1952,7 +1964,7 @@
             <canvas-table selectable striped aria-label="Upcoming appointments">
               <canvas-table-head>
                 <canvas-table-row>
-                  <canvas-table-cell width="44px"><canvas-checkbox id="filter-bar-select-all"></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell width="44px"><canvas-checkbox id="filter-bar-select-all" aria-label="Select all rows"></canvas-checkbox></canvas-table-cell>
                   <canvas-table-cell>Patient</canvas-table-cell>
                   <canvas-table-cell>Provider</canvas-table-cell>
                   <canvas-table-cell>Date</canvas-table-cell>
@@ -1960,19 +1972,19 @@
               </canvas-table-head>
               <canvas-table-body>
                 <canvas-table-row>
-                  <canvas-table-cell width="44px"><canvas-checkbox checked></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell width="44px"><canvas-checkbox checked aria-label="Select Maria Gomez"></canvas-checkbox></canvas-table-cell>
                   <canvas-table-cell>Maria Gomez</canvas-table-cell>
                   <canvas-table-cell>Dr. Alvarez</canvas-table-cell>
                   <canvas-table-cell>Apr 22, 2026</canvas-table-cell>
                 </canvas-table-row>
                 <canvas-table-row>
-                  <canvas-table-cell width="44px"><canvas-checkbox></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell width="44px"><canvas-checkbox aria-label="Select James Patel"></canvas-checkbox></canvas-table-cell>
                   <canvas-table-cell>James Patel</canvas-table-cell>
                   <canvas-table-cell>Dr. Brennan</canvas-table-cell>
                   <canvas-table-cell>Apr 23, 2026</canvas-table-cell>
                 </canvas-table-row>
                 <canvas-table-row>
-                  <canvas-table-cell width="44px"><canvas-checkbox checked></canvas-checkbox></canvas-table-cell>
+                  <canvas-table-cell width="44px"><canvas-checkbox checked aria-label="Select Anita Rao"></canvas-checkbox></canvas-table-cell>
                   <canvas-table-cell>Anita Rao</canvas-table-cell>
                   <canvas-table-cell>Dr. Chen</canvas-table-cell>
                   <canvas-table-cell>Apr 24, 2026</canvas-table-cell>
@@ -2006,6 +2018,21 @@
       <div class="field-row"><canvas-input label="Email" type="email" placeholder="patient@example.com"></canvas-input></div>
       <div class="field-row"><canvas-input label="Date of Birth" type="date"></canvas-input></div>
       <div class="field-row"><canvas-input placeholder="No label, just placeholder"></canvas-input></div>
+    </div>
+
+    <!-- Phone formatting -->
+    <div class="sample-card">
+      <h3>Phone Number (format="phone")</h3>
+      <div class="field-row">
+        <canvas-input id="phone-demo" label="Phone number" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
+      </div>
+      <div id="phone-demo-log" class="text-sm text-muted" style="margin-top: 8px">.value = ""</div>
+      <div class="field-row" style="margin-top: 16px">
+        <canvas-input id="phone-validate" label="Phone number (validates on blur)" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
+      </div>
+      <div class="field-row" style="margin-top: 16px">
+        <canvas-input id="phone-prefill" label="Pre-filled from value=&quot;5551234567&quot;" type="tel" format="phone" value="5551234567"></canvas-input>
+      </div>
     </div>
 
     <!-- Error state -->
@@ -2384,6 +2411,38 @@
       <canvas-modal id="modal-events" size="small">
         <canvas-modal-header dismissable>Event Demo</canvas-modal-header>
         <canvas-modal-content><p>Open and dismiss this modal to see events logged below.</p></canvas-modal-content>
+      </canvas-modal>
+    </div>
+
+    <!-- Long content, scrolling -->
+    <div class="sample-card">
+      <h3>Medium, long content, scrolls</h3>
+      <canvas-button id="modal-open-long">Open long modal</canvas-button>
+      <canvas-modal id="modal-long" size="medium">
+        <canvas-modal-header dismissable>Consent and Authorization</canvas-modal-header>
+        <canvas-modal-content>
+          <p style="margin-bottom: 12px"><strong>Section 1. Purpose</strong></p>
+          <p style="margin-bottom: 12px">This authorization permits the disclosure of protected health information for the purposes described below. Read each section carefully before signing. The modal body is intentionally long so the scroll behavior is visible.</p>
+          <p style="margin-bottom: 12px">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+          <p style="margin-bottom: 12px"><strong>Section 2. Information Disclosed</strong></p>
+          <p style="margin-bottom: 12px">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p style="margin-bottom: 12px">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+          <p style="margin-bottom: 12px"><strong>Section 3. Recipients</strong></p>
+          <p style="margin-bottom: 12px">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+          <p style="margin-bottom: 12px">Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</p>
+          <p style="margin-bottom: 12px"><strong>Section 4. Expiration</strong></p>
+          <p style="margin-bottom: 12px">Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.</p>
+          <p style="margin-bottom: 12px">Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.</p>
+          <p style="margin-bottom: 12px"><strong>Section 5. Right to Revoke</strong></p>
+          <p style="margin-bottom: 12px">At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+          <p style="margin-bottom: 12px">Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p>
+          <p style="margin-bottom: 12px"><strong>Section 6. Acknowledgement</strong></p>
+          <p>Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.</p>
+        </canvas-modal-content>
+        <canvas-modal-footer>
+          <canvas-button variant="ghost" id="modal-long-cancel">Decline</canvas-button>
+          <canvas-button variant="primary" id="modal-long-accept">I Agree</canvas-button>
+        </canvas-modal-footer>
       </canvas-modal>
     </div>
   </section>
@@ -3373,25 +3432,25 @@
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
             <span>Email notifications</span>
-            <canvas-toggle checked></canvas-toggle>
+            <canvas-toggle checked aria-label="Email notifications"></canvas-toggle>
           </div>
         </canvas-sortable-item>
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
             <span>SMS alerts</span>
-            <canvas-toggle checked></canvas-toggle>
+            <canvas-toggle checked aria-label="SMS alerts"></canvas-toggle>
           </div>
         </canvas-sortable-item>
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
             <span>Push notifications</span>
-            <canvas-toggle></canvas-toggle>
+            <canvas-toggle aria-label="Push notifications"></canvas-toggle>
           </div>
         </canvas-sortable-item>
         <canvas-sortable-item>
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
             <span>In-app messages</span>
-            <canvas-toggle checked></canvas-toggle>
+            <canvas-toggle checked aria-label="In-app messages"></canvas-toggle>
           </div>
         </canvas-sortable-item>
       </canvas-sortable-list>
@@ -4361,6 +4420,23 @@ document.getElementById('dropdown-duration').addEventListener('change', function
   document.getElementById('dropdown-change-log').textContent = 'Selected: ' + e.target.value + ' min';
 });
 
+// Phone input: live raw-digit readout
+(function () {
+  var phone = document.getElementById('phone-demo');
+  var log = document.getElementById('phone-demo-log');
+  function show() { log.textContent = '.value = ' + JSON.stringify(phone.value); }
+  phone.addEventListener('input', show);
+  phone.addEventListener('change', show);
+  show();
+})();
+
+// Phone input: consumer-controlled validation on blur (empty or exactly 10 digits)
+document.getElementById('phone-validate').addEventListener('change', function () {
+  var v = this.value;
+  if (v && v.length !== 10) this.setAttribute('error', 'Must be a valid phone number');
+  else this.removeAttribute('error');
+});
+
 // Menu Button select events
 document.getElementById('mb-default').addEventListener('select', function(e) {
   document.getElementById('mb-default-log').textContent = 'Selected: ' + e.detail.label + ' (value: ' + e.detail.value + ')';
@@ -4555,6 +4631,11 @@ modalDismiss('modal-delete-cancel', 'modal-delete');
 modalDismiss('modal-delete-confirm', 'modal-delete');
 
 modalWire('modal-open-info', 'modal-info');
+
+modalWire('modal-open-long', 'modal-long');
+modalDismiss('modal-long-cancel', 'modal-long');
+modalDismiss('modal-long-accept', 'modal-long');
+
 modalWire('modal-open-events', 'modal-events');
 
 var eventsModal = document.getElementById('modal-events');
@@ -4703,28 +4784,112 @@ document.getElementById('gated-locked').addEventListener('beforemove', function 
 
 <script>
 (function () {
-  var btn = document.createElement('button');
-  btn.type = 'button';
-  btn.id = 'a11y-scan-btn';
-  btn.textContent = 'Run a11y scan';
-  Object.assign(btn.style, {
-    position: 'fixed', bottom: '16px', right: '16px', zIndex: '99999',
-    padding: '10px 16px', background: '#1976d2', color: '#fff',
-    border: '0', borderRadius: '6px', fontFamily: 'inherit',
-    fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  var wrapper = document.createElement('div');
+  wrapper.id = 'a11y-scan-wrapper';
+  Object.assign(wrapper.style, {
+    position: 'fixed', top: '16px', bottom: '16px', right: '16px', zIndex: '99999',
+    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    alignItems: 'flex-end', gap: '8px', pointerEvents: 'none'
   });
 
-  var panel = document.createElement('div');
-  panel.id = 'a11y-scan-panel';
-  Object.assign(panel.style, {
-    position: 'fixed', bottom: '64px', right: '16px',
-    width: 'min(520px, calc(100vw - 32px))',
-    maxHeight: 'calc(100vh - 96px)', overflow: 'auto', zIndex: '99998',
-    background: '#fff', border: '1px solid rgba(0,0,0,0.15)',
-    borderRadius: '6px', padding: '16px', fontFamily: 'inherit',
-    fontSize: '13px', lineHeight: '1.45',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.15)', display: 'none'
+  /* The trigger is a real canvas-button slotted into a canvas-popover so the
+     widget matches Canvas chrome. The scan button uses the secondary (blue)
+     variant, which is the design system default for a standard action. */
+  var btn = document.createElement('canvas-button');
+  btn.id = 'a11y-scan-btn';
+  btn.setAttribute('slot', 'trigger');
+  btn.setAttribute('variant', 'secondary');
+  btn.setAttribute('aria-label', 'Run accessibility scan');
+  btn.textContent = 'Run a11y scan';
+
+  /* One canvas-popover anchored to the button serves every state that pops from
+     the a11y button, the scope chooser and the scan results. Both render into the
+     same bubble, so they share one set of paddings, the same border, shadow, and
+     the pointer arrow that tethers the bubble to the button. pointer sets the 10px
+     gap. direction="up" and align="end" pin it to the bottom-right corner.
+     size="auto" grows the surface to its content, capped at 400px and clamped to
+     the viewport on small screens. The component owns open/close, focus, ARIA, and
+     outside-click. */
+  var menu = document.createElement('canvas-popover');
+  menu.id = 'a11y-scan-menu';
+  menu.setAttribute('pointer', '');
+  menu.setAttribute('direction', 'up');
+  menu.setAttribute('align', 'end');
+  menu.setAttribute('size', 'auto');
+  menu.setAttribute('label', 'Accessibility scan');
+  Object.assign(menu.style, { pointerEvents: 'auto', flexShrink: '0' });
+  menu.style.setProperty('--canvas-popover-max-width', 'min(400px, calc(100vw - 32px))');
+
+  /* bodyHost holds whichever state is showing, the chooser or the results.
+     text-align is pinned left here. The widget sits in a fixed wrapper anchored
+     to the bottom right, and the panel content was inheriting a right alignment
+     from that context. The accordion title forces its own left alignment in
+     shadow, so without this pin the title read left while the counts and the
+     suppressed reason read right. Declaring it on the host re-propagates left
+     through the whole panel including the slotted accordion content. */
+  var bodyHost = document.createElement('div');
+  bodyHost.style.textAlign = 'left';
+
+  /* The token for the scan in flight, or null when idle. runScan creates a fresh
+     token each run and the loop reads its cancelled flag at every checkpoint, so
+     closing the popover or starting another scan stops the previous one cleanly. */
+  var currentScan = null;
+
+  /* Scope chooser. Two rows that read as selectable options, sitting inside the
+     popover padding with their own rounded hover. One scans the section in view,
+     one steps the whole page. */
+  var chooser = document.createElement('div');
+  Object.assign(chooser.style, { display: 'flex', flexDirection: 'column', gap: '2px' });
+
+  function makeOption(value, title, sub) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    Object.assign(b.style, {
+      display: 'block', width: '100%', textAlign: 'left', background: 'transparent',
+      border: '0', borderRadius: '6px', padding: '8px 10px', cursor: 'pointer',
+      fontFamily: 'inherit', color: 'rgba(0, 0, 0, 0.87)'
+    });
+    b.innerHTML = '<div style="font-weight:700;font-size:14px;line-height:1.2;">' + title + '</div>' +
+      '<div style="color:#767676;font-size:12px;margin-top:2px;line-height:1.3;">' + sub + '</div>';
+    function on() { b.style.background = 'rgba(0, 0, 0, 0.05)'; }
+    function off() { b.style.background = 'transparent'; }
+    b.addEventListener('mouseenter', on);
+    b.addEventListener('mouseleave', off);
+    b.addEventListener('focus', on);
+    b.addEventListener('blur', off);
+    /* Stop the click here. runScan swaps the panel content synchronously, which
+       detaches this button before the click reaches the popover's document level
+       outside click handler. That handler would then read the orphaned target as
+       a click outside the popover and close it, cancelling the scan that just
+       started. A click on a control inside the popover is never an outside
+       click, so keeping it from bubbling out is correct. */
+    b.addEventListener('click', function (e) { e.stopPropagation(); runScan(value); });
+    return b;
+  }
+
+  chooser.appendChild(makeOption('visible', 'Scan visible section', 'Fast, checks what is on screen now'));
+  chooser.appendChild(makeOption('whole', 'Scan whole page', 'Thorough, steps through every section'));
+  menu.appendChild(btn);
+  menu.appendChild(bodyHost);
+
+  /* The popover always shows the chooser when it opens from the trigger. The
+     widget swaps in progress and results through setPanel while it drives the
+     scan. Resetting to the chooser on close means the next open starts fresh, and
+     because the content is in place before the surface opens, the popover measures
+     the right size when it computes placement. */
+  function showChooser() { bodyHost.innerHTML = ''; bodyHost.appendChild(chooser); }
+  showChooser();
+  /* On close the trigger returns to its scan label. While results are open the
+     label reads Dismiss, and the trigger toggles the popover shut, so the same
+     button that ran the scan also dismisses its results. While a scan is
+     running the label reads Cancel, so closing the popover doubles as the
+     cancel action. Flagging the live scan token aborts its loop at the next
+     checkpoint and lets it restore the scroll position. */
+  menu.addEventListener('close', function () {
+    if (currentScan) { currentScan.cancelled = true; currentScan = null; }
+    showChooser();
+    btn.textContent = 'Run a11y scan';
+    btn.setAttribute('aria-label', 'Run accessibility scan');
   });
 
   function escapeHtml(s) {
@@ -4733,7 +4898,69 @@ document.getElementById('gated-locked').addEventListener('beforemove', function 
     });
   }
 
-  function setPanel(html) { panel.innerHTML = html; panel.style.display = 'block'; }
+  /* Render widget-driven content (progress, results, errors) into the popover and
+     make sure it is open. When the surface is already open, the content height
+     changes (progress is short, results are tall), so nudge the popover to
+     remeasure placement, otherwise a tall results view would overlap the button. */
+  function setPanel(html) {
+    bodyHost.innerHTML = html;
+    if (!menu.hasAttribute('open')) {
+      if (typeof menu.open === 'function') menu.open();
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }
+
+  /* A spin keyframe for the progress dot, injected once so the progress panel
+     reads as live work rather than a frozen string while a scan runs. */
+  if (!document.getElementById('a11y-scan-spin-style')) {
+    var spinStyle = document.createElement('style');
+    spinStyle.id = 'a11y-scan-spin-style';
+    spinStyle.textContent = '@keyframes a11yScanSpin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(spinStyle);
+  }
+
+  /* The progress panel shown while a scan runs. The view scan is a single fast
+     pass so it reads as an indeterminate Scanning view. The whole page scan
+     steps through the page, so it reads Scanning (n/c) and updates each step,
+     which is the live feedback that replaces the old static text. */
+  function progressPanel(label) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:2px 0;">' +
+      '<span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.18);border-top-color:rgba(0,0,0,0.6);border-radius:50%;display:inline-block;flex:0 0 auto;animation:a11yScanSpin 0.7s linear infinite;"></span>' +
+      '<span style="font-weight:600;font-size:14px;">' + escapeHtml(label) + '</span>' +
+      '</div>';
+  }
+
+  /* Resolve after the browser has painted at least once. axe evaluates its rules
+     synchronously and blocks the main thread for around a second, so without a
+     paint in between the click looks dead until the thread frees up. Yielding two
+     frames lets the spinner and scanning label paint first. The spinner animates
+     on a compositor transform, so it keeps turning through the blocking run. */
+  function afterPaint() {
+    return new Promise(function (resolve) {
+      requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+    });
+  }
+
+  /* The whole page scan steps and measures the page section by section, so a
+     resize or a manual scroll mid scan moves the painted band axe is measuring
+     and skews the contrast results. This panel warns against that, and is set a
+     fixed width so the message wraps cleanly rather than stretching the popover
+     to one long line. The count sits below the banner at a larger weight so the
+     progress reads at a glance, and carries an id so each step updates the text
+     in place without rebuilding the panel, which keeps the spinner turning. */
+  function fullScanPanel(countLabel) {
+    return '<div style="width:300px;max-width:100%;text-align:left;">' +
+      '<div style="display:flex;gap:8px;align-items:flex-start;background:#FFF8E1;border:1px solid #FFE082;border-radius:6px;padding:9px 11px;margin-bottom:20px;">' +
+        '<span aria-hidden="true" style="flex:0 0 auto;font-weight:700;color:#8D6E10;line-height:1.45;">!</span>' +
+        '<span style="font-size:14.8571px;line-height:1.45;color:#5F4B14;">Please keep this window still while the full page scan runs. It steps through the page to measure contrast, so resizing or scrolling mid scan can skew the results.</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<span style="width:20px;height:20px;border:3px solid rgba(0,0,0,0.15);border-top-color:rgba(0,0,0,0.65);border-radius:50%;display:inline-block;flex:0 0 auto;animation:a11yScanSpin 0.7s linear infinite;"></span>' +
+        '<span id="a11y-scan-count" style="font-weight:700;font-size:18px;line-height:1.1;">' + escapeHtml(countLabel) + '</span>' +
+      '</div>' +
+    '</div>';
+  }
 
   function loadAxe() {
     return new Promise(function (resolve, reject) {
@@ -4746,12 +4973,243 @@ document.getElementById('gated-locked').addEventListener('beforemove', function 
     });
   }
 
-  function renderResults(r) {
+  /* Suppression registry. Each entry pulls accepted findings out of the live
+     scan and into the suppressed notice, carrying the reason it is accepted.
+     The registry is declarative so adding a suppression is one more entry, each
+     with its own reason. matchNode defaults to every node of the named rules.
+     A future entry could match only nodes whose computed colors are genuine
+     Canvas values, per the cnv-958 honesty caveat, by returning true only for
+     those. To add one, append an object with a stable id, a title, the axe rule
+     ids it governs, the buckets it applies to, a matchNode predicate, and a
+     reason. */
+  var SUPPRESSIONS = [
+    {
+      id: 'canvas-color-contrast',
+      title: 'Canvas palette contrast',
+      rules: ['color-contrast'],
+      buckets: ['violations', 'incomplete'],
+      matchNode: function () { return true; },
+      reason: 'These nodes use Canvas\'s Semantic UI palette, which the design system ' +
+        'mirrors exactly so plugins match the Canvas home app. The contrast shortfall lives ' +
+        'upstream in Semantic UI, so recoloring here would make plugin components diverge from ' +
+        'the Canvas UI they render beside. Accepted as inherited platform debt per the cnv-958 ' +
+        'decision. If a failing node ever shows a value that is not a Canvas color, that is token ' +
+        'drift to fix on its own, not inherited debt.'
+    }
+  ];
+
+  /* Pull suppressed nodes out of the live buckets and into per-suppression
+     groups. A rule with all of its nodes suppressed leaves its bucket. A rule
+     with only some nodes suppressed stays, holding the nodes that were not
+     matched. The groups attach to results._suppressed so the notice and the
+     copy can read them, and _suppressedNodeCount holds the total. */
+  function applySuppressions(results) {
+    var groups = [];
+    var totalNodes = 0;
+    SUPPRESSIONS.forEach(function (s) {
+      var group = { id: s.id, title: s.title, reason: s.reason, rules: [] };
+      s.buckets.forEach(function (bucket) {
+        var list = results[bucket];
+        if (!list) return;
+        for (var i = list.length - 1; i >= 0; i--) {
+          var rule = list[i];
+          if (s.rules.indexOf(rule.id) === -1) continue;
+          var matched = [];
+          var kept = [];
+          rule.nodes.forEach(function (n) {
+            if (s.matchNode(n, rule)) matched.push(n); else kept.push(n);
+          });
+          if (!matched.length) continue;
+          group.rules.push({
+            bucket: bucket, id: rule.id, impact: rule.impact,
+            help: rule.help, helpUrl: rule.helpUrl, nodes: matched
+          });
+          totalNodes += matched.length;
+          rule.nodes = kept;
+          if (!kept.length) list.splice(i, 1);
+        }
+      });
+      if (group.rules.length) groups.push(group);
+    });
+    results._suppressed = groups;
+    results._suppressedNodeCount = totalNodes;
+    return results;
+  }
+
+  /* Render every node of one suppressed rule, including the axe failure summary
+     where present. Unlike the live list this does not cap at five nodes, since
+     the notice is the full log, and the failure summary carries the foreground
+     color, background color, and measured ratio that back the suppression
+     reason. */
+  function renderNodeLog(nodes) {
+    var out = [];
+    nodes.forEach(function (n) {
+      var t = Array.isArray(n.target) ? n.target.join(' ') : String(n.target);
+      out.push('<div style="text-align:left;margin-top:6px;color:#777;font-family:monospace;font-size:11px;word-break:break-all;">' + escapeHtml(t) + '</div>');
+      if (n.failureSummary) {
+        out.push('<div style="text-align:left;margin-top:2px;color:#999;font-size:11px;white-space:pre-wrap;">' + escapeHtml(n.failureSummary) + '</div>');
+      }
+    });
+    return out.join('');
+  }
+
+  function buildResultsText(r, includeSuppressed) {
+    var out = [];
+    out.push('Scan results');
+    out.push('Passes, ' + r.passes.length + ' rules');
+    out.push('Violations, ' + r.violations.length + ' rules');
+    out.push('Incomplete, ' + r.incomplete.length + ' rules need manual review');
+    function appendRules(label, rules) {
+      if (!rules.length) return;
+      out.push('');
+      out.push(label);
+      rules.forEach(function (v, i) {
+        out.push('');
+        out.push((i + 1) + '. ' + v.id + ' (' + (v.impact || 'unknown') + ')');
+        out.push(v.help);
+        out.push(v.helpUrl);
+        out.push('Affected nodes, ' + v.nodes.length);
+        v.nodes.forEach(function (n) {
+          var t = Array.isArray(n.target) ? n.target.join(',') : String(n.target);
+          out.push(t);
+        });
+      });
+    }
+    appendRules('Violations', r.violations);
+    appendRules('Incomplete', r.incomplete);
+
+    var groups = r._suppressed || [];
+    if (groups.length) {
+      if (!includeSuppressed) {
+        out.push('');
+        out.push('Suppressed, ' + r._suppressedNodeCount + ' findings hidden. Enable Include suppressed in copy to include them with reasons.');
+      } else {
+        out.push('');
+        out.push('Suppressed findings');
+        groups.forEach(function (g) {
+          out.push('');
+          out.push(g.title);
+          out.push('Reason, ' + g.reason);
+          g.rules.forEach(function (rule) {
+            out.push('');
+            out.push(rule.id + ' (' + (rule.impact || 'unknown') + ') [' + rule.bucket + ']');
+            out.push(rule.help);
+            out.push(rule.helpUrl);
+            out.push('Affected nodes, ' + rule.nodes.length);
+            rule.nodes.forEach(function (n) {
+              var t = Array.isArray(n.target) ? n.target.join(',') : String(n.target);
+              out.push(t);
+              if (n.failureSummary) out.push(n.failureSummary);
+            });
+          });
+        });
+      }
+    }
+    return out.join('\n');
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        resolve();
+      } catch (e) {
+        reject(e);
+      } finally {
+        document.body.removeChild(ta);
+      }
+    });
+  }
+
+  function renderResults(r, scopeLabel) {
+    var groups = r._suppressed || [];
     var lines = [];
-    lines.push('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">');
+    lines.push('<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">');
     lines.push('<b>Scan results</b>');
-    lines.push('<button type="button" id="a11y-scan-close" style="background:none;border:0;font-size:18px;cursor:pointer;padding:0 4px;">×</button>');
+    /* Transparent close matching the modal dismiss, a plain 2rem button with a
+       14px stroked X in currentColor and a subtle hover, rather than the ghost
+       canvas-button whose fill reads as a grey box here. */
+    lines.push('<button type="button" id="a11y-scan-close" aria-label="Close scan results" style="display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;flex-shrink:0;padding:0;background:transparent;border:none;border-radius:.28571429rem;cursor:pointer;color:rgba(0,0,0,0.6);transition:color 0.1s ease,background 0.1s ease;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false" style="display:block;"><path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>');
     lines.push('</div>');
+
+    /* Everything below the header lives in a bounded scroll area. The popover
+       surface clamps its height to the space above the trigger but does not
+       scroll its own overflow, so a tall expanded log would spill past the
+       surface and drag the pointer arrow into the middle of the spill. The
+       popover publishes the exact space it has as --canvas-popover-available-height
+       on the surface, which inherits down to this slotted content, so capping
+       the body to that height minus the header and padding keeps the whole
+       surface within its own clamp. The header with Copy and Close stays put
+       while only this region scrolls, and collapsed content stays short so no
+       scrollbar appears. The 100vh fallback covers the first paint before the
+       popover has measured. The subtracted amount leaves room for the fixed
+       header above and the pinned footer below. */
+    lines.push('<div style="max-height:calc(var(--canvas-popover-available-height, 100vh) - 170px);overflow:auto;text-align:left;">');
+
+    /* Suppressed notice sits at the top, collapsed, as a single accordion. Its
+       content holds one section per suppression, split by a rule. Each section
+       leads with a short title that captures the gist, then the reason it was
+       suppressed, then a Show output button pinned below that reveals the full
+       log in place between the reason and the button. The include-in-copy
+       checkbox lives in the footer because that is where copy is. */
+    if (groups.length) {
+      var total = r._suppressedNodeCount || 0;
+      lines.push('<canvas-accordion style="display:block;margin-bottom:8px;text-align:left;">');
+      lines.push('<canvas-accordion-item>');
+      /* slot is pre-assigned here. The accordion-item otherwise assigns these
+         slots a tick after insertion, which leaves the panel short when the
+         popover measures its placement, then grows it, so the surface visibly
+         jumps into place on first open. Assigning the slots in the markup makes
+         the title and content render synchronously, so the first placement is
+         already correct. */
+      lines.push('<canvas-accordion-title slot="title">Suppressed (' + total + ')</canvas-accordion-title>');
+      lines.push('<canvas-accordion-content slot="content">');
+      groups.forEach(function (g, gi) {
+        var count = 0;
+        g.rules.forEach(function (rule) { count += rule.nodes.length; });
+        /* A rule between sections, so several suppressions read as a stack of
+           distinct blocks rather than one run of text. */
+        if (gi > 0) lines.push('<hr style="border:0;border-top:1px solid #e5e5e5;margin:16px 0;">');
+        lines.push('<div class="a11y-supp-section" style="text-align:left;">');
+        lines.push('<div style="font-weight:700;font-size:15px;line-height:1.3;margin-bottom:4px;">' + escapeHtml(g.title) + ' (' + count + ')</div>');
+        lines.push('<div style="color:#555;line-height:1.5;">' + escapeHtml(g.reason) + '</div>');
+        /* The full log, hidden until the section's Show output button reveals it.
+           It sits above the button so revealing it grows the section between the
+           reason and the button rather than below the control. */
+        lines.push('<div class="a11y-supp-output" style="display:none;margin-top:12px;">');
+        g.rules.forEach(function (rule) {
+          lines.push('<div style="text-align:left;margin-bottom:10px;">');
+          lines.push('<div style="font-weight:700;">' + escapeHtml(rule.id) + ' (' + escapeHtml(rule.impact || 'unknown') + ') <span style="font-weight:400;color:#999;">' + escapeHtml(rule.bucket) + '</span></div>');
+          lines.push('<div style="color:#555;">' + escapeHtml(rule.help) + '</div>');
+          lines.push('<div><a href="' + escapeHtml(rule.helpUrl) + '" target="_blank" rel="noopener" style="color:#1976d2;">' + escapeHtml(rule.helpUrl) + '</a></div>');
+          lines.push('<div style="color:#555;">Affected nodes, ' + rule.nodes.length + '</div>');
+          lines.push(renderNodeLog(rule.nodes));
+          lines.push('</div>');
+        });
+        lines.push('</div>');
+        lines.push('<div style="margin-top:10px;">');
+        lines.push('<canvas-button class="a11y-supp-toggle" variant="ghost" size="xs">Show output</canvas-button>');
+        lines.push('</div>');
+        lines.push('</div>');
+      });
+      lines.push('</canvas-accordion-content>');
+      lines.push('</canvas-accordion-item>');
+      lines.push('</canvas-accordion>');
+    }
+
+    if (scopeLabel) {
+      lines.push('<div style="color:#555;margin-bottom:6px;">Scope, ' + escapeHtml(scopeLabel) + '</div>');
+    }
     lines.push('<div>Passes, ' + r.passes.length + ' rules</div>');
     var color = r.violations.length === 0 ? '#1B5E20' : '#B71C1C';
     lines.push('<div>Violations, <b style="color:' + color + '">' + r.violations.length + ' rules</b></div>');
@@ -4773,33 +5231,347 @@ document.getElementById('gated-locked').addEventListener('beforemove', function 
         lines.push('</div>');
       });
     }
+    lines.push('</div>');
+
+    /* Footer pinned below the scroll area, so it stays at the bottom of the
+       panel while the body scrolls. Copy is the start aligned primary action,
+       the include-suppressed checkbox sits beside it with a gap. The checkbox
+       keeps its native inline-flex host, a display block override would collapse
+       its box span to a hairline. The checkbox only appears when there is
+       something suppressed to include. */
+    lines.push('<div style="display:flex;align-items:center;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid #eee;">');
+    lines.push('<canvas-button id="a11y-scan-copy" variant="ghost" size="sm">Copy results</canvas-button>');
+    if (groups.length) {
+      lines.push('<canvas-checkbox id="a11y-scan-include-suppressed" label="Include suppressed"></canvas-checkbox>');
+    }
+    lines.push('</div>');
+
+    /* With results showing, the trigger becomes the dismiss control. The popover
+       trigger already toggles open and shut, so relabeling it is enough, a click
+       closes the results, and the close handler restores the scan label.
+
+       Relabel before setPanel. setPanel dispatches the resize that recomputes the
+       popover placement, and the pointer arrow is anchored to the trigger center.
+       Done after setPanel, the arrow would be placed against the narrower Cancel
+       width and then the wider Dismiss label would shift the trigger center left,
+       leaving the arrow offset to the right. The whole page scan hid this because
+       restoring its scroll at the end queued a scroll reposition that ran after
+       the relabel, but the visible scan never scrolls, so the offset stayed. */
+    btn.textContent = 'Dismiss';
+    btn.setAttribute('aria-label', 'Dismiss scan results');
     setPanel(lines.join(''));
     var close = document.getElementById('a11y-scan-close');
-    if (close) close.addEventListener('click', function () { panel.style.display = 'none'; });
+    if (close) {
+      close.addEventListener('click', function () { if (typeof menu.close === 'function') menu.close(); });
+      /* Hover matches the modal close, since inline styles cannot carry a :hover
+         rule. The color deepens and a faint wash appears, then both reset. */
+      close.addEventListener('mouseenter', function () { close.style.background = 'rgba(0, 0, 0, 0.05)'; close.style.color = 'rgba(0, 0, 0, 0.87)'; });
+      close.addEventListener('mouseleave', function () { close.style.background = 'transparent'; close.style.color = 'rgba(0, 0, 0, 0.6)'; });
+    }
+    /* Each section's Show output button reveals or hides that section's full log
+       in place and swaps its own label. Revealing or hiding changes the panel
+       height, so the popover is nudged to remeasure. */
+    var toggles = bodyHost.querySelectorAll('.a11y-supp-toggle');
+    Array.prototype.forEach.call(toggles, function (t) {
+      t.addEventListener('click', function () {
+        var section = t.closest('.a11y-supp-section');
+        var output = section && section.querySelector('.a11y-supp-output');
+        if (!output) return;
+        var shown = output.style.display !== 'none';
+        output.style.display = shown ? 'none' : 'block';
+        t.textContent = shown ? 'Show output' : 'Hide output';
+        window.dispatchEvent(new Event('resize'));
+      });
+    });
+
+    /* Expanding the suppressed notice changes the panel height, so remeasure the
+       popover placement the same way setPanel does for progress and results. On
+       collapse, reset every section back to hidden output with the Show output
+       label, so the next open starts clean. The accordion content collapses to
+       display none instantly, so this reset is invisible and never flashes,
+       while the next open already shows only the titles and reasons. */
+    var acc = bodyHost.querySelector('canvas-accordion');
+    if (acc) acc.addEventListener('toggle', function (e) {
+      if (e.detail && e.detail.open === false) {
+        Array.prototype.forEach.call(bodyHost.querySelectorAll('.a11y-supp-output'), function (o) { o.style.display = 'none'; });
+        Array.prototype.forEach.call(bodyHost.querySelectorAll('.a11y-supp-toggle'), function (t) { t.textContent = 'Show output'; });
+      }
+      window.dispatchEvent(new Event('resize'));
+    });
+    var includeBox = document.getElementById('a11y-scan-include-suppressed');
+    var copy = document.getElementById('a11y-scan-copy');
+    if (copy) copy.addEventListener('click', function () {
+      var prev = copy.textContent;
+      copyText(buildResultsText(r, !!(includeBox && includeBox.checked))).then(function () {
+        copy.textContent = 'Copied';
+        setTimeout(function () { copy.textContent = prev; }, 1200);
+      }, function () {
+        copy.textContent = 'Copy failed';
+        setTimeout(function () { copy.textContent = prev; }, 1600);
+      });
+    });
   }
 
-  btn.addEventListener('click', function () {
-    btn.disabled = true;
-    var prev = btn.textContent;
-    btn.textContent = 'Loading axe-core';
-    setPanel('<div>Loading axe-core from CDN.</div>');
-    loadAxe().then(function (axe) {
-      btn.textContent = 'Scanning';
-      return axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] });
+  /* Build a map of every element ID that exists anywhere in the page including
+     inside shadow roots. axe uses document.getElementById which cannot cross
+     shadow boundaries, so aria-controls / aria-labelledby references that are
+     correct but shadow-internal get flagged as unresolvable. */
+  function buildShadowIdMap(root, map) {
+    if (!map) map = new Map();
+    var withIds = root.querySelectorAll('[id]');
+    for (var i = 0; i < withIds.length; i++) {
+      if (!map.has(withIds[i].id)) map.set(withIds[i].id, true);
+    }
+    var all = root.querySelectorAll('*');
+    for (var j = 0; j < all.length; j++) {
+      if (all[j].shadowRoot) buildShadowIdMap(all[j].shadowRoot, map);
+    }
+    return map;
+  }
+
+  var ID_REF_ATTRS = ['aria-controls', 'aria-labelledby', 'aria-describedby', 'aria-owns', 'aria-activedescendant'];
+
+  /* Resolve the actual DOM element from an axe target array.
+     axe 4.10 reports shadow DOM elements as [hostSelector, innerSelector].
+     nodeResult.element is null for shadow elements so we walk the chain. */
+  function resolveFromTarget(target) {
+    var parts = Array.isArray(target) ? target : [String(target)];
+    var el = null;
+    for (var i = 0; i < parts.length; i++) {
+      var sel = parts[i];
+      if (!sel) continue;
+      try {
+        if (i === 0) {
+          el = document.querySelector(sel);
+        } else {
+          var scope = (el && el.shadowRoot) ? el.shadowRoot : (el || document);
+          el = scope.querySelector(sel);
+        }
+      } catch (e) { return null; }
+      if (!el) return null;
+    }
+    return el;
+  }
+
+  /* Extract ID values from ARIA id-reference attribute selectors in the last
+     part of a target array. Used when the element itself cannot be resolved. */
+  function extractSelectorIds(target) {
+    var parts = Array.isArray(target) ? target : [String(target)];
+    var last = parts[parts.length - 1] || '';
+    var pattern = /\[(?:aria-controls|aria-labelledby|aria-describedby|aria-owns|aria-activedescendant)="([^"]+)"\]/g;
+    var ids = [];
+    var m;
+    while ((m = pattern.exec(last)) !== null) {
+      m[1].trim().split(/\s+/).forEach(function (id) { if (id) ids.push(id); });
+    }
+    return ids;
+  }
+
+  /* Remove incomplete aria-valid-attr-value nodes whose failing ID references
+     all resolve somewhere in the shadow tree. Keeps nodes with genuinely
+     missing targets so real errors still surface. */
+  function filterShadowIncompletes(results) {
+    var shadowMap = buildShadowIdMap(document);
+    results.incomplete = results.incomplete.filter(function (rule) {
+      if (rule.id !== 'aria-valid-attr-value') return true;
+      rule.nodes = rule.nodes.filter(function (nodeResult) {
+        var el = nodeResult.element;
+        if (!el || !el.getAttribute) el = resolveFromTarget(nodeResult.target);
+
+        if (el && el.getAttribute) {
+          for (var a = 0; a < ID_REF_ATTRS.length; a++) {
+            var val = el.getAttribute(ID_REF_ATTRS[a]);
+            if (!val) continue;
+            var ids = val.trim().split(/\s+/);
+            for (var k = 0; k < ids.length; k++) {
+              if (ids[k] && !document.getElementById(ids[k]) && !shadowMap.has(ids[k])) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+
+        /* Last resort: parse IDs directly from the selector string. */
+        var selectorIds = extractSelectorIds(nodeResult.target);
+        if (!selectorIds.length) return true;
+        return selectorIds.some(function (id) {
+          return !document.getElementById(id) && !shadowMap.has(id);
+        });
+      });
+      return rule.nodes.length > 0;
+    });
+    return results;
+  }
+
+  /* Merge axe rule results from one scan position into an accumulating bucket.
+     Nodes are deduped by their target so the same element seen at overlapping
+     scroll positions is counted once. Rules absent from the base appear when a
+     later position is the first to surface them. */
+  function mergeRuleNodes(targetBucket, srcRules) {
+    srcRules.forEach(function (rule) {
+      var existing = null;
+      for (var i = 0; i < targetBucket.length; i++) {
+        if (targetBucket[i].id === rule.id) { existing = targetBucket[i]; break; }
+      }
+      if (!existing) {
+        existing = { id: rule.id, help: rule.help, helpUrl: rule.helpUrl, impact: rule.impact, description: rule.description, tags: rule.tags, nodes: [], _seen: {} };
+        targetBucket.push(existing);
+      }
+      if (!existing._seen) {
+        existing._seen = {};
+        existing.nodes.forEach(function (n) { existing._seen[JSON.stringify(n.target)] = true; });
+      }
+      rule.nodes.forEach(function (n) {
+        var key = JSON.stringify(n.target);
+        if (!existing._seen[key]) { existing._seen[key] = true; existing.nodes.push(n); }
+      });
+    });
+  }
+
+  /* axe color-contrast only measures elements painted in the visible band of a
+     scroll container, so a single run on this long, scroll-clipped page misses
+     everything off screen. Structural rules walk the whole DOM regardless, so
+     one full run covers them. We then step the scroll container through the
+     page running only the visual checks and union them in. The scroll position
+     is restored when the pass finishes. */
+  var FULL_RULES = { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] };
+  var VISUAL_RULES = ['color-contrast', 'link-in-text-block'];
+
+  function fullPageScan(axe, token, onProgress) {
+    var scroller = document.getElementById('showcase-content');
+    return axe.run(document, FULL_RULES).then(function (base) {
+      if (token && token.cancelled) return null;
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 4) {
+        return base;
+      }
+      var startTop = scroller.scrollTop;
+      var prevBehavior = scroller.style.scrollBehavior;
+      scroller.style.scrollBehavior = 'auto';
+      var stepSize = Math.max(1, Math.floor(scroller.clientHeight * 0.85));
+      var positions = [];
+      for (var y = 0; y <= scroller.scrollHeight; y += stepSize) positions.push(y);
+      var idx = 0;
+      /* Put the page back the way it was found, whether the pass finished or was
+         cancelled mid step, so a cancel never strands the user scrolled away. */
+      function restore() {
+        scroller.scrollTop = startTop;
+        scroller.style.scrollBehavior = prevBehavior;
+        base.violations.forEach(function (rule) { delete rule._seen; });
+        base.incomplete.forEach(function (rule) { delete rule._seen; });
+      }
+      function stepNext() {
+        if (token && token.cancelled) { restore(); return null; }
+        if (idx >= positions.length) { restore(); return base; }
+        scroller.scrollTop = positions[idx];
+        idx++;
+        if (onProgress) onProgress(idx, positions.length);
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () { setTimeout(resolve, 45); });
+        }).then(function () {
+          if (token && token.cancelled) { restore(); return null; }
+          return axe.run(document, { runOnly: VISUAL_RULES });
+        }).then(function (r) {
+          if (!r) return null;
+          mergeRuleNodes(base.violations, r.violations);
+          mergeRuleNodes(base.incomplete, r.incomplete);
+          return stepNext();
+        });
+      }
+      return stepNext();
+    });
+  }
+
+  /* Pick the component section with the most overlap with the scroll
+     container viewport. That is the section the user is currently looking at. */
+  function getVisibleSection() {
+    var scroller = document.getElementById('showcase-content');
+    var sections = document.querySelectorAll('.component-section');
+    if (!scroller || !sections.length) return null;
+    var box = scroller.getBoundingClientRect();
+    var best = null, bestOverlap = 0;
+    for (var i = 0; i < sections.length; i++) {
+      var r = sections[i].getBoundingClientRect();
+      var overlap = Math.min(r.bottom, box.bottom) - Math.max(r.top, box.top);
+      if (overlap > bestOverlap) { bestOverlap = overlap; best = sections[i]; }
+    }
+    return best;
+  }
+
+  /* Visible scan does not scroll. It runs the full ruleset scoped to the
+     section in view, so contrast is measured only for what is painted now. */
+  function visibleScan(axe) {
+    var section = getVisibleSection();
+    return axe.run(section || document, FULL_RULES).then(function (r) {
+      r._scope = section ? ('visible section, ' + (section.id || 'unnamed')) : 'page';
+      return r;
+    });
+  }
+
+  function fullPageScanLabelled(axe, token, onProgress) {
+    return fullPageScan(axe, token, onProgress).then(function (r) {
+      if (r) r._scope = 'whole page';
+      return r;
+    });
+  }
+
+  /* The scan runs optimistically. The progress panel and the Cancel label are
+     set synchronously on click, before axe even loads, so the popover never sits
+     on a static string while work happens off screen. The trigger reads Cancel
+     for the duration, and because the trigger toggles the popover shut, clicking
+     it closes the bubble, which the close handler turns into a real cancel of the
+     scan in flight. A finished or cancelled run clears currentScan so a stale
+     token can never abort a later scan. */
+  function runScan(mode) {
+    var token = { cancelled: false };
+    currentScan = token;
+    btn.textContent = 'Cancel';
+    btn.setAttribute('aria-label', 'Cancel scan');
+    /* Force every section to render for the scan. The sections carry
+       content-visibility auto for idle CPU, which would otherwise leave the
+       precomputed scroll-step positions an estimate and skip offscreen paint
+       that the contrast pass relies on. Revealing them keeps scan coverage
+       identical to before. endScan restores it on every exit path. */
+    document.documentElement.classList.add('a11y-scanning');
+    setPanel(mode === 'whole' ? fullScanPanel('Scanning') : progressPanel('Scanning view'));
+    afterPaint().then(function () {
+      if (token.cancelled) return null;
+      return loadAxe();
+    }).then(function (axe) {
+      if (!axe || token.cancelled) return null;
+      /* Yield once more so the loaded scanner does not block in the same frame
+         it resolved in, keeping the spinner painted before the heavy run. */
+      return afterPaint().then(function () {
+        if (token.cancelled) return null;
+        if (mode === 'whole') {
+          return fullPageScanLabelled(axe, token, function (i, c) {
+            if (token.cancelled) return;
+            var countEl = bodyHost.querySelector('#a11y-scan-count');
+            if (countEl) countEl.textContent = 'Scanning (' + i + '/' + c + ')';
+          });
+        }
+        return visibleScan(axe);
+      });
     }).then(function (r) {
-      btn.disabled = false;
-      btn.textContent = prev;
-      renderResults(r);
+      document.documentElement.classList.remove('a11y-scanning');
+      if (token.cancelled || !r) return;
+      currentScan = null;
+      btn.textContent = 'Run a11y scan';
+      filterShadowIncompletes(r);
+      applySuppressions(r);
+      renderResults(r, r._scope);
     }).catch(function (err) {
-      btn.disabled = false;
-      btn.textContent = prev;
+      document.documentElement.classList.remove('a11y-scanning');
+      if (token.cancelled) return;
+      currentScan = null;
+      btn.textContent = 'Run a11y scan';
       setPanel('<div style="color:#B71C1C;font-weight:700;">Scan failed</div><div>' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>');
     });
-  });
+  }
 
   function mount() {
-    document.body.appendChild(btn);
-    document.body.appendChild(panel);
+    wrapper.appendChild(menu);
+    document.body.appendChild(wrapper);
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mount);

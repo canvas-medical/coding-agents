@@ -26,6 +26,17 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 **Rule home.** `component-usage.md` Text Inputs vs Textareas.
 **Validation check.** `validation-checklist.md` Phase 1, no native replacements.
 
+## Hand-Rolled Phone Mask
+
+**Detection.** A `canvas-input` for a phone number with a manual `keyup` or `input` listener that inserts parentheses and dashes, a regex replace on every keystroke, or a plain input left unformatted. Also per-keystroke phone validation that sets the error on the `input` event.
+
+**Why.** `canvas-input` already masks phone numbers through `format="phone"`, capping at 10 digits and exposing raw digits as the value. A hand-rolled mask drifts from the home-app format, fights the caret, and usually stores the formatted string instead of raw digits, which the backend then has to clean. Per-keystroke validation flashes an error for every digit before the tenth.
+
+**Fix.** Set `format="phone"` and `type="tel"` on `canvas-input`. Read `value` for raw digits. Validate on the `change` event, empty or exactly 10 digits, and set the `error` attribute from the consumer. See `patterns.md` Phone Field with Validation for the template.
+
+**Rule home.** `web-components.md` canvas-input Phone formatting.
+**Validation check.** `validation-checklist.md` Phase 2, Text Inputs.
+
 ## Native Details and Summary Use
 
 **Detection.** Any `<details>` or `<summary>` element in the template.
@@ -37,6 +48,17 @@ Common mistakes agents make when generating or refactoring plugin UI. Each entry
 **Exception.** A custom header row whose trigger content does not fit the accordion title slot, for example a medication group row with name, sig, badges, and actions. That exception still rules out native `<details>` as the outer container.
 
 **Rule home.** `component-usage.md` Accordion vs Tabs.
+**Validation check.** `validation-checklist.md` Phase 2, Accordions.
+
+## Interactive Control in Accordion Title
+
+**Detection.** A `canvas-toggle`, `canvas-checkbox`, `canvas-radio`, `canvas-button`, or any other interactive control placed inside `canvas-accordion-title`, often with a `flex: 1` span pushing it to the right edge of the title.
+
+**Why.** `canvas-accordion-title` renders inside the trigger button. An interactive control inside a button is a nested-interactive violation, the inner control is unreliable for screen readers, and clicking it has to be specially suppressed so it does not toggle the panel. Only non-interactive content belongs in the title.
+
+**Fix.** Keep text and an optional `canvas-badge` in `canvas-accordion-title`. Move every interactive control into a sibling `canvas-accordion-actions` element. It renders beside the button, so the controls stay accessible and their clicks never toggle the panel. See `web-components.md` canvas-accordion What goes in the actions slot.
+
+**Rule home.** `web-components.md` canvas-accordion.
 **Validation check.** `validation-checklist.md` Phase 2, Accordions.
 
 ## Mixed Size Tier in One Row

@@ -1,5 +1,76 @@
 # Changelog
 
+## 4.31.3
+
+### Fixed
+
+- `references/web-components.md` authoritative count corrected from 49 tag names to 50. The `canvas-accordion-actions` element added in 4.31.0 took the registered tag count to 50, but the header line was never updated, so the count that other files point to as authoritative understated the system by one tag. The component count stays 30 because `canvas-accordion-actions` is a subcomponent of the accordion rather than a standalone component. Verified by counting the `CanvasUI.register('canvas-...')` calls in `assets/canvas-plugin-ui.js`, which total 50. Documentation only, no component output change.
+
+## 4.31.2
+
+### Fixed
+
+- `canvas-progress` active sweep no longer animates `width`, which forced a layout and a paint on every frame and burned CPU for as long as an active bar was on screen. The `progress-active` keyframe now animates `transform: scaleX` from 0 to 1 with `transform-origin: left`, so the same left to right sweep composites on the GPU. The `.bar::after` overlay keeps its full size and is scaled rather than grown. No visible change to the animation at default sizes.
+- `canvas-progress` now respects `prefers-reduced-motion: reduce`. The active sweep was the only animation in the design system with no reduced motion gate. Under reduced motion the `.bar::after` overlay is set to `display: none` and `animation: none`, leaving a plain determinate bar, matching the static affordance `canvas-loader` already shows. See `references/web-components.md` canvas-progress Active animation.
+
+### Changed
+
+- `examples/showcase.html` `.component-section` wrappers gain `content-visibility: auto` with `contain-intrinsic-size: auto 600px`, so the browser skips rendering sections scrolled offscreen and the page's many infinite CSS animations (the eleven `canvas-loader` spinners and the active progress bar) only run while their section is on screen. This cuts idle CPU on the long showcase page. The a11y scanner forces the sections back to fully rendered for the duration of a run by toggling an `a11y-scanning` class on the document element, since the whole page scan steps the scroll container through the page and relies on offscreen content painting as it scrolls into view, so scan coverage is unchanged.
+
+## 4.31.1
+
+### Fixed
+
+- `canvas-calendar` no longer fires the `aria-required-children` violation. The outer `.layout` container carried `role="grid"` while holding only the navigation, the weekday header, the day grid, and the picked list, so it claimed to be a grid yet owned no rows. The role is removed, leaving the real grid on the inner `.days` element, which already has its `role="row"` wrappers, `role="gridcell"` buttons, and grid `aria-label`. The weekday header is now decorative, marked `aria-hidden="true"` with its `role="row"` and per-cell `role="columnheader"` removed, since each day cell's `aria-label` already names the full weekday, so no information is lost and `aria-required-parent` does not regress. The now unused `_dayFullNames` helper is removed. The change is markup and ARIA only, the calendar renders identically. Verified on the showcase axe scan, `aria-required-children` dropped from 16 affected nodes to zero with passing rule count unchanged. See `references/web-components.md` canvas-calendar ARIA.
+
+## 4.31.0
+
+### Added
+
+- `canvas-accordion-actions`, a new element that holds interactive header controls beside the trigger button instead of inside it. The element registers from the same file as the rest of the accordion. `canvas-accordion-item` now renders a header row with the trigger `<button>` and a sibling actions container. The button keeps `flex: 1` so the whole left region stays the click target, and the actions container pins to the far right, vertically centered, with its children at natural size. The actions container stays hidden and adds no spacing when an item has no `canvas-accordion-actions`. Place a `canvas-toggle`, `canvas-checkbox`, `canvas-radio`, or `canvas-button` in the actions slot. Because the controls render outside the button, their clicks never toggle the panel and screen readers can reach them. This clears the `nested-interactive` violation that fired whenever an interactive control sat inside `canvas-accordion-title`. See `references/web-components.md` canvas-accordion and the showcase accordion section.
+
+### Changed
+
+- `canvas-accordion-title` is now for non-interactive content only, text and an optional `canvas-badge`. The title sizes to its content and aligns to the start, so a badge sits right beside the label rather than being pushed to the far right with a `flex: 1` span. Interactive controls move to the new `canvas-accordion-actions` slot.
+- `canvas-accordion-item` no longer inspects the event path to suppress toggling when a click comes from an interactive child. The `isFromInteractiveChild` filter and its selector list are removed. Suppression is no longer needed because interactive controls live outside the trigger button in the actions slot. Behavior change for any consumer that placed an interactive control directly inside `canvas-accordion-title`. That control now both fires the `nested-interactive` violation and toggles the panel on click. Move such controls into `canvas-accordion-actions`. Documented as an anti-pattern in `references/anti-patterns.md` Interactive Control in Accordion Title.
+
+## 4.30.2
+
+### Fixed
+
+- `canvas-radio` no longer reserves trailing space when it has no `label`. The `.label-text` span always carried an `8px` left padding, so a label-less radio rendered the dot with an empty gap to its right. A `.label-text:empty` rule now drops the padding to `0` when the label is empty, leaving a radio with a visible label unchanged.
+
+## 4.30.1
+
+### Fixed
+
+- `canvas-modal` now scrolls from the top with its `2rem` overlay padding intact when the modal is taller than the viewport. Previously a tall modal centered the dialog in the fixed `.scroll` overlay, and the part above the center point was clipped and could not be reached by scrolling, so the header sat flush against the top edge with no breathing room. Two changes fix it. The overlay uses `align-items: safe center` and the `margin: auto` is removed from `.modal`, so the dialog still centers when it fits but falls back to top alignment when it overflows. And `open()` focuses the first control with `preventScroll: true` then resets `scroll.scrollTop` to `0`, because focusing the dialog otherwise scrolled the focused element into view and consumed the top padding on open. Short modals still center vertically. The showcase Modal section gains a Medium, long content, scrolls example so the behavior can be reviewed in a browser.
+
+## 4.30.0
+
+### Added
+
+- `canvas-input` gains a `format="phone"` attribute that masks a North American phone number as the user types. The display fills in progressively, `000`, then `(000) 000`, then `(000) 000-0000`, and the field accepts at most 10 digits, matching the home-app patient phone field in `PhoneNumber.tsx`. The mask exists only for display. The `value` property and the form value both return the raw digits, so typing `(555) 123-4567` yields `el.value === "5551234567"`, which is what a backend expects. The setter accepts either raw digits or a formatted string and normalizes to the mask. A new `_raw` field backs the value, and the phone helpers (`_phoneFormat`, `_phoneParse`, `_caretAfterDigit`, `_applyPhoneMask`, `_assignValue`) live on the component. The caret is preserved by digit position during edits so inserting a digit mid-number does not jump the cursor. The component does not validate the phone itself. Validation stays with the consumer through the `error` attribute, consistent with every other input in the system. When `format` is absent the input behaves exactly as before. Pair the attribute with `type="tel"` for the numeric mobile keypad. See `references/web-components.md` canvas-input Phone formatting and the `component-samples/phone.html` sample.
+- Documentation for phone validation patterns. `references/patterns.md` gains a Phone Field with Validation copy-paste template. `references/component-usage.md` Feedback and Status now explains why validation runs on the `change` event (blur) rather than per keystroke, and states that `canvas-input` never validates itself so the rule and message live in the consumer. `references/anti-patterns.md` gains a Hand-Rolled Phone Mask entry. `references/validation-checklist.md` Phase 2 gains a Text Inputs block. The showcase Input section gains a phone formatting card with a live raw-value readout and a blur-validation example, and the realistic form gains a phone field so the submitted `FormData` shows raw digits.
+## 4.29.4
+
+### Fixed
+
+- `canvas-accordion-item` mirrors the content id onto the shadow `slot[name="content"]`. The shadow trigger button has carried `aria-controls` pointing at the content id since the original disclosure pattern landed, but the id lived only on the slotted `canvas-accordion-content` element in light DOM. axe resolves IDREFs from the source element's shadow scope, so `button.getRootNode().getElementById` could not see the light DOM id and `aria-valid-attr-value` fired on every open item. The shadow template now also sets `id` on the content slot, and `_assignSlots` keeps that slot id in sync with the resolved `this._contentId` whenever the slotted content carries its own id. The button's `aria-controls` now resolves inside its own shadow scope, the rule clears at all 10 nodes, the APG accordion disclosure pattern stays intact, and screen readers continue to follow `aria-controls` through the flatten algorithm to the slotted content in light DOM.
+
+## 4.29.3
+
+### Fixed
+
+- `canvas-accordion-item` moves the title id from the shadow trigger button to the slotted `canvas-accordion-title` in light DOM. The shadow `.title` button now carries `aria-labelledby` pointing at that light DOM id instead of carrying the id directly. `canvas-accordion-content` continues to carry `aria-labelledby` pointing at the same id. Because the id now lives in light DOM, `axe.getElementById` resolves it and the `aria-valid-attr-value` violation that previously fired on every open accordion item clears. No visible markup change, no CSS change, the slotted title still renders inside the trigger button exactly as before.
+- `canvas-calendar` shadow `.layout` wrapper gains `role="grid"`. The `.day-names` row with `role="row"` now has a grid ancestor, which satisfies `aria-required-parent` without moving day-names into the `.days` grid or wrapping it in a new element. The existing `role="grid"` on `.days` is kept, axe walks ancestors for context-role checks so nested grids do not regress. No visible markup change, no CSS change, the calendar renders identically.
+
+## 4.29.2
+
+### Changed
+
+- Reverted visible markup and CSS in three areas to match the state on `main` before the a11y branch landed, while keeping every invisible a11y improvement (aria attributes, AriaProxy host hygiene, dropdown accessible name resolution, sidebar and content tabindex defaults, filter-bar role default, tabs aria-label injection). `canvas-accordion-item` shadow DOM returns to a single `.title` button with the chevron and the `slot[name="title"]` inside the same button. The accordion focus ring returns to the row-wide `outline-offset: -2px` style. `canvas-calendar` shadow DOM puts `.day-names` back above the `.body` grid as a sibling rather than nested inside `.days`, the `_renderGrid()` method returns to `innerHTML = ''`, and the `.cell.outside` color returns to `rgba(0, 0, 0, 0.45)`. The `--palette-text-muted` token returns to `#767676`. The three `--canvas-calendar-*-bg` overrides added at the `:root` block are removed. The `references/web-components.md` accordion accessibility paragraph reverts to describe the restored `aria-controls` and `role="region"` wiring. Note that this re-opens `aria-required-parent` on calendar day-names, `color-contrast` on muted text and on outside-month and selected calendar chips, and `nested-interactive` on accordions that slot interactive controls into the title. See `.artifacts/journal/projects/canvas-plugin-tools/fix/canvas-ui-a11y/009-execution-scope-decision.md` for the full classification.
+
 ## 4.29.1
 
 ### Fixed

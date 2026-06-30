@@ -1,6 +1,6 @@
 # Web Components
 
-Reference for the Canvas plugin web component system. The system registers 30 components spanning 49 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
+Reference for the Canvas plugin web component system. The system registers 30 components spanning 50 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
 
 ## Contents
 
@@ -339,6 +339,7 @@ A single-line text input with integrated label, error state, and native form par
 <canvas-input label="Date of Birth" type="date"></canvas-input>
 <canvas-input label="First Name" required error="Required"></canvas-input>
 <canvas-input label="Patient ID" value="PAT-00421" disabled></canvas-input>
+<canvas-input label="Phone number" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
 <canvas-input placeholder="No label, just placeholder"></canvas-input>
 ```
 
@@ -354,12 +355,13 @@ A single-line text input with integrated label, error state, and native form par
 | `disabled` | boolean | false |
 | `value` | string | empty |
 | `name` | string | none (form field name for ElementInternals) |
+| `format` | `phone` | none (no formatting). When `phone`, the input masks to `(000) 000-0000` as the user types and caps at 10 digits. |
 
 **Properties**
 
 | Property | Type | Description |
 |---|---|---|
-| `value` | string | Get or set the current input value. Setting also updates the form value via ElementInternals. |
+| `value` | string | Get or set the current input value. Setting also updates the form value via ElementInternals. With `format="phone"`, the getter returns the raw digits (e.g. `"5551234567"`) and the setter accepts raw or formatted input, normalizing to the mask for display. |
 | `name` | string | The form field name (reads from attribute). |
 
 **Events**
@@ -391,6 +393,24 @@ document.querySelector('canvas-input').removeAttribute('error');
 ```
 
 When in error state, the label turns red (`#9f3a38`), the input background turns pink (`#fff6f6`), the border turns pink (`#e0b4b4`), and the error text appears. The input gets `aria-invalid="true"` and `aria-describedby` linking to the error message.
+
+**Phone formatting.** Set `format="phone"` to mask a North American phone number as the user types. The display fills in progressively, `000`, then `(000) 000`, then `(000) 000-0000`, and the field accepts at most 10 digits. This mirrors the home-app patient phone field, where raw digits live in state and the mask exists only for display. Pair it with `type="tel"` so mobile keyboards show the numeric keypad.
+
+```html
+<canvas-input label="Phone number" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
+```
+
+The `value` property and the form value both return the raw digits, not the masked string. Typing `(555) 123-4567` yields `el.value === "5551234567"`, which is what a backend expects. Setting `value` accepts either form, so `el.value = "5551234567"` and `el.value = "(555) 123-4567"` both render the same mask. The caret is preserved by digit position while typing, so editing in the middle of the number does not jump the cursor.
+
+The component does not validate the phone itself. Like every other input in the system, validation stays with the consumer, who sets and clears the `error` attribute. Mirror the home-app rule of empty or exactly 10 digits. Validate on the `change` event (blur), not on `input`, so the error does not flash on every digit. See [component-usage.md](component-usage.md) Feedback and Status for the timing rule and [patterns.md](patterns.md) Phone Field with Validation for the copy-paste template.
+
+```js
+phone.addEventListener('change', () => {
+  const v = phone.value; // raw digits
+  if (v && v.length !== 10) phone.setAttribute('error', 'Must be a valid phone number');
+  else phone.removeAttribute('error');
+});
+```
 
 **ARIA.** The component extends the `AriaProxy` mixin with the default attribute list, so `required`, `aria-invalid`, `disabled`, `aria-describedby`, `aria-labelledby`, `aria-controls`, `aria-expanded`, and `aria-activedescendant` set on the host mirror onto the inner shadow `<input>` automatically. Three ids are generated via the `cuid` helper on construction, one for the inner `<input>`, one for the visible label, and one for the error span. The label's `for` attribute points at the input id, the inner input's `aria-labelledby` points at the label id, and the inner input's `aria-describedby` points at the error span id when the `error` attribute is set. Multiple `canvas-input` instances on the same form no longer collide on a literal id, which was the duplicate id collision the audit caught. Setting the `required` attribute on the host mirrors `required` onto the inner `<input>` so the native HTML constraint and `aria-required` semantics both apply. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy and cuid contracts.
 
@@ -540,7 +560,7 @@ A standalone month grid for date selection. Single date, range, or multi-date mo
 
 **Keyboard.** Arrow keys move between days. Home and End jump to the start and end of the row. PageUp and PageDown move months. Enter or Space selects the focused day. Disabled cells stay reachable through arrow navigation so focus is never lost at min and max boundaries, Enter and Space silently no-op on disabled cells. The grid uses a roving tabindex, the grid container itself is not a Tab stop.
 
-**ARIA.** The grid is `role="grid"` with six `role="row"` wrappers, each containing seven `role="gridcell"` buttons. The day-name header row is `role="row"` with seven `role="columnheader"` cells, each named with the full weekday (`Sunday`, `Monday`, etc) so screen readers do not pronounce the visible two-letter abbreviation. Day cells carry an `aria-label` of `"Wednesday, June 15, 2026"` followed in order by `, today`, range role (`, start of range` / `, end of range` / `, in range`), `, selected`, `, unavailable`. Today carries `aria-current="date"`. Selected cells carry `aria-selected="true"`. Disabled cells carry `aria-disabled="true"`. The grid `aria-label` is `"Calendar, <Month> <Year>"`. The month header is plain text, not a heading, so it does not pollute the document outline.
+**ARIA.** The day grid is `role="grid"` with six `role="row"` wrappers, each containing seven `role="gridcell"` buttons, and it carries the grid `aria-label`. The surrounding layout container holds the navigation, the weekday header, the day grid, and the optional picked list, and carries no role, since it is not itself a grid. The weekday header row is decorative, marked `aria-hidden="true"` with no `role="row"` or `role="columnheader"`, because every day cell already names its full weekday so the abbreviations would only duplicate that announcement. Day cells carry an `aria-label` of `"Wednesday, June 15, 2026"` followed in order by `, today`, range role (`, start of range` / `, end of range` / `, in range`), `, selected`, `, unavailable`. Today carries `aria-current="date"`. Selected cells carry `aria-selected="true"`. Disabled cells carry `aria-disabled="true"`. The grid `aria-label` is `"Calendar, <Month> <Year>"`. The month header is plain text, not a heading, so it does not pollute the document outline.
 
 **Live region.** A visually hidden `role="status" aria-live="polite"` region inside the calendar announces month changes (after navigation buttons or PageUp / PageDown), single selection, range start vs range complete, and multi-select count changes including granular adds. Picked list clear announces "All dates cleared." Range pick after the first click announces "Start date <date> selected. Pick an end date." After the second click announces "Range <start> to <end> selected."
 
@@ -1259,6 +1279,8 @@ When a dropdown shares a row with inputs, buttons, or other dropdowns, follow th
 
 **ARIA.** The trigger carries `role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded` reflecting open state, and `aria-controls` pointing at the listbox id generated via the `cuid` helper. The listbox carries `role="listbox"`, each option inside carries `role="option"` and a `cuid` generated id, and the trigger's `aria-activedescendant` points at the highlighted option's real id. The previous `opt-N` literal token is gone, screen readers now follow the highlight as it moves through the menu. The selected option carries `aria-selected="true"`. Disabled options carry `aria-disabled="true"` and are skipped during arrow navigation. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the cuid contract.
 
+**Accessible name resolution.** The trigger resolves its accessible name in priority order, `label` attribute (`aria-labelledby` to the rendered label span in the shadow root), then `aria-label` on the host element (mirrored as `aria-label` on the trigger), then `placeholder` text as a last-resort `aria-label`. Authoring guidance, prefer `label` for any persistent form field, use `aria-label` on the host when the visible label sits next to the field instead of above it, and treat the placeholder fallback as a temporary state, the component logs a one-time `console.warn` per instance when it kicks in.
+
 **Menu behavior.** The dropdown menu must not exceed the viewport. If the menu would overflow below the trigger, it flips to open above. If it would overflow on the right, it aligns to the right edge of the trigger. Long option lists scroll within the menu rather than growing the menu beyond the viewport.
 
 **Empty state.** When no `<canvas-option>` children are present, opening the dropdown renders the empty state row inside the menu. The trigger never enters its open styling without visible panel content. Override the default "No options" copy with the `empty-state` attribute for plain text, or with a light DOM `<div slot="empty">` for rich content. Attribute wins over slot content when both are set.
@@ -1786,7 +1808,7 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 
 ### canvas-accordion
 
-A collapsible section container with chevron animation, ARIA, and keyboard support. Registers four elements from one file. `canvas-accordion` is the outer container (no Shadow DOM), `canvas-accordion-item` wraps each section, `canvas-accordion-title` holds the clickable header, and `canvas-accordion-content` holds the collapsible body.
+A collapsible section container with chevron animation, ARIA, and keyboard support. Registers five elements from one file. `canvas-accordion` is the outer container (no Shadow DOM), `canvas-accordion-item` wraps each section, `canvas-accordion-title` holds the clickable header label, `canvas-accordion-actions` holds optional interactive controls beside the header, and `canvas-accordion-content` holds the collapsible body.
 
 **Usage**
 
@@ -1831,15 +1853,25 @@ A collapsible section container with chevron animation, ARIA, and keyboard suppo
 |---|---|---|
 | `toggle` | When an item expands or collapses. Bubbles and composes. | `{ open: boolean }` |
 
-**Title content.** The default slot on `canvas-accordion-title` accepts any content. Text, badges, buttons, toggles, and checkboxes can all be placed inside. The chevron icon is rendered automatically by the component and always appears first.
-
-**Actions in title.** Place interactive elements directly inside `canvas-accordion-title`. The accordion inspects the event path on its trigger handlers and skips expand or collapse when a click or keyboard activation originates from an interactive descendant. The filter covers `canvas-button`, `canvas-toggle`, `canvas-checkbox`, `canvas-radio`, `canvas-dropdown`, `canvas-combobox`, `canvas-multi-select`, `canvas-input`, `canvas-date-input`, `canvas-textarea`, plain HTML `button`, `a[href]`, `input`, `select`, `textarea`, and any element carrying an ARIA role of button, switch, checkbox, radio, link, menuitem, tab, or option. Plugin authors do not need to add `event.stopPropagation` on interactive children. When mixing text and interactive elements, use flex utilities on the title content.
+**What goes in the title.** `canvas-accordion-title` renders inside the trigger button, so it holds only non-interactive content. Text and a `canvas-badge` are allowed, nothing else. Never place a toggle, checkbox, radio, button, or any other interactive control in the title. An interactive control inside the button is a nested-interactive violation, the inner control is unreliable for screen readers, and the design system forbids it. The chevron icon is rendered automatically and always appears first. The title sizes to its content and aligns to the start, so a badge sits right beside the label rather than being pushed to the edge.
 
 ```html
 <canvas-accordion-title>
-  <span style="flex: 1">Notifications</span>
-  <canvas-toggle label="" checked></canvas-toggle>
+  <span>Active Medications</span>
+  <canvas-badge color="blue" size="tiny">4 active</canvas-badge>
 </canvas-accordion-title>
+```
+
+**What goes in the actions slot.** Interactive controls go in `canvas-accordion-actions`, which renders as a sibling of the trigger button, not inside it. Because the controls live outside the button they stay reachable for screen readers and their clicks never toggle the panel, so no event-path filtering or `event.stopPropagation` is needed. The slot pins to the far right of the header, vertically centered, with its children at their natural size. Omit the element entirely when an item has no header controls, the slot stays hidden and adds no spacing. The trigger button fills the whole header width up to the actions, so the entire left region is the click target.
+
+```html
+<canvas-accordion-item open>
+  <canvas-accordion-title>Email Notifications</canvas-accordion-title>
+  <canvas-accordion-actions>
+    <canvas-toggle checked aria-label="Email Notifications"></canvas-toggle>
+  </canvas-accordion-actions>
+  <canvas-accordion-content><!-- panel --></canvas-accordion-content>
+</canvas-accordion-item>
 ```
 
 **Multiple open.** Multiple items can be open simultaneously. There is no exclusive mode.
@@ -2297,7 +2329,7 @@ A horizontal fill bar matching the Canvas home-app. Shows completion percentages
 
 **Colors.** Blue is the default and matches active campaign progress in Canvas. Grey for inactive or selected states. Green for match scores and success indicators. Red and orange for error and warning contexts. The color is always set by the consumer. The component does not change color based on the percentage value.
 
-**Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Canvas home-app active progress animation.
+**Active animation.** The `active` attribute adds a pulsing white sweep animation across the bar, matching the Canvas home-app active progress animation. The sweep animates `transform: scaleX` rather than `width` so it composites on the GPU instead of forcing a layout and paint every frame. Under `prefers-reduced-motion: reduce` the sweep is dropped entirely, leaving a plain determinate bar.
 
 **ARIA.** The bar element carries `role="progressbar"`, `aria-valuemin="0"`, and `aria-valuemax="100"`. `aria-valuenow` is set to the numeric value when the value is determinate and is omitted when the value is indeterminate, so screen readers announce an indeterminate progressbar correctly rather than reading a stale or default zero. Always provide an accessible name via `aria-label` or `aria-labelledby` so screen readers announce what is in progress, for example `Upload progress`. When `label` is set, the visible percentage text doubles as a sighted progress indicator but does not replace the accessible name, screen readers still need the `aria-label` since the visible text is rendered inside the bar fill.
 

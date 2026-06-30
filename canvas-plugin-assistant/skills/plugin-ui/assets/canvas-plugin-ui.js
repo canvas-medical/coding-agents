@@ -204,11 +204,17 @@
     'aria-invalid',
     'disabled',
     'aria-describedby',
+    'aria-label',
     'aria-labelledby',
     'aria-controls',
     'aria-expanded',
     'aria-activedescendant'
   ];
+
+  /* ARIA 1.2 prohibits these attributes on role="generic" (the default role
+     for custom elements). After proxying them to the inner shadow control they
+     are removed from the host so axe does not flag the outer shell. */
+  var ARIA_HOST_CLEAN_ATTRS = ['aria-label', 'aria-controls', 'aria-haspopup', 'aria-expanded'];
 
   /** AriaProxy mixin factory. Class that mirrors aria attributes from the host onto the element returned by this._ariaProxyTarget. Usage, class CanvasInput extends AriaProxy(HTMLElement) {}. */
   function AriaProxy(BaseClass, options) {
@@ -221,25 +227,50 @@
         for (var i = 0; i < attrs.length; i++) {
           if (merged.indexOf(attrs[i]) === -1) merged.push(attrs[i]);
         }
+        for (var j = 0; j < ARIA_HOST_CLEAN_ATTRS.length; j++) {
+          if (merged.indexOf(ARIA_HOST_CLEAN_ATTRS[j]) === -1) merged.push(ARIA_HOST_CLEAN_ATTRS[j]);
+        }
         return merged;
       }
       attributeChangedCallback(name, oldVal, newVal) {
+        if (this._ariaProxyClearing) return;
         if (typeof super.attributeChangedCallback === 'function') {
           super.attributeChangedCallback(name, oldVal, newVal);
         }
-        if (attrs.indexOf(name) === -1) return;
+        if (attrs.indexOf(name) === -1 && ARIA_HOST_CLEAN_ATTRS.indexOf(name) === -1) return;
         var target = typeof this._ariaProxyTarget === 'function' ? this._ariaProxyTarget() : null;
         if (!target) return;
-        if (newVal == null) target.removeAttribute(name);
-        else target.setAttribute(name, newVal);
+        if (newVal == null) {
+          target.removeAttribute(name);
+        } else {
+          target.setAttribute(name, newVal);
+          if (ARIA_HOST_CLEAN_ATTRS.indexOf(name) !== -1) {
+            this._ariaProxyClearing = true;
+            this.removeAttribute(name);
+            this._ariaProxyClearing = false;
+          }
+        }
       }
       _syncAriaProxy() {
         var target = typeof this._ariaProxyTarget === 'function' ? this._ariaProxyTarget() : null;
         if (!target) return;
         for (var i = 0; i < attrs.length; i++) {
           var n = attrs[i];
+          /* Skip clean attrs here — they were already forwarded and removed from
+             the host by attributeChangedCallback during element parsing. The
+             second loop below handles any that are still on the host. */
+          if (ARIA_HOST_CLEAN_ATTRS.indexOf(n) !== -1) continue;
           if (this.hasAttribute(n)) target.setAttribute(n, this.getAttribute(n));
           else target.removeAttribute(n);
+        }
+        for (var j = 0; j < ARIA_HOST_CLEAN_ATTRS.length; j++) {
+          var cn = ARIA_HOST_CLEAN_ATTRS[j];
+          if (this.hasAttribute(cn)) {
+            target.setAttribute(cn, this.getAttribute(cn));
+            this._ariaProxyClearing = true;
+            this.removeAttribute(cn);
+            this._ariaProxyClearing = false;
+          }
         }
       }
     };
@@ -287,10 +318,23 @@
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-      this.shadowRoot.innerHTML = '<style>:host{display:flex;align-items:center;gap:8px;flex:1;min-width:0}</style><slot></slot>';
+      this.shadowRoot.innerHTML = '<style>:host{display:flex;align-items:center;gap:8px}</style><slot></slot>';
     }
   }
   CanvasUI.register('canvas-accordion-title', CanvasAccordionTitle);
+
+  /* canvas-accordion-actions: optional header controls (toggle, checkbox,
+     button) that render beside the trigger button, not inside it. Keeping
+     interactive controls out of the button avoids nested-interactive and lets
+     screen readers reach them. */
+  class CanvasAccordionActions extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = '<style>:host{display:flex;align-items:center;gap:8px}</style><slot></slot>';
+    }
+  }
+  CanvasUI.register('canvas-accordion-actions', CanvasAccordionActions);
 
   /* canvas-accordion-content: collapsible content area, hidden by default */
   class CanvasAccordionContent extends HTMLElement {
@@ -305,11 +349,14 @@
   }
   CanvasUI.register('canvas-accordion-content', CanvasAccordionContent);
 
-  /* canvas-accordion-item: collapsible section with chevron, title slot, and content slot.
-     The shadow trigger is a native <button>. The header button id and the
-     content id are generated via cuid so multiple instances coexist without
-     collisions and the canvas-accordion-content can label its region by
-     pointing aria-labelledby at the header button id. */
+  /* canvas-accordion-item: collapsible section with chevron, title slot,
+     optional actions slot, and content slot. The shadow trigger is a native
+     <button> that wraps only the chevron and the title. Header controls go in
+     the actions slot, which renders as a sibling of the button so the controls
+     stay outside it. The header button id and the content id are generated via
+     cuid so multiple instances coexist without collisions and the
+     canvas-accordion-content can label its region by pointing aria-labelledby
+     at the header button id. */
   class CanvasAccordionItem extends HTMLElement {
     constructor() {
       super();
@@ -345,6 +392,11 @@
       this.shadowRoot.innerHTML = `
         <style>
           :host { display: block; }
+          .header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
           .title {
             display: flex;
             align-items: center;
@@ -357,7 +409,8 @@
             color: rgba(0, 0, 0, 0.87);
             background: transparent;
             border: none;
-            width: 100%;
+            flex: 1;
+            min-width: 0;
             text-align: left;
             cursor: pointer;
             font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
@@ -383,18 +436,41 @@
           :host([open]) .icon {
             transform: rotate(0deg);
           }
+          .actions {
+            display: none;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
+            padding-left: 8px;
+          }
+          .actions.has-content {
+            display: flex;
+          }
         </style>
-        <button type="button" class="title" id="${this._titleId}" aria-expanded="false" aria-controls="${this._contentId}">
-          <span class="icon"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" aria-hidden="true" focusable="false"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg></span>
-          <slot name="title"></slot>
-        </button>
-        <slot name="content"></slot>
+        <div class="header">
+          <button type="button" class="title" aria-expanded="false" aria-labelledby="${this._titleId}" aria-controls="${this._contentId}">
+            <span class="icon"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor" aria-hidden="true" focusable="false"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg></span>
+            <slot name="title"></slot>
+          </button>
+          <div class="actions"><slot name="actions"></slot></div>
+        </div>
+        <slot name="content" id="${this._contentId}"></slot>
       `;
     }
 
     _assignSlots() {
       var titleEl = this.querySelector('canvas-accordion-title');
-      if (titleEl) titleEl.setAttribute('slot', 'title');
+      if (titleEl) {
+        titleEl.setAttribute('slot', 'title');
+        if (titleEl.id) {
+          this._titleId = titleEl.id;
+          var titleBtn = this.shadowRoot.querySelector('.title');
+          if (titleBtn) titleBtn.setAttribute('aria-labelledby', this._titleId);
+        } else {
+          titleEl.id = this._titleId;
+        }
+      }
       var contentEl = this.querySelector('canvas-accordion-content');
       if (contentEl) {
         contentEl.setAttribute('slot', 'content');
@@ -406,38 +482,29 @@
         contentEl.setAttribute('aria-labelledby', this._titleId);
         var btn = this.shadowRoot.querySelector('.title');
         if (btn) btn.setAttribute('aria-controls', this._contentId);
+        /* Mirror the resolved content id onto the shadow slot so the button's
+           aria-controls IDREF resolves inside its own shadow scope. Without
+           this mirror, getRootNode().getElementById from the shadow button
+           cannot see the light DOM id and axe fires aria-valid-attr-value. */
+        var contentSlot = this.shadowRoot.querySelector('slot[name="content"]');
+        if (contentSlot) contentSlot.id = this._contentId;
+      }
+      var actionsEl = this.querySelector('canvas-accordion-actions');
+      if (actionsEl) {
+        actionsEl.setAttribute('slot', 'actions');
+        var actionsWrap = this.shadowRoot.querySelector('.actions');
+        if (actionsWrap) actionsWrap.classList.add('has-content');
       }
     }
 
     _bindEvents() {
       var self = this;
       var title = this.shadowRoot.querySelector('.title');
-      var INTERACTIVE_SELECTOR = [
-        'button', 'a[href]', 'input', 'select', 'textarea',
-        '[role="button"]', '[role="switch"]', '[role="checkbox"]', '[role="radio"]',
-        '[role="link"]', '[role="menuitem"]', '[role="tab"]', '[role="option"]',
-        'canvas-button', 'canvas-toggle', 'canvas-checkbox', 'canvas-radio',
-        'canvas-dropdown', 'canvas-combobox', 'canvas-multi-select',
-        'canvas-menu-button', 'canvas-popover',
-        'canvas-input', 'canvas-date-input', 'canvas-textarea'
-      ].join(',');
-
-      /* Slotted interactive children dispatch click events that bubble to the
-         shadow trigger button. Skip toggle when the click originated from one
-         so a checkbox or button inside the title does not also expand the item.
-         Native button handles Enter and Space, so no keydown handler is needed. */
-      function isFromInteractiveChild(e) {
-        var path = e.composedPath();
-        for (var i = 0; i < path.length; i++) {
-          var el = path[i];
-          if (el === title) return false;
-          if (el && el.nodeType === 1 && el.matches && el.matches(INTERACTIVE_SELECTOR)) return true;
-        }
-        return false;
-      }
-
-      title.addEventListener('click', function(e) {
-        if (isFromInteractiveChild(e)) return;
+      /* The trigger is the only clickable element. Header controls live in the
+         actions slot, a sibling of the button, so their clicks never reach it
+         and no path filtering is needed. The native button handles Enter and
+         Space, so no keydown handler is needed either. */
+      title.addEventListener('click', function() {
         self.toggle();
       });
     }
@@ -790,7 +857,7 @@
         <div class="banner" role="${role}"${headerAttr}>
           ${header ? '<div class="header" id="' + headingId + '">' + header + '</div>' : ''}
           <div class="body"><slot></slot></div>
-          ${dismissible ? '<button type="button" class="dismiss" aria-label="Dismiss" aria-controls="' + hostId + '"' + (header ? ' aria-labelledby="' + headingId + '"' : '') + '><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' : ''}
+          ${dismissible ? '<button type="button" class="dismiss" aria-label="Dismiss"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' : ''}
         </div>
       `;
     }
@@ -809,7 +876,8 @@
     'aria-pressed',
     'aria-expanded',
     'aria-controls',
-    'aria-disabled'
+    'aria-disabled',
+    'aria-haspopup'
   ];
 
   class CanvasButton extends AriaProxy(HTMLElement, { attributes: BUTTON_ARIA_PROXY_ATTRS }) {
@@ -1283,8 +1351,13 @@
 
     _syncLabelledBy() {
       var hostLb = this.getAttribute('aria-labelledby');
-      if (hostLb) this._input.setAttribute('aria-labelledby', this._labelId + ' ' + hostLb);
-      else this._input.setAttribute('aria-labelledby', this._labelId);
+      if (hostLb) {
+        this._input.setAttribute('aria-labelledby', this._labelId + ' ' + hostLb);
+      } else if (this.hasAttribute('label')) {
+        this._input.setAttribute('aria-labelledby', this._labelId);
+      } else {
+        this._input.removeAttribute('aria-labelledby');
+      }
     }
 
     connectedCallback() {
@@ -1311,6 +1384,7 @@
       switch (name) {
         case 'label':
           this._labelText.textContent = this.getAttribute('label') || '';
+          this._syncLabelledBy();
           break;
         case 'checked':
           this._input.checked = this.hasAttribute('checked');
@@ -2322,7 +2396,7 @@
 
   class CanvasDropdown extends HTMLElement {
     static get observedAttributes() {
-      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name', 'size', 'empty-state', 'loading', 'loading-label'];
+      return ['label', 'placeholder', 'value', 'disabled', 'required', 'error', 'name', 'size', 'empty-state', 'loading', 'loading-label', 'aria-label'];
     }
 
     static get formAssociated() { return true; }
@@ -2341,6 +2415,7 @@
       this._listboxId = cuid('dd-list');
       this._errorId = cuid('dd-err');
       this._statusId = cuid('dd-status');
+      this._warnedPlaceholderName = false;
       this._onDocClick = this._onDocClick.bind(this);
     }
 
@@ -2389,7 +2464,7 @@
         }
         return;
       }
-      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled' || name === 'empty-state') {
+      if (name === 'label' || name === 'placeholder' || name === 'error' || name === 'disabled' || name === 'empty-state' || name === 'aria-label') {
         if (this.shadowRoot.querySelector('.dropdown')) {
           this._render();
           this._bindEvents();
@@ -2438,6 +2513,19 @@
       var displayText = this._selectedText || '';
       var isPlaceholder = !displayText;
       var ariaDescribedBy = error ? this._errorId : '';
+      var hostAriaLabel = this.getAttribute('aria-label');
+      var triggerNameAttr = '';
+      if (label) {
+        triggerNameAttr = ' aria-labelledby="' + this._labelId + '"';
+      } else if (hostAriaLabel) {
+        triggerNameAttr = ' aria-label="' + hostAriaLabel.replace(/"/g, '&quot;') + '"';
+      } else if (placeholder) {
+        triggerNameAttr = ' aria-label="' + placeholder.replace(/"/g, '&quot;') + '"';
+        if (!this._warnedPlaceholderName) {
+          this._warnedPlaceholderName = true;
+          console.warn('canvas-dropdown is using placeholder text as its accessible name. Add a label attribute or aria-label for a stable name.', this);
+        }
+      }
 
       var optionsHtml = '';
       for (var i = 0; i < this._options.length; i++) {
@@ -2677,7 +2765,7 @@
           ${SR_STATUS_CSS}
         </style>
         ${label ? '<span class="label" id="' + this._labelId + '">' + label + '</span>' : ''}
-        <div class="dropdown" tabindex="${disabled ? '-1' : '0'}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-controls="${this._listboxId}"${label ? ' aria-labelledby="' + this._labelId + '"' : ''}${ariaDescribedBy ? ' aria-describedby="' + ariaDescribedBy + '"' : ''}${error ? ' aria-invalid="true"' : ''}${this.hasAttribute('required') ? ' aria-required="true"' : ''}${loading ? ' aria-busy="true"' : ''}>
+        <div class="dropdown" tabindex="${disabled ? '-1' : '0'}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-controls="${this._listboxId}"${triggerNameAttr}${ariaDescribedBy ? ' aria-describedby="' + ariaDescribedBy + '"' : ''}${error ? ' aria-invalid="true"' : ''}${this.hasAttribute('required') ? ' aria-required="true"' : ''}${loading ? ' aria-busy="true"' : ''}>
           ${loading
             ? '<span class="loading-state" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><span class="loading-text">' + loadingLabel + '</span></span>'
             : '<span class="text' + (isPlaceholder ? ' placeholder' : '') + '">' + (isPlaceholder ? placeholder : displayText) + '</span>'}
@@ -2925,7 +3013,7 @@
 
   class CanvasInput extends AriaProxy(HTMLElement) {
     static get observedAttributes() {
-      var base = ['label', 'placeholder', 'required', 'error', 'disabled', 'value', 'name', 'type'];
+      var base = ['label', 'placeholder', 'required', 'error', 'disabled', 'value', 'name', 'type', 'format'];
       var inherited = super.observedAttributes || [];
       for (var i = 0; i < inherited.length; i++) {
         if (base.indexOf(inherited[i]) === -1) base.push(inherited[i]);
@@ -3057,11 +3145,79 @@
       this._label.id = this._labelId;
       this._label.setAttribute('for', this._inputId);
       this._errorMsg.id = this._errorId;
+      // Raw, unformatted value backing the phone mask. When format="phone" the
+      // visible input shows the (000) 000-0000 mask while _raw holds the bare
+      // digits and is what value, the form value, and change events expose.
+      this._raw = '';
       this._boundOnInput = this._onInput.bind(this);
       this._boundOnChange = this._onChange.bind(this);
     }
 
     _ariaProxyTarget() { return this._input; }
+
+    /* ---- phone formatting ---- */
+
+    /* True when the input runs the phone mask. The mask mirrors home-app's
+       PhoneNumber field, which stores raw digits in form state and formats
+       only for display. */
+    _isPhone() { return this.getAttribute('format') === 'phone'; }
+
+    /* Display string from raw digits. Matches home-app phoneFormatter exactly:
+       up to 3 digits stay bare, 4 to 6 become (000) 000, 7 to 10 become
+       (000) 000-0000. */
+    _phoneFormat(digits) {
+      if (!digits) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+      return '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6, 10);
+    }
+
+    /* Raw digits from any input, stripped of non-digits and capped at 10.
+       The cap is the max-character restriction, matching home-app phoneParser. */
+    _phoneParse(str) { return str ? str.replace(/\D/g, '').substring(0, 10) : ''; }
+
+    /* Index in a formatted string that sits just after the nth digit. Used to
+       keep the caret next to the same digit after the value is reformatted. */
+    _caretAfterDigit(str, n) {
+      if (n <= 0) return 0;
+      var count = 0;
+      for (var i = 0; i < str.length; i++) {
+        if (str.charCodeAt(i) >= 48 && str.charCodeAt(i) <= 57) {
+          count++;
+          if (count === n) return i + 1;
+        }
+      }
+      return str.length;
+    }
+
+    /* Reformat the visible value in place, preserving the caret position by
+       digit count rather than character index so the mask punctuation does not
+       drag the caret. Updates _raw to the bare digits. */
+    _applyPhoneMask() {
+      var input = this._input;
+      var caret = input.selectionStart == null ? input.value.length : input.selectionStart;
+      var digitsBeforeCaret = input.value.slice(0, caret).replace(/\D/g, '').length;
+      this._raw = this._phoneParse(input.value);
+      var formatted = this._phoneFormat(this._raw);
+      input.value = formatted;
+      var pos = this._caretAfterDigit(formatted, Math.min(digitsBeforeCaret, this._raw.length));
+      try { input.setSelectionRange(pos, pos); } catch (e) { /* not a text-range input */ }
+    }
+
+    /* Set the value from an attribute or property. Phone mode parses to raw
+       digits, shows the mask, and reports raw digits as the form value. Plain
+       inputs pass the value straight through as before. */
+    _assignValue(v) {
+      if (v == null) return;
+      if (this._isPhone()) {
+        this._raw = this._phoneParse(String(v));
+        this._input.value = this._phoneFormat(this._raw);
+        this._internals.setFormValue(this._raw);
+      } else {
+        this._input.value = v;
+        this._internals.setFormValue(v);
+      }
+    }
 
     _syncDescribedBy() {
       var hostDesc = this.getAttribute('aria-describedby');
@@ -3117,26 +3273,34 @@
           this._syncError();
           break;
         case 'value':
-          if (newVal !== null) {
-            this._input.value = newVal;
-            this._internals.setFormValue(newVal);
-          }
+          this._assignValue(newVal);
           break;
         case 'name':
           break;
         case 'type':
           this._input.type = newVal || 'text';
           break;
+        case 'format':
+          // Reformat the current value when the mask is toggled on or off.
+          // Turning the mask on parses the visible text into digits; turning it
+          // off shows the digits that were being held raw.
+          if (this._isPhone()) {
+            this._assignValue(this._input.value);
+          } else {
+            var prev = this._raw;
+            this._raw = '';
+            this._assignValue(prev || this._input.value);
+          }
+          break;
       }
     }
 
     get value() {
-      return this._input.value;
+      return this._isPhone() ? this._raw : this._input.value;
     }
 
     set value(v) {
-      this._input.value = v;
-      this._internals.setFormValue(v);
+      this._assignValue(v == null ? '' : v);
     }
 
     get name() {
@@ -3157,8 +3321,7 @@
 
       var val = this.getAttribute('value');
       if (val !== null) {
-        this._input.value = val;
-        this._internals.setFormValue(val);
+        this._assignValue(val);
       }
 
       this._syncError();
@@ -3182,13 +3345,18 @@
 
     _onInput(e) {
       e.stopPropagation();
-      this._internals.setFormValue(this._input.value);
+      if (this._isPhone()) {
+        this._applyPhoneMask();
+        this._internals.setFormValue(this._raw);
+      } else {
+        this._internals.setFormValue(this._input.value);
+      }
       this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     }
 
     _onChange(e) {
       e.stopPropagation();
-      this._internals.setFormValue(this._input.value);
+      this._internals.setFormValue(this._isPhone() ? this._raw : this._input.value);
       this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     }
   }
@@ -4432,6 +4600,7 @@
       var self = this;
       requestAnimationFrame(function() {
         self._focusFirst();
+        scroll.scrollTop = 0;
         var modal = self.shadowRoot.querySelector('.modal');
         if (modal) self._releaseTrap = trapFocus(modal, { restore: false });
       });
@@ -4507,7 +4676,7 @@
             display: none; position: fixed; inset: 0;
             overflow-y: auto; z-index: 1001; padding: 2rem;
           }
-          .scroll.active { display: flex; align-items: flex-start; justify-content: center; }
+          .scroll.active { display: flex; align-items: safe center; justify-content: center; }
           .modal {
             position: relative;
             display: flex; flex-direction: column;
@@ -4515,7 +4684,6 @@
             border: none;
             border-radius: var(--radius, .28571429rem);
             box-shadow: 1px 3px 3px 0 rgba(0, 0, 0, 0.2), 1px 3px 15px 2px rgba(0, 0, 0, 0.2);
-            margin: auto;
             font-family: var(--font-family, lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
           }
           .modal:focus { outline: none; }
@@ -4555,9 +4723,9 @@
       if (!modal) return;
       var tabbables = _collectTabbable(modal);
       if (tabbables.length > 0) {
-        try { tabbables[0].focus(); } catch (e) { modal.focus(); }
+        try { tabbables[0].focus({ preventScroll: true }); } catch (e) { modal.focus({ preventScroll: true }); }
       } else {
-        modal.focus();
+        modal.focus({ preventScroll: true });
       }
     }
   }
@@ -5319,10 +5487,12 @@
 
           :host([size="tiny"]) .label { display: none; }
 
-          /* Active pulsing animation */
+          /* Active pulsing animation. Animates transform scaleX rather than
+             width so the sweep composites on the GPU instead of forcing a
+             layout and paint every frame. */
           @keyframes progress-active {
-            0% { opacity: 0.3; width: 0; }
-            100% { opacity: 0; width: 100%; }
+            0% { opacity: 0.3; transform: scaleX(0); }
+            100% { opacity: 0; transform: scaleX(1); }
           }
 
           :host([active]) .bar::after {
@@ -5334,7 +5504,17 @@
             bottom: 0;
             background: #fff;
             border-radius: var(--radius, .28571429rem);
+            transform-origin: left center;
             animation: progress-active 2s ease infinite;
+          }
+
+          /* Reduced motion drops the pulse entirely, leaving the plain
+             determinate bar, matching the loader's reduced motion behavior. */
+          @media (prefers-reduced-motion: reduce) {
+            :host([active]) .bar::after {
+              animation: none;
+              display: none;
+            }
           }
 
           /* Indeterminate fills the track so the bar surface remains
@@ -5442,6 +5622,10 @@
           .label-text {
             padding-left: 8px;
             color: rgba(0, 0, 0, 0.87);
+          }
+
+          .label-text:empty {
+            padding-left: 0;
           }
         </style>
         <input type="radio" part="input">
@@ -5791,6 +5975,7 @@
     connectedCallback() {
       this._applyVariant();
       this._applyLandmark();
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
     }
 
     attributeChangedCallback(name) {
@@ -5844,6 +6029,7 @@
 
     connectedCallback() {
       this._applyLandmark();
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
     }
 
     attributeChangedCallback(name) {
@@ -6145,6 +6331,7 @@
     }
 
     connectedCallback() {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'group');
       this.addEventListener('pointerdown', this._onPointerDown);
       this._warnIfNoLabel();
     }
@@ -7246,10 +7433,13 @@
           badgeHtml = '<span class="tab-badge">' + t.badge + '</span>';
         }
         var titleAttr = t.hasLabel ? ' title="' + t.labelText.replace(/"/g, '&quot;') + '"' : '';
+        /* aria-label gives the button an explicit accessible name that axe can
+           find even when the visible text is CSS-truncated (text-overflow: ellipsis). */
+        var ariaLabelAttr = t.labelText ? ' aria-label="' + t.labelText.replace(/"/g, '&quot;') + '"' : '';
         /* The shadow button mirrors the canvas-tab id so the matching panel
            can wire aria-labelledby to a stable, collision free id even when
            multiple canvas-tabs instances coexist on the page. */
-        var openTag = '<button type="button" class="tab-button" id="' + t.id + '" role="tab" aria-selected="false" tabindex="-1" data-index="' + i + '" data-panel="' + (t.panelId || '') + '"' + (t.panelId ? ' aria-controls="' + t.panelId + '"' : '') + '>';
+        var openTag = '<button type="button" class="tab-button" id="' + t.id + '" role="tab" aria-selected="false" tabindex="-1" data-index="' + i + '" data-panel="' + (t.panelId || '') + '"' + ariaLabelAttr + '>';
 
         if (t.hasLabel) {
           buttonsHtml += openTag
@@ -7492,7 +7682,6 @@
         if (panel) {
           panel.removeAttribute('hidden');
           panel.setAttribute('visible', '');
-          btn.setAttribute('aria-controls', panelId);
           if (tabMeta) panel.setAttribute('aria-labelledby', tabMeta.id);
           if (typeof panel._ensureTabindex === 'function') panel._ensureTabindex();
         }
@@ -9034,7 +9223,7 @@
                   '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 0h8a1 1 0 01.7 1.7l-4 4a1 1 0 01-1.4 0l-4-4A1 1 0 011 0z"/></svg>' +
                 '</button>' +
               '</div>' +
-              '<div class="grid day-names" role="row"></div>' +
+              '<div class="grid day-names" aria-hidden="true"></div>' +
             '</div>' +
             '<div class="body" part="body">' +
               '<div class="grid days" role="grid"></div>' +
@@ -9197,14 +9386,6 @@
       return out;
     }
 
-    _dayFullNames() {
-      var base = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      var start = this._weekStartIndex();
-      var out = [];
-      for (var i = 0; i < 7; i++) out.push(base[(i + start) % 7]);
-      return out;
-    }
-
     _monthLabelText() {
       var months = ['January', 'February', 'March', 'April', 'May', 'June',
                     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -9251,12 +9432,9 @@
     _renderDayNames() {
       this._dayNamesRow.innerHTML = '';
       var names = this._dayNames();
-      var fullNames = this._dayFullNames();
       for (var i = 0; i < names.length; i++) {
         var el = document.createElement('div');
         el.className = 'day-name';
-        el.setAttribute('role', 'columnheader');
-        el.setAttribute('aria-label', fullNames[i]);
         el.textContent = names[i];
         this._dayNamesRow.appendChild(el);
       }
