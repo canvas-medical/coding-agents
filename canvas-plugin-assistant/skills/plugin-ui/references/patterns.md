@@ -104,6 +104,30 @@ A horizontal row of form elements above a table. Wrap in `canvas-card` plus `can
 
 For a filter bar above a table with bulk actions, add a second `canvas-card-body no-padding` for the table and a `canvas-card-footer` for the selection count on the left and action buttons on the right. See the Filter Bar (with table and action footer) card in `examples/showcase.html` under the Form section.
 
+## Phone Field with Validation
+
+A phone number field that masks as the user types and validates when they leave the field. Set `format="phone"` and `type="tel"` on `canvas-input`. The mask is presentational, `value` returns raw digits, and the component does not validate itself. Validation stays with the consumer, applied on the `change` event (blur), not on every keystroke. Decision rules live in `component-usage.md` Feedback and Status. The API lives in `web-components.md` canvas-input Phone formatting.
+
+```html
+<canvas-input id="phone" name="phone" label="Phone number" type="tel" format="phone" placeholder="(000) 000-0000"></canvas-input>
+
+<script>
+  var phone = document.getElementById('phone');
+  // Validate on blur, not on input. A half-typed number always looks invalid,
+  // so per-keystroke errors would flash for every digit before the tenth.
+  phone.addEventListener('change', function () {
+    var digits = phone.value; // raw digits, e.g. "5551234567"
+    if (digits && digits.length !== 10) {
+      phone.setAttribute('error', 'Must be a valid phone number');
+    } else {
+      phone.removeAttribute('error');
+    }
+  });
+</script>
+```
+
+To make the field required, also check for an empty value at submit time and set the same `error` attribute. Inside a `<form>`, the raw digits are the submitted value, so `FormData` carries `phone=5551234567`.
+
 ## Sortable List Minimum Height
 
 Empty receiving lists need a minimum drop target so the user can still drop onto an empty column.
