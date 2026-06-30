@@ -105,6 +105,14 @@ Rules in [component-usage.md](component-usage.md) Modal Patterns.
 
 1. Each `canvas-accordion-item` has exactly one `canvas-accordion-title` and one `canvas-accordion-content`.
 2. No native `<details>` or `<summary>`. See [anti-patterns.md](anti-patterns.md) Native Details and Summary Use.
+3. `canvas-accordion-title` holds only text and an optional `canvas-badge`. Interactive controls (toggle, checkbox, radio, button) live in a sibling `canvas-accordion-actions`, never in the title. See [anti-patterns.md](anti-patterns.md) Interactive Control in Accordion Title.
+
+### Text Inputs
+
+Rules in [component-usage.md](component-usage.md) Text Inputs vs Textareas and [web-components.md](web-components.md) canvas-input Phone formatting.
+
+1. Phone number fields use `canvas-input` with `format="phone"`, not a hand-rolled mask or a plain input with manual `keyup` formatting.
+2. Phone fields read `value` as raw digits and apply validation in the consumer (empty or exactly 10 digits), not inside the component.
 
 ### Inline Form Rows
 
