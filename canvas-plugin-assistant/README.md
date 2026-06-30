@@ -111,6 +111,7 @@ Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively
 ### Skills
 
 - **canvas-sdk**: Complete Canvas SDK documentation (~20k lines)
+- **data-access-strategy**: Decide SDK vs FHIR and existing models vs Custom Data — SDK/existing by default, escalate only when needed, with rationale recorded in the spec
 - **plugin-patterns**: Architecture patterns and best practices
 - **plugin-api-server-security**: Security review for SimpleAPI/WebSocket handlers (when plugin is the server)
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
