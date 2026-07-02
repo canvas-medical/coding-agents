@@ -83,12 +83,15 @@ no code changes.
 Run these checks before deploying:
 
 ```bash
-# Verify manifest is valid
-uv run canvas validate-manifest .
+# Validate the manifest AND that every handler loads in the sandbox —
+# the same checks `canvas install` runs before uploading, but local and
+# non-deploying. Fix anything it reports and re-run until clean; a clean
+# validate means the install won't fail on those checks.
+uv run canvas validate .
 
-# Sandbox lint — catches disallowed imports, augmented-assignment on
-# subscripts, and unprefixed internal imports BEFORE the install reaches
-# the runner. Cheaper than a failed deploy.
+# Sandbox lint — a fast static pass over the same failure classes
+# (disallowed imports, augmented-assignment on subscripts, unprefixed
+# internal imports). Complements `canvas validate` above.
 uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
 
 # Run tests
@@ -245,7 +248,7 @@ For production deployments, always confirm:
 
 ### Manifest Validation Errors
 
-1. Run `uv run canvas validate-manifest .` locally
+1. Run `uv run canvas validate .` locally
 2. Check SDK version compatibility
 3. Verify all referenced classes exist
 

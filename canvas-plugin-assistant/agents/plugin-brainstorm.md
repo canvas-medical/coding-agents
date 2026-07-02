@@ -398,10 +398,12 @@ patient_id = patient["id"]
 
 ### Step 4: Validate
 
-Run pre-deploy checks:
+Run pre-deploy checks — `canvas validate` runs the manifest check plus
+the sandbox handler-load, the same validation `canvas install` runs before
+uploading. Fix anything it reports and re-run until clean:
 
 ```bash
-uv run canvas validate-manifest .
+uv run canvas validate .
 ```
 
 ### Step 5: Custom Data Check
@@ -528,10 +530,10 @@ Then ask the user to describe the specific changes they want in their own words.
 2. **Edit existing files** — prefer editing over creating new files
 3. **Update CANVAS_MANIFEST.json** if components, secrets, or description changed
 4. **Update tests** to reflect the changes
-5. **Validate** the manifest:
+5. **Validate** the plugin (manifest + sandbox handler-load):
 
 ```bash
-uv run canvas validate-manifest .
+uv run canvas validate .
 ```
 
 ### Update Step 4: Custom Data Check

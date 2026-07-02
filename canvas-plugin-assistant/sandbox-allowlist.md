@@ -62,7 +62,9 @@ Only the names listed under each module are importable.
 
 ## Canvas SDK modules
 
-All `canvas_sdk.*` modules are available — no allowlist on submodules or names:
+The `canvas_sdk.*` top-level packages below are importable, and there is no per-name allowlist *within* a real module. But only submodules that actually exist resolve — a mistyped or not-yet-existing path fails at load exactly like a blocked import (`'<path>' is not an allowed import`). Confirm a submodule exists before importing it rather than assuming a plausible-looking path (e.g. a guessed `canvas_sdk.effects.<x>`) is real; `canvas validate` / `canvas install` runs the sandbox load and will report a bad path.
+
+Django constructs are **not** re-exported from `canvas_sdk.v1.data.base` — `from canvas_sdk.v1.data.base import UniqueConstraint` (or `models`) fails at load. Import those from Django directly (`from django.db.models import UniqueConstraint`) and import the specific Canvas model classes you need from `canvas_sdk.v1.data`. (`from canvas_sdk.v1.data.base import CustomModel` is fine — that's the base class for your own models.)
 
 - `canvas_sdk.caching`
 - `canvas_sdk.commands`
