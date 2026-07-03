@@ -89,9 +89,10 @@ Run these checks before deploying:
 # validate means the install won't fail on those checks.
 uv run canvas validate .
 
-# Sandbox lint — a fast static pass over the same failure classes
-# (disallowed imports, augmented-assignment on subscripts, unprefixed
-# internal imports). Complements `canvas validate` above.
+# Sandbox construct lint — catches RestrictedPython constructs that fail at
+# runtime inside a handler body (setattr/delattr/bytearray/3-arg type,
+# augmented-assignment on subscripts), which `canvas validate`'s module-level
+# load can't see. Imports/manifest are already covered by `canvas validate`.
 uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
 
 # Run tests
@@ -101,7 +102,7 @@ uv run pytest
 uv run mypy --config-file=mypy.ini .
 ```
 
-If `lint_sandbox.py` reports violations, **fix them before running `canvas install`** — the runner will reject the same violations and the deploy will fail. The script's output names the file, line, and remediation for each violation; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the full set of allowed imports and names.
+If `lint_sandbox.py` reports violations, **fix them before running `canvas install`** — those constructs fail at runtime in the sandbox and the deploy will break on the instance. The script's output names the file, line, and remediation for each. For import / manifest / handler-load errors, rely on `canvas validate` above (it runs the real sandbox load against the runner's own allowlist), and consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the allowed imports and names.
 
 **Also verify cache busting is in place:**
 
@@ -313,9 +314,10 @@ from my_plugin.models.cache import get
 from my_plugin.handler import MyHandler
 ```
 
-**Before running `canvas install`** for a redeploy, run the sandbox lint to catch all of these locally:
+**Before running `canvas install`** for a redeploy, run `canvas validate` to catch import-prefix and other load errors locally (it runs the real sandbox load), plus the construct lint:
 
 ```bash
+uv run canvas validate .
 uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
 ```
 

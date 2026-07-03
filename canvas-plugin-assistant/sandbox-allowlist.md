@@ -48,8 +48,10 @@ Only the names listed under each module are importable.
 | `dateutil.relativedelta` | `relativedelta` |
 | `defusedxml.ElementTree` | `fromstring` |
 | `django.db` | `IntegrityError` |
-| `django.db.models` | `Avg`, `BigIntegerField`, `Case`, `CharField`, `Count`, `Exists`, `IntegerField`, `Max`, `Min`, `Model`, `OuterRef`, `Prefetch`, `Q`, `Subquery`, `Sum`, `Value`, `When` |
+| `django.db.transaction` | `atomic`, `on_commit`, `on_rollback` |
+| `django.db.models` | `Avg`, `BigIntegerField`, `BooleanField`, `CASCADE`, `Case`, `CharField`, `Count`, `DO_NOTHING`, `DateField`, `DateTimeField`, `DecimalField`, `Exists`, `F`, `FloatField`, `ForeignKey`, `Func`, `Index`, `IntegerField`, `JSONField`, `ManyToManyField`, `Max`, `Min`, `Model`, `OneToOneField`, `OuterRef`, `Prefetch`, `Q`, `RowRange`, `SET_NULL`, `Subquery`, `Sum`, `TextField`, `UniqueConstraint`, `Value`, `ValueRange`, `When`, `Window` |
 | `django.db.models.expressions` | `Case`, `Exists`, `OuterRef`, `Subquery`, `Value`, `When` |
+| `django.db.models.functions` | `Coalesce`, `CumeDist`, `DenseRank`, `FirstValue`, `Lag`, `LastValue`, `Lead`, `NthValue`, `Ntile`, `PercentRank`, `Rank`, `RowNumber`, `Trim` |
 | `django.db.models.query` | `Prefetch`, `QuerySet` |
 | `django.utils.functional` | `cached_property` |
 | `jwt` | `decode`, `encode`, `ExpiredSignatureError`, `InvalidTokenError`, `PyJWKClient` |
@@ -96,7 +98,7 @@ Plus RestrictedPython's safe basics: `bool`, `int`, `float`, `str`, `bytes`, `tu
 Even with the right imports, the sandbox rejects several normal Python constructs. These were the single largest source of failed deploys in real-customer use — every entry here cost at least one project at least one failed deploy to discover.
 
 - **Augmented assignment on subscripts / slices.** `d["k"] += 1`, `arr[i] += 1`, `arr[i:j] += [...]` all fail with `Code is invalid: Augmented assignment of object items and slices is not allowed.` Rewrite as explicit reassignment: `d["k"] = d["k"] + 1`. Search your code for `[*] +=`, `[*] -=`, `[*] *=`, `[*] /=` — there are usually several offenders in the same file.
-- **No `@dataclass(frozen=True)`** (uses `exec()` internally, which the sandbox blocks). `@dataclass(slots=True)` is also out. For immutable records use `typing.NamedTuple`. Plain `@dataclass` (mutable) is fine.
+- **`@dataclass` is fine, including `frozen=True` and `slots=True`.** All three load and run in the sandbox (`dataclass` runs its codegen in the trusted `dataclasses` module, not under restriction).
 - **No deep attribute access through dotted module paths.** Reading `pkg.sub.NAME` at the use site after `import pkg` may raise `AttributeError: "pkg.sub.NAME" is an invalid attribute name (not in ALLOWED_MODULES)`. Import the name explicitly: `from pkg.sub import NAME`. This applies to YOUR OWN plugin's modules too — always `from my_plugin.x import Y`, never `import my_plugin.x` then `my_plugin.x.Y(...)`.
 - **No `setattr()` / `delattr()`.** These are blocked entirely. Re-design to use direct attribute assignment (`obj.attr = value`) or rethink the abstraction.
 - **No `type(...)` as a callable on a class** for purposes other than introspection. `type(x)` to compare against a class is allowed; `type("NewClass", ...)` to create a class is blocked.
@@ -112,7 +114,7 @@ Even with the right imports, the sandbox rejects several normal Python construct
 
 ### Django field types
 
-The sandbox exposes Django's *query builders* (`Q`, `Count`, `Sum`, `Avg`, `Prefetch`, `Case`, `When`, `Exists`, `Subquery`, `OuterRef`, `Value`) but NOT the model *field types* (`CharField`, `TextField`, `IntegerField`, `BigIntegerField`, `DateTimeField`, `BooleanField`, `JSONField`, `UUIDField`). If you're declaring a `CustomModel` subclass, use Canvas SDK's field declarations from `canvas_sdk.v1.data` instead.
+The sandbox exposes both Django's *query builders* (`Q`, `Count`, `Sum`, `Avg`, `Prefetch`, `Case`, `When`, `Exists`, `Subquery`, `OuterRef`, `Value`) and the model *field types* used to declare `CustomModel` subclasses (`CharField`, `TextField`, `IntegerField`, `BigIntegerField`, `DateField`, `DateTimeField`, `DecimalField`, `FloatField`, `BooleanField`, `JSONField`, `ForeignKey`, `OneToOneField`, `ManyToManyField`, plus `CASCADE`/`DO_NOTHING`/`SET_NULL` and `UniqueConstraint`/`Index`) — see the `django.db.models` row above. Import them directly from `django.db.models`; `canvas validate` reports anything that isn't exposed. Note `UUIDField` is not on the list.
 
 ## Custom Data model gotchas
 
