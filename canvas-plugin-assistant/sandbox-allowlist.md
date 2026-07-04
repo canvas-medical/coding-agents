@@ -148,7 +148,7 @@ Rules:
 - `sensitive: true` for credentials/tokens/passwords/API keys (masked input).
 - Omit `sensitive` (or set `false`) for URLs, IDs, durations, display names, file paths, etc. (plain text — user must be able to see what they're typing).
 - `default` is allowed only on non-sensitive variables.
-- NEVER write a bare `"secrets": [...]` array on its own. The pre-deploy `lint_manifest.py` rejects manifests that have `secrets` and no `variables`.
+- NEVER write a bare `"secrets": [...]` array on its own — always use `variables`. `canvas validate` warns on a legacy `secrets`-only manifest, and Studio's install gate rejects it outright.
 - Some pieces of Canvas SDK reference documentation still show the legacy `secrets` form in older examples — ignore them; the runner accepts both, but Studio's UI cannot render the legacy form correctly.
 
 ## Internal-import rules
