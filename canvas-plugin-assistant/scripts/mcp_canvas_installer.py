@@ -22,9 +22,9 @@ class CanvasInstallerMcp:
 
         Reads the modern `variables: [{name, sensitive?, default?}, ...]`
         schema. Falls back to the legacy `secrets: [name, ...]` array
-        for unmigrated plugins, but emits no values for it — the
-        deprecated form is rejected by `lint_manifest.py` before any
-        install reaches Canvas.
+        for unmigrated plugins, but emits no values for it — always use
+        `variables` (`canvas validate` warns on a legacy `secrets`-only
+        manifest).
         """
         variables = manifest.get("variables")
         if isinstance(variables, list) and variables:

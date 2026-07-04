@@ -83,13 +83,12 @@ no code changes.
 Run these checks before deploying:
 
 ```bash
-# Verify manifest is valid
-uv run canvas validate-manifest .
-
-# Sandbox lint — catches disallowed imports, augmented-assignment on
-# subscripts, and unprefixed internal imports BEFORE the install reaches
-# the runner. Cheaper than a failed deploy.
-uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
+# Validate the manifest, that every handler loads in the sandbox, and that no
+# handler body uses a construct or Custom Data setup the runner rejects — the
+# same checks `canvas install` runs before uploading, but local and
+# non-deploying. Fix anything it reports and re-run until clean; a clean
+# validate means the install won't fail on those checks.
+uv run canvas validate .
 
 # Run tests
 uv run pytest
@@ -98,7 +97,7 @@ uv run pytest
 uv run mypy --config-file=mypy.ini .
 ```
 
-If `lint_sandbox.py` reports violations, **fix them before running `canvas install`** — the runner will reject the same violations and the deploy will fail. The script's output names the file, line, and remediation for each violation; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the full set of allowed imports and names.
+If `canvas validate` reports violations, **fix them before running `canvas install`** — it runs the runner's own loader and allowlist, so anything it flags (disallowed imports, sandbox-rejected constructs like `setattr`/`bytearray`, Custom Data misconfiguration, handler-load failures) will break the deploy on the instance. Its output names the file, line, and remediation for each; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the allowed imports and names.
 
 **Also verify cache busting is in place:**
 
@@ -245,7 +244,7 @@ For production deployments, always confirm:
 
 ### Manifest Validation Errors
 
-1. Run `uv run canvas validate-manifest .` locally
+1. Run `uv run canvas validate .` locally
 2. Check SDK version compatibility
 3. Verify all referenced classes exist
 
@@ -310,10 +309,10 @@ from my_plugin.models.cache import get
 from my_plugin.handler import MyHandler
 ```
 
-**Before running `canvas install`** for a redeploy, run the sandbox lint to catch all of these locally:
+**Before running `canvas install`** for a redeploy, run `canvas validate` to catch import-prefix errors and everything else locally (it runs the real sandbox load):
 
 ```bash
-uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/lint_sandbox.py" "$CPA_PLUGIN_DIR"
+uv run canvas validate .
 ```
 
 For the complete allowlist (which stdlib modules are accepted, which names from each, which third-party libraries are exposed), consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md`.
