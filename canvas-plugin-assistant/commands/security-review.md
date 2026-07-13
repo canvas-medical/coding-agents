@@ -214,13 +214,14 @@ If issues were found, use AskUserQuestion:
 This command can be run standalone or is called by `/cpa:wrap-up`:
 
 ```
-/cpa:check-setup     →  Verify environment tools
-/cpa:new-plugin      →  Create plugin from requirements
-/cpa:deploy          →  Deploy to Canvas instance for UAT
-/cpa:coverage        →  Check test coverage (aim for 90%)
-/cpa:security-review →  Comprehensive security audit  ← YOU ARE HERE
-/cpa:database-performance-review  →  Database query optimization
-/cpa:wrap-up         →  Final checklist before delivery
+/cpa:check-setup                 →  Verify environment tools
+/cpa:new-plugin                  →  Create plugin from requirements
+/cpa:deploy                      →  Deploy to Canvas instance for UAT
+/cpa:coverage                    →  Check test coverage (aim for 90%)
+/cpa:security-review             →  Engineering security audit  ← YOU ARE HERE
+/cpa:product-review              →  Product / regulatory / norms review
+/cpa:database-performance-review →  Database query optimization
+/cpa:wrap-up                     →  Final checklist before delivery
 ```
 
 After the security review passes, guide the user to the next step in the workflow.
