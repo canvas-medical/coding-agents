@@ -20,3 +20,5 @@ Invoke this skill **proactively** as soon as Custom Data is involved — don't w
 ## Quick Reference
 
 Reference the `custom_data_context.txt` file for detailed anti-patterns with BAD/GOOD examples.
+
+> **Custom-data models are keyed on `dbid`, not `id`.** Any query that references `"id"` on a `CustomModel` — `Count("id")`, `order_by("id")`, `values("id")`, `F("id")` — raises `FieldError: Cannot resolve keyword 'id' into field`. Use `dbid` (the primary key on the SDK base model). Tests that mock the queryset (`patch(...objects...)`) never resolve the real field name, so this bug passes CI and 500s against a live DB. See the **database-performance** skill (§"Canvas Execution Limits") for detection and the write-amplification/idempotency patterns that also apply to custom-data-backed sync.

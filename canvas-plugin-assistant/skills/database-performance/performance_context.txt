@@ -261,22 +261,243 @@ Combine `.only()` with `.iterator()` when you only need a few fields — this re
 
 ---
 
+## Over-Hydration & Memory
+
+N+1 is about the *number* of queries. Over-hydration is the opposite failure: too *few* queries, each pulling far too much. On a hot endpoint (one hit on nearly every page load), row_count × row_width is what drives per-request memory — and that is what causes container memkills, not query count. Real incident (a go-live instance with a large migrated dataset): a `/appointments` feed hydrated up to 3,000 `Appointment` rows per request with 6 `select_related` joins, producing ~80 MB single-request spikes and plugin-runner memkills. The fix was to *remove* a join and trim the serializer.
+
+### 1. Never load large text/JSON blob columns unless you actually use them
+
+Some columns hold large free-text or JSON blobs — the clinical `Note._body`, serialized payloads, cached JSON, HTML/document fields. A single such column can dwarf every other field on the row, so loading it across hundreds or thousands of rows is a memory blowout **even when the query count is perfect**. This is the same failure as over-hydrating a relation (the `Note.dbid` case below), one level down — at the *column* level. It is often the single biggest per-row memory cost, so treat it first.
+
+Two rules:
+- To read a related row's id, don't load the row at all — use the `<fk>_id` column (see #2 below).
+- When you need a model instance but not its blob field(s), exclude them with `.defer()`, or name only what you need with `.only()`. Django loads a deferred field lazily if something later touches it — so make sure nothing does, or you reintroduce an N+1.
+
+```python
+# BAD - loads the full Note body for every row just to show a heading + date
+notes = Note.objects.filter(patient_id=pid)          # SELECT * — includes _body
+for n in notes:
+    render(n.title, n.datetime_of_service)           # never touches the body
+
+# GOOD - never fetch the blob column
+notes = Note.objects.filter(patient_id=pid).defer("_body")
+# or, equivalently, name exactly the small fields you use:
+notes = Note.objects.filter(patient_id=pid).only("dbid", "title", "datetime_of_service")
+```
+
+Treat any `*_body`, `*_json`, `*_data`, `*_html`, `payload`, `content`, or document/blob field as "do not load unless required." If you only need a scalar off such a model, project it with `.values("dbid", "title", ...)` and skip model hydration entirely. The same caution applies to a `select_related`/`prefetch_related` that pulls a relation whose rows carry a blob column — add `.defer()` on the related fields or don't join at all.
+
+### 2. Do NOT `select_related` a large relation just to read its id
+
+This is the most important correction to the "always add select_related" reflex. A ForeignKey's own column already holds the related row's primary key — you never need to join the related table to read it.
+
+```python
+# BAD - joins and hydrates the ENTIRE Note row for every appointment,
+# solely to read the note's integer id. On a 3,000-row feed this is a memory driver.
+appointments = Appointment.objects.select_related("patient", "provider", "note")
+for appt in appointments:
+    note_id = appt.note.dbid          # forces the whole Note to be loaded
+
+# GOOD - read the FK column that is already on the appointment row.
+# note_id IS the Note's primary key; the large Note row is never joined or hydrated.
+appointments = Appointment.objects.select_related("patient", "provider")
+for appt in appointments:
+    note_id = appt.note_id            # no join, no Note hydration
+```
+
+Rule: **to read a related object's PK, use `<fk>_id`, not `select_related(<fk>).<fk>.dbid`.** Only `select_related` a relation when you actually read multiple fields off the related object per row. When the joined row is large and mostly unused, more/narrower queries beat one fat join.
+
+### 3. Trim serializers to exactly what the front end reads
+
+Fetching or emitting fields nobody uses is both a memory cost and a data-leak surface. Lock the read contract so it cannot silently regrow.
+
+```python
+# The exact keys the card emits — the front-end read contract. Kept explicit and
+# asserted in tests so the serializer can't silently grow extra fields (over-fetching /
+# leaking) or drop one the UI needs.
+CARD_FIELDS = frozenset({"id", "note_id", "start", "status", "patient_id", "patient_name", ...})
+
+def serialize_appointment(appt) -> dict:
+    return {"id": appt.dbid, "note_id": appt.note_id, ...}
+
+# In tests:
+def test_card_contract():
+    assert set(serialize_appointment(fake_appt())) == set(CARD_FIELDS)
+```
+
+### 4. Prefer `.values()` / `.only()` on read-heavy list endpoints
+
+If the endpoint returns a projection (not full model behavior), select only the columns you serialize. `.values("dbid", "note_id", "start_time", ...)` or `.only(...)` avoids hydrating full model instances for thousands of rows.
+
+---
+
+## Accumulating Unbounded State Across Invocations
+
+A memory failure mode that isn't a query at all, but shows up in the same investigations. A resumable/paginated job (typically a cron-driven scan or backfill) keeps all results-so-far in a **single cache entry** (e.g. Redis) or a single in-process list, and each invocation reads the whole blob, grows it, and writes it back. Memory then scales with the *total* items processed, not with one batch — and the parse→concat→dump cycle holds 2–3 copies of the blob at peak.
+
+```python
+# BAD - the cache entry accumulates EVERY matched row across all pages/runs.
+# Each call holds the raw JSON bytes + the parsed list + the re-serialized dump
+# simultaneously; the list grows unbounded and lingers for the whole TTL.
+def advance_scan(self, days):
+    cache = get_cache()
+    key = scan_cache_key(days)
+    state = json.loads(cache.get(key) or "{}")        # full list into memory
+    new_rows = fetch_page(...)
+    state["entries"] = state.get("entries", []) + new_rows   # list copy — 2 copies live
+    cache.set(key, json.dumps(state), timeout_seconds=DAY)   # full dump — 3rd copy
+    return state["entries"]                            # returns the whole accumulation
+
+# GOOD - persist only the cursor/metadata; process each page and let it go.
+def advance_scan(self, days):
+    cache = get_cache()
+    key = scan_cache_key(days)
+    state = json.loads(cache.get(key) or '{"offset": 0, "complete": false}')
+    page = fetch_page(offset=state["offset"], limit=PAGE_SIZE)   # only this page in memory
+    process(page)                                                # act on it now, don't retain
+    state["offset"] += len(page)
+    state["complete"] = len(page) < PAGE_SIZE
+    cache.set(key, json.dumps(state), timeout_seconds=SHORT_TTL) # bounded blob: cursor only
+    return state
+```
+
+Rules:
+- Store **cursor/metadata** (`offset`, `total`, `complete`), never the accumulated payload. Re-fetch each page and process it in place.
+- If you must emit accumulated output, flush it downstream **in batches**, don't hold one giant list for the whole run (this also keeps effect batches under the ceiling — see "Canvas Execution Limits").
+- Keep the TTL short and scoped to the job window so stale blobs don't linger; concurrent invocations each pay the full copy cost, so per-batch bounds matter.
+
+---
+
+## Write Amplification & Idempotency
+
+The read-focused advice above does nothing for write load. Sync, webhook, and reconcile paths can re-write the same rows over and over, and in Canvas each write can *cascade* (a saved appointment triggers `AppointmentSyncHandler.compute()`, which can trigger an external push). Two real incidents: (a) an inbound webhook re-issued a `ScheduleEvent.update()` for an admin hold **every time** an unchanged event reappeared in a delta — a large share of appointment-table write load; (b) a non-converging importer minted 331k holds for 202k distinct events and drove ~5M `compute()` runs/day (baseline ~3k/day).
+
+### 1. Guard writes with a content hash (no-op guard)
+
+```python
+# BAD - re-saves on every delivery, even when nothing changed
+def apply_inbound(event):
+    ScheduleEvent(id=mapping.event_id).update(...)   # UPDATE every time
+
+# GOOD - skip the write when content is unchanged; record the hash on create AND update
+def apply_inbound(event):
+    new_hash = google_event_content_hash(event)
+    if mapping.last_applied_hash == new_hash:
+        stats["holds_unchanged"] += 1
+        return                                       # no-op: no UPDATE issued
+    ScheduleEvent(id=mapping.event_id).update(...)
+    mapping.last_applied_hash = new_hash
+    mapping.save()
+```
+
+### 2. Make sync/import converge and be idempotent
+
+An importer that can create a new row for an event it already imported will never converge. Deduplicate on a stable external key, bound recurring expansion to a fixed window, and treat "already imported, unchanged" as a no-op. Watch for feedback loops: a write that re-triggers the handler that made the write.
+
+### 3. Bound reconcile work to what changed
+
+"Delete all + recreate all" reconcilers are O(everything) on every trigger. Scope the work to the affected window.
+
+```python
+# BAD - on every booking, deletes and recreates buffers for EVERY future appointment
+# on the provider — thousands of effects per booking on a busy provider, stalls the flow.
+def reconcile_buffers(appt):
+    Event.objects.filter(calendar__id__in=cals, title="Buffer").delete()
+    for a in Appointment.objects.filter(provider=appt.provider, start_time__gte=now):
+        create_buffer(a)
+
+# GOOD - bound both the delete and the recreate to the triggering appointment's UTC day
+# (padded by the buffer size). Per-booking work becomes O(appointments that day).
+def reconcile_buffers(appt):
+    day_start = appt.start_time.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day_start + timedelta(days=1)
+    pad = timedelta(minutes=max(pre, post) + 1)
+    Event.objects.filter(calendar__id__in=cals, title="Buffer",
+                         starts_at__gte=day_start - pad, starts_at__lt=day_end + pad).delete()
+    for a in Appointment.objects.filter(provider=appt.provider,
+                                        start_time__gte=day_start, start_time__lt=day_end):
+        create_buffer(a)
+```
+
+Note the correctness trap that exposed this one: FHIR-booked appointments (e.g. via mental-health-scheduler) attach the patient as the Appointment `subject`, so `patient_id` is **null** on essentially every such row. A `patient__isnull=False` filter silently matched ~0 appointments. Don't filter visits on `patient_id` when they may be FHIR-booked.
+
+---
+
+## Canvas Execution Limits
+
+These are Canvas-runtime constraints, not Django ones — generic ORM advice will not surface them.
+
+### 1. Custom-data (SDK) models are keyed on `dbid`, not `id`
+
+`Count("id")`, `order_by("id")`, or any `"id"` reference on a custom-data model raises `FieldError: Cannot resolve keyword 'id' into field`. Use `dbid` (the primary key on `canvas_sdk.v1.data.base.Model`).
+
+```python
+# BAD - custom-data model has no `id` field → FieldError, 500s the page
+AppointmentEventMapping.objects.values("google_calendar_id").annotate(n=Count("id"))
+# GOOD
+AppointmentEventMapping.objects.values("google_calendar_id").annotate(n=Count("dbid"))
+```
+
+Tests that `patch(...objects...)` never resolve the real field name, so a broken `Count("id")` passes in CI while failing against a live DB. A query/field change needs a test that hits real field resolution (or at least asserts the field name), not a mocked queryset.
+
+### 2. The 64 MB effect-batch ceiling — chunk large fan-out through a queue + cron
+
+Effects are applied by the platform **only after the handler returns**, as a single batch. One handler that returns tens of thousands of effects crosses the 64 MB gRPC message ceiling and the whole batch is **silently dropped** — the plugin logs all the work as done, but nothing lands. Scaling the worker cannot fix this; it is a batching problem.
+
+```python
+# BAD - "re-import all": one handler computes the whole roster and returns every effect.
+# 32k+ hold effects in one batch → exceeds 64 MB gRPC ceiling → dropped, ~nothing persists.
+def reimport_all(self):
+    effects = []
+    for provider in all_providers():
+        effects += rebuild_holds(provider)   # tens of thousands of effects
+    return effects
+
+# GOOD - enqueue one unit of work per provider; a cron drains a bounded number per run,
+# so each handler invocation returns a small effect batch that fits under the ceiling.
+def reimport_all(self):
+    for provider in all_providers():
+        ReimportQueue.objects.get_or_create(provider_id=provider.id)   # idempotent
+    return []
+
+def drain_reimport(self):   # cron, e.g. every minute
+    for row in ReimportQueue.objects.all()[:BATCH]:
+        apply(rebuild_holds(row.provider_id))
+        row.delete()
+```
+
+Rule: any handler that emits effects proportional to an unbounded queryset (all providers, all patients, all appointments) must chunk the work — queue + cron, or paginate — never return one giant batch.
+
+---
+
 ## Detection Checklist
 
 When reviewing plugin code, look for:
 
-### High Priority (Likely N+1 or Memory Issues)
+### High Priority (Likely N+1, Memory, Write, or Correctness Issues)
 - [ ] `for` loops that call `.objects.get()` or `.objects.filter()` inside
 - [ ] Accessing `.related_name` or reverse relations inside loops without prefetch
 - [ ] Accessing ForeignKey attributes inside loops without select_related
 - [ ] `list()` wrapping large or unbounded querysets (e.g., `list(Model.objects.all()...)`)
 - [ ] `.all()` iterations without `.iterator()` on large tables (Patient, Note, Appointment, etc.)
+- [ ] **Over-hydration:** loading a large text/JSON blob column (`_body`, `*_json`, `*_data`, `payload`, `content`, HTML/document field) that the code path never uses → `.defer(...)` / `.only(...)` / `.values(...)`
+- [ ] **Over-hydration:** `select_related(<fk>)` on a large relation where the only downstream use is `.dbid`/`.id` → replace with the `<fk>_id` column
+- [ ] **Over-hydration:** hot list endpoint hydrating full model instances instead of `.values()`/`.only()` projections
+- [ ] **Write amplification:** `.update()`/`.save()` in a sync/webhook/reconcile path with no content-hash or change guard
+- [ ] **Unbounded reconcile:** "delete all + recreate all" not scoped to the changed window/day
+- [ ] **Cache/state accumulator:** a resumable/cron job storing all results-so-far in one cache entry or in-process list (read → concat → re-serialize each call) instead of persisting only the cursor/metadata
+- [ ] **Effect-batch ceiling:** a handler returning effects proportional to an unbounded queryset (all providers/patients/appointments) instead of chunking via queue+cron
+- [ ] **Custom-data PK:** `Count("id")` / `order_by("id")` / any `"id"` reference on a custom-data (SDK) model → use `dbid`
 
 ### Medium Priority (Potential Issues)
 - [ ] Multiple queries that could be combined with `Q` objects
 - [ ] `.count()` or `.exists()` called inside loops
 - [ ] Fetching full objects when only IDs or counts are needed
 - [ ] `.all()` or broad `.filter()` without `.only()` when only a few fields are used
+- [ ] Serializer/read contract not locked (no `FIELDS` frozenset + test) on a hot endpoint, so it can silently regrow
+- [ ] Filtering visits on `patient_id`/`patient__isnull` when they may be FHIR-booked (patient is the `subject`, so `patient_id` is null)
+- [ ] Query/field changes covered only by tests that `patch(...objects...)` (mocked querysets never resolve real field names)
+- [ ] Non-converging / non-idempotent importer (can re-create an already-imported record)
 
 ### Low Priority (Optimization Opportunities)
 - [ ] Queries that could benefit from database indexes
@@ -292,12 +513,16 @@ When reviewing, report findings as:
 
 ### Findings
 
-| Severity | Issue | Location | Recommendation |
-|----------|-------|----------|----------------|
-| HIGH | N+1 query in patient loop | handlers/handler.py:45 | Add prefetch_related('conditions') |
-| HIGH | Query inside for loop | handlers/handler.py:67 | Move query outside loop, use filter(id__in=) |
-| MEDIUM | Missing select_related | api/routes.py:23 | Add select_related('patient') |
-| LOW | Fetching all fields | handlers/handler.py:12 | Consider .only() for needed fields |
+| Severity | Axis | Issue | Location | Recommendation |
+|----------|------|-------|----------|----------------|
+| HIGH | Read count | N+1 query in patient loop | handlers/handler.py:45 | Add prefetch_related('conditions') |
+| HIGH | Memory | Note._body loaded for a list that never reads it | api/routes.py:19 | .defer("_body") or .only(needed fields) |
+| HIGH | Memory | select_related('note') only used for note.dbid | api/routes.py:23 | Drop the join; read appt.note_id |
+| HIGH | Write | update() in webhook path with no change guard | inbound.py:88 | Add content-hash no-op guard |
+| HIGH | Exec limit | Count("id") on custom-data model | routes/admin.py:31 | Use Count("dbid") |
+| HIGH | Exec limit | handler returns effects for all providers | protocols/reimport.py:20 | Chunk via queue + cron |
+| MEDIUM | Read count | Missing select_related | api/routes.py:52 | Add select_related('patient') |
+| LOW | Memory | Fetching all fields | handlers/handler.py:12 | Consider .only()/.values() for needed fields |
 
 ### Query Analysis
 
