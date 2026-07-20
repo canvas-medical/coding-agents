@@ -42,17 +42,34 @@ grep -rn "\.objects\." --include="*.py" .
 
 ### 2. Invoke Database Performance Skill
 
-Invoke the **database-performance** skill to analyze query patterns.
+Invoke the **database-performance** skill to analyze data-access patterns across **all four failure modes** — not just N+1.
+
+**Measure before you fix.** Query count is only one axis. Before proposing changes, identify the hot path (which endpoint/handler and how often it runs), then estimate **rows × row width per request** (memory) and **writes/effects per trigger** (amplification). Confirm the fix addresses the actual bottleneck — an oversized effect batch or a non-converging import is algorithmic and scaling workers/memory will not fix it.
 
 The skill will check for:
+
+*Read count (N+1):*
 - **N+1 query patterns**: Queries executed inside loops
 - **Missing `select_related()`**: Foreign key access without prefetching
 - **Missing `prefetch_related()`**: Reverse relation or many-to-many access without prefetching
-- **Unbounded queries**: `.all()` or `.filter()` without limits
 - **Inefficient filtering**: Filtering in Python instead of database
-- **Large queryset materialization**: `list()` wrapping unbounded querysets loads everything into memory
-- **Missing `.iterator()`**: Large table scans without `.iterator(chunk_size=N)` cache all rows
-- **Missing `.only()`**: Fetching all columns when only a few fields are used
+
+*Over-hydration / memory:*
+- **Large text/JSON blob columns loaded but unused**: `Note._body` and other `*_body`/`*_json`/`*_data`/`payload`/`content`/document fields can dwarf the rest of the row → `.defer(...)` them, or `.only(...)`/`.values(...)` the small fields you use. Often the single biggest per-row cost.
+- **`select_related` used only for an id**: joining a large relation (e.g. `note`) whose only downstream use is `.dbid`/`.id` → read the `<fk>_id` column instead
+- **Full-instance hydration on hot list endpoints**: use `.values()`/`.only()` projections
+- **Large queryset materialization / missing `.iterator()`**: `list()` wrapping or bare `.all()` iteration over large tables
+- **Cache/state accumulator**: a resumable or cron-driven job that stores all results-so-far in one cache entry or in-process list (read → concat → re-serialize each call) → persist only the cursor/metadata (`offset`, `total`, `complete`), process each page in place
+- **Unlocked serializer contract**: no `FIELDS` frozenset + test, so the card can silently regrow
+
+*Write amplification:*
+- **Redundant writes**: `.update()`/`.save()` in sync/webhook/reconcile paths with no content-hash change guard
+- **Unbounded reconcile**: "delete all + recreate all" not scoped to the changed window/day
+- **Non-converging / non-idempotent imports**: can re-create an already-imported record
+
+*Canvas execution limits:*
+- **Custom-data PK**: `Count("id")`/`order_by("id")` on a custom-data (SDK) model → use `dbid`
+- **Effect-batch ceiling**: a handler emitting effects proportional to an unbounded queryset → chunk via queue + cron (one batch must stay under the 64 MB gRPC limit)
 
 ---
 
@@ -94,6 +111,55 @@ grep -rn "\.objects\.all()\|\.objects\.filter(" --include="*.py" . | grep -v "\.
 
 Cross-reference `.only()` hits with actual field usage to confirm unnecessary columns are being fetched.
 
+**Over-hydration — large text/JSON blob columns loaded without .defer()/.only():**
+```bash
+grep -rn "_body\|_json\|_html\|_data\|payload\|\.content" --include="*.py" .
+```
+
+For each model that has a large blob column (notably `Note._body`), check whether the query paths that fetch that model actually read the blob. If not, flag it — the query should `.defer("_body", ...)`, `.only(...)` the small fields, or `.values(...)` when only scalars are needed. A blob column loaded across hundreds/thousands of rows is a memory blowout even at a perfect query count. Also check `select_related`/`prefetch_related` that pull a relation whose rows carry a blob column.
+
+**Cache/state accumulator (memory grows with total items, not per batch):**
+```bash
+grep -rn "cache.get\|cache.set\|json.loads\|json.dumps" --include="*.py" .
+```
+
+Look for a resumable/cron job that reads a cache blob, concatenates new items onto a stored list, and re-serializes the whole thing each call (e.g. `state["entries"] = state.get("entries", []) + new_rows`). That accumulates unbounded state and holds 2–3 copies at peak. Flag it — the job should persist only the cursor/metadata and process each page in place.
+
+**Over-hydration — select_related used only for an id:**
+```bash
+grep -rn "select_related(" --include="*.py" .
+```
+
+For each hit, check the downstream use of the joined relation. If the only access is `.dbid`/`.id` (e.g. `appt.note.dbid`), flag it — read the `<fk>_id` column (`appt.note_id`) instead so the large related row is never hydrated.
+
+**Custom-data PK — `id` used where the PK is `dbid`:**
+```bash
+grep -rn 'Count("id")\|order_by("id")\|values("id")\|F("id")' --include="*.py" .
+```
+
+For custom-data (SDK) models, `"id"` raises `FieldError` (PK is `dbid`). Cross-reference against models defined with the SDK base.
+
+**Write amplification — writes in sync/webhook/reconcile paths:**
+```bash
+grep -rn "\.update(\|\.save(\|\.delete(" --include="*.py" .
+```
+
+In inbound/webhook/sync/reconcile code, flag writes that run unconditionally on every delivery. Look for a content-hash / change guard before the write; flag "delete all + recreate all" that isn't bounded to the changed window.
+
+**Effect-batch ceiling — effects proportional to an unbounded queryset:**
+```bash
+grep -rn "for.*in.*\.objects" --include="*.py" . -A 8 | grep -E "\.apply\(|effects\.append|effects \+=|return effects"
+```
+
+Flag handlers that build an effect list by looping over all providers/patients/appointments and return it in one batch — chunk via queue + cron instead.
+
+**Tests that mock the ORM (hide field/query errors):**
+```bash
+grep -rn "patch(.*objects\|Mock().*objects\|MagicMock" --include="*.py" ./tests 2>/dev/null
+```
+
+A query/field change covered only by a mocked queryset is not real coverage — the mock never resolves field names, so `Count("id")`-style bugs pass in CI.
+
 ---
 
 ### 4. Generate Performance Report
@@ -114,15 +180,18 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/db-performance-review-$TI
 
 ## Summary
 
-| Category | Status | Issues |
-|----------|--------|--------|
-| N+1 Query Patterns | ✅ Pass / ⚠️ X issues / N/A | ... |
-| select_related Usage | ✅ Pass / ⚠️ X issues / N/A | ... |
-| prefetch_related Usage | ✅ Pass / ⚠️ X issues / N/A | ... |
-| Query Bounds | ✅ Pass / ⚠️ X issues / N/A | ... |
-| Large Queryset Materialization | ✅ Pass / ⚠️ X issues / N/A | ... |
-| Missing .iterator() | ✅ Pass / ⚠️ X issues / N/A | ... |
-| Missing .only() | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Axis | Category | Status | Issues |
+|------|----------|--------|--------|
+| Read count | N+1 Query Patterns | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Read count | select_related / prefetch_related Usage | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Memory | Over-hydration (blob columns loaded / select_related for id only) | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Memory | Large queryset materialization / .iterator() / .only() | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Memory | Cache/state accumulator (cursor-only, no growing blob) | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Memory | Serializer contract locked | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Write | Redundant writes / content-hash guard | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Write | Bounded reconcile / idempotent sync | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Exec limit | Custom-data PK (dbid vs id) | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Exec limit | Effect-batch ceiling (queue+cron chunking) | ✅ Pass / ⚠️ X issues / N/A | ... |
 
 ## Detailed Findings
 
