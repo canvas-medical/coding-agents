@@ -1,5 +1,6 @@
 ---
 name: wrap-up
+description: Final checklist before calling a plugin "done" for this version.
 ---
 
 # Wrap Up Plugin

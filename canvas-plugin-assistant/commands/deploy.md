@@ -1,5 +1,6 @@
 ---
 name: deploy
+description: Deploy the current plugin to a Canvas instance with log monitoring.
 ---
 
 # Deploy Plugin

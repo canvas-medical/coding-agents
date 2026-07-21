@@ -1,5 +1,6 @@
 ---
 name: create-icon
+description: Generate an SVG icon from a description and automatically convert it to 48x48 PNG format.
 ---
 
 # Create Icon

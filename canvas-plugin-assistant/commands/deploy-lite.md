@@ -1,5 +1,6 @@
 ---
 name: deploy-lite
+description: Quick-deploy the current plugin to a Canvas instance — no version bump, no tests, no commit. Just install and monitor logs.
 ---
 
 # Deploy Lite
