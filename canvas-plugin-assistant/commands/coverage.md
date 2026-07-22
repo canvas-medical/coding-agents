@@ -1,5 +1,6 @@
 ---
 name: coverage
+description: Run tests with coverage and offer to improve if below 90%.
 ---
 
 # Test Coverage Report

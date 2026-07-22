@@ -1,5 +1,6 @@
 ---
 name: run-evals
+description: Execute eval cases to verify that security and database performance review commands correctly detect known issues.
 ---
 
 # Run Evals
