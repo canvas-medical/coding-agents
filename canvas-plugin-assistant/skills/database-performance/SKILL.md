@@ -20,6 +20,22 @@ Do **not** reflexively add `select_related`. Adding a join to a **large** relati
 
 Likewise, do not load **large text/JSON blob columns** you don't use. `Note._body` and other `*_body`/`*_json`/`payload`/document fields can be far larger than every other field combined; pulling them across many rows is a memory blowout even at a perfect query count. Default to `.defer("_body", ...)` or `.only(...)` the small fields, or `.values(...)` when you only need scalars. See `performance_context.txt` §"Over-Hydration & Memory."
 
+## Reading "current state" — never join the derived view (forced full sort)
+
+Fetching a note's current state via `Note.objects.select_related("current_state")` — or any join onto a `current_*` relation the SDK backs with a `DISTINCT ON (...) ORDER BY ...` view (e.g. `canvas_sdk_data_current_note_state_001`) — does **not** push your per-row filter into that view. Postgres builds the *entire* current-state derivation for the whole instance (a `Unique` over a full sort of the underlying `api_notestatechangeevent` table) and merge-joins your one row to it. That turns an O(1) keyed read into O(all state events): on a large instance a single-note fetch sorts millions of rows and takes seconds. Adding `select_related` here makes it **worse**, not better.
+
+- **Symptom:** one query, one row returned, multi-second latency. `EXPLAIN` shows a `Sort`/`Unique` over the whole event table feeding a `Merge Join`, not an index point-lookup.
+- **Fix:** fetch the note plainly, then read state through the indexed FK path. `note.current_state` accessed lazily (or the latest state event queried by `note_id`, which is indexed) is a sub-ms point read — far cheaper than the forced sort.
+
+```python
+# BAD — forces a full DISTINCT ON sort of the state-event table, then merge-joins one note (seconds)
+note = Note.objects.select_related("current_state").get(id=note_id)
+# GOOD — plain keyed fetch; current state via the indexed note_id lookup (O(1), sub-ms)
+note = Note.objects.get(id=note_id)          # add .defer("_body") if you don't read the body
+```
+
+Generalize: any `select_related`/join onto a "latest-per-X" / `current_*` view is suspect — verify with `EXPLAIN`; prefer an indexed keyed lookup.
+
 ## When to Use This Skill
 
 Use this skill when:
@@ -43,6 +59,8 @@ The GTM performance PRs that landed all *measured first*, then attributed root c
 grep -rn "for.*in.*\.objects" --include="*.py" .
 # select_related on a relation only used for its id (over-hydration)
 grep -rn "select_related(" --include="*.py" .
+# select_related onto a derived current-state view — forces a full sort, not an O(1) lookup
+grep -rn 'select_related([^)]*current_' --include="*.py" .
 # large text/JSON blob columns pulled without .defer()/.only() (over-hydration)
 grep -rn "_body\|_json\|_html\|payload\|\.content" --include="*.py" .
 # cache/state accumulators: full blob read+concat+re-serialize each run (memory)
