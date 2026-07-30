@@ -38,13 +38,12 @@ uv run pytest --cov=. --cov-report=term-missing
 
 3. **Generate Coverage Report**
 
-Create a timestamp and get a workspace directory:
+Get the workspace directory:
 ```bash
 WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
-TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 ```
 
-Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/coverage-report-$TIMESTAMP.md`:
+Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/coverage-report.md`, overwriting any previous run:
 
 ```markdown
 ## Coverage Report
