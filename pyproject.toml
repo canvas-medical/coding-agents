@@ -11,6 +11,7 @@ dev = []
 
 [dependency-groups]
 dev = [
+    "mcp>=1.26.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     # Imported by test_generate_platform_context.py; the generator itself declares
