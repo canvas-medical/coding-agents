@@ -358,6 +358,7 @@ OR
 Save the report, overwriting any previous run:
 
 ```bash
+mkdir -p "$CPA_PLUGIN_DIR/.cpa-workflow-artifacts"
 REPORT_FILE="$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/wrap-up-report.md"
 
 # Create the report (replace {plugin_name} with actual plugin name)
