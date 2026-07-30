@@ -28,7 +28,7 @@ Run `/cpa:new-plugin` to start a guided brainstorming session that asks clarifyi
 
 ## Environment Variables
 
-CPA uses three environment variables to manage workspace context and enable session tracking. These must be set before starting Claude.
+CPA uses three environment variables to manage workspace context. These must be set before starting Claude.
 
 ### Starting a CPA Session
 
@@ -50,7 +50,7 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 
 | Variable              | Required          | Purpose                                                                                                                                             |
 |-----------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CPA_RUNNING`         | Always            | Set to `1` to enable CPA. Activates SessionEnd hooks for cost tracking and user input logging on `/exit`.                                           |
+| `CPA_RUNNING`         | Always            | Set to `1` to enable CPA. Commands refuse to run without it.                                                                                        |
 | `CPA_WORKSPACE_DIR`   | Always            | Root workspace directory. Used for storing workflow artifacts in `.cpa-workflow-artifacts/` before being moved within the created plugin directory. |
 | `CPA_PLUGIN_DIR`      | For most commands | Specific plugin directory to work on. Must be a subdirectory of `CPA_WORKSPACE_DIR`.                                                                |
 | `CPA_SECRET_FILEPATH` | No                | Override the default plugin secrets file path. See [Plugin Secrets](#plugin-secrets).                                                                |
@@ -72,16 +72,10 @@ not use bare `python` or `pip` in command workflows.
 | `:deploy`                      | Yes                                            |
 | `:wrap-up`                     | Yes                                            |
 
-### SessionEnd Hooks
+### Session End
 
-When `CPA_RUNNING=1`, the following actions run automatically when you `/exit`:
-
-1. **Cost Logger** - Saves session cost data (tokens, duration, model) to `.cpa-workflow-artifacts/costs/`
-2. **User Input Logger** - Saves user prompts to `.cpa-workflow-artifacts/user_inputs/`
-
-Without `CPA_RUNNING=1`, these hooks are skipped and session data is not tracked.
-
-Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively and cannot inspect untracked files or ask for consent, so a blind `git add`/commit risks staging secrets. The `:wrap-up` command commits interactively instead, where untracked files are reviewed (and scanned for secrets) and pushing is confirmed with you first.
+CPA registers no session hooks: it writes nothing on `/exit`. Committing happens in the `:wrap-up` command, where untracked files are reviewed (and
+scanned for secrets) and pushing is confirmed with you first.
 
 ## What This Assistant Does
 
@@ -314,73 +308,34 @@ automatically.
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
-├── hooks/
-│   └── hooks.json             # SessionEnd hooks for cost tracking and user inputs tracking
-├── scripts/
+└── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
-│   ├── user_input_logger.py       # Full user inputs tracking
-│   ├── compare_review_results.py  # Eval comparison using Anthropic API
-│   ├── cost_logger.py             # SessionEnd hook script for cost tracking
-│   ├── verify_plugin_structure.py # Check the plugin structure
-│   └── update_pricing.py          # Model pricing updater
-└── model_costs.json               # Claude model pricing data
+    ├── compare_review_results.py  # Eval comparison using Anthropic API
+    ├── get_plugin_dir.py          # Workspace directory resolution
+    └── verify_plugin_structure.py # Check the plugin structure
 
 ```
 
 ## Workflow Artifacts
 
-CPA saves workflow artifacts to `.cpa-workflow-artifacts/` at the git repository root. These artifacts are critical for:
-
-**Training & Feedback**
-
-- Session histories capture the full dialogue, decisions made, and problems solved
-- Reviewing past sessions helps users learn patterns and improve their plugin development skills
-- Artifacts provide concrete examples for onboarding new team members
-
-**Continuous Improvement**
-
-- Plugin specs document requirements gathering patterns that worked well
-- Security reviews highlight common vulnerabilities to watch for
-- Session histories help identify where CPA guidance could be improved
-
-**Cost Tracking & Budgeting**
-
-- Automatic session cost tracking helps monitor AI usage and budget
-- Aggregated cost data enables project cost analysis across multiple sessions
-- Cost breakdown by model type (Opus, Sonnet, Haiku) informs model selection decisions
+Commands and agents write their working files to `.cpa-workflow-artifacts/` in the workspace directory. Every file is scratch space for the session
+that produced it, kept out of git via the plugin repo's `.gitignore`. Each report has a fixed name, so a re-run replaces the previous one instead of
+piling up.
 
 **Artifacts saved:**
-| File | Purpose |
-|------|---------|
-| `plugin-spec.md` | Plugin requirements and architecture decisions |
-| `coverage-report-{timestamp}.md` | Test coverage report |
-| `security-review-{timestamp}.md` | Security audit findings and recommendations |
-| `db-performance-review-{timestamp}.md` | Database query optimization findings |
-| `claude-history.txt` | Complete transcript of all project sessions |
-| `eval-results-{timestamp}.md` | Eval suite results |
-| `{case_name}-security-review.md` | Per-case security review (evals) |
-| `{case_name}-database-review.md` | Per-case database review (evals) |
-| `costs/{session-id}.json` | Individual session cost data (tokens, duration, cost) |
-| `costs/{workspace-directory}.json` | Aggregated cost summary for all sessions in the workspace |
+| File | Purpose | Read by |
+|------|---------|---------|
+| `plugin-spec.md` | Plugin requirements and architecture decisions | `:new-plugin`, deploy-uat, instance-analyze |
+| `wrap-up-report.md` | Wrap-up checklist results | `:new-plugin` (marks the plugin as shipped) |
+| `security-review.md` | Security audit findings and recommendations | You |
+| `db-performance-review.md` | Database query optimization findings | You |
+| `coverage-report.md` | Test coverage report | You |
+| `instance-config-{hostname}.md` | Instance configuration analysis | You |
+| `eval-results-{timestamp}.md` | Eval suite results | You |
+| `{case_name}-security-review.md` | Per-case security review (evals) | `compare_review_results.py` |
+| `{case_name}-database-review.md` | Per-case database review (evals) | `compare_review_results.py` |
 
-**Cost Tracking Details:**
-
-CPA automatically tracks session costs via a SessionEnd hook. When a session ends, cost data is saved to `.cpa-workflow-artifacts/costs/` at the git
-repository root:
-
-- **Individual session files** (`{session-id}.json`): Token usage (input, output, cache read/write), model used, session duration, and calculated cost
-  in USD
-- **Aggregated files** (`{workspace-directory}.json`): Summary of all sessions in the workspace (git repository) with total cost, token usage, and
-  session list
-
-Update pricing data with `scripts/update_pricing.py`:
-
-```bash
-  export ANTHROPIC_API_KEY=your_api_key_here
-./scripts/update_pricing.py
-```
-
-**Keep these artifacts.** They're valuable for retrospectives, training, project budgeting, and improving CPA itself.
+Delete the directory whenever you want: nothing outside the session that wrote a file depends on it.
 
 ## Evals
 
@@ -423,18 +378,12 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 
 | Module                        | Description                         |
 |-------------------------------|-------------------------------------|
-| `base_logger.py`              | Base class for session logging              |
 | `compare_review_results.py`   | Eval comparison using Anthropic API         |
 | `constants.py`                | CPA environment variable constants          |
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
-| `cost_logger.py`              | Session cost tracking                       |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `hook_information.py`         | Hook data structures                        |
 | `mcp_canvas_installer.py`     | MCP server for plugin install with secrets  |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |
-| `session_end_orchestrator.py` | SessionEnd hook orchestration               |
-| `update_pricing.py`           | Model pricing data updater                  |
-| `user_input_logger.py`        | User input tracking                         |
 | `validate_cpa_environment.py` | Environment variable validation             |
 | `verify_plugin_structure.py`  | Plugin structure verification               |
 
