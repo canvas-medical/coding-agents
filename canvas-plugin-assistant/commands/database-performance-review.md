@@ -165,13 +165,12 @@ A query/field change covered only by a mocked queryset is not real coverage — 
 
 ### 4. Generate Performance Report
 
-Create a timestamp and get a workspace directory:
+Get the workspace directory:
 ```bash
 WORKSPACE_DIR=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
-TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 ```
 
-Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/db-performance-review-$TIMESTAMP.md`:
+Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/db-performance-review.md`, overwriting any previous run:
 
 ```markdown
 # Database Performance Review: {plugin_name}
