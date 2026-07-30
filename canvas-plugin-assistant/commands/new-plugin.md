@@ -310,8 +310,7 @@ Check if the plugin has already been through the wrap-up process (i.e., is a com
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
-plugin_name_snake=$(echo "$(basename "$CPA_PLUGIN_DIR")" | tr '-' '_')
-if [ -f "$plugin_name_snake/.cpa-workflow-artifacts/wrap-up-report.md" ]; then
+if [ -f ".cpa-workflow-artifacts/wrap-up-report.md" ]; then
   echo "PLUGIN_COMPLETED=true"
 else
   echo "PLUGIN_COMPLETED=false"
