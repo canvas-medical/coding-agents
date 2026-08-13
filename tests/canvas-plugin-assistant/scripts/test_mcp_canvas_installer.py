@@ -10,28 +10,66 @@ import pytest
 from mcp_canvas_installer import CanvasInstallerMcp
 
 
-class TestParseSecretNames:
-    """Tests for CanvasInstallerMcp._parse_secret_names."""
+class TestParseVariableNames:
+    """Tests for CanvasInstallerMcp._parse_variable_names."""
 
     @pytest.mark.parametrize(
-        ("raw_value", "expected"),
+        ("manifest", "expected"),
         [
-            pytest.param(["API_KEY", "TOKEN"], ["API_KEY", "TOKEN"], id="list_input"),
-            pytest.param(["  KEY  ", " VAL "], ["KEY", "VAL"], id="list_strips_whitespace"),
-            pytest.param(["KEY", "", "  ", "VAL"], ["KEY", "VAL"], id="list_filters_empty"),
-            pytest.param([123, "KEY"], ["123", "KEY"], id="list_non_string_items"),
-            pytest.param("KEY1, KEY2, KEY3", ["KEY1", "KEY2", "KEY3"], id="string_comma_separated"),
-            pytest.param("KEY1\nKEY2\nKEY3", ["KEY1", "KEY2", "KEY3"], id="string_newline_separated"),
-            pytest.param("KEY1,,, KEY2", ["KEY1", "KEY2"], id="string_filters_empty"),
-            pytest.param(12345, [], id="unsupported_type"),
-            pytest.param(None, [], id="none_input"),
+            pytest.param(
+                {"variables": [{"name": "API_KEY"}, {"name": "TOKEN"}]},
+                ["API_KEY", "TOKEN"],
+                id="variables",
+            ),
+            pytest.param(
+                {"variables": [{"name": "  KEY  "}, {"name": " VAL "}]},
+                ["KEY", "VAL"],
+                id="variables_strip_whitespace",
+            ),
+            pytest.param(
+                {"variables": [{"name": "KEY"}, {"name": ""}, {"name": "   "}, {"name": "VAL"}]},
+                ["KEY", "VAL"],
+                id="variables_filter_blank_names",
+            ),
+            pytest.param(
+                {"variables": [{"name": 123}, {"name": "KEY"}, {}]},
+                ["KEY"],
+                id="variables_filter_non_string_and_missing_names",
+            ),
+            pytest.param(
+                {"variables": ["API_KEY", {"name": "KEY"}]},
+                ["KEY"],
+                id="variables_filter_non_dict_entries",
+            ),
+            pytest.param(
+                {"variables": [], "secrets": ["KEY", "", "  ", 123]},
+                ["KEY", "123"],
+                id="legacy_secrets_list_used_when_variables_empty",
+            ),
+            pytest.param(
+                {"secrets": "KEY1, KEY2, KEY3"},
+                ["KEY1", "KEY2", "KEY3"],
+                id="legacy_secrets_string_comma_separated",
+            ),
+            pytest.param(
+                {"secrets": "KEY1\nKEY2"},
+                ["KEY1", "KEY2"],
+                id="legacy_secrets_string_newline_separated",
+            ),
+            pytest.param(
+                {"secrets": "KEY1,,, KEY2"},
+                ["KEY1", "KEY2"],
+                id="legacy_secrets_string_filters_empty",
+            ),
+            pytest.param({"secrets": 12345}, [], id="unsupported_secrets_type"),
+            pytest.param({}, [], id="no_variables_and_no_secrets"),
         ],
     )
-    def test__parse_secret_names(self, raw_value: object, expected: list[str]) -> None:
-        """Parse secret names from various input formats."""
+    def test__parse_variable_names(self, manifest: dict, expected: list[str]) -> None:
+        """Parse variable names from a manifest, falling back to the legacy secrets key."""
         tested = CanvasInstallerMcp
 
-        result = tested._parse_secret_names(raw_value)
+        result = tested._parse_variable_names(manifest)
 
         assert result == expected
 

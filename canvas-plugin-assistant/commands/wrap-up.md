@@ -70,7 +70,7 @@ This covers:
 - **Application Scope** - Manifest scope alignment with token usage
 - **Secrets Declaration** - All tokens properly declared
 
-The command saves a timestamped report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
+The command saves a report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
 
 ### 2. Database Performance Review
 
@@ -355,11 +355,11 @@ OR
 
 **Save the wrap-up report:**
 
-Create a timestamp and save the report:
+Save the report, overwriting any previous run:
 
 ```bash
-TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-REPORT_FILE="$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/wrap-up-report-$TIMESTAMP.md"
+mkdir -p "$CPA_PLUGIN_DIR/.cpa-workflow-artifacts"
+REPORT_FILE="$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/wrap-up-report.md"
 
 # Create the report (replace {plugin_name} with actual plugin name)
 cat > "$REPORT_FILE" <<'REPORT_END'
