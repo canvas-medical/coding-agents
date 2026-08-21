@@ -129,6 +129,9 @@ scanned for secrets) and pushing is confirmed with you first.
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
 - **agent-patterns**: When to build an agent with the Agent Development Kit instead of a handler that calls a model, standard tools first, tool grants and approval, testing with a fake gateway, and agent security review
+- **custom-data-patterns**: Custom Data anti-patterns and corrections (unnecessary compatibility checks, misuse of AttributeHubs vs CustomModels)
+- **fhir-api-client-development**: FHIR API reference for plugins that read or write data via FHIR endpoints
+- **instance-analyze**: Analyze Canvas instance configuration to understand the target environment for plugin development
 
 ### Slash Commands
 
