@@ -118,6 +118,9 @@ Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
+- **custom-data-patterns**: Custom Data anti-patterns and corrections (unnecessary compatibility checks, misuse of AttributeHubs vs CustomModels)
+- **fhir-api-client-development**: FHIR API reference for plugins that read or write data via FHIR endpoints
+- **instance-analyze**: Analyze Canvas instance configuration to understand the target environment for plugin development
 
 ### Slash Commands
 

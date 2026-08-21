@@ -13,6 +13,7 @@ dev = []
 dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.pytest.ini_options]
