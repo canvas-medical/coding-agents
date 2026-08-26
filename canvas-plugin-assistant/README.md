@@ -111,6 +111,7 @@ Git commits are **not** done by a SessionEnd hook. A hook runs non-interactively
 ### Skills
 
 - **canvas-sdk**: Complete Canvas SDK documentation (~20k lines)
+- **canvas-platform**: Native-feature reference (does Canvas already do X?) and UI-placement model (where a plugin's UI lands and in what order)
 - **plugin-patterns**: Architecture patterns and best practices
 - **plugin-api-server-security**: Security review for SimpleAPI/WebSocket handlers (when plugin is the server)
 - **fhir-api-client-security**: Security review for FHIR API usage (token scopes, patient-scoped tokens)
@@ -303,6 +304,7 @@ automatically.
 │   └── case_index.md          # Case descriptions (CPA denied access)
 ├── skills/
 │   ├── canvas-sdk/            # SDK documentation
+│   ├── canvas-platform/       # Native-feature reference + UI-placement model
 │   ├── plugin-patterns/       # Architecture patterns
 │   ├── icon-generation/       # SVG icon generation and PNG conversion
 │   ├── plugin-api-server-security/  # SimpleAPI/WebSocket auth

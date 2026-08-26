@@ -29,6 +29,28 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/canvas-medical/documentation/refs/heads/main/fhir-context.txt \
             -o canvas-plugin-assistant/skills/fhir-api-client-development/fhir_client_context.txt
 
+      - name: Download Canvas platform context
+        # Two-tier native-feature reference: index (grepped first) + corpus (bodies).
+        # curl -f fails the step on any HTTP error, and the [ -s ] check rejects an
+        # empty body, so a broken sync fails loudly instead of overwriting a good
+        # bundled copy with nothing. Each file is validated in a temp path and only
+        # moved into place once non-empty.
+        run: |
+          mkdir -p canvas-plugin-assistant/skills/canvas-platform
+          for pair in \
+            "platform-index.txt:canvas_platform_index.txt" \
+            "platform-context.txt:canvas_platform_context.txt"; do
+            src="${pair%%:*}"
+            dest="canvas-plugin-assistant/skills/canvas-platform/${pair##*:}"
+            tmp="$(mktemp)"
+            curl -fSL "https://raw.githubusercontent.com/canvas-medical/documentation/refs/heads/main/${src}" -o "$tmp"
+            if [ ! -s "$tmp" ]; then
+              echo "ERROR: downloaded ${src} is empty — refusing to overwrite ${dest}" >&2
+              exit 1
+            fi
+            mv "$tmp" "$dest"
+          done
+
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -38,6 +60,8 @@ jobs:
         run: |
           git add canvas-plugin-assistant/skills/canvas-sdk/coding_agent_context.txt
           git add canvas-plugin-assistant/skills/fhir-api-client-development/fhir_client_context.txt
+          git add canvas-plugin-assistant/skills/canvas-platform/canvas_platform_index.txt
+          git add canvas-plugin-assistant/skills/canvas-platform/canvas_platform_context.txt
 
           # Check if there are changes to commit
           if git diff --staged --quiet; then
