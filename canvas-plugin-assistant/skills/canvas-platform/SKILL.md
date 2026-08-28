@@ -1,11 +1,11 @@
 ---
 name: canvas-platform
-description: Canvas native-feature and UI-placement reference. Use whenever a question or plan touches whether Canvas already does something natively ("can we set up appointment reminders?", "does Canvas handle X out of the box?") before proposing to build a plugin, and whenever you need to know where a plugin's UI lands (app drawer, panel, provider menu, note tabs, chart sections) or in what order. The bundled docs are the source of truth; do not answer from memory.
+description: Canvas native-feature reference. Use whenever a question or plan touches whether Canvas already does something natively ("can we set up appointment reminders?", "does Canvas handle X out of the box?"). The bundled docs are the source of truth; do not answer from memory.
 ---
 
-# Canvas Platform Reference
+# Canvas Native-Feature Reference
 
-This skill grounds two kinds of answer that the model's prior gets wrong: **what Canvas already does natively** (so we don't rebuild a shipped feature) and **where a plugin's UI lands and in what order**. It bundles a two-tier native-feature reference (a grep-able index + a full-body corpus) and a static placement model.
+This skill helps determine **what Canvas already does natively**. It bundles a two-tier native-feature reference — a grep-able index plus a full-body corpus.
 
 ## Grounding Rule — Read Before Answering
 
@@ -47,42 +47,7 @@ The retrieval order matters:
 
 **NEVER attempt to curl or download either file — both are already bundled here.**
 
-## Placement Model — Where a Plugin's UI Lands
-
-This section is static and hand-authored (it is not in the corpus). Use it to answer "where will this app show up, and in what order" and to choose an order value that lands an app between two existing neighbors.
-
-### Applications — `CANVAS_MANIFEST.json` → `components.applications[]`
-
-Each application entry declares its placement through these fields:
-
-- **`scope`** — where the app appears. Values:
-  - `global` — app drawer, everywhere (not tied to a patient).
-  - `patient_specific` — app drawer within a patient chart.
-  - `provider_menu_item` — a button on the provider's menu.
-  - `portal_menu_item` — a button on the patient portal menu.
-  - `full_chart` — a full-chart tab, alongside the built-in "Chart" and "Profile" tabs.
-  - `provider_companion_global` / `provider_companion_patient_specific` / `provider_companion_note_specific` — Provider Companion surfaces.
-- **`menu_position`** — coarse placement within the menu (e.g. `"top"`). Applies **only to the provider menu**.
-- **`menu_order`** — integer-like ordering within the menu (e.g. `100`, `200`). Lower renders first.
-- **`show_in_panel`** — boolean. When `true`, the app shows alongside the other panel buttons instead of inside the app drawer, raising its visibility.
-- **`panel_priority`** — integer ordering **within the panel** when `show_in_panel` is `true` (e.g. `100`, `200`). Lower renders first.
-
-### Render / sort rule
-
-Apps in the same surface render by **`menu_order` ascending** (`panel_priority` ascending for panel buttons). The ordering is nullable: an entry with **no order value sorts to the top** (NULLs first), and **ties fall back to install order**. So an app with `menu_order` unset outranks every app that sets one.
-
-**Choosing a `menu_order` to land between neighbors:** pick any value strictly between the two neighbors' orders. Given apps at `90`, `100`, and `150`, they render in that order; to land a new app between `100` and `150`, give it any value in `(100, 150)` — e.g. `120`. To force an app to the very top of the surface, leave its order unset (NULLs sort first) rather than guessing a smaller number than every existing app.
-
-### ActionButton and NoteApplication — placement is in the handler, not the manifest
-
-Some surfaces are placed by **class attributes on the handler**, not by `applications[]`:
-
-- **`ActionButton`** — `BUTTON_LOCATION` picks the surface (`NOTE_HEADER`, `NOTE_FOOTER`, `CHART_SUMMARY_VITALS_SECTION`, `CHART_SUMMARY_ALLERGIES_SECTION`, …); `PRIORITY` (integer) orders buttons within that location, ascending, lower first, default `0`.
-- **`NoteApplication`** tabs — `PRIORITY` (integer) orders tabs within the note, ascending, lower first, default `0`.
-
-When asked where one of these lands, read `BUTTON_LOCATION` / `PRIORITY` off the handler class — the manifest `applications[]` fields above do not govern them.
-
 ## Related Skills
 
 - **canvas-sdk** — what you can *build*: SDK classes, handlers, events, effects, data models, manifest structure. Use it to scaffold the plugin once this skill confirms Canvas doesn't already cover the need.
-- The boundary: **`canvas-sdk` = what you can build; `canvas-platform` = what Canvas already does natively + where the UI lands.** Check `canvas-platform` before building; use `canvas-sdk` to build.
+- The boundary: **`canvas-sdk` = what you can build; `canvas-platform` = what Canvas already does natively.** Check `canvas-platform` before building; use `canvas-sdk` to build.
