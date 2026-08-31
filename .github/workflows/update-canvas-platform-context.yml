@@ -1,0 +1,46 @@
+name: Update Canvas Platform Context
+
+# Re-extracts the Canvas Help Center (https://help.canvasmedical.com/llms.txt) into
+# the canvas-platform skill's two bundled files. The Help Center is external to this
+# repo (Pylon-hosted) and changes independently of any code, so this scrapes it
+# directly on a daily timer and commits the result to the default branch.
+on:
+  schedule:
+    # Daily at 06:00 UTC.
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+
+jobs:
+  update-platform-context:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+
+      - name: Re-extract Help Center into the canvas-platform skill
+        run: uv run --script canvas-plugin-assistant/scripts/generate_platform_context.py
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push if changes
+        run: |
+          git add canvas-plugin-assistant/skills/canvas-platform/canvas_platform_index.txt
+          git add canvas-plugin-assistant/skills/canvas-platform/canvas_platform_context.txt
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Canvas platform context [automated]"
+            git push
+          fi
