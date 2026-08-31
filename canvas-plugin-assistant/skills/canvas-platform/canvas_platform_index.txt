@@ -992,6 +992,13 @@
         - Why did the prescription fail after I entered all the required fields?
         - When should I contact support?
     - Related Articles
+- [FAQ: Preparing Lab Orders Before a Scheduled Visit](https://help.canvasmedical.com/articles/3424703540-faq-preparing-lab-orders-before-a-scheduled-visit)
+    - Can I prepare a Lab Order before the patient is checked in?
+    - Do I need to check in the patient before adding a Lab Order?
+    - When is a Lab Order sent to the lab?
+    - What is the recommended workflow for preparing a Lab Order?
+    - What happens to the Lab Order when the patient is checked in?
+    - How do I avoid duplicate lab orders?
 
 ### Messaging & Communication
 - [Patient Message Inbox](https://help.canvasmedical.com/articles/6255444430-patient-message-inbox)
@@ -1215,6 +1222,16 @@
         - Moving Clinical Data
         - Inactivating a Duplicate Chart
         - Best Practices to Prevent Duplicate Charts
+- [Security audit trail and SIEM export](https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export)
+    - Overview
+    - How you can access the audit trail
+    - Availability
+    - Audit trail access in Canvas
+    - SIEM export behavior
+    - PHI and identifiers
+    - Retention and archive behavior
+    - Configurable settings
+    - Retry behavior
 
 ### Data Integration
 - [Reviewing Consult Reports](https://help.canvasmedical.com/articles/8177085140-consult-report-review)
