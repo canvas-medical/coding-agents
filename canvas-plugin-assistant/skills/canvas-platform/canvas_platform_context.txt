@@ -2132,12 +2132,16 @@ If the claim is not in the coding queue:
      - Updating only the note body (for example, adding a plan command) will keep the claim in the current queue — you'll need to move it back to coding manually.
      - Adding or changing a diagnosis or CPT code that will modify the billing footer will automatically return the claim to the coding queue.
 ### Manually Moving Multiple Claims
-  1. Navigate to the revenue queue the claims will be moving from
-  2. Apply any necessary filters to target specific claims (e.g. claims for a specific provider)
-  3. In the upper right, click **Batch Actions** to open the dropdown
-  4. Click **Move claims to queue**
-  5. Select the queue the claims need to moved to and the claims will be transferred
-This action is irreversible. If claims are moved to the wrong queue, repeat the process to correct it.
+  1. Navigate to the revenue queue the claims will be moving from.
+  2. Apply any necessary filters to target specific claims. The batch action applies to every claim that matches your current filters, not only the rows currently visible in the table.
+  3. In the upper right, click **Batch Actions** to open the dropdown.
+  4. Click **Move claims to queue**.
+  5. Select the queue the claims need to move to.
+  6. Review the confirmation dialog, then confirm the move.
+Canvas displays a dialog while it counts and moves the claims. The dialog shows how many claims match your current filters. If no claims match, Canvas will let you know there is nothing to move.
+A progress spinner appears while claims are counted and again while they are moved. The dialog cannot be dismissed while the move is in progress.
+When the move is complete, Canvas reports the outcome in the dialog and refreshes the claim table when you close it.
+By default, one batch move can move up to **2,000 claims**. If more claims match your filters, the result will tell you how many claims are left. Repeat the batch action to continue moving the remaining claims. Admins can configure this limit using the `MAX_BATCH_CLAIM_QUEUE_MOVE` setting in Constance.
 ![2025-03-25_21-58-43.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1742961432996-2025-03-25_21-58-43.png?Expires=253370764800&Signature=gjUXsR1q-theVVmJ~Zfwwl3IgasCaSZeUs3-PYapoZaiSmiWGZqrzCc2V1Psv3SigMgLk5~mCvPmge2fjan4lPBB5BOWt98ACUblM--Kds0PFdOskuISuzaQdAYORuHZ3qaFZXxbx1gJRiVayzVvKLv59SF0UMnXWprlzXF57jN1r-gdL62d8BaCAdJNwoN4N1WUx2ywHjSALnLVZppluCOK-OeTcTrsWxwY4Oy~~XWc-dCMv0kCYZlpHZSLDQIT289xBWGGgOCztHPlw7PwzRtMd7sGJx14EJqD2q5K3ZMZHRucbnxlnnTcojYjS80ksq56-dMWovDnliB3shcvsA__&Key-Pair-Id=K3NV4LZ47N8M46)
 # Configuration & Set Up
 ## Managing Revenue Queues
@@ -2304,6 +2308,37 @@ This process begins in desired patient's chart
 # Resources
 ### [Video: Print Flowsheet for Vitals](https://www.loom.com/share/96ac033799a447bc920529f78134df0d?sid=b16e20c0-8e59-45d5-a600-9f18c8ba4e12)
 ----- END PAGE https://help.canvasmedical.com/articles/3407978845-print-vitals
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/3424703540-faq-preparing-lab-orders-before-a-scheduled-visit
+You can prepare lab orders before a scheduled visit so they are ready for the provider to review and sign during the encounter.
+# User's Guide
+## Can I prepare a Lab Order before the patient is checked in?
+Yes. Once an appointment is booked, Canvas creates an appointment note. You can open that appointment note before check-in and add commands, including **Lab Order**.
+## Do I need to check in the patient before adding a Lab Order?
+No. Check-in is not required to add commands to a booked appointment note.
+## When is a Lab Order sent to the lab?
+A Lab Order is sent when the command is committed.
+If you add a **Lab Order** command and leave it uncommitted, the order is staged but not sent. When the provider signs the command at the visit, the order is sent.
+## What is the recommended workflow for preparing a Lab Order?
+  1. Open the booked appointment note from the schedule or patient chart.
+  2. Add the **Lab Order** command.
+  3. Complete the required fields.
+  4. Leave the command uncommitted.
+  5. At the visit, review and sign the command when ready.
+This creates a single order and sends it only when signed.
+## What happens to the Lab Order when the patient is checked in?
+Commands already staged on the appointment note remain on the note when the appointment is checked in. You do not need to recreate them.
+## How do I avoid duplicate lab orders?
+Only sign the prepared Lab Order when you intend to send it to the lab. If you need to make changes before the visit, edit the uncommitted command rather than creating and signing a separate order for the same tests.
+# Related Resources
+  - [📄 Introduction to Commands](/articles/4129367510)
+  - [📄 Ordering Labs](/articles/3065191197)
+  - [📄 How to Order Labs Not Integrated with Health Gorilla](/articles/3296538159)
+* * *
+**Keywords:** lab order, precharting, prep orders, scheduled visit, appointment note, uncommitted commands, commit, sign and send
+**Categories:** Clinical Documentation, Commands, Labs, Appointments
+----- END PAGE https://help.canvasmedical.com/articles/3424703540-faq-preparing-lab-orders-before-a-scheduled-visit
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3427480901-prescribing-restrictions
@@ -2888,6 +2923,51 @@ A: In the billing footer click on your CPT code and click remove.
 ## Resources
 [CPT Codes, Modifiers and Units](https://www.loom.com/share/0ad339e26bde4a1fb3920665dd084e3e?sid=1a0f5ddd-7848-493f-9eea-9100e216f7b6)
 ----- END PAGE https://help.canvasmedical.com/articles/3710141189-revenue-adding-cpt-code-modifiers-and-cpt-units
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export
+## Overview
+Canvas can keep a security audit trail of sign-ins, chart access, and clinical data changes, and can optionally stream those events to your security information and event management system (SIEM).
+The audit trail is recorded using the Open Cybersecurity Schema Framework (OCSF). Events use opaque identifiers and do not include patient or provider names, dates of birth, or clinical values.
+## How you can access the audit trail
+Canvas supports two ways to review security audit events:
+  - **Audit trail view in Canvas:** a retained, read-only view for customers who do not run a SIEM.
+  - **SIEM export:** an optional export that posts events to an HTTPS endpoint you nominate, such as a Splunk HEC, Datadog intake, or generic webhook.
+## Availability
+The security audit trail is off unless it has been enabled for your Canvas instance. Reach out to Canvas Support to enable it and configure your audit trail or SIEM export settings.
+## Audit trail access in Canvas
+The customer-facing audit view is read-only. Access is controlled deliberately and requires both:
+  - The audit view to be enabled for your instance.
+  - The appropriate audit-view permission to be granted to the user or group that should see it.
+No existing customer role receives audit-view access automatically. This keeps audit data locked down by default.
+## SIEM export behavior
+When SIEM export is enabled, Canvas sends audit events as batched newline-delimited JSON (NDJSON) over HTTPS. Export dispatch runs approximately every 2 minutes.
+A delivery is considered successful when the configured endpoint returns a successful HTTP response. If your endpoint accepts a batch and then drops or rejects records downstream, Canvas may not be able to detect that from the dispatcher side. For that reason, customers should monitor their SIEM or intermediary pipeline for dropped-event counts and reconcile received events as needed.
+## PHI and identifiers
+Canvas supports two identifier modes for SIEM export:
+  - **Direct:** sends Canvas patient and resource identifiers.
+  - **Pseudonymized:** sends a keyed hash of those identifiers, supporting event correlation without sending reversible identifiers to the SIEM.
+Pseudonymization is not the same as Safe Harbor de-identification.
+## Retention and archive behavior
+Audit events remain queryable in Canvas for the configured retention period, which defaults to 90 days. After that period, events move to secure S3 archive storage and are pruned from the retained Canvas view.
+When SIEM export is enabled, Canvas only archives events that have been shipped or marked as unable to ship; unshipped backlog events are not archived before delivery handling completes.
+## Configurable settings
+Canvas Support can configure the following settings for your instance:
+Setting| Description  
+---|---  
+`SECURITY_AUDIT_CAPTURE_ENABLED`| Records the audit trail once the capability is enabled for your instance. Turning it off stops recording entirely.  
+`AUDIT_RETENTION_DAYS`| How long events stay queryable in Canvas before older events are archived. Defaults to 90 days.  
+`SIEM_EXPORT_ENABLED`| Sends recorded events to your SIEM endpoint.  
+`SIEM_ENDPOINT_URL`| The HTTPS endpoint where Canvas posts events.  
+`SIEM_AUTH_HEADER_NAME`| The authentication header name Canvas should use when posting events.  
+`SIEM_AUTH_HEADER_VALUE`| The authentication header value Canvas should use when posting events.  
+`SIEM_PHI_MODE`| Controls whether Canvas sends direct identifiers or pseudonymized identifiers.  
+`SIEM_BATCH_MAX`| Maximum events per request. Defaults to 500.  
+`SIEM_MAX_ATTEMPTS`| How many times an endpoint-rejected payload is retried before it is set aside. Defaults to 5.  
+## Retry behavior
+Canvas retries temporary delivery failures, such as network errors, many server-side failures, and rate limits. Payloads rejected by the endpoint, such as malformed or oversized batches, are retried up to the configured maximum attempts before being set aside.
+If an endpoint is unreachable, Canvas continues retrying and does not treat the payload as permanently rejected solely because the endpoint is unavailable.
+----- END PAGE https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3873660040-group-therapy-session-plugin
@@ -4229,7 +4309,7 @@ _Business lines must be enabled in Constance Config. Your clinic administrator o
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4551334461-patient-metadata
 # Introduction
-Additional profile fields allow your organization to collect and store custom patient information beyond the standard demographics data. These fields help capture important details specific to your practice needs, such as preferred communication methods, lifestyle factors, or other relevant patient information. 
+Additional profile fields allow your organization to collect and store custom patient information beyond the standard demographics data. These fields help capture important details specific to your practice needs, such as preferred communication methods, lifestyle factors, manually referenced pharmacy details for non-e-prescribing workflows, or other relevant patient information.
 Custom profile fields are enabled and created using a plugin and the [Canvas SDK](https://docs.canvasmedical.com/sdk/patient-metadata-create-form-effect/). If your organization has developer resources, please share the [How to add additional profile fields guide](https://docs.canvasmedical.com/guides/profile-additional-fields/) to facilitate further development.
 # User's Guide
 ## Viewing Additional Profile Fields
@@ -4246,7 +4326,7 @@ Custom profile fields are enabled and created using a plugin and the [Canvas SDK
 **Q: I don't see any additional profile fields in patient demographics. Why?**
 A: Additional profile fields must be configured by a developer. If your organization employs developers, share the [How to add additional profile fields guide](https://docs.canvasmedical.com/guides/profile-additional-fields/) to facilitate further development.
 **Q: Can I edit the dropdown options for select fields?**
-A: Dropdown options are set during development and cannot be changed through the Canvas interface. 
+A: Dropdown options are set during development and cannot be changed through the Canvas interface.
 ## **Related Resources**
   - [📄 Patient Demographics ](/articles/8802451810)
   - [How to add additional profile fields (Developer Guide)](https://docs.canvasmedical.com/guides/profile-additional-fields/)
@@ -8057,8 +8137,30 @@ The Review of Systems command is a micro-template command in Canvas that allows 
   - Select the command again to expand view
 **NOTE:** _Once the ROS command has been committed you will see a preview of any positives documented in the ROS. You can select the If you print the note you will be able to view the full ROS that was documented._
 # Setup & Configuration
-## Building a Questionnaire
-Questionnaires are created using a Google Sheet template that was shared during onboarding. Please reach out to the Canvas Onboarding Manager if assistance is needed locating the template 
+## Using the Questionnaire Builder
+The Questionnaire Builder is the recommended way for admin users to create and edit Questionnaire, Review of Systems, Physical Exam, and Structured Assessment forms directly in Canvas.
+For a walkthrough of updating a questionnaire, review the [Updating a Questionnaire with the Questionnaire Builder guide](https://app.arcade.software/share/xK79waUAi5Oyh8jBsEm8/guide).
+### Create a New Form
+  - Click the triple line menu in the upper left of Canvas.
+  - Select **Questionnaire Builder**.
+  - Select **Create New Form**.
+  - Choose the form type: **Questionnaire** , **Structured Assessment** , **Review of Systems** , or **Physical Exam**.
+  - Enter the form name and complete the required fields.
+  - Add questions and response options as needed.
+  - Review the form, then select **Publish** when it is ready for use.
+### Edit an Existing Form
+  - Open **Questionnaire Builder**.
+  - Select **Edit Existing Form**.
+  - Choose the form from the dropdown menu.
+  - Update the form name, questions, responses, or settings.
+  - Select **Publish** to make the updated version available for future use.
+Published changes apply when the form is used going forward. They do not update questionnaires that were already recorded in a patient chart.
+### Builder Settings
+  - **Carry forward:** Configure whether previously recorded responses can populate the form the next time it is used.
+  - **Social Determinants display:** Configure whether questionnaire responses display in the Social Determinants section of the patient summary, when applicable.
+  - **Status:** Publish or unpublish a form to control whether it is available for use in Canvas.
+## Building via Google Sheets
+Questionnaires are created using a Google Sheet template that was shared during onboarding. Please reach out to the Canvas Onboarding Manager if assistance is needed locating the template
   - The template allows configuration without needing code.
   - **Questionnaires (blue)** consist of multiple **Questions (red)**. Each question is paired with specific **Question Responses (green)** , creating a structured data model for effective use.
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730590591707-JessScreenshotfromGoogleChromeon2024-11-026%25402x.jpg?Expires=253370764800&Signature=DMAc3SK-mwAviR~5aS1fxwE42MBONVxfH-c2oG2AkcvMB-n1VBBW3ADUsYtWOXRyunJlNdQjopDyxGPyciL5xfmK5lMnepPWWk~PVIqW4VFwJ-hi9B3uePNUC5eWb2TOkpktm7Fws9CmB502HEWjSSOhqkEr-MWJXzTtOHXhoceYu96Miml9xveS-Tlh5D9H0zT5twlRhI-G2ifcr-thVXsWyxboMjry~w2eoS54WbvhF6Y1vvi1h1GAJAKD3L5CAR0XgwhVZ9Kpns6LmqG6APofXwbaDRaPOIu4CuiFCKQrvNG7-AKuL8H7LPpDCq95mTbu1xDgDJksfDshmv0ViQ__&Key-Pair-Id=K3NV4LZ47N8M46)
@@ -8098,13 +8200,13 @@ These settings are adjusted by modifying the corresponding cells within the rele
 ### **Questionnaire Settings** 🔵
 **Name**| **Questionnaire Field Description**| **Required**  
 ---|---|---  
-use_case_in_charting| Choose from the following options: 
+use_case_in_charting| Choose from the following options:
   - **QUES** for Questionnaire
   - **SA** for Structured Assessment
   - **EXAM** for Physical Exam
   - **ROS** for Review of Systems
 | Required  
-code_system| Choose from the following options: 
+code_system| Choose from the following options:
   - [SNOMED](https://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=MAIN/2024-11-01&release=&languages=en)
   - [LOINC](https://loinc.org/)
   - [ICD-10](https://www.icd10data.com/)
@@ -8145,7 +8247,7 @@ name|
   - The text that will be display for the question in the command
   - The **name** field should match the **content** field
 | Required  
-code_system| Choose from the following options: 
+code_system| Choose from the following options:
   - [SNOMED](https://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=MAIN/2024-11-01&release=&languages=en)
   - [LOINC](https://loinc.org/)
   - [ICD-10](https://www.icd10data.com/)
@@ -8162,7 +8264,7 @@ content|
   - The text that will be displayed when the command printed.
   - Should match the question's **name** field
 | Required  
-responses_code_system| Choose from the following options: 
+responses_code_system| Choose from the following options:
   - [SNOMED](https://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=MAIN/2024-11-01&release=&languages=en)
   - [LOINC](https://loinc.org/)
   - [ICD-10](https://www.icd10data.com/)
@@ -8173,6 +8275,7 @@ responses_type| Choose from the following determine response type:
   - **SING** for Single Select: One response selected from a dropdown
   - **MULT** for Multi Select: select multiple responses associated with one question
   - **TXT** for Free Text: Type in a free text response
+  - **DATE** for Date Fields
 | Required  
 use_in_shx| 
   - Enter `TRUE` if responses to this question should be displayed within the SDOH section of the patient summary.
@@ -8193,11 +8296,13 @@ code|
 code_description| Provide the description for the assigned code.| Optional  
 value| 
   - SING or MULT select
-    - Leave blank if no scoring is desired. 
+    - Leave blank if no scoring is desired.
     - If scoring is desired, insert the numerical value assigned to each response in the field
   - TXT
     - This is the text that will be displayed within the free text field by default.
     - If necessary, input predefined text here. If no input is required, leave this field blank.
+  - DATE
+    - Leave blank
 | Optional  
 ## Questionnaire Scoring
 Scoring assigns numerical values to responses, enabling automated calculations and standardized assessments. It helps evaluate patient conditions, measure risk factors, and ensure consistency in data interpretation.
@@ -8205,7 +8310,7 @@ Scoring assigns numerical values to responses, enabling automated calculations a
   - **Custom Scoring:** Allows for specialized scoring models requiring engineering support. A request must be submitted, specifying the scoring scale and methodology.
     - Example: The score of X means the patient is at high risk for dementia
 ### **Supported Custom Scoring**
-Below is a list of existing custom scoring functions available. Questionnaire scoring can be fully customized using the [Canvas SDK](https://docs.canvasmedical.com/sdk/effect-questionnaires/#creating-a-questionnaire-result) \- please review our developer documentation or start a [discussion](https://github.com/canvas-medical/canvas-plugins/discussions) in the Canvas Developer Community
+Below is a list of existing custom scoring functions available. Questionnaire scoring can be fully customized using the [Canvas SDK](https://docs.canvasmedical.com/sdk/effect-questionnaires/#creating-a-questionnaire-result)
 **Questionnaire**| **Scoring Function**  
 ---|---  
 Six Iten Cognitive Impairment Test| 6cit  
@@ -10745,11 +10850,13 @@ If a patient was incorrectly marked as deceased, unchecking the box restores the
 # Patient Preferences
 Primary care provider, referring provider, and time zone can be added under the patient's preferences.
   - **Primary Care Provider (PCP)** : A free-text field to record the PCP; it is not tied to workflows.
-  - **Preferred Scheduling Time Zone** (if applicable): Time zone to display the patient's appointments in for scheduling. Review 
+  - **Preferred Scheduling Time Zone** (if applicable): Time zone to display the patient's appointments in for scheduling. Review
   - **Business Lines** (if applicable): Location for patient communication. Refer to [Business Lines for Patient Communication](https://canvas-medical.help.usepylon.com/articles/1392971282-business-lines-customized-patient-communication) for further details on this setting
 ![2024-12-17_17-27-10.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734477945703-2024-12-17_17-27-10.png?Expires=253370764800&Signature=nOnGF5ULapZNTIK7z78AjZBjZfrbBXOBeegPSgO2vmqxj0ECLeq5Vty793QSyCN-mYvDeIGMP3nZqZXKyBwgDznfLeEh37k0WaMcas0sNV0KpWbWZa3sH6iUbYKIfqZ~RSfUU1zKNLODJkGXFyPhp50gR7W0syPipBf8JM0jKitbVNCaAFUVdUesrTUoWAHh~KbGklCXoIYOLqeuim6SBFG1pCkXU8E00lG0z6NPlja7u8SNaF009Fskqx3otxP1Yi~nj7Y1J1mokAuBOlBLH~KXt-bEou063yQcIaz~eQRCPZHbEb23HJL3wR1UMN8cFc1REX~Qj61u3L4ts7zPuQ__&Key-Pair-Id=K3NV4LZ47N8M46)
 # Preferred Pharmacies
-Preferred pharmacies streamline prescribing workflows. Pharmacies are sourced from the Surescripts directory and can be searched by name, address, store number, or phone number.
+Preferred pharmacies streamline prescribing workflows. Pharmacies are sourced from the Surescripts directory, which Canvas updates nightly, and can be searched by name, address, store number, or phone number.
+Canvas electronic prescribing is certified with Surescripts, so pharmacies must be listed in the Surescripts directory to be saved as preferred pharmacies or selected for e-prescribing. If a pharmacy is not found, first try searching with alternate labels, phone numbers, store numbers, or address details, as pharmacy names can vary in the directory. If the pharmacy is not in Surescripts, the pharmacy must work with Surescripts to join their network.
+If a pharmacy is not available in Surescripts and prescriptions need to be processed manually, store the pharmacy details somewhere intended for reference only, such as the **Administrative caption** on the patient banner or a configured [custom profile field](https://canvas-medical.help.usepylon.com/articles/4551334461-patient-metadata). These notes do not populate the Prescribe command and do not allow electronic transmission to that pharmacy.
   - **Multiple Pharmacies** : Add multiple pharmacies (e.g., mail-order and brick-and-mortar) for a single patient.
   - **Default Pharmacy** : Designate one pharmacy as the default, which will pre-populate in prescribing workflows. Additional pharmacies appear as quick-picks in the pharmacy dropdown.
   - **Pharmacy Type** : Types (e.g., retail, mail-order) display as badges in search results and once added.
@@ -10766,11 +10873,11 @@ While in the patient's profile on the left panel expand the **Patient Consents**
   - If documentation is required, the warning **"Document required"** will display. Link the consent document through [**Data Integration**](https://canvas-medical.help.usepylon.com/articles/7371085164-data-integration).
   - Once processed, view the document by clicking **View Document**. Updates to consents with newer effective dates will replace older versions in the profile.
 ### Updating Consents
-By clicking the **Edit** button (pencil icon), the state, effective date and/or expiration date can be modified. 
+By clicking the **Edit** button (pencil icon), the state, effective date and/or expiration date can be modified.
 Non-mandatory consents can be removed from the list by clicking **Clear**. Any associated document will remain accessible in the **Admin Documents** section of the chart.
 Consents added through **Data Integration** are automatically reflected in the patient profile. For consents requiring documentation, adding them directly in **Data Integration** can streamline the process by eliminating the need for additional steps.
 # Care Team
-The **Care Team** feature allows assignment of roles to team members involved in a patient's care. 
+The **Care Team** feature allows assignment of roles to team members involved in a patient's care.
 Care teams roles must be configured by a practice admin before members can be designated in the patient profile. The admin process for Care Teams is outlined [**here**](https://canvas-medical.help.usepylon.com/articles/8709525024-care-team-roles)**.**
 ## Managing Care Team Members
   - Click **Add** to assign a care team member and role.
@@ -10799,15 +10906,15 @@ Patient addresses are required for any practices that will be ordering labs and/
 Add multiple phone numbers with free-text descriptions.
   - Use the **Preferred** toggle to set the primary number.
   - Enable **This phone can receive text messages** for numbers used in outbound text communication through the Canvas app
-  - A text message will be sent to the patient to verify their contact in order for them to begin receiving communication. 
+  - A text message will be sent to the patient to verify their contact in order for them to begin receiving communication.
   - Patients can reply **STOP** to a text message and any time to unenroll.
 A phone number can only be verified for a single patient. Verifying the same phone number across multiple patients is not supported.
 ![2024-12-18_13-18-55.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734702764042-1734545939480-2024-12-18_13-18-55.png-f2409e56-b789-4b9e-b3ae-71b9fd077eb1?Expires=253370764800&Signature=r8608QbIHJf3T5juZ2JsePVr1qvblI4dVW3cAP5rRC2UeBcEaPNPLg53KttBtlrQDVf4Ar377avXKaltvX87Z7vx5WHDt0bkWlOysNQBrWuE95qFCn98hVBdHJjusm4HnusbH0rWHrkHTAEblHYnHyPnf-I6-WcWMPTX3Yv5rJ~mj1jdry~IIbZLIXC7zSYuJPYgu-kotrvmYauwXA9DPP6jthznj3ZeD~fEpwXRDBaT-O6l~vTrM0FcLvaguSEvu398bFu0s~rqSrlz-rK6zcxBjEJV4qiOiQjKaJURPoddPjhuzKrFEvjbwxxQAS1rArLJvE2mbDltkbGjQbR0aA__&Key-Pair-Id=K3NV4LZ47N8M46)
 # Emails
 Add multiple email addresses with free-text descriptions.
   - Use the **Preferred** toggle to indicate the primary email.
-  - An email will be sent to the patient to verify their contact in order for them to begin receiving communication. 
-Verified emails must be unique to each patient. If an email needs to be shared across multiple patients, apply subaddressing as a workaround. The format is `address+tag@domain.com`. 
+  - An email will be sent to the patient to verify their contact in order for them to begin receiving communication.
+Verified emails must be unique to each patient. If an email needs to be shared across multiple patients, apply subaddressing as a workaround. The format is `address+tag@domain.com`.
 For example, if the shared email is **familycare@example.com** , you can use:
     - **familycare+child1@example.com** for one child
     - **familycare+child2@example.com** for another child
@@ -10816,13 +10923,13 @@ These emails will all deliver to **familycare@example.com** , but each patient's
 Phone number and email verification can be disabled by an admin through **Constance: Config >** **ENABLE_VERIFICATION_MESSAGES** setting. Uncheck the box to disable contact verification messages.
 # Contacts
 The **Contacts** section ensures all relevant individuals connected to the patient are included. Contacts can be manually added, or you can link existing patient records. Each contact can include:
-  - **Name:** Users can either add a free text name or search for an existing patient chart. As you type, the field will populate with search results. Choosing the top selection or tabbing will keep the text you typed. 
+  - **Name:** Users can either add a free text name or search for an existing patient chart. As you type, the field will populate with search results. Choosing the top selection or tabbing will keep the text you typed.
     - Once you have navigated to the next field, the record can no longer be updated. You must retype the free text field or search for a different patient.
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1760988058085-Screenshot2025-10-20at12.20.38PM.png?Expires=253370764800&Signature=cWNnAkn2PZBF4jKxLKTBLaX~2ZZw9u8ch6E4Ib4IRHxe~hf~2iitJMTVg1gZW3e674vKUtrH20Yr1LS6YAMp3ReK56wnp9lwIgTzO6bQBk2Ded52SIhDwJXr4B2v4715L8dXOMMUpC4tDoegfEr5g-rDpU3FxT8oMYbPannEIjaIFjJ9CpgmDJ2EQA4NTKqG-Hn32V5oakjvLlQDZbKM~2XIeihu6nMkiRHhqgfP2sJduIuu5t-ex7AoaflFHtAW0V~jSNSTnoVydLfHU1jsty9th5oX601fkd~x454DlyI~VC2mq5OUoKjtnSyUODmMqcsafq4hxRGY31b8l~IwIg__&Key-Pair-Id=K3NV4LZ47N8M46)
   - **Phone/Email:**
     - Add manually if the contact was added via free text
-    - If a linked patient is selected, the phone and email will display the primary contact points from that patient as read only. Updates to that patient will be reflected in the record. 
-  - **Categories** : Select from pre-configured options that include relationships and tags (e.g., Father or Power of Attorney, Emergency Contact, etc). Contacts can have one or multiple categories, displayed as colored labels. 
+    - If a linked patient is selected, the phone and email will display the primary contact points from that patient as read only. Updates to that patient will be reflected in the record.
+  - **Categories** : Select from pre-configured options that include relationships and tags (e.g., Father or Power of Attorney, Emergency Contact, etc). Contacts can have one or multiple categories, displayed as colored labels.
   - **Comments.** Free text notes
 Admins can add new categories via the **Practice: Contact Categories** setting. Review process [**here**](https://canvas-medical.help.usepylon.com/articles/8258338559-contact-categories)
 ![2024-12-18_13-02-49.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734544979188-2024-12-18_13-02-49.png?Expires=253370764800&Signature=OnO~N9dgDubF9DcSUs1Cc7tVPlbw1aQGFwE1vivqK8VjtArr4TfXAnFix0ZLKgSzAVtCQDiZowSYD375v9y4BshfdsseYFbwuIOIAqw1C5cOedbxLsOBPNR9t75RyrWtZxt~~e67GjsNoo2fGu0VSsZdp~cr1fvqkbKYz4KYuQ5-965uIY9RohSZq5myC88ChMdCODNt7Ld81AzkxcK9Q9cCTbZqPnEu0yP-17RTWWQcjGRPKNtEMMarzGS4AKKcHzgKbTL16r3Kgo~HfbqkXOWDAPp1W16tZoRSdw~pIFhP86F-xWFq1yp1VINSNW-536HcSn7bHYpM9OvFfgAn6Q__&Key-Pair-Id=K3NV4LZ47N8M46)
