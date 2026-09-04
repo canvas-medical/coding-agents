@@ -5753,6 +5753,77 @@ Due to the ever evolving nature of our product, recorded videos may be slightly 
 ----- END PAGE https://help.canvasmedical.com/articles/5128727084-managing-medication-commands
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5155757572-navigator-and-mcp
+Navigator is Canvas Medical's customer-facing AI assistant. It helps your team find Canvas documentation, answer implementation questions, troubleshoot your deployed plugins, and draft validated SQL from the tools where you already work.
+Navigator is scoped to your organization. It is designed to answer questions using Canvas documentation, Canvas product information, and your organization's own configured Canvas context.
+## **How to use Navigator**
+You can use Navigator in two ways:
+  - **In Slack:** Ask Navigator a question in your organization's Navigator Slack channel.
+  - **From a coding agent:** Connect Navigator to tools such as Claude Code using MCP.
+Both entry points use the same Navigator knowledge and customer-specific scope. The difference is where you ask the question.
+## **What you can ask Navigator**
+Navigator is best for Canvas implementation, configuration, and development questions, including:
+  - Finding the right Canvas SDK or FHIR API documentation.
+  - Understanding how to build or update a plugin.
+  - Troubleshooting why one of your deployed plugins is not behaving as expected.
+  - Finding relevant Canvas Help Center articles or product updates.
+  - Drafting SQL for reporting or investigation workflows.
+  - Checking whether a SQL query is valid before you use it elsewhere.
+  - Learning what changed in recent Canvas product updates.
+## **Using Navigator in Slack**
+To ask Navigator a question in Slack, post your question in your organization's Navigator channel. You can mention Navigator directly or continue an existing thread.
+Navigator reads the thread context, searches the sources available to your organization, and replies in the same thread.
+If you do not currently have a shared Slack channel with the Canvas team and would like to use Navigator, please contact our team to get set up.
+### **Example questions**
+  - How do I build a plugin that listens for a new appointment?
+  - What FHIR resource should I use for medication data?
+  - How do I create a new staff member?
+  - Can you write a SQL query for patients with active prescriptions?
+  - What shipped in Canvas recently?
+## **Using Navigator from a coding agent with MCP**
+Navigator can also be connected to a coding agent using the Model Context Protocol (MCP). This lets you ask Navigator questions from your development workflow while you are working in tools such as Claude Code.
+When connected through MCP, Navigator can receive relevant development context from your coding agent and return Canvas-specific answers in that same workflow.
+### **Before you begin**
+  - Your organization must have Navigator enabled.
+  - MCP access must be enabled for your Navigator deployment.
+  - You need an individual Navigator MCP API key.
+If you are not sure whether MCP is enabled for your organization, contact your Canvas representative.
+## **What Navigator can access**
+Navigator uses customer-safe Canvas sources, including:
+  - Canvas SDK documentation.
+  - Canvas FHIR API documentation.
+  - Canvas Help Center articles.
+  - Canvas product updates and release notes.
+  - Your organization's deployed plugins, when available to Navigator.
+  - Canvas reference plugin examples.
+  - SQL validation tools that check query structure without executing the query.
+## **What Navigator does not do**
+Navigator is intentionally limited. It does not:
+  - Have access to PHI
+  - Make broad changes to your Canvas instance.
+  - Create or modify plugins for you.
+  - Execute SQL queries.
+  - Access other customers' information.
+  - Replace Canvas Support for urgent production issues.
+## **Privacy and security**
+Navigator is scoped to your organization. It is designed so your data and plugin context remain isolated to your deployment.
+Navigator's SQL validation checks whether a query is valid, but it does not run the query or return database results.
+## **FAQ**
+**Q: Is Navigator the same in Slack and MCP?**  
+**A:** Yes. Slack and MCP are two entry points to the same Navigator assistant. MCP is designed for developer workflows inside a coding agent.
+**Q: Can Navigator write code for me?**  
+**A:** Navigator can explain Canvas concepts, point to relevant examples, and help troubleshoot or draft implementation ideas. It does not directly modify your plugin code or deploy changes.
+**Q: Can Navigator run SQL?**  
+**A:** No. Navigator can help draft SQL and validate that a query is structurally valid, but it does not execute the query.
+**Q: How do I get MCP access?**  
+**A:** Ask Navigator in Slack to create an MCP API key. If MCP is not enabled for your organization, contact your Canvas representative.
+**Q: What should I do if Navigator cannot answer my question?**  
+**A:** Contact Canvas Support or your Canvas representative with the question and any relevant context.
+## **Keywords**
+Keywords: Navigator, MCP, Model Context Protocol, Claude Code, Cursor, Canvas SDK, FHIR API, plugins, SQL validation, developer assistant
+----- END PAGE https://help.canvasmedical.com/articles/5155757572-navigator-and-mcp
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5318098623-can-i-use-hyperscribe-with-a-template
 Yes! Hyperscribe can be used to complete notes with commands have been added manually or using automations before the session begins.
 If you add commands to a note using a template or automation before starting Hyperscribe, it will apply information from the transcript to relevant fields.

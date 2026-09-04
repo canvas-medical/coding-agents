@@ -23,6 +23,18 @@
     - Smart Limitations for Focused Organization
     - Built on Proven Technology
     - Get Started Today
+- [The Canvas Navigator](https://help.canvasmedical.com/articles/5155757572-navigator-and-mcp)
+    - How to use Navigator
+    - What you can ask Navigator
+    - Using Navigator in Slack
+        - Example questions
+    - Using Navigator from a coding agent with MCP
+        - Before you begin
+    - What Navigator can access
+    - What Navigator does not do
+    - Privacy and security
+    - FAQ
+    - Keywords
 
 ## Getting Started
 
