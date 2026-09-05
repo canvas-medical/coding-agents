@@ -1134,15 +1134,6 @@
         - Ignore option
         - Duplicate requests
 
-### Hyperscribe
-- [How to start a Hyperscribe recording](https://help.canvasmedical.com/articles/7948266459-how-to-start-a-hyperscribe-recording)
-- [How to speak to Hyperscribe](https://help.canvasmedical.com/articles/3321271561-how-to-speak-to-hyperscribe)
-- [How to customize Hyperscribe prompts](https://help.canvasmedical.com/articles/1953888785-how-to-customize-hyperscribe-prompts)
-- [Can I use Hyperscribe with a template?](https://help.canvasmedical.com/articles/5318098623-can-i-use-hyperscribe-with-a-template)
-- [Which commands does Hyperscribe support?](https://help.canvasmedical.com/articles/8245178168-which-commands-does-hyperscribe-support)
-- [Why isn't the Hyperscribe button appearing in my note header?](https://help.canvasmedical.com/articles/4789801796-why-isn-t-the-hyperscribe-button-appearing-in-my-note)
-- [Can I edit my note during my Hyperscribe session?](https://help.canvasmedical.com/articles/7797462779-can-i-edit-my-note-during-my-hyperscribe-session)
-
 ## Revenue & Billing
 
 ### Payment Processing
@@ -1490,7 +1481,6 @@
     - Frequent Articles:
     - Stay Up To Date:
     - For Developers:
-- [How do I enable Hyperscribe in Canvas?](https://help.canvasmedical.com/articles/7456009359-how-do-i-enable-hyperscribe-in-canvas)
 - [Understanding Note States in Canvas](https://help.canvasmedical.com/articles/2348566112-understanding-note-states-in-canvas)
     - What Are Note States?
         - The Three Note States

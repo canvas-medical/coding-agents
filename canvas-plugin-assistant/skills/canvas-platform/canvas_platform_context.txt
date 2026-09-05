@@ -666,32 +666,6 @@ This process begins with an open note of the patient chart.
 ----- END PAGE https://help.canvasmedical.com/articles/1745103290-command-physical-exam
 
 
------ BEGIN PAGE https://help.canvasmedical.com/articles/1953888785-how-to-customize-hyperscribe-prompts
-Custom prompting is available for the following commands:
-  - **ReasonForVisit** \- customizes the `comment` field
-  - **HistoryOfPresentIllness** \- customizes the `narrative` field
-  - **Plan** \- customizes the `plan` field
-  - **Instruct** \- customizes the `comment` field
-  - **FollowUp** \- customizes the `reason_for_visit` field within the follow up command, e.g. "Follow up in two weeks to review lab results." 
-  1. From the [Schedule View](https://help.canvasmedical.com/articles/1131763313-navigate-canvas-home-screen), click on the grid to open the app drawer
-  2. Click on the "**Hyperscribe Customization** " app
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fd5c44f1c-2ce1-4f10-8879-326df44d8dc2-1762988452093-Screenshot2025-11-12at2.59.48PM.png-994ac204-60bd-4d24-9c62-bd7fcfd95f67?Expires=253370764800&Signature=HmLkug~Nlk5eaLI-p-P1SxagoIOYqfrJyAG6pOsZn9RCudyTNiisIDngQB8PUNM633lmKwKRPJnHTLUmQDxbCk5xTiL5BfYAzX7r2evQTTVZuzE4F70AkqhDaGBSg1xbebWuhvUaR0nTL-a6c1tOR40suHnafwHRJtxune0z8OxjGkM3lfAQc1nSCaIIUDPqMyzQkG2YtML8Q4d4pqQMsRPPDZcIzFTtD~-bO3~GRltTJqKpcLu6qnhOn3kfkBCEkgZXhRwm1hQ9jBc1re4F464ydAPQ2rp58W7D6Jaq5jOfQshpSI5TX9eWC2gWYF4c-akiT5XokCbtzUW0hxTL0A__&Key-Pair-Id=K3NV4LZ47N8M46)
-  3. Select the **Command** that you want to customize
-  4. Enter a **Custom Prompt** in the free text field
-  5. Press "**Save** " to save drafted changes
-  6. Check **"Published"** and then press "**Save** " to publish saved changes
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb027153a-9197-4404-a43b-208d5747a6b9-1763096395694-Screenshot2025-11-13at8.59.49PM.png-0f92e2e4-6508-4a07-a1c3-817b48f9f0ef?Expires=253370764800&Signature=MCqrtqCie71rBm9FYJnpRvL4Se5xa3lYv19BBHrzcIfp-zWW2QNmlVNdidq5di3ukHsBrFKJeYo8OEkkh8eHLAG31PSKYEov1kPlr5A~xatYoAntYnytu7Z4XkEFy2AnLqggPMtS9u-rGxr5dRjXHJ5kmX9VPbysPGZK41cbPUtB6QXv7UZ7Kk6i9reB4jGrkQcjNA8uxEDkPQV4JWBnYXBEjiAGeDmXaLMxWm7Leyqdc1y9ZNK7lkfCtX-xdrDeMAQ-MT2b1o6Lp5iq1fRRcIMnArlGRGV8O~JpsxN5PdUUQxxuX~niEsz1cFXRXwgaW1ZkiXBydS0yuMrmD4foRQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-**Command**| **Example Custom Prompt**  
----|---  
-Reason for Visit| Use the patient's own words and maintain their perspective  
-History of Present Illness| Reformat this narrative to follow OLDCARTS structure (Onset, Location, Duration, Character, Aggravating/Alleviating factors, Radiation, Timing, Severity)  
-Plan| Format the plan with numbered items, including diagnostic tests, treatments, medications with dosages, follow-up instructions, and patient education points  
-Instruct| Write instructions in simple, patient-friendly language. Avoid medical jargon  
-Follow Up| Start with the primary clinical problem, then list specific tasks  
-**Video** : How to Customize Prompts
------ END PAGE https://help.canvasmedical.com/articles/1953888785-how-to-customize-hyperscribe-prompts
-
-
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2111959321-studio-reference-guide
 ## **Introduction**
 This guide explains every screen, button, and feature in Studio so you can look up exactly how something works when you need it. Unlike the Quick Start, it's meant to be skimmed by topic rather than read end to end. Publishing is covered in full here, including the two ways your practice might be set up.
@@ -2275,21 +2249,6 @@ or
 # Resources
 ### [Video: Populations Module](https://www.loom.com/share/d500b5c282c7499b9c780db05aa1070f?sid=d47979d4-c048-41f0-b36e-ab56571cfd39)
 ----- END PAGE https://help.canvasmedical.com/articles/3316466244-population-module
-
-
------ BEGIN PAGE https://help.canvasmedical.com/articles/3321271561-how-to-speak-to-hyperscribe
-You can use Hyperscribe to record either a patient-provider conversation or to record monologue dictation. Hyperscribe is not a speech-to-text dictation tool, meaning you can use natural language rather than speaking in Canvas commands.
-**Ambient Patient-Provider Dialogue**
-**Provider:** "Good morning, Mr. Smith. What brings you in today?" 
-**Patient:** "Hi, Dr. Chen. For the last three or four days, I've had this really sharp pain in my stomach, right here on the lower right side. It's not constant, but it really hurts when I move, and I felt nauseous yesterday." 
-**Doctor:** "I see. Any fever or vomiting?" 
-**Patient:** "No vomiting, but I checked my temperature this morning and it was 100.5°F. I just feel awful." 
-**Doctor:** "Okay, let's get you on the table so I can examine that area. I'm checking for tenderness and any rebound pain..."
-**Monologue Provider Dictation**
-**Provider** : New patient, John Smith, 42-year-old male, presents with a three-day history of sharp, intermittent right lower quadrant abdominal pain. Patient reports associated fever, measured at 100.5 degrees Fahrenheit this morning, and nausea. Physical exam reveals significant tenderness and guarding in the right lower quadrant with positive rebound tenderness. Suspected acute appendicitis, will consult surgery based on imaging results.
-**Related Articles**
-[📄 How to start a Hyperscribe recording](/articles/7948266459)
------ END PAGE https://help.canvasmedical.com/articles/3321271561-how-to-speak-to-hyperscribe
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3407978845-print-vitals
@@ -4950,16 +4909,6 @@ Canvas best practice is to have any documentation associated to a command. By de
 ----- END PAGE https://help.canvasmedical.com/articles/4756622202-restrict-free-text
 
 
------ BEGIN PAGE https://help.canvasmedical.com/articles/4789801796-why-isn-t-the-hyperscribe-button-appearing-in-my-note
-If you have installed Hyperscribe, a button will appear in the header of all **checked-in notes** allowing you to start a session. 
-If the Hyperscribe button is not appearing in your header, first check to see if the note has been checked in:
-![check in the note.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1763488404323-checkinthenote.png?Expires=253370764800&Signature=cFZR1T6ntM25tCQkWAdAc3bxQhE1WtNJitRaRJp9ur-Eosn9ZrSEexuemnAnUQMlP3LWjX6IrjBbx0yQZxiOmFPkoX36TynKvfx6AcXJ76w5Sk9BgOPPNL-rrLQQBQklV9ttk0nd-BTzEcQcdMDnGn6igmAsqBB~B3W6JzfZt-AABg8aeiR2HxfWUCq~sGfXSYCGUUumXfJSq9o-EfHgieqIgOMalwQvFYlGNmdBA0pBvql2SxbNJJen8SV3cTuoJ9glLVhUPz5t5OvR1bngeQIAzR5sSLIwOMnej8Nwxx33j5gZqWsRwqY75KoYpaZbhq~f48DwwZighSIgka6lmw__&Key-Pair-Id=K3NV4LZ47N8M46)
-If the note has been checked in Hyperscribe button still does not appear in the header, navigate to Settings > Plugin_IO > Plugins to confirm that Hyperscribe has been installed.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1763488503684-Screenshot2025-11-18at9.54.58AM.png?Expires=253370764800&Signature=Ki-mcx5JTJEa25cfuJ08EgtZCifsHmuIOel9gcncjCpciH~u~dpvJAEoeGZW1puYq0bn6i~o7ZvFRCKi72te~ucRJwkebAguhqRBh8ExChYysjyd6MpGmppsyMZobw3zbkYk6IBmWo2kWgK5lNWEw0BsUxoypU75ZvpSdXyijSDHsZQld~4rLgEZEElaIarUuzgirZ9DNP5aesYOqlMBItcw-zw-QZ8niqeP7qRn8LhR26zmWs~zVzZHbAxDn-0OvT6Siv9dnHAyzxnAgHzb8XC07ko2E47qeJ1XaJlunPnyT0vWQCy2fEvkfOlI3nA8QufOW5EUKpcZd~xUe2MOIQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-If Hyperscribe needs to be installed or the button still does not appear, email [ai@canvasmedical.com](mailto:ai@canvasmedical.com) for next steps.
------ END PAGE https://help.canvasmedical.com/articles/4789801796-why-isn-t-the-hyperscribe-button-appearing-in-my-note
-
-
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4791996458-filter-notes-in-patient-timeline
 The timeline is a core component of the patient chart in Canvas Medical, displaying and storing all notes. This guide explains how to effectively utilize filters in the timeline to refine the view based on note type, author, and date range.
 # User's Guide
@@ -5822,14 +5771,6 @@ Navigator's SQL validation checks whether a query is valid, but it does not run 
 ## **Keywords**
 Keywords: Navigator, MCP, Model Context Protocol, Claude Code, Cursor, Canvas SDK, FHIR API, plugins, SQL validation, developer assistant
 ----- END PAGE https://help.canvasmedical.com/articles/5155757572-navigator-and-mcp
-
-
------ BEGIN PAGE https://help.canvasmedical.com/articles/5318098623-can-i-use-hyperscribe-with-a-template
-Yes! Hyperscribe can be used to complete notes with commands have been added manually or using automations before the session begins.
-If you add commands to a note using a template or automation before starting Hyperscribe, it will apply information from the transcript to relevant fields.
-**Video** : Using Hyperscribe with a Template
-Hyperscribe will place information from the provider's dictation or the patient-provider conversation into relevant commands, including questionnaires. This works even when there are multiple questionnaires present in the note. 
------ END PAGE https://help.canvasmedical.com/articles/5318098623-can-i-use-hyperscribe-with-a-template
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5357437743-training-basics
@@ -9310,14 +9251,6 @@ A: Yes. The log of updates made before commitment stays visible; only the abilit
 ----- END PAGE https://help.canvasmedical.com/articles/7448245522-command-audit-history
 
 
------ BEGIN PAGE https://help.canvasmedical.com/articles/7456009359-how-do-i-enable-hyperscribe-in-canvas
-If you are an existing Canvas customer, you can request a Hyperscribe trial using the link below:
-  - [Hyperscribe Trial Account Request Form](https://docs.google.com/forms/d/1oMnAFQy29n9QPWi_uxh-YTxyOSvYZLhCuzQEswgZ0BA/preview?edit_requested=true)
-If you have completed your Hyperscribe trial and would like to enable Hyperscribe in production, complete the form below:
-  - [Hyperscribe Production Account Request Form](https://docs.google.com/forms/d/17Bjw9rdVAyjLneXYU2haQk4-jK8QzCAR0k5svqwl_PA/preview?edit_requested=true)
------ END PAGE https://help.canvasmedical.com/articles/7456009359-how-do-i-enable-hyperscribe-in-canvas
-
-
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7566748234-process-image-results
 Imaging reports are critical for diagnosing and monitoring medical conditions. Within Canvas, imaging documents are integrated through the Data Integration system, allowing for streamlined upload, review, and chart linking. Reports may be uploaded manually or received via fax, and once linked, they can be reviewed, edited, or associated with imaging orders. This article provides a complete guide for managing imaging reports to ensure accurate and organized documentation that supports clinical decision-making.
 # User's Guide
@@ -9573,22 +9506,6 @@ A. The disabled label will still be available as a filter option and will remain
 ----- END PAGE https://help.canvasmedical.com/articles/7708474806-task-claim-labels
 
 
------ BEGIN PAGE https://help.canvasmedical.com/articles/7797462779-can-i-edit-my-note-during-my-hyperscribe-session
-Yes, you can make changes to your note (including originating and editing commands) at any time during your Hyperscribe session.
-To get the most out of your Hyperscribe session, we recommend taking the following steps:
-  1. Load your note template using any automations or plugins you have configured
-  2. Press "**Play** " to begin your Hyperscribe session
-  3. Record your visit using either monologue dictation or ambient dialogue
-  4. Press "**Pause** " to pause the recording as needed
-  5. Press "**Stop** " once your recording is complete
-  6. Wait for Hyperscribe to switch from "generating commands" to "**ready for review** "
-  7. Review the Hyperscribe generated commands, make edits as needed and commit each command
-**Related Articles**
-[📄 How to speak to Hyperscribe](/articles/3321271561)
-[📄 Can I use Hyperscribe with a template?](/articles/5318098623)
------ END PAGE https://help.canvasmedical.com/articles/7797462779-can-i-edit-my-note-during-my-hyperscribe-session
-
-
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7808408736-managing-canvas-staff-activity-report-recipients
 ## Introduction
 The Canvas Staff Activity Report helps administrators monitor team engagement and usage patterns by providing automated nightly summaries of staff activity. This article covers how to add or remove recipients from the report distribution list and manage report settings.
@@ -9619,21 +9536,6 @@ If you don't see the configuration options mentioned above, you may need elevate
 **Keywords:** staff activity report, nightly report, email recipients, Canvas admin, REPORT_EMAIL, configuration, constance config
 **Categories:** Administration, Reports, Configuration
 ----- END PAGE https://help.canvasmedical.com/articles/7808408736-managing-canvas-staff-activity-report-recipients
-
-
------ BEGIN PAGE https://help.canvasmedical.com/articles/7948266459-how-to-start-a-hyperscribe-recording
-Once you have access to Hyperscribe, the launch button appears in the header of an editable patient note. Click this button to start a new session associated with the note. 
-Hyperscribe will open on the right-hand side with the same ID that appeared on the launch button. This ID indicates which note Hyperscribe is associated with. 
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1766003709431-Screenshot2025-12-17at12.34.29PM.png?Expires=253370764800&Signature=LZ5EBmnPMiooQePmu9NkjEiAq-E5ufz2MzLfTOBlCrYj-j4WgYSYxAenOdCehySITwMCBv0Gu91CPxwzdZC8uGNkpfMvC4dl2QR7SCiMRx2iw6XZ0RKbNUZ4HiuUcwu-HWY2rv3vxWGHkkdMuiUR6Cj3iW9tke5VfZ1b6BVe5qBNtDCy3fgM4wiipoKEMvnZDVu8~mBH--Us3WUC6ZICpZf0Z65lIvWB9Ujv14YfMvh2pNIKmKoHVTLWaEfyJOMDZ3aMR-sKTTG~~x-wZkx890ZgiF1uSUpglawZAJmIZmfS0FVRY6X372JGPD98oZRfp~hgA~Bq0mkU8uGaTVJZcw__&Key-Pair-Id=K3NV4LZ47N8M46)
-If there are any templates or automations that you want Hyperscribe to reference, add them before you begin recording.
-**Video** : How to Start a Hyperscribe Recording
-Once you are ready to start recording, you can press "Play" to begin. 
-If you need to pause the recording, press the "Pause" button.
-Once you have completed your audio recording, press "Stop" to end the session.
-⚠ If you press Stop, you will not be able to add to the recording associated with that note. 
-**Related Articles**
-[📄 How to speak to Hyperscribe](/articles/3321271561)
------ END PAGE https://help.canvasmedical.com/articles/7948266459-how-to-start-a-hyperscribe-recording
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions
@@ -10161,13 +10063,6 @@ To remove zip code filtering:
 • **Keywords:** service area, zip codes, referral directory, practice locations, provider filtering
 • **Categories:** Practice Settings, Referral Management, Configuration
 ----- END PAGE https://help.canvasmedical.com/articles/8191726034-managing-service-area-zip-codes-for-practice-locations
-
-
------ BEGIN PAGE https://help.canvasmedical.com/articles/8245178168-which-commands-does-hyperscribe-support
-Hyperscribe supports the commands listed below:
-AdjustPrescription, Allergy, Assess, CloseGoal, Diagnose, FamilyHistory, FollowUp, Goal, HistoryOfPresentIllness, ImagingOrder, ImmunizationStatement, Immunize, Instruct, LabOrder, MedicalHistory, Medication, Perform, PhysicalExam, Plan, Prescription, Questionnaire, ReasonForVisit, Refer, Refill, RemoveAllergy, ResolveCondition, ReviewOfSystem, StopMedication, StructuredAssessment, SurgeryHistory, Task, UpdateDiagnose, UpdateGoal, Vitals
-For a complete list of commands available in Canvas:[📄 Introduction to Commands](/articles/4129367510)
------ END PAGE https://help.canvasmedical.com/articles/8245178168-which-commands-does-hyperscribe-support
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8258338559-contact-categories
