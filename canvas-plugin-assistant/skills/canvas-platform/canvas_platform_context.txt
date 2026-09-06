@@ -2565,43 +2565,14 @@ A: Yes, Canvas Support will always notify you once enrollment is complete.
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3690739682-structured-reason-for-visit
-The Reason for Visit command frames the motivation for the documented encounter. Canvas offers the option to have a structured or unstructured reason for visit. This article outlines how a Structured Reason for Visit is managed.
-# Enable Structured Reason for Visit
-  - Under the **Constance: Config** setting, locate the `STRUCTURED_REASON_FOR_VISIT_ENABLED`
-  - Click on the check box under **VALUE** to enable and save.
-    - Value box checked = Enabled
-    - Value box unchecked = Disabled
-# Adding a Structured Reason for Visit
-  - **Note:** If you don't see the "Reason For Visit Setting Coding" option in your Practice settings, you may need appropriate permissions. Contact your system administrator or Canvas support to ensure you have access to this configuration section.
-  - Under settings, locate **Reason For Visit Setting Coding** under the **Practice** section and select **\+ Add reason for visit setting coding**
-  - Fill in the following fields to add a new reason for visit option and save
-    - **System** : LOINC, SNOMED, INTERNAL
-    - **Code** : Used by developers
-    - **Display** : How it will be listed in the dropdown
-    - **User Selected** : When checked, the reason for visit is active. When unchecked, the reason for visit is inactive.
-    - **Reason for Visit Setting** : Durations that need to be available for scheduling need to be listed under the **Chosen Schedule Duration** column
-# Managing Structured Reason for Visit
-## Updating a Structured Reason for Visit
-  - Under settings, locate **Reason For Visit Setting Coding** under the **Practice** section
-  - Click the reason for visit that needs to be updated, make needed adjustments and save.
-## Deactivating a Structured Reason for Visit
-  - Under settings, locate **Reason For Visit Setting Coding** under the **Practice** section
-  - Check the box for Reason for Visit(s) needing to be deactivated.
-  - Select **Deactivate** from the **Action** dropdown and click **Go**
-  - The same rules apply for reactivating a Reason for Visit but **Activate** will be selected from the dropdown menu
-# FAQs
-**Q: What happens if I disable Structured Reason for Visit?**
-A: Disabling reverts the workflow to an unstructured format.
-**Q: I don't see "Reason For Visit Setting Coding" in my Practice settings. What should I do?**
-A: This setting requires specific permissions to access. If you don't see it in your Practice settings menu (it appears near the bottom of the list), contact your system administrator or Canvas support to have the necessary permissions added to your user account.
-**Keywords & Metadata**
-  - **Keywords** : Structured Reason for Visit, RFV, Appointment Scheduling, Coding Settings, Patient Chart Notes
-  - **Categories** : Configuration, Scheduling, Charting
-**Q: What happens if I disable Structured Reason for Visit?**
-A: Disabling reverts the workflow to an unstructured format.
-**Keywords & Metadata**
-  - **Keywords** : Structured Reason for Visit, RFV, Appointment Scheduling, Coding Settings, Patient Chart Notes
-  - **Categories** : Configuration, Scheduling, Charting
+**Applies to:** Structured Reason for Visit
+If **Reason for Visit Setting Codings** is missing, the usual cause is access to that admin page, not the Structured Reason for Visit feature toggle itself.
+Turning on Structured Reason for Visit changes scheduling and note workflows to use structured reasons, but it does not by itself make the admin page appear for every user. A user must also have permission to view and manage Reason for Visit Setting Codings.
+## What to check
+  - Confirm the user has access to **Reason for Visit Setting Codings**.
+  - If access was just added, sign out and back in again if the page still does not appear.
+  - If Structured Reason for Visit is enabled, use that page to add or edit the dropdown options your team will select during scheduling.
+If one user can see the page and another cannot, that difference points to permissions rather than a hidden Canvas-side feature flag.
 ----- END PAGE https://help.canvasmedical.com/articles/3690739682-structured-reason-for-visit
 
 
@@ -7268,7 +7239,8 @@ A: Another EPCS-enabled provider with a valid passphrase and token can complete 
 A: The OTP token expires every 30 seconds. You must click Authorize before the pin expires.
 ### Administrator access
 **Q: Who can be an EPCS Administrator?**
-A: More than one staff member can have the EPCS Administrator role, but we recommend limiting the number of staff with this access.
+A: An EPCS Administrator can be an administrative staff member and does not need to be a prescribing provider. The key restriction is that the EPCS Administrator cannot be someone who is actively prescribing medications.
+More than one staff member can have the EPCS Administrator role, but we recommend limiting the number of staff with this access.
 **Q: Can any staff member activate grants?**
 A: No. Only users with EPCS Administrator permissions can access the EPCS Dashboard and activate grants.
 ### Provider status
@@ -7568,7 +7540,7 @@ Practices can create their own note types to create a more customized experience
      - **Default place of service:** Default selection when multiple places of service are available
      - **Is Active** : Controls visibility in dropdowns
      - **Is scheduleable via patient portal** : Allows scheduling through patient portal as a visit type
-     - **Online duration** : Default duration for patient portal scheduling
+     - **Online Duration** : The default duration for scheduling in the patient portal. If the note type is schedulable in the portal, a duration **must** be set to enable scheduling functionality.
   4. Click **Save** to create the note type
 Scheduling and billing settings only apply to **encounter notes**.
 ### Creating a New Event Type
@@ -10045,7 +10017,7 @@ To configure service area zip codes:
   1. Navigate to Settings > Practice Locations
   2. Select the practice location you want to configure
   3. Locate the `serviceAreaZipCodes` setting
-  4. Enter zip codes in the **Value** field with the following format: [11111, 22222, 33333]
+  4. Enter zip codes in the **Value** field with the following format: `["11111", "22222", "33333"]`
 To remove zip code filtering:
   1. Navigate to the same setting
   2. Enter empty brackets in the **Value** field: `[]`
@@ -10653,6 +10625,8 @@ Once your grant is activated and Canvas Support finalizes enrollment, you can st
 ### Timeline and process
 **Q: How long does EPCS enrollment take?**
 A: Timelines vary, but it is typically 3-5 days if there are no delays such as the provider and EPCS admin setting time to activate the grant
+**Q: After final authorization is complete, when should controlled-substance prescribing start working?**
+A: After the EPCS admin completes final authorization and Canvas applies the final service level, successful prescriptions may still take up to 24 hours depending on when the pharmacy updates its directory.
 **Q: Why is EPCS enrollment so complicated?**
 A: Federal regulations for controlled substances require extra security to prevent abuse and diversion. All the steps—identity proofing, OTP tokens, passphrases—are legally mandated.
 **Q: Can I complete identity proofing before ePrescribing is done?**
@@ -10683,19 +10657,8 @@ A: This will depend on how far you got in the IPrescribe set up.
     - Click **Add** under **Code Generator**
 **Q: What if I forget my passphrase?**
 A: You can reset it through DrFirst's website. See [Resetting Your EPCS Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase) for step-by-step instructions.
-**Q: Stuck at "IDP Verified"? You haven't finished enrolling.**  
-A: If your EPCS status shows **IDP Verified** (not **Enrolled**) and controlled-substance prescriptions fail with _"Authentication failed. Access is denied."_ or _"This NPI does not have this active valid token,"_ you passed identity proofing but exited before adding a token. Identity proofing is the middle of enrollment — you're not enrolled until you **add a token, create a passphrase, set a security question, and your EPCS admin performs grant activation (LAC).**  
-To finish:
-  1. Open your DrFirst invite → **Enroll Now** → **I have an invite**.
-  2. Enter your **NPI** and **Invite ID** (usually auto-filled; otherwise it's in the invite email).
-  3. On the credentials screen, choose **"Begin identity proofing again."**
-⚠**Do NOT** choose "Use existing credentials."
-  4. Complete the identity-proofing prompts.
-  5. On the token page, click **Add new Token**.
-Choose **Code Generator** (click **Add**). **_Never select Push Notification_** _—_** _Canvas does not support iPrescribe Push._**__ You must use the **VIP Access** app.
-  1. Enter the token details: Manufacturer **Symantec** , Issuer **DrFirst** , Type **Soft Token** , Name = any label (e.g., "iPhone 15"), Credential ID = the **SYMC########** value from VIP Access (letters + numbers, no spaces).
-  2. Click **Continue** , then create your **passphrase** and **security question**.
-  3. You'll hit a congratulations screen — you're now ready for **grant activation (LAC)** , the final step your EPCS admin / Canvas performs.
+**Q: Stuck at "IDP Verified"?**
+A: If your EPCS status shows **IDP Verified** , identity proofing is complete but enrollment is not finished. In current support cases, this status means the provider still needs to return to the original DrFirst browser session and click **Check Status**. If that step is completed within 24 hours, enrollment can continue. After 24 hours, Canvas Support needs to send a new invite.
 ### Getting help
 **Q: Where do I get help with DrFirst issues?**
 A: For VIP Access app issues, passphrase resets, token problems, or account lockouts, contact [DrFirst Support](https://help.drfirst.com/hc/en-us). Have your NPI and invite ID handy.

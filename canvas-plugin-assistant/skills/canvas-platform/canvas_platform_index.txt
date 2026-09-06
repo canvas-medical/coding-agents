@@ -563,9 +563,8 @@
     - Create a New Group
     - Edit a Group
     - Remove a Group
-- [Structured Reason for Visit](https://help.canvasmedical.com/articles/3690739682-structured-reason-for-visit)
-    - Updating a Structured Reason for Visit
-    - Deactivating a Structured Reason for Visit
+- [Why Reason for Visit Setting Codings is missing](https://help.canvasmedical.com/articles/3690739682-structured-reason-for-visit)
+    - What to check
 - [Managing Staff Profiles](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member)
     - Role-Specific Setup Requirements
     - Creating a New Staff Profile
@@ -607,7 +606,7 @@
 ## Charting & Documentation
 
 ### Chart Overview
-- [Administrative Menu | Print Medication and Allergies](https://help.canvasmedical.com/articles/1484925805-print-medication-and-allergies)
+- [Print Medications and Allergies opens in the browser print flow](https://help.canvasmedical.com/articles/1484925805-print-medication-and-allergies)
     - Introduction
     - Step by Step
         - Video: Print Medications and Allergies
