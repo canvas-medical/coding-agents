@@ -165,7 +165,7 @@ def fetch_external_data(self, patient_id: str) -> dict:
 
 **CRITICAL: All git add commands MUST be scoped to the current directory.**
 
-**CRITICAL: Any automated/unattended commit (e.g. a SessionEnd hook) MUST stage tracked changes only — use `git add -u .`, never `git add -A .`.**
+**CRITICAL: Any automated/unattended commit MUST stage tracked changes only — use `git add -u .`, never `git add -A .`.**
 Staging untracked files without a human reviewing risks sweeping a stray secrets dump, `.env`, or scratch file into the commit.
 
 ```bash
@@ -191,7 +191,7 @@ The `-A .` combination additionally stages *new untracked* files. Only use it in
 **Never use `git add --all` or `git add -A` without a path.** These commands can accidentally stage and commit files outside the plugin directory,
 which is extremely difficult to unwind.
 
-**Automated commits must not push.** A SessionEnd or similar hook may commit locally, but pushing is outward-facing and must stay a deliberate user action.
+**Automated commits must not push.** An unattended process may commit locally, but pushing is outward-facing and must stay a deliberate user action.
 
 ## Cache Busting: Version-Stamp HTML and JavaScript Content
 

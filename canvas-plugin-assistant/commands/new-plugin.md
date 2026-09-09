@@ -175,12 +175,13 @@ fi
 ```
 
 The same way, add to `.gitignore`:
+- `.cpa-workflow-artifacts`
 - `.pytest_cache`
 - `.__pycache__`
 - `.coverage`
 - any other files or directories that git should ignored 
 
-**DO NOT add the folder `.cpa-workflow-artifacts` to `.gitignore`: it has to be committed to the repo.**
+`.cpa-workflow-artifacts` stays local: the reports and specs inside it are working notes for the current session, not deliverables, and committing them puts session detail into a customer's plugin repo.
 
 
 **Replace `pyproject.toml` with the minimal version:**
@@ -309,8 +310,7 @@ Check if the plugin has already been through the wrap-up process (i.e., is a com
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
-plugin_name_snake=$(echo "$(basename "$CPA_PLUGIN_DIR")" | tr '-' '_')
-if ls "$plugin_name_snake/.cpa-workflow-artifacts"/wrap-up-report-*.md 1>/dev/null 2>&1; then
+if [ -f ".cpa-workflow-artifacts/wrap-up-report.md" ]; then
   echo "PLUGIN_COMPLETED=true"
 else
   echo "PLUGIN_COMPLETED=false"
