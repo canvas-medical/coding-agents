@@ -1,0 +1,25 @@
+name: Quality Rules Manifest
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Validate rule manifest
+        run: uv run python canvas-plugin-assistant/quality/validate_rules.py
+
+      - name: Run manifest validator tests
+        run: uv run pytest tests/canvas-plugin-assistant/quality/ -v
