@@ -602,6 +602,13 @@
     - Creating a Diagnostic Theater View
     - Editing a Diagnostic Theater View
     - Related Resources
+- [Config | Constance Settings](https://help.canvasmedical.com/articles/4646004700-config-constance-settings)
+    - Where to find Constance: Config
+    - Who can change these settings
+    - Sections your team can edit
+    - Sections Canvas configures for you
+    - If a setting is not showing
+    - Related articles
 
 ## Charting & Documentation
 

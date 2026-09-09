@@ -4705,6 +4705,113 @@ By default, Canvas allows double booking, but it can be disabled.
 ----- END PAGE https://help.canvasmedical.com/articles/4617508394-managing-appointments
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4646004700-config-constance-settings
+Canvas keeps a set of instance-level settings in the admin area under **Constance > Config**. These settings turn features on and off, hold configuration for third-party integrations, and adjust default behavior across your whole instance. Release notes frequently name one of them directly, for example `ENABLE_CANVAS_CHAT` or `NOTE_BODY_TAB_LABEL`.
+This article covers where to find these settings, who on your team can change them, and which sections your team edits directly versus which ones Canvas configures for you.
+## Where to find Constance: Config
+  1. Begin in the Schedule View.
+  2. Open **Settings** from the triple line menu.
+  3. Under the **Constance** heading, select **Config**.
+Settings are grouped into sections and listed alphabetically within each one. Each row shows the setting name, its current **Value** , its **Default** , and help text describing what it does. Checkbox settings are on/off, and the rest are text inputs, numbers, or dropdowns. Change the value, scroll to the bottom of the page, and select **Save**. A _Live settings updated successfully_ banner confirms the change.
+Three things are worth knowing before you change anything:
+  - **Changes take effect immediately.** There is no restart or deploy step, and the change applies to every user on the instance.
+  - **Every setting can be reverted.** A **Reset to default** link sits beneath each value field.
+  - **Settings are per instance.** A value changed in a development or staging instance has no effect on production, and the reverse is also true. Confirm which instance you are in before saving.
+## Who can change these settings
+Access to Constance: Config comes from the **Administrative** auth group. Staff inherit that group from any role whose **Domain** is set to **Administrative** or **Hybrid**. On a new instance, that covers Administrative Developer, Office Manager, Clerk, EPCS Administrator, Biller, Medical Assistant, and Care Coordinator. Roles in the **Clinical** domain, including Physician, Nurse Practitioner, Nurse, and Clinical Developer, do not have access, and a staff member holding only Clinical roles does not see the Constance heading in Settings.
+These are the defaults for a new instance. Because a role's domain and its default auth groups are both editable, your instance may differ. Check the role in Settings to confirm.
+To give someone access, assign them a role in the Administrative or Hybrid domain. See [Staff Roles](https://help.canvasmedical.com/articles/6649603926-staff-roles) for creating and configuring roles, [Managing Staff Profiles](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member) for assigning one, and [User Permissions](https://help.canvasmedical.com/articles/4709841955-user-permissions) for how auth groups work more generally.
+Changing a role's default auth groups affects only staff created afterward. To give access to someone who already exists, assign them a role in the Administrative or Hybrid domain, or set the auth group on their staff profile directly.
+The Administrative auth group is broad. It grants access to instance-wide configuration and to other administrative areas beyond Constance, so assign it deliberately and only to the people who need to administer the instance.
+## Sections your team can edit
+These 16 sections are visible and editable in your admin to any staff member in the Administrative auth group.
+Section| What it controls| Learn more  
+---|---|---  
+**Billing**  
+ _9 settings_|  Automated invoicing and its interval, whether invoices may fall back to mail or email, referring-provider autofill on claims, the Push Charges button in the note footer, the Medicare identifier (PTAN) on claims, and the cap on a single Move claims to queue batch action.| [Claim Management](https://help.canvasmedical.com/articles/9992348572-claim-management), [Revenue Queues](https://help.canvasmedical.com/articles/3240845520-queues)  
+**Claim.MD Configuration**  
+ _2 settings_|  The user ID and account key Canvas uses to submit claims to your Claim.MD clearinghouse account.| [Claim Management](https://help.canvasmedical.com/articles/9992348572-claim-management)  
+**Clinical Signature Restrictions**  
+ _3 settings_|  Whether only the listed prescriber can commit a medication order, whether only the note provider can sign or lock a note, and whether all commands must be committed before a note can be signed.| [Admin | Note Signature Restrictions](https://help.canvasmedical.com/articles/2642239613-note-signature-restrictions), [Configuring Note Signing Requirements](https://help.canvasmedical.com/articles/5071031576-configuring-note-signing-requirements), [Prescribing Restrictions](https://help.canvasmedical.com/articles/3427480901-prescribing-restrictions)  
+**Communication**  
+ _5 settings_|  Outbound messaging through protocols, phone and email verification messages, the SMS and email bodies used for telehealth appointment instructions, and whether patient communications use the preferred name instead of the first name.| [Disable Patient Communications](https://help.canvasmedical.com/articles/4711229187-admin-disable-patient-communications), [Appointment Reminders](https://help.canvasmedical.com/articles/2892642076-appointment-reminders)  
+**Dialing Service**  
+ _2 settings_|  The name of your telephony provider and the URL template Canvas opens when a staff member clicks a phone number.| [Admin | Click To Dial](https://help.canvasmedical.com/articles/3042359596-click-to-dial)  
+**Drug and Allergy Warning Level**  
+ _3 settings_|  Which drug-drug interaction and allergy warnings are surfaced during prescribing, and the allergy severity at which prescribing is blocked outright.| [Admin | Drug/Allergy Warning Controls](https://help.canvasmedical.com/articles/8580349867-drug-allergy-warning-controls)  
+**General Configuration**  
+ _12 settings_|  Business lines, the custom fax cover sheet, the request-records button on protocol cards, free text in notes and in the Immunization Statement title, the network status dimmer, the note body tab label, note autosave and command revision intervals, ZIP+4 and international patient addresses, coverage validation tasks, and whether notes open collapsed.| [Business Lines for Customized Communication](https://help.canvasmedical.com/articles/1392971282-business-lines-customized-patient-communication), [Admin | Fax Cover Sheet](https://help.canvasmedical.com/articles/5885566398-fax-cover-sheet), [Restrict Free Text in Note](https://help.canvasmedical.com/articles/4756622202-restrict-free-text), [Admin | Network Settings](https://help.canvasmedical.com/articles/6258026160-network-settings)  
+**Messaging Configuration**  
+ _1 setting_|  Whether Canvas Chat is available to staff members and teams for internal communication.| [Canvas Chat and Bot](https://help.canvasmedical.com/articles/2541599205-canvas-chat-and-bot)  
+**Multi-Factor Authentication**  
+ _7 settings_|  Whether MFA is required for all users, which factors are permitted (email, SMS, authenticator app, and custom addresses or numbers), and how many days a device is remembered.| [Multi-factor Authentication (MFA)](https://help.canvasmedical.com/articles/3598397632-multi-factor-authentication-mfa)  
+**Note Header and Appointment Configuration**  
+ _11 settings_|  The telehealth button and assignee control in the note header, which Reason for Visit command becomes the header, structured Reason for Visit, double booking, default appointment duration and event type, the appointment status applied at check-in, how many appointments the schedule view fetches, full-week schedules, and how many days of upcoming appointments appear in the patient timeline.| [Event and Note Types](https://help.canvasmedical.com/articles/6785045644-appointment-event-note-types), [Managing Patient Appointments](https://help.canvasmedical.com/articles/4617508394-managing-appointments), [Structured Reason for Visit](https://help.canvasmedical.com/articles/3690739682-structured-reason-for-visit)  
+**Patient App**  
+ _8 settings_|  Whether the patient portal is enabled at all, which pages appear in it (messaging, payments, labs, contact), email-only portal accounts, patient document uploads, and the banner on the portal login page.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)  
+**Registration**  
+ _5 settings_|  Preferred patient timezone, patient consents, the metadata section on the registration page, a free-text last known location for unhoused patients, and whether the Canvas Remote QR modal opens by default when adding a coverage.| [Custom Profile Fields & Patient Metadata](https://help.canvasmedical.com/articles/4551334461-patient-metadata), [Managing Consents](https://help.canvasmedical.com/articles/8144965836-manging-patient-consents), [Patient Profile](https://help.canvasmedical.com/articles/8802451810-patient-demographics)  
+**Reporting**  
+ _1 setting_|  The comma-separated list of email addresses that staff reports are sent to.| [Managing Canvas Staff Activity Report Recipients](https://help.canvasmedical.com/articles/7808408736-managing-canvas-staff-activity-report-recipients)  
+**Sfax Configuration**  
+ _4 settings_|  The credentials Canvas uses to send and receive faxes through Sfax.| [Fax Migration & Event History](https://help.canvasmedical.com/articles/4882014801-fax-migration-event-history)  
+**SSO Configuration**  
+ _6 settings_|  Whether the SSO link appears on the login page, plus the service provider configuration, signing key, public certificate, and identity provider metadata behind it.| [Configuring Single Sign-On (SSO)](https://help.canvasmedical.com/articles/6984866654-sso-single-sign-on)  
+**Stripe Configuration**  
+ _3 settings_|  The API key, public key, and connected account ID Canvas uses to take patient payments through Stripe.| [Collect Patient Payments](https://help.canvasmedical.com/articles/4431910086-collect-patient-payments), [Saved Payment Methods](https://help.canvasmedical.com/articles/4603195425-feature_spotlight_saved_payment_methods)  
+## Sections Canvas configures for you
+These 18 sections do not appear in your admin. They hold credentials for third-party integrations, endpoints and keys provisioned when your instance was built, security-sensitive configuration, and features still being validated. Canvas Support changes these on request.
+To request a change, [submit a support ticket](https://portal.usepylon.com/canvas-medical/forms/standard) or ask in your Canvas Slack channel. Name the setting and the value you want, and say which instance it applies to.
+Section| What it controls| Learn more  
+---|---|---  
+**Apryse**  
+ _3 settings_|  Credentials for the PDF annotation engine, whether annotation is enabled, and the per-use cost warning shown to staff.| [PDF Annotations](https://help.canvasmedical.com/articles/2451966298-pdf-annotations-user-guide)  
+**Audit & SIEM Export**  
+ _9 settings_|  Audit-event capture and how long the audit ledger stays queryable, plus the endpoint, authentication header, PHI mode, and batching for streaming those events to your own SIEM.| [Security audit trail and SIEM export](https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export)  
+**Data integration**  
+ _1 setting_|  Whether the signature field is available in data integration.| [Data Integration and Document Management](https://help.canvasmedical.com/articles/7371085164-data-integration)  
+**DrFirst**  
+ _7 settings_|  The vendor, router, and API endpoint configuration Canvas uses to route ePrescribing and EPCS traffic through DrFirst.| [Activating EPCS Grants with DrFirst](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst), [EPCS Enrollment](https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment)  
+**Faxing Configuration**  
+ _1 setting_|  The API key for your fax provider.| [Fax Migration & Event History](https://help.canvasmedical.com/articles/4882014801-fax-migration-event-history)  
+**Google Configuration**  
+ _5 settings_|  Your Google service account credentials, Drive and reporting spreadsheet IDs, and the Google Calendar event cache.| [Google Scheduled Reports](https://help.canvasmedical.com/articles/7316720617-scheduled-reports)  
+**Health Gorilla and Lab Order Configuration**  
+ _7 settings_|  Whether the Health Gorilla integration is enabled and its OAuth credentials, whether all lab orders bill to the practice, and whether specimen collection time appears on the lab order command.| [Health Gorilla Integration for Lab Ordering](https://help.canvasmedical.com/articles/6041713155-how-to-order-labs-and-integrate-with-lab-vendors-in-canvas), [Labs | Ordering in Health Gorilla](https://help.canvasmedical.com/articles/9512475619-labs-ordering-in-health-gorilla)  
+**Healthwise**  
+ _2 settings_|  The credentials Canvas uses to pull Healthwise patient education content.| [Command | Educational Material](https://help.canvasmedical.com/articles/4966226408-educational-material-command)  
+**Internal Configuration**  
+ _1 setting_|  The maximum length of the patient clinical caption.| –  
+**LOB**  
+ _1 setting_|  The API key for the print-and-mail service used to send statements and invoices by post.| [Revenue | Print Batch Statement](https://help.canvasmedical.com/articles/4083957452-print-batch-statement)  
+**ONC Configuration**  
+ _1 setting_|  Whether the Health Records page appears in the patient portal.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)  
+**Patient Portal Beta Features**  
+ _4 settings_|  Portal pages still in beta: My Health, self-scheduling, consents, and self-registration.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)  
+**Patient Privacy Link**  
+ _1 setting_|  The Privacy & Security link included in patient verification texts and emails.| [Config | Privacy Link](https://help.canvasmedical.com/articles/5488834057-)  
+**Permissions Configuration**  
+ _5 settings_|  Whether model, object, and custom permissions are enforced, whether the All Patients group is available, and whether patient names are hidden in search based on group permissions.| [User Permissions](https://help.canvasmedical.com/articles/4709841955-user-permissions), [Patient Groups](https://help.canvasmedical.com/articles/8319995182-patient-groups)  
+**Pharmacy Configuration**  
+ _9 settings_|  Medication History and Eligibility and Benefits requests to pharmacies, including daily automated requests and the staff member they run as, the maximum daily dose field on controlled substance prescriptions, and whether outgoing prescriptions use the note's practice location for the prescriber address.| [Surescripts Medication History](https://help.canvasmedical.com/articles/8047008267-surescripts-medication-history)  
+**SendGrid Configuration**  
+ _1 setting_|  The API key Canvas uses to send transactional email.| –  
+**Support Configuration**  
+ _2 settings_|  The in-app support chat widget and the webhook Canvas uses to alert on lab order errors and account lockouts.| [Canvas Support Resources](https://help.canvasmedical.com/articles/5542576212-canvas-support-resources)  
+## If a setting is not showing
+When a release note names a setting you cannot find in Constance: Config, work through these in order:
+  - **Check your auth groups.** If the Constance heading is missing from Settings entirely, your roles are not in the Administrative auth group. See [User Permissions](https://help.canvasmedical.com/articles/4709841955-user-permissions).
+  - **Check whether Canvas owns the section.** If the Constance heading is there but the section is not, it is one of the 18 in the second table above. [Submit a support ticket](https://portal.usepylon.com/canvas-medical/forms/standard) to have it changed.
+  - **Check your release.** Settings arrive with a Canvas release. An instance that has not yet received the release that introduced a setting will not show it.
+  - **Check which instance you are in.** Settings do not carry across instances, so a value set in staging will read as unchanged in production.
+## Related articles
+  - [Staff Roles](https://help.canvasmedical.com/articles/6649603926-staff-roles)
+  - [User Permissions](https://help.canvasmedical.com/articles/4709841955-user-permissions)
+  - [Managing Staff Profiles](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member)
+  - [Canvas Support Resources](https://help.canvasmedical.com/articles/5542576212-canvas-support-resources)
+----- END PAGE https://help.canvasmedical.com/articles/4646004700-config-constance-settings
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4646118598-printing-basic-patient-information
 ## Introduction
 Printing basic patient information includes patient demographics, coverages and contact information.
