@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
 import pytest
-from mcp.types import ToolAnnotations
 
 from mcp_canvas_installer import CanvasInstallerMcp
 
@@ -372,27 +371,3 @@ class TestCreateServer:
 
         exp_list_calls = [call("i", "c")]
         assert mock_list.mock_calls == exp_list_calls
-
-
-class TestToolAnnotations:
-    """The tools declare concurrency hints so the SDK knows what to parallelize."""
-
-    def test_lister_is_read_only(self) -> None:
-        """lister only reads, so it is safe to run concurrently."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        annotations = server._tool_manager._tools["lister"].annotations
-
-        expected = ToolAnnotations(readOnlyHint=True)
-        assert annotations == expected
-
-    def test_installer_is_not_read_only(self) -> None:
-        """installer installs/deploys, so it must not be run concurrently."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        annotations = server._tool_manager._tools["installer"].annotations
-
-        expected = ToolAnnotations(readOnlyHint=False)
-        assert annotations == expected

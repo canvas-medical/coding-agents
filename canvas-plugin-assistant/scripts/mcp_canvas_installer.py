@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
-from mcp.types import ToolAnnotations
 
 from secret_requester import SecretRequester
 
@@ -140,8 +139,7 @@ class CanvasInstallerMcp:
         """Create and configure the FastMCP server with canvas tools."""
         server = FastMCP("canvas_cmd_line")
 
-        # readOnlyHint lets the SDK parallelize read-only tools (lister); installer writes.
-        @server.tool(annotations=ToolAnnotations(readOnlyHint=False))
+        @server.tool()
         async def installer(plugin_name: str, instance: str, cwd: str) -> str:
             """Install a Canvas SDK plugin on a Canvas instance with its secrets.
 
@@ -156,7 +154,7 @@ class CanvasInstallerMcp:
             """
             return await cls.install(plugin_name, instance, cwd)
 
-        @server.tool(annotations=ToolAnnotations(readOnlyHint=True))
+        @server.tool()
         async def lister(instance: str, cwd: str) -> str:
             """List installed Canvas SDK plugins on a Canvas instance.
 
