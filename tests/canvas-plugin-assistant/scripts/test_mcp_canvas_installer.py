@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
 import pytest
+from mcp.types import ToolAnnotations
 
 from mcp_canvas_installer import CanvasInstallerMcp
 
@@ -371,3 +372,61 @@ class TestCreateServer:
 
         exp_list_calls = [call("i", "c")]
         assert mock_list.mock_calls == exp_list_calls
+
+
+class TestToolAnnotations:
+    """The tools declare concurrency hints so the SDK knows what to parallelize."""
+
+    def test_lister_is_read_only(self) -> None:
+        """lister only reads, so it is safe to run concurrently."""
+        tested = CanvasInstallerMcp
+        server = tested.create_server()
+
+        annotations = server._tool_manager._tools["lister"].annotations
+
+        expected = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
+        assert annotations == expected
+
+    def test_installer_is_not_read_only(self) -> None:
+        """installer installs/deploys to a remote instance, so it must not run concurrently."""
+        tested = CanvasInstallerMcp
+        server = tested.create_server()
+
+        annotations = server._tool_manager._tools["installer"].annotations
+
+        expected = ToolAnnotations(
+            readOnlyHint=False,
+            destructiveHint=True,
+            idempotentHint=False,
+            openWorldHint=True,
+        )
+        assert annotations == expected
+
+    def test_every_tool_declares_a_concurrency_hint(self) -> None:
+        """Every registered tool must carry ToolAnnotations with an explicit readOnlyHint.
+
+        The Claude Code CLI only runs tool calls in parallel when every tool in the
+        batch is concurrency-safe, and for in-process MCP tools that maps exactly to
+        ``annotations.readOnlyHint is True`` (the default for a tool with no
+        annotations is "not safe"). A read tool that forgets the hint silently
+        serializes itself, and drags down any batch it lands in.
+        """
+        server = CanvasInstallerMcp.create_server()
+        tools = list(server._tool_manager._tools.values())
+
+        missing_annotations = [t.name for t in tools if t.annotations is None]
+        assert not missing_annotations, (
+            f"Tools with no ToolAnnotations (defaults to not-concurrency-safe, so they "
+            f"serialize): {sorted(set(missing_annotations))}. Add "
+            f"annotations=ToolAnnotations(readOnlyHint=<bool>)."
+        )
+
+        missing_hint = [
+            t.name
+            for t in tools
+            if getattr(t.annotations, "readOnlyHint", None) is None
+        ]
+        assert not missing_hint, (
+            f"Tools whose ToolAnnotations omit readOnlyHint: {sorted(set(missing_hint))}. "
+            f"Set readOnlyHint=True for read tools (so they parallelize) or False for writes."
+        )

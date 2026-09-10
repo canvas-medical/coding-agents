@@ -17,6 +17,9 @@ dev = [
     # these in its PEP 723 header for the `uv run --script` path in CI.
     "beautifulsoup4>=4.12",
     "html2text>=2024.2.26",
+    # mcp_canvas_installer imports mcp.server.fastmcp (the v1 FastMCP API); mcp 2.x
+    # renamed it to MCPServer, so the tests that import the module pin mcp<2.
+    "mcp<2",
 ]
 
 [tool.pytest.ini_options]
