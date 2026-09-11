@@ -1,0 +1,52 @@
+name: Update Canvas Ruff Config
+
+# Keeps the canonical Canvas ruff ruleset in CPA in sync with the source of
+# truth in canvas-medical/canvas-plugins. The file is copied verbatim; `ruff
+# --config <file>` reads only its [tool.ruff*] tables and ignores the rest, so
+# no transform is needed. Both /cpa:style and Studio's deploy-time style gate
+# point ruff at this file.
+#
+# The destination MUST be named pyproject.toml: `ruff --config <path>` reads the
+# [tool.ruff] table only when the file is literally named pyproject.toml;
+# otherwise ruff parses it as a flat ruff.toml and errors on the non-ruff tables
+# (build-system, project, ...). It lives in its own config/ dir so it is never
+# mistaken for a project's own pyproject.toml.
+
+on:
+  schedule:
+    # Every Monday at 10am UTC
+    - cron: '0 10 * * 1'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+
+jobs:
+  update-ruff-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Canvas ruff config
+        run: |
+          mkdir -p canvas-plugin-assistant/config
+          curl -sSL https://raw.githubusercontent.com/canvas-medical/canvas-plugins/main/pyproject.toml \
+            -o canvas-plugin-assistant/config/pyproject.toml
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push if changes
+        run: |
+          git add canvas-plugin-assistant/config/pyproject.toml
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Canvas ruff config [automated]"
+            git push
+          fi
