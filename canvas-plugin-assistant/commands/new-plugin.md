@@ -201,6 +201,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.19.0",
+    "ruff>=0.15.14",
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
     "pytest-django>=4.7.0",
