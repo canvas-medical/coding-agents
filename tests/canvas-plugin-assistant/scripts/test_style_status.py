@@ -237,6 +237,33 @@ class TestToolFailureIsNotACheckFailure:
 
         assert outcomes["mypy"] == "skip"
 
+    def test_a_signal_kill_is_a_skip(self, tmp_path: Path, monkeypatch) -> None:
+        """A negative code means the tool was killed, not that the plugin is dirty.
+
+        An OOM-kill returns -9, which the documented 0/1/2 contract does not
+        cover. Testing the complement of "the tool reported on the code" keeps it
+        out of the plugin's record.
+        """
+        self._stub_runs(monkeypatch, ruff=(-9, ""), mypy=(0, ""))
+        (tmp_path / "mypy.ini").write_text("[mypy]\n")
+
+        outcomes = style_status.run_checks(
+            tmp_path, "ruff.toml", str(tmp_path / "mypy.ini")
+        )
+
+        assert outcomes["ruff"] == "skip"
+
+    def test_an_unknown_exit_code_is_a_skip(self, tmp_path: Path, monkeypatch) -> None:
+        """A code above 2 is not a documented diagnostic result, so it is a skip."""
+        self._stub_runs(monkeypatch, ruff=(0, ""), mypy=(3, "internal error"))
+        (tmp_path / "mypy.ini").write_text("[mypy]\n")
+
+        outcomes = style_status.run_checks(
+            tmp_path, "ruff.toml", str(tmp_path / "mypy.ini")
+        )
+
+        assert outcomes["mypy"] == "skip"
+
     def test_mypy_exit_1_is_a_real_failure(self, tmp_path: Path, monkeypatch) -> None:
         """Type errors stay a failed check."""
         self._stub_runs(
