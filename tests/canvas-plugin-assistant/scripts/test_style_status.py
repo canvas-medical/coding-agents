@@ -467,16 +467,52 @@ class TestReadStatus:
 
         assert verdict == style_status.UNKNOWN
 
-    def test_a_non_boolean_check_value_is_not_a_pass(self, tmp_path: Path) -> None:
-        """Only literal true counts as passing, so a truthy string is not a pass."""
+    def test_a_non_boolean_check_value_is_a_corrupt_record(self, tmp_path: Path) -> None:
+        """A value that is neither true nor false means the record is corrupt.
+
+        That is UNKNOWN rather than FAILED: reporting it as "your ruff is dirty"
+        would be a claim about the code, when all we know is the record is junk.
+        Either way it is never a pass.
+        """
+        for value in ('"yes"', "null", "1", "[]"):
+            self._write(
+                tmp_path,
+                '{"version": 1, "style_clean": true, '
+                f'"checks": {{"ruff": {value}, "mypy": true}}}}',
+            )
+
+            verdict, detail = style_status.read_status(tmp_path)
+
+            assert verdict == style_status.UNKNOWN, value
+            assert "ruff" in detail, value
+
+    def test_a_literal_false_is_a_real_failure(self, tmp_path: Path) -> None:
+        """FAILED is reserved for a check that ran and reported a problem."""
         self._write(
             tmp_path,
-            '{"version": 1, "style_clean": true, "checks": {"ruff": "yes", "mypy": true}}',
+            '{"version": 1, "style_clean": false, "checks": {"ruff": false, "mypy": true}}',
         )
 
-        verdict, _ = style_status.read_status(tmp_path)
+        verdict, detail = style_status.read_status(tmp_path)
 
         assert verdict == style_status.FAILED
+        assert detail == "ruff"
+
+    def test_an_incomplete_assessment_outranks_a_known_failure(self, tmp_path: Path) -> None:
+        """A missing required check wins over a recorded failure.
+
+        Re-running surfaces the failure anyway, whereas reporting FAILED here
+        would present a partial verdict as the whole story.
+        """
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": false, "checks": {"ruff": false}}',
+        )
+
+        verdict, detail = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+        assert "mypy" in detail
 
 
 class TestCheckMode:

@@ -156,12 +156,25 @@ def read_status(plugin_dir: Path) -> tuple[str, str]:
     checks = payload.get("checks")
     if not isinstance(checks, dict):
         return UNKNOWN, "style status has no checks"
-    # Presence, not value: an absent key means that check did not run.
+
+    # A value that is neither true nor false is a corrupt record, not a dirty
+    # plugin, so it is UNKNOWN rather than FAILED. FAILED is reserved for a
+    # literal false, which is a real finding about the code.
+    malformed = sorted(
+        name for name, passed in checks.items() if passed is not True and passed is not False
+    )
+    if malformed:
+        return UNKNOWN, f"non-boolean result for: {', '.join(malformed)}"
+
+    # Presence, not value: an absent key means that check did not run. Checked
+    # before failures on purpose — an incomplete assessment dominates a known
+    # failure, because re-running surfaces that failure anyway while the reverse
+    # would report a partial verdict as the whole story.
     missing = [name for name in REQUIRED_CHECKS if name not in checks]
     if missing:
         return UNKNOWN, f"did not run: {', '.join(missing)}"
 
-    failed = sorted(name for name, passed in checks.items() if passed is not True)
+    failed = sorted(name for name, passed in checks.items() if passed is False)
     if failed:
         return FAILED, ", ".join(failed)
 

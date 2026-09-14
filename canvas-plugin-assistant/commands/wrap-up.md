@@ -541,6 +541,7 @@ This command is the **final step** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
