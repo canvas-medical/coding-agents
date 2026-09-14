@@ -67,16 +67,19 @@ This applies the canonical key order and 2-space indent; it is safe to run repea
 
 ### Step 6: Record the style status
 
-Confirm the final state by running Steps 2–5 once more end to end, then write the plugin's style status to `.cpa-workflow-artifacts/style-status.json`. This is a durable, committed record of the build (`.cpa-workflow-artifacts/` is tracked in the repo), not a message to anyone:
+Record the outcome by running the status script, which re-runs every check and writes `.cpa-workflow-artifacts/style-status.json` from their actual exit codes:
 
 ```bash
-mkdir -p .cpa-workflow-artifacts
-cat > .cpa-workflow-artifacts/style-status.json <<'EOF'
-{"style_clean": true, "checks": {"ruff": true, "mypy": true, "manifest": true}}
-EOF
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/style_status.py" --run \
+  --ruff-config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" \
+  --mypy-config mypy.ini
 ```
 
-Set each subfield under `checks` to that check's outcome — `true` if it passes with nothing remaining, `false` if issues remain after four rounds. Set the top-level `style_clean` to `true` only when every subfield is `true`; otherwise `false`. The per-check fields make it clear *which* check failed; the file is the durable record.
+Do not hand-write this file. The script is the only producer — Studio's deploy gate records through the same script — so the payload shape and the pass/fail rule cannot drift between the two. It prints the payload it wrote; read that line back to confirm the final state.
+
+`style_clean` is `true` only when every check ran and passed, `false` when a check failed, and `null` when a required check could not run at all (so an unassessed build never reads back as a clean one). A skipped check is omitted from `checks` rather than recorded as passing. This is a durable, committed record of the build (`.cpa-workflow-artifacts/` is tracked in the repo), not a message to anyone.
+
+If it reports `style_clean: false` after four rounds, leave the code in its best state and move on — the file records which check is outstanding.
 
 ## CPA Workflow
 
