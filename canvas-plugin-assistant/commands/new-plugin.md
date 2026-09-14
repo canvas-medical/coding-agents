@@ -69,13 +69,14 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 
 1. Invoke the canvas-sdk skill to have SDK documentation available
 2. Ask the user to describe the problem they're trying to solve
-3. Use AskUserQuestion to gather structured requirements:
+3. Check native coverage with the canvas-platform skill to determine if the ask is fully, partially, or not at all covered by native Canvas functionality
+4. Use AskUserQuestion to gather structured requirements, scoped to what isn't natively covered:
    - Who experiences the problem?
    - What should trigger the plugin?
    - What should the plugin create or do?
-4. Map answers to Canvas SDK concepts (events, effects)
-5. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
-6. Wait for user approval before any implementation
+5. Map answers to Canvas SDK concepts (events, effects)
+6. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
+7. Wait for user approval before any implementation
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)

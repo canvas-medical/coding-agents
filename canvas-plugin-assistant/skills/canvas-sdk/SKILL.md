@@ -14,7 +14,7 @@ This skill provides comprehensive documentation for the Canvas Medical SDK, enab
 Before stating any specific class name, import path, effect/event name, field name, method, or supported value:
 1. Read `coding_agent_context.txt` from this skill's directory (see Usage below) and `grep`/search it for the relevant term.
 2. Base your answer on what the bundled docs actually say.
-3. **Cite the source doc page URL** (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` line that contains the content) so the user can verify it — the same way a high-quality grounded answer always links its source.
+3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line, so derive the link text from the URL's last path segment, de-hyphenated and title-cased — `/sdk/clients-twilio/` → `[Twilio Client](https://docs.canvasmedical.com/sdk/clients-twilio/)`, `/guides/custom-landing-page/` → `[Custom Landing Page](https://docs.canvasmedical.com/guides/custom-landing-page/)`. If the page body does open with a heading that names the page, prefer that. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
 
 This applies to a one-line verbal question just as much as to code generation. If a question is even partially about an SDK capability and you have not yet consulted this skill in the current conversation, consult it first, then answer.
 
@@ -119,8 +119,14 @@ To use this skill:
 1. **Read `coding_agent_context.txt` from this skill's directory** - it already exists locally
 2. Search the file for specific class names, event types, or effect types
 3. Use the documentation to understand Canvas SDK capabilities
-4. **Cite the source doc page URL** in your answer (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` URL whose section you used), so the answer is verifiable and grounded rather than asserted from memory
+4. **Cite the page as a `[Page Title](url)` markdown link** for the `----- BEGIN PAGE https://docs.canvasmedical.com/...` block whose section you used (link text derived from the URL slug — see the Grounding Rule above), so the answer is verifiable and grounded rather than asserted from memory
 
-The context file contains ~20000 lines of comprehensive SDK documentation including all handlers, events, effects, and data models.
+The context file contains roughly 50000 lines of comprehensive SDK documentation, including all handlers, events, effects, and data models.
 
 **NEVER attempt to curl or download coding_agent_context.txt - it is already bundled here.**
+
+## Related Skills
+
+- **canvas-platform** — what Canvas already does *natively*, with no plugin at all: shipped features, settings, roles, templates, admin workflows, and out-of-the-box UI behavior, sourced from the Canvas Help Center. Worth a check when a request could plausibly be satisfied by configuration instead of code, or when someone asks "can Canvas do X?" without specifying how. This is advisory, not a gate — go straight to the SDK docs for questions that are unambiguously about building.
+- **Omniplug MCP tools** — the state of one specific Canvas instance: which plugins are installed and what each does (`get_customer_plugins`, `describe_plugin`), where their UI lands (`get_plugin_placement`), and which Canvas-managed plugins exist to install (`list_reference_plugins`). `instance-analyze` covers the same ground for local development against an instance directly.
+- The boundary: **`canvas-sdk` = what you can build; `canvas-platform` = what Canvas already does natively; Omniplug = what this instance currently has.**
