@@ -346,3 +346,160 @@ class TestMain:
             os.chmod(tmp_path, 0o700)
 
         assert exit_code == 2
+
+
+class TestReadStatus:
+    """Tests for reading the record back.
+
+    Every way of failing to get a trustworthy answer must be UNKNOWN, never
+    CLEAN. A reader that resolves an unreadable record to a pass reintroduces
+    the vacuous-true defect on the read side, which is the whole point of the
+    null rule on the write side.
+    """
+
+    def _write(self, plugin_dir: Path, body: str) -> None:
+        dest = plugin_dir / STATUS_PATH
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(body, encoding="utf-8")
+
+    def test_clean_when_every_check_passed(self, tmp_path: Path) -> None:
+        """The one case that reads as clean."""
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": true, '
+            '"checks": {"ruff": true, "mypy": true, "manifest": true}}',
+        )
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.CLEAN
+
+    def test_clean_without_a_manifest_check(self, tmp_path: Path) -> None:
+        """A plugin with no manifest still reads clean — it is not a required check."""
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": true, "checks": {"ruff": true, "mypy": true}}',
+        )
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.CLEAN
+
+    def test_failed_names_the_check(self, tmp_path: Path) -> None:
+        """A recorded failure is FAILED and says which check, so a caller can act."""
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": false, "checks": {"ruff": true, "mypy": false}}',
+        )
+
+        verdict, detail = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.FAILED
+        assert "mypy" in detail
+
+    def test_missing_file_is_unknown(self, tmp_path: Path) -> None:
+        """No record means nobody has assessed this code, not that it is fine."""
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+
+    def test_invalid_json_is_unknown(self, tmp_path: Path) -> None:
+        """A truncated record from an interrupted run is unknown, not a pass."""
+        self._write(tmp_path, '{"version": 1, "style_clean": tr')
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+
+    def test_a_json_non_object_is_unknown(self, tmp_path: Path) -> None:
+        """Valid JSON that is not an object cannot carry a verdict."""
+        self._write(tmp_path, '"clean"')
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+
+    def test_an_unrecognized_version_is_unknown(self, tmp_path: Path) -> None:
+        """The load-bearing check: a future shape must not be read as this one.
+
+        Everything else degrades safely. Skipping this one silently misreads a v2
+        payload as a v1, which is why it is compared explicitly.
+        """
+        self._write(
+            tmp_path,
+            '{"version": 2, "style_clean": true, "checks": {"ruff": true, "mypy": true}}',
+        )
+
+        verdict, detail = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+        assert "version" in detail
+
+    def test_a_missing_version_is_unknown(self, tmp_path: Path) -> None:
+        """A payload predating the version field is an unrecognized shape."""
+        self._write(tmp_path, '{"style_clean": true, "checks": {"ruff": true}}')
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+
+    def test_a_skipped_required_check_is_unknown(self, tmp_path: Path) -> None:
+        """An absent key means that check did not run, so the build is unassessed.
+
+        Read by presence, not by value — this is the fail-open case where the
+        toolchain was missing.
+        """
+        self._write(tmp_path, '{"version": 1, "style_clean": null, "checks": {}}')
+
+        verdict, detail = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+        assert "ruff" in detail and "mypy" in detail
+
+    def test_passing_checks_with_a_null_verdict_is_unknown(self, tmp_path: Path) -> None:
+        """A self-inconsistent record is not resolved in the optimistic direction."""
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": null, "checks": {"ruff": true, "mypy": true}}',
+        )
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+
+    def test_a_non_boolean_check_value_is_not_a_pass(self, tmp_path: Path) -> None:
+        """Only literal true counts as passing, so a truthy string is not a pass."""
+        self._write(
+            tmp_path,
+            '{"version": 1, "style_clean": true, "checks": {"ruff": "yes", "mypy": true}}',
+        )
+
+        verdict, _ = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.FAILED
+
+
+class TestCheckMode:
+    """Tests for the --check CLI, which /cpa:wrap-up calls."""
+
+    def test_exit_0_when_clean(self, tmp_path: Path) -> None:
+        """Clean exits 0."""
+        main(["--record", "ruff=pass", "mypy=pass", "--plugin-dir", str(tmp_path)])
+
+        assert main(["--check", "--plugin-dir", str(tmp_path)]) == 0
+
+    def test_exit_1_when_a_check_failed(self, tmp_path: Path) -> None:
+        """A real failure exits 1 — the caller should fix the code."""
+        main(["--record", "ruff=pass", "mypy=fail", "--plugin-dir", str(tmp_path)])
+
+        assert main(["--check", "--plugin-dir", str(tmp_path)]) == 1
+
+    def test_exit_3_when_unknown(self, tmp_path: Path) -> None:
+        """Unknown exits 3, distinct from 1, so the caller says "re-run" not "fix"."""
+        main(["--record", "none", "--plugin-dir", str(tmp_path)])
+
+        assert main(["--check", "--plugin-dir", str(tmp_path)]) == 3
+
+    def test_exit_3_with_no_record_at_all(self, tmp_path: Path) -> None:
+        """A never-checked plugin is unknown, and never silently 0."""
+        assert main(["--check", "--plugin-dir", str(tmp_path)]) == 3
