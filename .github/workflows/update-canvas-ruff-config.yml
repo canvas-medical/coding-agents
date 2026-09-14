@@ -32,8 +32,10 @@ jobs:
       - name: Download Canvas ruff config
         run: |
           mkdir -p canvas-plugin-assistant/config
-          curl -sSL https://raw.githubusercontent.com/canvas-medical/canvas-plugins/main/pyproject.toml \
-            -o canvas-plugin-assistant/config/pyproject.toml
+          tmp="$(mktemp)"
+          curl -fsSL https://raw.githubusercontent.com/canvas-medical/canvas-plugins/main/pyproject.toml -o "$tmp"
+          grep -q '^\[tool\.ruff\]' "$tmp"
+          mv "$tmp" canvas-plugin-assistant/config/pyproject.toml
 
       - name: Configure Git
         run: |
