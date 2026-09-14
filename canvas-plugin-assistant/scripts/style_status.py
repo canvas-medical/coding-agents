@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sole producer of .cpa-workflow-artifacts/style-status.json.
+"""Reads and writes .cpa-workflow-artifacts/style-status.json.
 
 Both enforcement points for the Canvas code-style standard record their outcome
 through this one file: CPA's ``/cpa:style`` (``--run``, which executes the checks
@@ -15,6 +15,7 @@ Usage:
   style_status.py --run [--plugin-dir DIR] --ruff-config PATH [--mypy-config PATH]
   style_status.py --record ruff=pass mypy=fail manifest=skip [--plugin-dir DIR]
   style_status.py --record none            # nothing ran; records the unknown state
+  style_status.py --check [--plugin-dir DIR]   # read the record back
 
 Outcomes are ``pass``, ``fail``, or ``skip``. A skipped check is omitted from
 ``checks`` rather than recorded as passing, so the file never claims a check
@@ -26,8 +27,16 @@ succeeded when it did not run.
   null   a required check did not run, so the state is genuinely unknown
 
 Exit codes:
-  0  the status file was written
-  2  bad usage, or the file could not be written
+  --run / --record
+    0  the status file was written
+    2  bad usage, or the file could not be written
+  --check
+    0  the plugin is recorded clean
+    1  a check that ran failed
+    3  unknown: no record, unreadable, an unrecognized version, or a required
+       check did not run. Distinct from 1 so a caller can say "re-run the
+       checks" rather than "fix your code". Never 0 -- an unreadable record is
+       not a pass.
 """
 
 from __future__ import annotations
@@ -45,8 +54,9 @@ from pathlib import Path
 # stays a local record of the build.
 STATUS_PATH = Path(".cpa-workflow-artifacts") / "style-status.json"
 
-# Bumped whenever the payload shape changes, so a reader can reject a shape it
-# does not understand instead of misinterpreting it.
+# Bumped whenever the payload shape changes, so `read_status` can reject a shape
+# it does not understand instead of misinterpreting it. A reader that skips this
+# comparison is the one failure that is silent: a future v2 gets read as a v1.
 SCHEMA_VERSION = 1
 
 # Checks that must have run for `style_clean` to be a real answer. The manifest
@@ -93,6 +103,71 @@ def build_payload(outcomes: dict[str, str]) -> dict:
     else:
         style_clean = all(checks.values())
     return {"version": SCHEMA_VERSION, "style_clean": style_clean, "checks": checks}
+
+
+# What `read_status` concluded about a plugin. UNKNOWN is deliberately distinct
+# from FAILED: a record that is missing, unreadable, of an unrecognized version,
+# or that says a required check never ran means nobody has assessed this code, so
+# the answer is "re-run the checks" rather than "fix your code". It is never
+# reported as CLEAN -- defaulting an unreadable status to a pass would be the
+# vacuous-true defect this file's rules exist to prevent, moved to the read side.
+CLEAN = "clean"
+FAILED = "failed"
+UNKNOWN = "unknown"
+
+_VERDICT_EXIT = {CLEAN: 0, FAILED: 1, UNKNOWN: 3}
+
+
+def read_status(plugin_dir: Path) -> tuple[str, str]:
+    """Read the recorded status for ``plugin_dir``: (verdict, human explanation).
+
+    Verdict is CLEAN, FAILED, or UNKNOWN. Every way of failing to get a
+    trustworthy answer collapses to UNKNOWN, so a caller cannot accidentally
+    treat one as a pass.
+
+    The record is a claim about the tree as it was when the checks ran, not about
+    the tree now. On the CPA side the artifacts directory is committed, so a
+    hand-edit after ``/cpa:style``, a checkout of an older commit, or a merge
+    taking one side's status and the other side's code all present a verdict
+    about different code. Callers that need certainty re-run rather than read.
+    """
+    path = plugin_dir / STATUS_PATH
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return UNKNOWN, "no style status recorded"
+    except OSError as exc:
+        return UNKNOWN, f"style status unreadable: {exc}"
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        return UNKNOWN, f"style status is not valid JSON: {exc}"
+    if not isinstance(payload, dict):
+        return UNKNOWN, "style status is not an object"
+
+    version = payload.get("version")
+    if version != SCHEMA_VERSION:
+        return UNKNOWN, (
+            f"style status version {version!r} is not {SCHEMA_VERSION} "
+            "(written by a different version of this tool)"
+        )
+
+    checks = payload.get("checks")
+    if not isinstance(checks, dict):
+        return UNKNOWN, "style status has no checks"
+    # Presence, not value: an absent key means that check did not run.
+    missing = [name for name in REQUIRED_CHECKS if name not in checks]
+    if missing:
+        return UNKNOWN, f"did not run: {', '.join(missing)}"
+
+    failed = sorted(name for name, passed in checks.items() if passed is not True)
+    if failed:
+        return FAILED, ", ".join(failed)
+
+    if payload.get("style_clean") is not True:
+        return UNKNOWN, "every check passed but style_clean is not true"
+    return CLEAN, "every check passed"
 
 
 def write_status(plugin_dir: Path, payload: dict) -> Path:
@@ -246,6 +321,11 @@ def main(argv: list[str]) -> int:
         "--run", action="store_true", help="run the checks, then record their outcomes"
     )
     mode.add_argument(
+        "--check",
+        action="store_true",
+        help="read the recorded status back (exit 0 clean, 1 failed, 3 unknown)",
+    )
+    mode.add_argument(
         "--record",
         nargs="+",
         metavar="NAME=OUTCOME",
@@ -260,6 +340,11 @@ def main(argv: list[str]) -> int:
     if not plugin_dir.is_dir():
         print(f"style_status: not a directory: {plugin_dir}", file=sys.stderr)
         return 2
+
+    if args.check:
+        verdict, detail = read_status(plugin_dir)
+        print(f"{verdict}: {detail}")
+        return _VERDICT_EXIT[verdict]
 
     if args.run:
         if not args.ruff_config:
