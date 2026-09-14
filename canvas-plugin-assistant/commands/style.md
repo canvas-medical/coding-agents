@@ -7,14 +7,18 @@ description: Format, lint, and type-check the plugin to the Canvas code-style st
 
 Bring the plugin up to the Canvas code-style standard and keep fixing until it
 passes cleanly: ruff formatting and lint, mypy type-checking, and canonical
-manifest formatting. This is the same standard Studio enforces automatically on
-every deploy, so leaving the plugin clean means a deploy is never held up.
+manifest formatting.
 
 **This is a fix-and-repeat loop, not a report.** Run each check, edit the code to
 resolve whatever it flags, and re-run until every check passes with nothing
 remaining. Fix the issues yourself — do not stop to ask which ones to address, and
 do not hand back a list of errors for someone else to resolve. The goal is
 clean-on-exit, reached by iterating.
+
+**Cap the loop at 4 rounds.** Attempt the full fix cycle (Steps 2–5) at most four
+times. If issues still remain after the fourth round, stop iterating — do not keep
+looping. Leave the code in its best state and record the outcome in the style-status
+file (Step 6), so there is a durable record of which checks passed.
 
 ## Instructions
 
@@ -61,9 +65,18 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/format_manifest.py" CANVAS_MANIFEST
 
 This applies the canonical key order and 2-space indent; it is safe to run repeatedly.
 
-### Step 6: Confirm clean
+### Step 6: Record the style status
 
-Run Steps 2–5 once more end to end and confirm they all pass with nothing remaining. Only then is the plugin style-clean. In the rare case a single issue genuinely can't be resolved by editing code (it needs a product or design decision), keep everything else clean and briefly raise just that one point; otherwise there is nothing to report beyond that the plugin is clean.
+Confirm the final state by running Steps 2–5 once more end to end, then write the plugin's style status to `.cpa-workflow-artifacts/style-status.json`. This is a durable, committed record of the build (`.cpa-workflow-artifacts/` is tracked in the repo), not a message to anyone:
+
+```bash
+mkdir -p .cpa-workflow-artifacts
+cat > .cpa-workflow-artifacts/style-status.json <<'EOF'
+{"style_clean": true, "checks": {"ruff": true, "mypy": true, "manifest": true}}
+EOF
+```
+
+Set each subfield under `checks` to that check's outcome — `true` if it passes with nothing remaining, `false` if issues remain after four rounds. Set the top-level `style_clean` to `true` only when every subfield is `true`; otherwise `false`. The per-check fields make it clear *which* check failed; the file is the durable record.
 
 ## CPA Workflow
 
