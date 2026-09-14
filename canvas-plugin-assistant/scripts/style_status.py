@@ -57,15 +57,19 @@ REQUIRED_CHECKS = ("ruff", "mypy")
 CHECK_NAMES = ("ruff", "mypy", "manifest")
 OUTCOMES = ("pass", "fail", "skip")
 
-# ruff and mypy both distinguish "I ran and found problems in your code" from "I
-# could not run" by exit code: 1 is diagnostics, 2 is the tool itself failing --
-# an unparseable or missing config, a bad argument. Only 1 describes the plugin,
-# so exit 2 is recorded as a skipped check rather than a failed one.
+# Exit codes that mean the tool RAN and is describing the plugin: 0 clean, 1
+# diagnostics. Anything else means it could not do its job, so it has said
+# nothing about the code and the check is recorded as skipped, not failed.
+#
+# ruff and mypy both document 2 as "the tool itself failed" -- an unparseable or
+# missing config, a bad argument. Testing the complement rather than `== 2` also
+# covers what the documented contract does not: a signal kill is negative (-9 on
+# an OOM-kill) and a future version could add a code above 2.
 #
 # Verified against ruff 0.15.14 and mypy 1.19: violations, a source syntax error,
 # and a missing input file all exit 1; an unknown rule selector, a missing
 # --config path, and a missing mypy --config-file all exit 2.
-TOOL_FAILED = 2
+TOOL_REPORTED_ON_CODE = (0, 1)
 
 _RUFF_TIMEOUT = 60
 _MYPY_TIMEOUT = 120
@@ -173,7 +177,7 @@ def run_checks(
         outcomes["ruff"] = "skip"
     else:
         returncode, output = check
-        if returncode == TOOL_FAILED:
+        if returncode not in TOOL_REPORTED_ON_CODE:
             print(f"style_status: ruff could not run: {output}", file=sys.stderr)
             outcomes["ruff"] = "skip"
         else:
@@ -189,7 +193,7 @@ def run_checks(
             outcomes["mypy"] = "skip"
         else:
             returncode, output = mypy
-            if returncode == TOOL_FAILED:
+            if returncode not in TOOL_REPORTED_ON_CODE:
                 print(f"style_status: mypy could not run: {output}", file=sys.stderr)
                 outcomes["mypy"] = "skip"
             else:
