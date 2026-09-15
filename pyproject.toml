@@ -17,6 +17,7 @@ dev = [
     # these in its PEP 723 header for the `uv run --script` path in CI.
     "beautifulsoup4>=4.12",
     "html2text>=2024.2.26",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.pytest.ini_options]
