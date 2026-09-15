@@ -19,18 +19,34 @@ Follow this exact workflow. Do NOT deviate.
 ```
 1. USER DESCRIBES PROBLEM (text input)
          ↓
-2. ASK STRUCTURED QUESTIONS (AskUserQuestion tool, 1-2 calls)
+2. CHECK NATIVE COVERAGE (canvas-platform skill) → shapes the questions below
          ↓
-3. RECORD ANSWERS → DO NOT REPEAT QUESTIONS
+3. ASK STRUCTURED QUESTIONS (AskUserQuestion tool, 1-2 calls)
          ↓
-4. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
+4. RECORD ANSWERS → DO NOT REPEAT QUESTIONS
          ↓
-5. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md)
+5. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
          ↓
-6. SHOW FILE PATH → WAIT FOR APPROVAL
+6. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md)
          ↓
-7. ONLY PROCEED AFTER USER APPROVES
+7. SHOW FILE PATH → WAIT FOR APPROVAL
+         ↓
+8. ONLY PROCEED AFTER USER APPROVES
 ```
+
+## Check Native Coverage First
+
+As soon as the user has described the problem — and **before** the first AskUserQuestion call — invoke the **canvas-platform** skill and look up whether Canvas already ships a feature, setting, or admin workflow covering any part of the ask.
+
+This runs first because it changes what is worth asking. The goal is to see if there is a gap between what Canvas already does and what the user wants. Questions probe the gap; if it doesn't exist the user can use the native feature, if it does the goal of the plugin is to successfully fill that gap.
+
+Use what you find to shape the question set:
+
+- **Fully covered** — say so, with the article link, and ask whether the native behavior meets their need before asking anything about a build. If it does, there is no spec to write.
+- **Partly covered** — name the covered part and aim your questions at the uncovered part. If native appointment reminders send one org-wide reminder and the user wants per-provider timing, skip "what should trigger this?" and ask about the per-provider dimension directly.
+- **Not covered** — proceed to the standard question set unchanged.
+
+Surface a match as a pointer, never a verdict: "Canvas may already cover this — see `[Article Title](url)`; does that behavior meet your need?" A wrong "Canvas already handles this" steers the user away from something they need, so let them confirm against their real requirement.
 
 ## Using AskUserQuestion
 
@@ -38,7 +54,7 @@ The AskUserQuestion tool returns the user's selections. **You MUST use those ans
 
 **NEVER repeat questions in text format after using AskUserQuestion.**
 
-### First Question Set (after user describes problem)
+### First Question Set (after user describes problem, informed by the native-coverage check)
 
 Ask these together in ONE AskUserQuestion call with multiple questions:
 

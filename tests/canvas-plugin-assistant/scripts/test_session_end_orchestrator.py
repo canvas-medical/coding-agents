@@ -23,20 +23,17 @@ def hook_info() -> HookInformation:
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
 def test_run__all_hooks_succeed(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
 ):
     """Test run executes all hooks in order when all succeed."""
     mock_costs_logger.run.side_effect = [None]
     mock_user_inputs_logger.run.side_effect = [None]
-    mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
 
     tested = SessionEndOrchestrator
@@ -49,28 +46,22 @@ def test_run__all_hooks_succeed(
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
 
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
-
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
 def test_run__hook_raises_system_exit(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
 ):
     """Test run catches SystemExit from hooks and continues execution."""
     mock_costs_logger.run.side_effect = [SystemExit(0)]
     mock_user_inputs_logger.run.side_effect = [SystemExit(1)]
-    mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
 
     tested = SessionEndOrchestrator
@@ -83,21 +74,16 @@ def test_run__hook_raises_system_exit(
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
 
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
-
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
 def test_run__hook_raises_exception(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
     capsys,
@@ -106,7 +92,6 @@ def test_run__hook_raises_exception(
     tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [ValueError("Cost calculation failed")]
     mock_user_inputs_logger.run.side_effect = [None]
-    mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
 
     tested.run(hook_info)
@@ -116,9 +101,6 @@ def test_run__hook_raises_exception(
 
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
-
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
     captured = capsys.readouterr()
     expected = "Warning: Cost Logger failed: Cost calculation failed"
@@ -129,13 +111,11 @@ def test_run__hook_raises_exception(
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
 def test_run__multiple_hooks_raise_exceptions(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
     capsys,
@@ -144,7 +124,6 @@ def test_run__multiple_hooks_raise_exceptions(
     tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [RuntimeError("Database connection failed")]
     mock_user_inputs_logger.run.side_effect = [IOError("File not found")]
-    mock_git_commit_plugin.run.side_effect = [None]
     mock_sys_exit.side_effect = [None]
 
     tested.run(hook_info)
@@ -154,9 +133,6 @@ def test_run__multiple_hooks_raise_exceptions(
 
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
-
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
     captured = capsys.readouterr()
     exp_error_1 = "Warning: Cost Logger failed: Database connection failed"
@@ -169,22 +145,19 @@ def test_run__multiple_hooks_raise_exceptions(
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
-def test_run__git_commit_plugin_raises_exception(
+def test_run__last_hook_raises_exception(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
     capsys,
 ):
-    """Test run handles GitCommitPlugin failure (last hook)."""
+    """Test run handles the final hook failing and still exits cleanly."""
     tested = SessionEndOrchestrator
     mock_costs_logger.run.side_effect = [None]
-    mock_user_inputs_logger.run.side_effect = [None]
-    mock_git_commit_plugin.run.side_effect = [Exception("Git push failed")]
+    mock_user_inputs_logger.run.side_effect = [Exception("Transcript unreadable")]
     mock_sys_exit.side_effect = [None]
 
     tested.run(hook_info)
@@ -195,11 +168,8 @@ def test_run__git_commit_plugin_raises_exception(
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
 
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
-
     captured = capsys.readouterr()
-    expected = "Warning: Git Commit Plugin failed: Git push failed"
+    expected = "Warning: User Input Logger failed: Transcript unreadable"
     assert expected in captured.err
 
     exp_sys_exit_calls = [call(0)]
@@ -207,20 +177,17 @@ def test_run__git_commit_plugin_raises_exception(
 
 
 @patch("session_end_orchestrator.sys.exit")
-@patch("session_end_orchestrator.GitCommitPlugin")
 @patch("session_end_orchestrator.UserInputsLogger")
 @patch("session_end_orchestrator.CostsLogger")
 def test_run__all_hooks_raise_system_exit(
     mock_costs_logger,
     mock_user_inputs_logger,
-    mock_git_commit_plugin,
     mock_sys_exit,
     hook_info,
 ):
     """Test run handles all hooks raising SystemExit."""
     mock_costs_logger.run.side_effect = [SystemExit(0)]
     mock_user_inputs_logger.run.side_effect = [SystemExit(0)]
-    mock_git_commit_plugin.run.side_effect = [SystemExit(0)]
     mock_sys_exit.side_effect = [None]
 
     tested = SessionEndOrchestrator
@@ -232,9 +199,6 @@ def test_run__all_hooks_raise_system_exit(
 
     exp_user_inputs_logger_calls = [call.run(hook_info)]
     assert mock_user_inputs_logger.mock_calls == exp_user_inputs_logger_calls
-
-    exp_git_commit_plugin_calls = [call.run(hook_info)]
-    assert mock_git_commit_plugin.mock_calls == exp_git_commit_plugin_calls
 
     exp_sys_exit_calls = [call(0)]
     assert mock_sys_exit.mock_calls == exp_sys_exit_calls

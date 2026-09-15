@@ -532,6 +532,7 @@
         - Click to Dial Settings
         - Click to Dial in the Schedule View
         - Click to Dial in the Patient Chart/Registration Page/Claim's View
+        - Plugin Click to Dial
 - [Continuity of Care (CCD) and Referral Note Documents](https://help.canvasmedical.com/articles/3692514885-ccda)
     - Introduction
     - User's Guide
