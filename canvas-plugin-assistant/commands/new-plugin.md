@@ -223,6 +223,7 @@ explicit_package_bases = True
 check_untyped_defs = True
 disallow_incomplete_defs = True
 disallow_untyped_calls = True
+untyped_calls_exclude = canvas_generated,factory,redis # Exempt three third-party packages that ship no usable annotations
 disallow_untyped_decorators = False
 disallow_untyped_defs = True
 error_summary = True
@@ -240,6 +241,15 @@ warn_unused_ignores = True
 
 follow_imports = silent
 ignore_missing_imports = True
+; ignore_missing_imports already makes an un-stubbed third-party import Any.
+; import-untyped fires only on the subset whose stubs happen to be published to
+; PyPI but are absent here, so without this the verdict turns on packaging
+; trivia: `import dateutil` is an error while an obscure library is silently
+; Any. It is also the one class of finding a plugin author cannot act on, since
+; stubs can only be installed into the Studio image. canvas-plugins instead
+; installs the types-* packages it needs; that does not transfer, because the
+; set of libraries a plugin might import is open-ended.
+disable_error_code = import-untyped
 no_implicit_optional = True
 pretty = False
 
