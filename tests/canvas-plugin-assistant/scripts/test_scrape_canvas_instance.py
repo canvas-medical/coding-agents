@@ -1198,5 +1198,6 @@ class TestCanvasInstanceScraper:
             call().__enter__(),
             call().write("# Report Content"),
             call().__exit__(None, None, None),
+            call().close(),
         ]
         assert mock_file_open.mock_calls == exp_file_open_calls
