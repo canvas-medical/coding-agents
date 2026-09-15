@@ -34,6 +34,7 @@ class TestBuildPayload:
             "version": SCHEMA_VERSION,
             "style_clean": True,
             "checks": {"ruff": True, "mypy": True, "manifest": True},
+            "tree_digest": None,
         }
 
     def test_a_failure_is_not_clean(self) -> None:
@@ -68,6 +69,7 @@ class TestBuildPayload:
             "version": SCHEMA_VERSION,
             "style_clean": None,
             "checks": {},
+            "tree_digest": None,
         }
 
     def test_skipped_required_check_is_unknown(self) -> None:
@@ -292,6 +294,7 @@ class TestMain:
             "version": SCHEMA_VERSION,
             "style_clean": False,
             "checks": {"ruff": True, "mypy": False},
+            "tree_digest": style_status.tree_digest(tmp_path),
         }
 
     def test_record_none_writes_the_unknown_status(self, tmp_path: Path) -> None:
@@ -313,6 +316,7 @@ class TestMain:
             "version": SCHEMA_VERSION,
             "style_clean": None,
             "checks": {},
+            "tree_digest": style_status.tree_digest(tmp_path),
         }
 
     def test_run_without_a_ruff_config_records_unknown(self, tmp_path: Path) -> None:
@@ -362,12 +366,25 @@ class TestReadStatus:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(body, encoding="utf-8")
 
+    def _write_record(self, plugin_dir: Path, **payload: object) -> None:
+        """Write a record that is correctly versioned and describes this tree.
+
+        Fills in the version and a matching digest so a test about one rule is
+        not answered by an earlier gate instead.
+        """
+        body = {
+            "version": SCHEMA_VERSION,
+            "tree_digest": style_status.tree_digest(plugin_dir),
+            **payload,
+        }
+        self._write(plugin_dir, json.dumps(body))
+
     def test_clean_when_every_check_passed(self, tmp_path: Path) -> None:
         """The one case that reads as clean."""
-        self._write(
+        self._write_record(
             tmp_path,
-            '{"version": 1, "style_clean": true, '
-            '"checks": {"ruff": true, "mypy": true, "manifest": true}}',
+            style_clean=True,
+            checks={"ruff": True, "mypy": True, "manifest": True},
         )
 
         verdict, _ = style_status.read_status(tmp_path)
@@ -376,9 +393,8 @@ class TestReadStatus:
 
     def test_clean_without_a_manifest_check(self, tmp_path: Path) -> None:
         """A plugin with no manifest still reads clean — it is not a required check."""
-        self._write(
-            tmp_path,
-            '{"version": 1, "style_clean": true, "checks": {"ruff": true, "mypy": true}}',
+        self._write_record(
+            tmp_path, style_clean=True, checks={"ruff": True, "mypy": True}
         )
 
         verdict, _ = style_status.read_status(tmp_path)
@@ -387,9 +403,8 @@ class TestReadStatus:
 
     def test_failed_names_the_check(self, tmp_path: Path) -> None:
         """A recorded failure is FAILED and says which check, so a caller can act."""
-        self._write(
-            tmp_path,
-            '{"version": 1, "style_clean": false, "checks": {"ruff": true, "mypy": false}}',
+        self._write_record(
+            tmp_path, style_clean=False, checks={"ruff": True, "mypy": False}
         )
 
         verdict, detail = style_status.read_status(tmp_path)
@@ -422,12 +437,12 @@ class TestReadStatus:
     def test_an_unrecognized_version_is_unknown(self, tmp_path: Path) -> None:
         """The load-bearing check: a future shape must not be read as this one.
 
-        Everything else degrades safely. Skipping this one silently misreads a v2
-        payload as a v1, which is why it is compared explicitly.
+        Everything else degrades safely. Skipping this one silently misreads a v3
+        payload as a v2, which is why it is compared explicitly.
         """
         self._write(
             tmp_path,
-            '{"version": 2, "style_clean": true, "checks": {"ruff": true, "mypy": true}}',
+            '{"version": 3, "style_clean": true, "checks": {"ruff": true, "mypy": true}}',
         )
 
         verdict, detail = style_status.read_status(tmp_path)
@@ -449,7 +464,7 @@ class TestReadStatus:
         Read by presence, not by value — this is the fail-open case where the
         toolchain was missing.
         """
-        self._write(tmp_path, '{"version": 1, "style_clean": null, "checks": {}}')
+        self._write_record(tmp_path, style_clean=None, checks={})
 
         verdict, detail = style_status.read_status(tmp_path)
 
@@ -458,9 +473,8 @@ class TestReadStatus:
 
     def test_passing_checks_with_a_null_verdict_is_unknown(self, tmp_path: Path) -> None:
         """A self-inconsistent record is not resolved in the optimistic direction."""
-        self._write(
-            tmp_path,
-            '{"version": 1, "style_clean": null, "checks": {"ruff": true, "mypy": true}}',
+        self._write_record(
+            tmp_path, style_clean=None, checks={"ruff": True, "mypy": True}
         )
 
         verdict, _ = style_status.read_status(tmp_path)
@@ -474,11 +488,11 @@ class TestReadStatus:
         would be a claim about the code, when all we know is the record is junk.
         Either way it is never a pass.
         """
-        for value in ('"yes"', "null", "1", "[]"):
-            self._write(
+        for value in ("yes", None, 1, []):
+            self._write_record(
                 tmp_path,
-                '{"version": 1, "style_clean": true, '
-                f'"checks": {{"ruff": {value}, "mypy": true}}}}',
+                style_clean=True,
+                checks={"ruff": value, "mypy": True},
             )
 
             verdict, detail = style_status.read_status(tmp_path)
@@ -488,9 +502,8 @@ class TestReadStatus:
 
     def test_a_literal_false_is_a_real_failure(self, tmp_path: Path) -> None:
         """FAILED is reserved for a check that ran and reported a problem."""
-        self._write(
-            tmp_path,
-            '{"version": 1, "style_clean": false, "checks": {"ruff": false, "mypy": true}}',
+        self._write_record(
+            tmp_path, style_clean=False, checks={"ruff": False, "mypy": True}
         )
 
         verdict, detail = style_status.read_status(tmp_path)
@@ -504,10 +517,7 @@ class TestReadStatus:
         Re-running surfaces the failure anyway, whereas reporting FAILED here
         would present a partial verdict as the whole story.
         """
-        self._write(
-            tmp_path,
-            '{"version": 1, "style_clean": false, "checks": {"ruff": false}}',
-        )
+        self._write_record(tmp_path, style_clean=False, checks={"ruff": False})
 
         verdict, detail = style_status.read_status(tmp_path)
 
@@ -539,3 +549,240 @@ class TestCheckMode:
     def test_exit_3_with_no_record_at_all(self, tmp_path: Path) -> None:
         """A never-checked plugin is unknown, and never silently 0."""
         assert main(["--check", "--plugin-dir", str(tmp_path)]) == 3
+
+
+class TestTreeDigest:
+    """Tests for the fingerprint that tells a current record from a stale one."""
+
+    def test_covers_sources_and_the_manifest(self, tmp_path: Path) -> None:
+        """The digest spans exactly what the checks read."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "CANVAS_MANIFEST.json").write_text("{}", encoding="utf-8")
+
+        covered = {str(path) for path in style_status.digest_files(tmp_path)}
+
+        assert covered == {"handler.py", "CANVAS_MANIFEST.json"}
+
+    def test_ignores_files_no_check_reads(self, tmp_path: Path) -> None:
+        """A README or a lockfile cannot change a verdict, so it cannot stale one."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+
+        (tmp_path / "README.md").write_text("docs\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) == before
+
+    def test_ignores_the_caches_and_the_record_itself(self, tmp_path: Path) -> None:
+        """Writing the record must not invalidate the record it just wrote.
+
+        The artifacts directory holds the status file, and a .py under a cache
+        directory is not the plugin's source, so neither belongs in the digest.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+        for directory in (".cpa-workflow-artifacts", "__pycache__", ".venv"):
+            nested = tmp_path / directory
+            nested.mkdir()
+            (nested / "noise.py").write_text("y = 2\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) == before
+
+    def test_moves_when_a_source_changes(self, tmp_path: Path) -> None:
+        """Editing a checked file changes the digest."""
+        source = tmp_path / "handler.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+
+        source.write_text("x = 2\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) != before
+
+    def test_moves_when_a_file_is_renamed(self, tmp_path: Path) -> None:
+        """Names are hashed too, so a rename is not invisible to the digest."""
+        source = tmp_path / "handler.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+
+        source.rename(tmp_path / "renamed.py")
+
+        assert style_status.tree_digest(tmp_path) != before
+
+
+class TestStaleRecord:
+    """A well-formed record about code that has since changed reads as unknown."""
+
+    def test_editing_a_source_stales_the_record(self, tmp_path: Path) -> None:
+        """The failure a shape check cannot catch: valid JSON, wrong code.
+
+        Every other rejection is about a record that is malformed on its face.
+        This one is entirely well-formed and simply describes a different tree,
+        which is why the digest exists.
+        """
+        source = tmp_path / "handler.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        main(["--record", "ruff=pass", "mypy=pass", "--plugin-dir", str(tmp_path)])
+        assert style_status.read_status(tmp_path)[0] == style_status.CLEAN
+
+        source.write_text("x = 2\n", encoding="utf-8")
+
+        verdict, detail = style_status.read_status(tmp_path)
+        assert verdict == style_status.UNKNOWN
+        assert "different code" in detail
+
+    def test_unknown_not_failed_so_the_advice_is_rerun(self, tmp_path: Path) -> None:
+        """Stale is UNKNOWN (exit 3), never FAILED: nobody has assessed this code."""
+        source = tmp_path / "handler.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        main(["--record", "ruff=pass", "mypy=pass", "--plugin-dir", str(tmp_path)])
+        source.write_text("x = 2\n", encoding="utf-8")
+
+        assert main(["--check", "--plugin-dir", str(tmp_path)]) == 3
+
+    def test_restoring_the_checked_tree_restores_the_verdict(
+        self, tmp_path: Path
+    ) -> None:
+        """The digest is content-addressed, so reverting an edit is not a change."""
+        source = tmp_path / "handler.py"
+        source.write_text("x = 1\n", encoding="utf-8")
+        main(["--record", "ruff=pass", "mypy=pass", "--plugin-dir", str(tmp_path)])
+        source.write_text("x = 2\n", encoding="utf-8")
+
+        source.write_text("x = 1\n", encoding="utf-8")
+
+        assert style_status.read_status(tmp_path)[0] == style_status.CLEAN
+
+    def test_a_record_without_a_digest_is_unknown(self, tmp_path: Path) -> None:
+        """A current-version record that cannot prove freshness is not a pass."""
+        dest = tmp_path / STATUS_PATH
+        dest.parent.mkdir(parents=True)
+        dest.write_text(
+            json.dumps(
+                {
+                    "version": SCHEMA_VERSION,
+                    "style_clean": True,
+                    "checks": {"ruff": True, "mypy": True},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        verdict, detail = style_status.read_status(tmp_path)
+
+        assert verdict == style_status.UNKNOWN
+        assert "digest" in detail
+
+
+class TestStatusReport:
+    """Tests for the structured read, which exists so consumers stop re-parsing."""
+
+    def test_clean_carries_the_per_check_booleans(self, tmp_path: Path) -> None:
+        """A consumer gets the detail without going near the JSON."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        main(
+            [
+                "--record", "ruff=pass", "mypy=pass", "manifest=pass",
+                "--plugin-dir", str(tmp_path),
+            ]
+        )
+
+        report = style_status.inspect_status(tmp_path)
+
+        assert report.verdict == style_status.CLEAN
+        assert report.exit_code == 0
+        assert report.present is True
+        assert report.checks == {"ruff": True, "mypy": True, "manifest": True}
+        assert report.failed == []
+        assert report.style_clean is True
+
+    def test_failed_names_every_failing_check(self, tmp_path: Path) -> None:
+        """`failed` is the list a caller would otherwise parse out by hand."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        main(
+            [
+                "--record", "ruff=fail", "mypy=fail", "manifest=pass",
+                "--plugin-dir", str(tmp_path),
+            ]
+        )
+
+        report = style_status.inspect_status(tmp_path)
+
+        assert report.verdict == style_status.FAILED
+        assert report.exit_code == 1
+        assert report.failed == ["mypy", "ruff"]
+
+    def test_an_untrustworthy_record_carries_no_check_data(
+        self, tmp_path: Path
+    ) -> None:
+        """The rule that keeps the structured read as safe as the verdict.
+
+        Echoing `checks` out of a payload the verdict just rejected would hand a
+        consumer exactly the numbers the guards refused to stand behind, which
+        is the naive-parse defect moved up one layer.
+        """
+        dest = tmp_path / STATUS_PATH
+        dest.parent.mkdir(parents=True)
+        dest.write_text(
+            '{"version": 3, "style_clean": true, "checks": {"ruff": true}}',
+            encoding="utf-8",
+        )
+
+        report = style_status.inspect_status(tmp_path)
+
+        assert report.verdict == style_status.UNKNOWN
+        assert report.exit_code == 3
+        assert report.checks == {}
+        assert report.failed == []
+        assert report.style_clean is None
+
+    def test_a_missing_record_is_reported_absent(self, tmp_path: Path) -> None:
+        """`present` separates "never checked" from "checked and unreadable"."""
+        report = style_status.inspect_status(tmp_path)
+
+        assert report.verdict == style_status.UNKNOWN
+        assert report.present is False
+
+    def test_read_status_is_the_narrow_view(self, tmp_path: Path) -> None:
+        """The tuple API stays the first two fields of the report."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        main(["--record", "ruff=pass", "mypy=fail", "--plugin-dir", str(tmp_path)])
+
+        report = style_status.inspect_status(tmp_path)
+
+        assert style_status.read_status(tmp_path) == (report.verdict, report.detail)
+
+
+class TestJsonOutput:
+    """Tests for --check --json, the cross-repo structured read."""
+
+    def test_emits_the_report_and_keeps_the_exit_code(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        """Structure on stdout, same 0/1/3 contract the command tables document."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        main(["--record", "ruff=pass", "mypy=fail", "--plugin-dir", str(tmp_path)])
+        capsys.readouterr()
+
+        exit_code = main(["--check", "--json", "--plugin-dir", str(tmp_path)])
+
+        emitted = json.loads(capsys.readouterr().out)
+        assert exit_code == 1
+        assert emitted["verdict"] == style_status.FAILED
+        assert emitted["exit_code"] == 1
+        assert emitted["checks"] == {"ruff": True, "mypy": False}
+        assert emitted["failed"] == ["mypy"]
+
+    def test_unknown_emits_json_too(self, tmp_path: Path, capsys) -> None:
+        """A caller parsing stdout gets an object for every verdict, not just good ones."""
+        exit_code = main(["--check", "--json", "--plugin-dir", str(tmp_path)])
+
+        emitted = json.loads(capsys.readouterr().out)
+        assert exit_code == 3
+        assert emitted["verdict"] == style_status.UNKNOWN
+        assert emitted["present"] is False
+
+    def test_json_without_check_is_rejected(self, tmp_path: Path) -> None:
+        """--json describes a read, so pairing it with a write is a usage error."""
+        assert (
+            main(["--record", "ruff=pass", "--json", "--plugin-dir", str(tmp_path)])
+            == 2
+        )

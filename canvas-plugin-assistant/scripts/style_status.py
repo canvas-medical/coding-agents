@@ -15,7 +15,7 @@ Usage:
   style_status.py --run [--plugin-dir DIR] --ruff-config PATH [--mypy-config PATH]
   style_status.py --record ruff=pass mypy=fail manifest=skip [--plugin-dir DIR]
   style_status.py --record none            # nothing ran; records the unknown state
-  style_status.py --check [--plugin-dir DIR]   # read the record back
+  style_status.py --check [--plugin-dir DIR] [--json]   # read the record back
 
 Outcomes are ``pass``, ``fail``, or ``skip``. A skipped check is omitted from
 ``checks`` rather than recorded as passing, so the file never claims a check
@@ -26,6 +26,19 @@ succeeded when it did not run.
   false  a check that ran failed
   null   a required check did not run, so the state is genuinely unknown
 
+``tree_digest`` fingerprints the sources the checks ran against, so a reader can
+tell a verdict about this code from a verdict about code that has changed since.
+That staleness is the one way a record misleads while being entirely well-formed,
+so validating the shape alone would never catch it.
+
+Reading is ``inspect_status``, which returns a ``StatusReport`` carrying the
+verdict, the per-check booleans and the failed names; ``read_status`` is the
+``(verdict, detail)`` view of it, and ``--check --json`` is the same report for
+callers in another language or another repo. Consumers should use one of those
+rather than loading the JSON directly, which is how the checks below get missed.
+For an untrustworthy record the report's per-check fields stay empty instead of
+repeating values out of a payload the verdict has already rejected.
+
 Exit codes:
   --run / --record
     0  the status file was written
@@ -33,20 +46,22 @@ Exit codes:
   --check
     0  the plugin is recorded clean
     1  a check that ran failed
-    3  unknown: no record, unreadable, an unrecognized version, or a required
-       check did not run. Distinct from 1 so a caller can say "re-run the
-       checks" rather than "fix your code". Never 0 -- an unreadable record is
-       not a pass.
+    3  unknown: no record, unreadable, an unrecognized version, a required
+       check that did not run, or a record describing different code. Distinct
+       from 1 so a caller can say "re-run the checks" rather than "fix your
+       code". Never 0 -- an unreadable record is not a pass.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
 # Where the record lives, relative to the plugin directory. CPA commits this
@@ -56,8 +71,12 @@ STATUS_PATH = Path(".cpa-workflow-artifacts") / "style-status.json"
 
 # Bumped whenever the payload shape changes, so `read_status` can reject a shape
 # it does not understand instead of misinterpreting it. A reader that skips this
-# comparison is the one failure that is silent: a future v2 gets read as a v1.
-SCHEMA_VERSION = 1
+# comparison is the one failure that is silent: a future v3 gets read as a v2.
+#
+# v2 adds `tree_digest`. The bump is what makes the upgrade safe: a v1 record
+# carries no digest, so a v2 reader cannot tell whether it describes the current
+# code, and the version check already answers UNKNOWN for it.
+SCHEMA_VERSION = 2
 
 # Checks that must have run for `style_clean` to be a real answer. The manifest
 # check is excluded: it only applies to a plugin that has a CANVAS_MANIFEST.json,
@@ -85,13 +104,80 @@ _RUFF_TIMEOUT = 60
 _MYPY_TIMEOUT = 120
 _MANIFEST_TIMEOUT = 15
 
+# Directories the digest never descends into: the record's own home, and the
+# caches and virtualenvs that churn without the plugin's sources changing.
+# Getting this set wrong is the failure that matters: too narrow and the digest
+# moves on its own, every read answers UNKNOWN, and the nudge becomes noise
+# people learn to click past.
+_DIGEST_SKIP_DIRS = frozenset(
+    {
+        ".cpa-workflow-artifacts",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "node_modules",
+    }
+)
 
-def build_payload(outcomes: dict[str, str]) -> dict:
+# What the checks actually read: Python sources for ruff and mypy, the manifest
+# for the formatter. A change anywhere else cannot change a verdict, so folding
+# it into the digest would only invalidate records for no reason.
+_DIGEST_SUFFIXES = frozenset({".py"})
+_DIGEST_NAMES = frozenset({"CANVAS_MANIFEST.json"})
+
+
+def digest_files(plugin_dir: Path) -> list[Path]:
+    """The files the digest covers, sorted, relative to ``plugin_dir``."""
+    found = []
+    for path in plugin_dir.rglob("*"):
+        relative = path.relative_to(plugin_dir)
+        if _DIGEST_SKIP_DIRS.intersection(relative.parts):
+            continue
+        if not path.is_file():
+            continue
+        if path.suffix in _DIGEST_SUFFIXES or path.name in _DIGEST_NAMES:
+            found.append(relative)
+    return sorted(found)
+
+
+def tree_digest(plugin_dir: Path) -> str | None:
+    """A digest of the sources the checks looked at, or None if it can't be taken.
+
+    Recorded alongside the outcomes so a reader can tell a verdict about *this*
+    code from a verdict about code that has since changed. That is the one way a
+    record can mislead while being entirely well-formed, which no amount of
+    validating its shape would catch.
+
+    Names go into the hash as well as contents, so renaming a file or adding an
+    empty one moves the digest. None on an unreadable tree: without a digest the
+    record cannot be shown to be current, and every reader treats that as
+    unknown rather than assuming it is.
+    """
+    accumulator = hashlib.sha256()
+    try:
+        for relative in digest_files(plugin_dir):
+            accumulator.update(str(relative).encode("utf-8"))
+            accumulator.update(b"\0")
+            accumulator.update((plugin_dir / relative).read_bytes())
+            accumulator.update(b"\0")
+    except OSError as exc:
+        print(f"style_status: could not digest the tree: {exc}", file=sys.stderr)
+        return None
+    return accumulator.hexdigest()
+
+
+def build_payload(outcomes: dict[str, str], digest: str | None = None) -> dict:
     """Assemble the status payload from per-check outcomes.
 
     ``outcomes`` maps a check name to ``pass``/``fail``/``skip``. Skipped checks
     are dropped from ``checks``; a required check that is skipped or absent makes
     ``style_clean`` null rather than vacuously true.
+
+    ``digest`` is the ``tree_digest`` of the sources the checks ran against, and
+    is what lets a later read tell whether the code has moved on since.
     """
     checks = {
         name: outcome == "pass"
@@ -102,10 +188,15 @@ def build_payload(outcomes: dict[str, str]) -> dict:
         style_clean = None
     else:
         style_clean = all(checks.values())
-    return {"version": SCHEMA_VERSION, "style_clean": style_clean, "checks": checks}
+    return {
+        "version": SCHEMA_VERSION,
+        "style_clean": style_clean,
+        "checks": checks,
+        "tree_digest": digest,
+    }
 
 
-# What `read_status` concluded about a plugin. UNKNOWN is deliberately distinct
+# What `inspect_status` concluded about a plugin. UNKNOWN is deliberately distinct
 # from FAILED: a record that is missing, unreadable, of an unrecognized version,
 # or that says a required check never ran means nobody has assessed this code, so
 # the answer is "re-run the checks" rather than "fix your code". It is never
@@ -118,44 +209,90 @@ UNKNOWN = "unknown"
 _VERDICT_EXIT = {CLEAN: 0, FAILED: 1, UNKNOWN: 3}
 
 
-def read_status(plugin_dir: Path) -> tuple[str, str]:
-    """Read the recorded status for ``plugin_dir``: (verdict, human explanation).
+@dataclass(frozen=True)
+class StatusReport:
+    """Everything a caller may safely conclude from a recorded status.
 
-    Verdict is CLEAN, FAILED, or UNKNOWN. Every way of failing to get a
-    trustworthy answer collapses to UNKNOWN, so a caller cannot accidentally
-    treat one as a pass.
+    ``verdict`` and ``detail`` are the pair ``read_status`` returns. The rest is
+    the structure a consumer would otherwise re-derive by parsing the JSON
+    itself, which is exactly how the checks below get skipped.
 
-    The record is a claim about the tree as it was when the checks ran, not about
-    the tree now. On the CPA side the artifacts directory is committed, so a
-    hand-edit after ``/cpa:style``, a checkout of an older commit, or a merge
-    taking one side's status and the other side's code all present a verdict
-    about different code. Callers that need certainty re-run rather than read.
+    The per-check fields are populated ONLY for a record that validated. An
+    untrustworthy one leaves them empty rather than echoing values out of a
+    payload the verdict has just rejected, so a caller cannot act on numbers the
+    verdict does not stand behind.
+    """
+
+    verdict: str
+    detail: str
+    present: bool = False
+    checks: dict[str, bool] = field(default_factory=dict)
+    failed: list[str] = field(default_factory=list)
+    style_clean: bool | None = None
+    path: str = ""
+
+    @property
+    def exit_code(self) -> int:
+        """This verdict as a process exit code: 0 clean, 1 failed, 3 unknown."""
+        return _VERDICT_EXIT[self.verdict]
+
+    def as_dict(self) -> dict:
+        """The report as JSON-serializable data, for ``--check --json``."""
+        return {
+            "verdict": self.verdict,
+            "detail": self.detail,
+            "exit_code": self.exit_code,
+            "present": self.present,
+            "checks": dict(self.checks),
+            "failed": list(self.failed),
+            "style_clean": self.style_clean,
+            "path": self.path,
+        }
+
+
+def inspect_status(plugin_dir: Path) -> StatusReport:
+    """Read the recorded status for ``plugin_dir`` as a structured report.
+
+    Every way of failing to get a trustworthy answer collapses to UNKNOWN, so a
+    caller cannot accidentally treat one as a pass.
+
+    That includes a record about code that has since changed. The record is a
+    claim about the tree the checks ran against, and on the CPA side the
+    artifacts directory is committed, so a hand-edit after ``/cpa:style``, a
+    checkout of an older commit, or a merge taking one side's status and the
+    other side's code all present a verdict about a different tree. Comparing
+    ``tree_digest`` is what turns that from invisible into UNKNOWN.
     """
     path = plugin_dir / STATUS_PATH
+    location = str(path)
+
+    def unknown(detail: str, present: bool = True) -> StatusReport:
+        return StatusReport(UNKNOWN, detail, present=present, path=location)
+
     try:
         raw = path.read_text(encoding="utf-8")
     except FileNotFoundError:
-        return UNKNOWN, "no style status recorded"
+        return unknown("no style status recorded", present=False)
     except OSError as exc:
-        return UNKNOWN, f"style status unreadable: {exc}"
+        return unknown(f"style status unreadable: {exc}")
 
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError as exc:
-        return UNKNOWN, f"style status is not valid JSON: {exc}"
+        return unknown(f"style status is not valid JSON: {exc}")
     if not isinstance(payload, dict):
-        return UNKNOWN, "style status is not an object"
+        return unknown("style status is not an object")
 
     version = payload.get("version")
     if version != SCHEMA_VERSION:
-        return UNKNOWN, (
+        return unknown(
             f"style status version {version!r} is not {SCHEMA_VERSION} "
             "(written by a different version of this tool)"
         )
 
     checks = payload.get("checks")
     if not isinstance(checks, dict):
-        return UNKNOWN, "style status has no checks"
+        return unknown("style status has no checks")
 
     # A value that is neither true nor false is a corrupt record, not a dirty
     # plugin, so it is UNKNOWN rather than FAILED. FAILED is reserved for a
@@ -164,23 +301,60 @@ def read_status(plugin_dir: Path) -> tuple[str, str]:
         name for name, passed in checks.items() if passed is not True and passed is not False
     )
     if malformed:
-        return UNKNOWN, f"non-boolean result for: {', '.join(malformed)}"
+        return unknown(f"non-boolean result for: {', '.join(malformed)}")
 
     # Presence, not value: an absent key means that check did not run. Checked
-    # before failures on purpose — an incomplete assessment dominates a known
+    # before failures on purpose -- an incomplete assessment dominates a known
     # failure, because re-running surfaces that failure anyway while the reverse
     # would report a partial verdict as the whole story.
     missing = [name for name in REQUIRED_CHECKS if name not in checks]
     if missing:
-        return UNKNOWN, f"did not run: {', '.join(missing)}"
+        return unknown(f"did not run: {', '.join(missing)}")
+
+    # Freshness last among the rejections, because "this describes different
+    # code" is only worth saying once the record is known to be well-formed and
+    # complete. A v1 record never reaches here: it fails the version check.
+    recorded = payload.get("tree_digest")
+    if not isinstance(recorded, str):
+        return unknown("style status carries no tree digest")
+    current = tree_digest(plugin_dir)
+    if current is None:
+        return unknown("could not digest the plugin to tell whether the record is current")
+    if current != recorded:
+        return unknown("recorded against different code; the plugin changed after the checks ran")
 
     failed = sorted(name for name, passed in checks.items() if passed is False)
     if failed:
-        return FAILED, ", ".join(failed)
+        return StatusReport(
+            FAILED,
+            ", ".join(failed),
+            present=True,
+            checks=dict(checks),
+            failed=failed,
+            style_clean=payload.get("style_clean"),
+            path=location,
+        )
 
     if payload.get("style_clean") is not True:
-        return UNKNOWN, "every check passed but style_clean is not true"
-    return CLEAN, "every check passed"
+        return unknown("every check passed but style_clean is not true")
+    return StatusReport(
+        CLEAN,
+        "every check passed",
+        present=True,
+        checks=dict(checks),
+        style_clean=True,
+        path=location,
+    )
+
+
+def read_status(plugin_dir: Path) -> tuple[str, str]:
+    """The recorded verdict for ``plugin_dir`` as ``(verdict, explanation)``.
+
+    The narrow view of :func:`inspect_status`, for callers that only branch on
+    the verdict.
+    """
+    report = inspect_status(plugin_dir)
+    return report.verdict, report.detail
 
 
 def write_status(plugin_dir: Path, payload: dict) -> Path:
@@ -347,7 +521,16 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--plugin-dir", default=".", help="the plugin directory")
     parser.add_argument("--ruff-config", help="path to the Canvas ruff ruleset")
     parser.add_argument("--mypy-config", help="path to the mypy config")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="with --check, print the full report as JSON (exit code unchanged)",
+    )
     args = parser.parse_args(argv)
+
+    if args.json and not args.check:
+        print("style_status: --json applies to --check", file=sys.stderr)
+        return 2
 
     plugin_dir = Path(args.plugin_dir).resolve()
     if not plugin_dir.is_dir():
@@ -355,9 +538,12 @@ def main(argv: list[str]) -> int:
         return 2
 
     if args.check:
-        verdict, detail = read_status(plugin_dir)
-        print(f"{verdict}: {detail}")
-        return _VERDICT_EXIT[verdict]
+        report = inspect_status(plugin_dir)
+        if args.json:
+            print(json.dumps(report.as_dict(), sort_keys=True))
+        else:
+            print(f"{report.verdict}: {report.detail}")
+        return report.exit_code
 
     if args.run:
         if not args.ruff_config:
@@ -378,7 +564,10 @@ def main(argv: list[str]) -> int:
             print(f"style_status: {exc}", file=sys.stderr)
             return 2
 
-    payload = build_payload(outcomes)
+    # Digested after the checks, never before: ruff rewrites files as it fixes
+    # them, so a digest taken first would describe a tree that no longer exists
+    # by the time the record lands.
+    payload = build_payload(outcomes, tree_digest(plugin_dir))
     try:
         dest = write_status(plugin_dir, payload)
     except OSError as exc:
