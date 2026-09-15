@@ -97,6 +97,26 @@ uv run mypy --config-file=mypy.ini .
 
 **If errors exist:** Flag this as a blocker.
 
+### 3a. Canvas Code Style
+
+Read back the style status recorded by `/cpa:style`:
+
+```bash
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/style_status.py" --check
+```
+
+It prints the verdict and exits:
+
+| Exit | Meaning | What to do |
+|------|---------|------------|
+| 0 | every check passed | Mark style as passing. |
+| 1 | a check failed | Flag as a blocker and offer to run `/cpa:style`. |
+| 3 | unknown | Run `/cpa:style`, then re-check. |
+
+Exit 3 covers no record, an unreadable one, an unrecognized version, and a required check that never ran — all of which mean nothing has assessed this code. Treat it as "not yet checked," never as a pass.
+
+The record describes the tree as it was when the checks ran, not the tree now, so a `0` here is not a substitute for `/cpa:style` if the code has changed since. When in doubt, re-run.
+
 ### 4. Test Coverage
 
 Run coverage check:
@@ -521,6 +541,7 @@ This command is the **final step** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit

@@ -202,6 +202,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.19.0",
+    "ruff==0.15.14",
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
     "pytest-django>=4.7.0",
@@ -223,6 +224,10 @@ explicit_package_bases = True
 check_untyped_defs = True
 disallow_incomplete_defs = True
 disallow_untyped_calls = True
+; Exempt three third-party packages that ship no usable annotations. Same
+; exclusion canvas-plugins uses, for the reason it cites (typeshed#10592).
+; Must stay on its own line: mypy's config parser has no inline comments.
+untyped_calls_exclude = canvas_generated,factory,redis
 disallow_untyped_decorators = False
 disallow_untyped_defs = True
 error_summary = True
@@ -240,6 +245,15 @@ warn_unused_ignores = True
 
 follow_imports = silent
 ignore_missing_imports = True
+; ignore_missing_imports already makes an un-stubbed third-party import Any.
+; import-untyped fires only on the subset whose stubs happen to be published to
+; PyPI but are absent here, so without this the verdict turns on packaging
+; trivia: `import dateutil` is an error while an obscure library is silently
+; Any. It is also the one class of finding a plugin author cannot act on, since
+; stubs can only be installed into the Studio image. canvas-plugins instead
+; installs the types-* packages it needs; that does not transfer, because the
+; set of libraries a plugin might import is open-ended.
+disable_error_code = import-untyped
 no_implicit_optional = True
 pretty = False
 
@@ -382,6 +396,7 @@ This command is **step 2** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
