@@ -563,20 +563,96 @@ const scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
 const socket = new WebSocket(scheme + "//" + window.location.host + path);
 ```
 
-### Reconnect
+### Surviving deploys & reconnection
 
-Browsers eventually drop idle WebSockets. Reconnect on `close` with a
-short backoff so the modal survives network blips:
+Canvas runs blue/green deploys during the working day. At cutover the
+old container drains and your WebSocket is closed mid-session; the
+client reconnects onto a freshly booted process. Three facts drive the
+design:
+
+- **Broadcasts are fire-and-forget and ephemeral.** `Broadcast` delivers
+  only to clients connected *right now*. There is no replay, no
+  per-client queue, and no acknowledgement. Anything broadcast while the
+  socket was down — including the entire deploy window — is gone for
+  good; the plugin-runner process that would have sent it may not even
+  exist anymore.
+- **The plugin process holds no durable state.** Module globals reset on
+  every deploy (this is why the cache-bust token regenerates). Never
+  park pending updates in an in-memory list expecting them to survive a
+  restart. The only durable state is Canvas data itself, read back
+  through the SDK.
+- **Disconnects are synchronized.** A deploy drops every client's socket
+  at the same instant, so they all reconnect together. A fixed reconnect
+  delay turns that into a thundering herd against the single container
+  that just booted.
+
+So the rule is: **push is a hint, pull is the truth.** The WebSocket only
+tells the client "something may have changed" — the client re-fetches the
+authoritative snapshot from your `SimpleAPI` endpoint to learn *what*.
+(This mirrors how the larger Canvas scribe pipeline stays deploy-safe:
+realtime frames are a nudge, rendered results are pulled from a durable
+store, and session state lives in a cache the server reloads after a
+restart — never in a worker's memory.)
+
+Concretely, a deploy-resilient client:
+
+1. **Re-fetches on every (re)connect, not just the first.** Wire the same
+   "load current state" fetch to the socket's `open` event so the initial
+   page load and every reconnect run identical reconciliation — anything
+   missed during the gap is picked up immediately:
 
 ```javascript
-socket.addEventListener("close", () => {
-    setStatus("Reconnecting…");
-    setTimeout(connectWebSocket, 4000);
+socket.addEventListener("open", () => {
+    setStatus("Live");
+    reconnectAttempts = 0;
+    loadCurrentState();  // reconcile — catches anything missed while disconnected
 });
 ```
 
-Surface the live state in the UI (a small pill is sufficient) so the
-user knows whether they're seeing live data or a stale snapshot.
+2. **Backs off exponentially with jitter and a cap**, so synchronized
+   reconnects spread out instead of hammering the new container:
+
+```javascript
+let reconnectAttempts = 0;
+function scheduleReconnect() {
+    const base = Math.min(1000 * 2 ** reconnectAttempts, 30000);  // cap at 30s
+    const delay = base / 2 + Math.random() * (base / 2);          // full jitter
+    reconnectAttempts += 1;
+    setStatus("Reconnecting…");
+    setTimeout(connectWebSocket, delay);
+}
+socket.addEventListener("close", scheduleReconnect);
+```
+
+3. **Reconnects immediately when the browser regains connectivity**,
+   instead of waiting out a backoff timer:
+
+```javascript
+window.addEventListener("online", () => { reconnectAttempts = 0; connectWebSocket(); });
+```
+
+4. **Surfaces the live/reconnecting state in the UI** (a small pill is
+   enough) so the user knows whether they're seeing live data or a stale
+   snapshot — and because going green re-runs the fetch, "Live" means the
+   snapshot is actually fresh, not merely "socket connected."
+
+An idle heartbeat is optional but cheap: a deploy can leave a half-open
+socket (the new container accepts traffic before the old one's FIN
+arrives), so a periodic ping that closes-and-reconnects on a missing
+response detects the dead path faster than waiting for the OS TCP timeout.
+
+### Mutations must be idempotent across a deploy
+
+A blue/green cutover can also drop the *response* to an in-flight
+mutating `POST` (assign-to-me, mark-complete, originate-command). The
+client cannot tell "never applied" from "applied, response lost," so a
+deploy-resilient client retries — which means the server must not
+double-apply. Make mutating endpoints idempotent: re-check current state
+before emitting the effect ("is this task already assigned to me? already
+complete?") and no-op if the desired state already holds, rather than
+blindly emitting a second effect. Pre-checking the state you're about to
+change is the same discipline rule 4 already calls for; here it doubles
+as retry safety.
 
 ---
 
