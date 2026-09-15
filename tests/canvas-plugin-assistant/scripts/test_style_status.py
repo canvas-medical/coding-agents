@@ -554,14 +554,33 @@ class TestCheckMode:
 class TestTreeDigest:
     """Tests for the fingerprint that tells a current record from a stale one."""
 
-    def test_covers_sources_and_the_manifest(self, tmp_path: Path) -> None:
-        """The digest spans exactly what the checks read."""
+    def test_covers_sources_the_manifest_and_the_mypy_config(
+        self, tmp_path: Path
+    ) -> None:
+        """The digest spans exactly the inputs that decide a verdict."""
         (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
         (tmp_path / "CANVAS_MANIFEST.json").write_text("{}", encoding="utf-8")
+        (tmp_path / "mypy.ini").write_text("[mypy]\n", encoding="utf-8")
 
         covered = {str(path) for path in style_status.digest_files(tmp_path)}
 
-        assert covered == {"handler.py", "CANVAS_MANIFEST.json"}
+        assert covered == {"handler.py", "CANVAS_MANIFEST.json", "mypy.ini"}
+
+    def test_moves_when_the_plugin_mypy_config_changes(self, tmp_path: Path) -> None:
+        """A plugin's own mypy.ini wins over the fallback, so it decides the verdict.
+
+        Relaxing a rule in it can turn a recorded mypy failure into a pass
+        without any source file changing, so a digest that ignored it would
+        report a verdict reached under rules that no longer apply.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        config = tmp_path / "mypy.ini"
+        config.write_text("[mypy]\nwarn_return_any = True\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+
+        config.write_text("[mypy]\nwarn_return_any = False\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) != before
 
     def test_ignores_files_no_check_reads(self, tmp_path: Path) -> None:
         """A README or a lockfile cannot change a verdict, so it cannot stale one."""
