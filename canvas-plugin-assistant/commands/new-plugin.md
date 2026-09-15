@@ -223,7 +223,10 @@ explicit_package_bases = True
 check_untyped_defs = True
 disallow_incomplete_defs = True
 disallow_untyped_calls = True
-untyped_calls_exclude = canvas_generated,factory,redis # Exempt three third-party packages that ship no usable annotations
+; Exempt three third-party packages that ship no usable annotations. Same
+; exclusion canvas-plugins uses, for the reason it cites (typeshed#10592).
+; Must stay on its own line: mypy's config parser has no inline comments.
+untyped_calls_exclude = canvas_generated,factory,redis
 disallow_untyped_decorators = False
 disallow_untyped_defs = True
 error_summary = True
