@@ -123,10 +123,15 @@ _DIGEST_SKIP_DIRS = frozenset(
 )
 
 # What the checks actually read: Python sources for ruff and mypy, the manifest
-# for the formatter. A change anywhere else cannot change a verdict, so folding
-# it into the digest would only invalidate records for no reason.
+# for the formatter, and a plugin's own mypy.ini, which wins over the fallback
+# ruleset and so decides what mypy reports. A change anywhere else cannot change
+# a verdict, so folding it in would only invalidate records for no reason.
+#
+# The ruff ruleset is deliberately absent: it is passed by path from outside the
+# plugin, so a per-plugin digest cannot see it. Its version is pinned and its
+# content is CI-synced, which is what holds it steady instead.
 _DIGEST_SUFFIXES = frozenset({".py"})
-_DIGEST_NAMES = frozenset({"CANVAS_MANIFEST.json"})
+_DIGEST_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
 
 
 def digest_files(plugin_dir: Path) -> list[Path]:
