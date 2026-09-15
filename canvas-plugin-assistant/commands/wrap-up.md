@@ -113,9 +113,11 @@ It prints the verdict and exits:
 | 1 | a check failed | Flag as a blocker and offer to run `/cpa:style`. |
 | 3 | unknown | Run `/cpa:style`, then re-check. |
 
-Exit 3 covers no record, an unreadable one, an unrecognized version, and a required check that never ran — all of which mean nothing has assessed this code. Treat it as "not yet checked," never as a pass.
+Exit 3 covers no record, an unreadable one, an unrecognized version, a required check that never ran, and a record describing code that has changed since. All of them mean nothing has assessed the code in front of you. Treat it as "not yet checked," never as a pass.
 
-The record describes the tree as it was when the checks ran, not the tree now, so a `0` here is not a substitute for `/cpa:style` if the code has changed since. When in doubt, re-run.
+That last case is why a `0` can be trusted: the record carries a digest of the sources the checks ran against, so editing a `.py` or the manifest after `/cpa:style` turns a stale `0` into a `3` rather than leaving it to look current.
+
+Add `--json` to the same command for the full report (the verdict, the per-check booleans, and the names of the failing checks) when you want to act on which check failed rather than just whether one did. The exit code is identical either way.
 
 ### 4. Test Coverage
 

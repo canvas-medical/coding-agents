@@ -43,7 +43,7 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/style_status.py" --check
 |------|---------|------------|
 | 0 | every check passed | Continue. |
 | 1 | a check failed | Tell the user, offer to run `/cpa:style`, continue if they decline. |
-| 3 | unknown (no record, unreadable, or a check never ran) | Same: offer `/cpa:style`, continue if they decline. |
+| 3 | unknown (no record, unreadable, a check never ran, or the code changed after the checks did) | Same: offer `/cpa:style`, continue if they decline. |
 
 **This is advisory — never refuse to deploy on style.** Deploying deliberately-dirty code for a quick UAT pass is legitimate, and the Studio deploy path treats style as a soft gate for the same reason. Print the verdict, offer the fix, respect the answer.
 
