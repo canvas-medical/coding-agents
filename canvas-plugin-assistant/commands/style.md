@@ -24,14 +24,23 @@ file (Step 6), so there is a durable record of which checks passed.
 
 **Execution standard:** Run Python scripts and Python-based tooling with `uv run ...` (for scripts, `uv run python <script>.py ...`). Do not invoke bare `python` or `pip`.
 
+ruff and mypy are resolved with `uv run --no-project --with <pinned spec>`, exactly as written below. Three things depend on that form, so do not shorten it:
+
+- a plugin does not declare either tool, so a plain `uv run ruff` exits 2 with "Failed to spawn: ruff"
+- `--no-project` is what stops uv creating a `.venv` inside the plugin directory
+- `--with` pins the version, so the verdict comes from the ruleset rather than from whatever the machine has installed
+
+Step 6 records the verdict using these same pinned versions, so iterating here and recording there cannot disagree.
+
 ### Step 1: Locate the plugin
 
 ```bash
-uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --require-plugin-dir
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" \
+  --require-plugin-dir --require-style-tools
 cd "$CPA_PLUGIN_DIR"
 ```
 
-If the environment validation fails, resolve the reported environment issue first, then continue.
+If the environment validation fails, resolve the reported environment issue first, then continue. `--require-style-tools` confirms `uv` can actually resolve ruff and mypy before the loop starts; without it, an unresolvable toolchain surfaces much later as a verdict of `null` rather than as a setup problem.
 
 The Canvas ruff ruleset lives in `${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml` — a verbatim, CI-synced copy of `canvas-plugins/pyproject.toml`, the same rules that gate every other Canvas Python repo.
 
@@ -40,13 +49,15 @@ Every ruff command below passes `--extend-exclude .venv`. That ruleset sets `exc
 ### Step 2: Format
 
 ```bash
-uv run ruff format --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+uv run --no-project --with ruff==0.15.14 \
+  ruff format --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
 ```
 
 ### Step 3: Lint, auto-fix, then fix the rest
 
 ```bash
-uv run ruff check --fix --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+uv run --no-project --with ruff==0.15.14 \
+  ruff check --fix --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
 ```
 
 ruff fixes what it can automatically. For every remaining violation — commonly a missing google-style docstring (`D` rules), an unused name, or a simplification (`SIM`) — edit the code to resolve it, then run this step again. Repeat until ruff reports nothing left.
@@ -54,7 +65,8 @@ ruff fixes what it can automatically. For every remaining violation — commonly
 ### Step 4: Type-check
 
 ```bash
-uv run mypy --config-file=mypy.ini .
+uv run --no-project --with "mypy>=1.19.0,<2" \
+  mypy --config-file=mypy.ini .
 ```
 
 For each mypy error, edit the code to fix it (add the missing annotation, correct the type, handle the `None` case), then re-run. Repeat until mypy passes with no errors.
