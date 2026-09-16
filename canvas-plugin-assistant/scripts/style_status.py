@@ -126,6 +126,31 @@ _PROBE_TIMEOUT = 120
 PINNED_RUFF = "ruff==0.15.14"
 BOUNDED_MYPY = "mypy>=1.19.0,<2"
 
+# The canonical mypy ruleset, used when a plugin ships no mypy.ini of its own.
+# Without it mypy is skipped without ever being invoked, and because mypy is in
+# REQUIRED_CHECKS that leaves `style_clean` null and `--check` answering UNKNOWN
+# no matter how many rounds run. That is the normal case rather than an edge
+# one: of five recently sampled Studio-generated plugins, none had a mypy.ini
+# and none had a pyproject.toml. Studio's gate has always had this fallback.
+FALLBACK_MYPY_CONFIG = Path(__file__).parent.parent / "config" / "mypy.ini"
+
+
+def resolve_mypy_config(plugin_dir: Path, mypy_config: str | None) -> Path | None:
+    """The mypy config to use, preferring the plugin's own over the fallback.
+
+    Returns None only when neither resolves, which is the one case where
+    skipping mypy is the honest answer.
+    """
+    if mypy_config:
+        candidate = Path(mypy_config)
+        if not candidate.is_absolute():
+            candidate = plugin_dir / candidate
+        if candidate.is_file():
+            return candidate
+    if FALLBACK_MYPY_CONFIG.is_file():
+        return FALLBACK_MYPY_CONFIG
+    return None
+
 # Directories the digest never descends into: the record's own home, and the
 # caches and virtualenvs that churn without the plugin's sources changing.
 # Getting this set wrong is the failure that matters: too narrow and the digest
@@ -545,7 +570,13 @@ def run_checks(
             if returncode != 0:
                 print(output, file=sys.stderr)
 
-    if not (mypy_config and Path(mypy_config).is_file()):
+    resolved_mypy_config = resolve_mypy_config(plugin_dir, mypy_config)
+    if resolved_mypy_config is None:
+        print(
+            "style_status: no mypy config available, including the fallback at "
+            f"{FALLBACK_MYPY_CONFIG} — skipping the mypy check",
+            file=sys.stderr,
+        )
         outcomes["mypy"] = "skip"
     elif not tool_available(BOUNDED_MYPY, "mypy", plugin_dir):
         print(
@@ -556,7 +587,12 @@ def run_checks(
         outcomes["mypy"] = "skip"
     else:
         mypy = _run(
-            tool_cmd(BOUNDED_MYPY, "mypy", "--config-file", mypy_config, "."),
+            tool_cmd(
+                BOUNDED_MYPY,
+                "mypy",
+                "--config-file", str(resolved_mypy_config),
+                ".",
+            ),
             plugin_dir,
             _MYPY_TIMEOUT,
         )
