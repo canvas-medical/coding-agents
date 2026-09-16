@@ -940,6 +940,29 @@ class TestRuffStaysOutOfTheVirtualenv:
         assert outcomes["ruff"] == "fail"
         assert "src/s.py" in capsys.readouterr().err
 
+    def test_both_subcommands_accept_the_exclusion(
+        self, tmp_path: Path, capsys, monkeypatch, shipped_ruff_config: str
+    ) -> None:
+        """The control for the test above: the exclusion must be a valid argument.
+
+        `ruff format` and `ruff check` do not accept the same flags --
+        `--extend-exclude` is valid for check and rejected by format with exit 2.
+        A rejected argument means formatting silently stops happening, and since
+        a format that never ran also leaves `.venv` untouched, the exclusion test
+        passes for the wrong reason. Asserting on the rewritten file cannot tell
+        them apart either, because `ruff check --fix` rewrites the same file.
+
+        So this asserts the thing that actually differs: nothing reported that it
+        could not run.
+        """
+        self._tree(tmp_path, monkeypatch)
+
+        style_status.run_checks(
+            tmp_path, ruff_config=shipped_ruff_config, mypy_config=None
+        )
+
+        assert "could not run" not in capsys.readouterr().err
+
     def test_generated_code_stays_excluded(
         self, tmp_path: Path, capsys, monkeypatch, shipped_ruff_config: str
     ) -> None:
