@@ -2,7 +2,10 @@
 
 import json
 import os
+import shutil
 from pathlib import Path
+
+import pytest
 
 import style_status
 from style_status import (
@@ -19,6 +22,25 @@ from style_status import (
 def _read_status(plugin_dir: Path) -> dict:
     """Load the status file written under `plugin_dir`."""
     return json.loads((plugin_dir / STATUS_PATH).read_text(encoding="utf-8"))
+
+
+# The real ruleset the workflow ships, not a hand-copied subset. Tests that
+# assert on what ruff includes or excludes have to read this file, because the
+# behavior under test is the interaction between its `exclude` and the command
+# line.
+SHIPPED_RUFF_CONFIG = (
+    Path(__file__).parents[3] / "canvas-plugin-assistant" / "config" / "pyproject.toml"
+)
+
+
+@pytest.fixture
+def shipped_ruff_config() -> str:
+    """The shipped ruff ruleset, skipping when ruff itself is unavailable."""
+    if shutil.which("ruff") is None:
+        pytest.skip("ruff is not on PATH")
+    if not SHIPPED_RUFF_CONFIG.is_file():
+        pytest.skip(f"shipped ruff config is missing at {SHIPPED_RUFF_CONFIG}")
+    return str(SHIPPED_RUFF_CONFIG)
 
 
 class TestBuildPayload:
@@ -847,3 +869,66 @@ class TestJsonOutput:
             main(["--record", "ruff=pass", "--json", "--plugin-dir", str(tmp_path)])
             == 2
         )
+
+
+class TestRuffStaysOutOfTheVirtualenv:
+    """The checks must not walk into the plugin's own .venv.
+
+    The Canvas ruleset sets `exclude`, which replaces ruff's built-in
+    exclusions, so `.venv` is not excluded by the config. `ruff check --fix`
+    would then rewrite installed dependency source. These run the real shipped
+    ruleset rather than a hand-copied subset, because the defect lives in the
+    interaction between that file's `exclude` and the command line.
+    """
+
+    def _tree(self, tmp_path: Path) -> dict[str, Path]:
+        """A non-git plugin dir holding a vendored file, generated code and a source."""
+        unformatted = "import os,sys\ndef f( a,b ):\n  return a+b\n"
+        paths = {
+            "vendored": tmp_path / ".venv" / "site-packages" / "vend" / "v.py",
+            "generated": tmp_path / "canvas_generated" / "g.py",
+            "source": tmp_path / "src" / "s.py",
+        }
+        for path in paths.values():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(unformatted, encoding="utf-8")
+        return paths
+
+    def test_a_vendored_file_is_left_untouched(
+        self, tmp_path: Path, capsys, shipped_ruff_config: str
+    ) -> None:
+        """ruff neither reformats nor --fixes anything under .venv."""
+        paths = self._tree(tmp_path)
+        before = paths["vendored"].read_bytes()
+
+        outcomes = style_status.run_checks(
+            tmp_path, ruff_config=shipped_ruff_config, mypy_config=None
+        )
+
+        assert paths["vendored"].read_bytes() == before
+        # Proves the run had a non-zero denominator: ruff did look at this tree
+        # and did report on it, so "nothing under .venv" is a real exclusion
+        # rather than a run that checked nothing at all.
+        assert outcomes["ruff"] == "fail"
+        assert "src/s.py" in capsys.readouterr().err
+
+    def test_generated_code_stays_excluded(
+        self, tmp_path: Path, capsys, shipped_ruff_config: str
+    ) -> None:
+        """The narrower flag must not un-exclude what the ruleset excludes.
+
+        `--exclude .venv` would replace the ruleset's own list and pull
+        `canvas_generated/` back into scope. Only `--extend-exclude` adds to it,
+        so this fails if the flag is ever swapped.
+        """
+        paths = self._tree(tmp_path)
+        before = paths["generated"].read_bytes()
+
+        style_status.run_checks(
+            tmp_path, ruff_config=shipped_ruff_config, mypy_config=None
+        )
+
+        reported = capsys.readouterr().err
+        assert "canvas_generated" not in reported
+        assert "src/s.py" in reported
+        assert paths["generated"].read_bytes() == before
