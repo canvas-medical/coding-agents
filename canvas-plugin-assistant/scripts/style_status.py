@@ -140,6 +140,25 @@ _DIGEST_SUFFIXES = frozenset({".py", ".pyi"})
 # sync are what hold the ruleset steady instead.
 _DIGEST_TOP_LEVEL_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
 
+# Keeps ruff out of the plugin's own virtualenv. The Canvas ruleset sets
+# `exclude`, which REPLACES ruff's built-in exclusions rather than adding to
+# them, and `.venv` is one of the defaults it drops -- so without this, `ruff
+# format` and `ruff check --fix` walk into `.venv` and rewrite installed
+# dependency source. `respect-gitignore` only covers it inside a git repo whose
+# .gitignore lists `.venv`, which a plugin checked out as a plain directory is
+# not.
+#
+# It must be `--extend-exclude`, never `--exclude`: `--exclude` replaces the
+# ruleset's own list, which would un-exclude `canvas_generated/` and
+# `canvas_cli/templates/` and trade one defect for another. Measured against
+# ruff 0.15.14 on a tree holding all three directories.
+#
+# This lives here, and in the same commands in `commands/style.md`, rather than
+# in `config/pyproject.toml`: that file is a verbatim mirror of canvas-plugins'
+# own pyproject, which `.github/workflows/update-canvas-ruff-config.yml`
+# overwrites and pushes on a weekly cron. An edit there regresses within a week.
+_RUFF_SCOPE_ARGS = ("--extend-exclude", ".venv")
+
 
 def digest_files(plugin_dir: Path) -> list[Path]:
     """The files the digest covers, sorted, relative to ``plugin_dir``."""
@@ -438,11 +457,16 @@ def run_checks(
     """
     outcomes: dict[str, str] = {}
 
-    _run(["ruff", "format", "--config", ruff_config, "."], plugin_dir, _RUFF_TIMEOUT)
+    _run(
+        ["ruff", "format", *_RUFF_SCOPE_ARGS, "--config", ruff_config, "."],
+        plugin_dir,
+        _RUFF_TIMEOUT,
+    )
 
     check = _run(
         [
             "ruff", "check", "--fix",
+            *_RUFF_SCOPE_ARGS,
             "--config", ruff_config,
             "--output-format", "concise",
             ".",

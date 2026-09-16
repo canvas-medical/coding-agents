@@ -163,16 +163,18 @@ $CPA_WORKSPACE_DIR/
 
 #### Step 5: Configure Plugin Directory
 
-**Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
+**Ensure `.gitignore` includes `.claude` and `.venv/`** (the first keeps Claude Code local settings out of the repo; the second keeps the virtualenv out, which also narrows what the style tooling walks):
 
 ```bash
 cd "$CPA_WORKSPACE_DIR/$plugin_name"
 
-if [ ! -f .gitignore ]; then
-  echo ".claude" > .gitignore
-elif ! grep -q "^\.claude$" .gitignore; then
-  echo ".claude" >> .gitignore
-fi
+for entry in ".claude" ".venv/"; do
+  if [ ! -f .gitignore ]; then
+    echo "$entry" > .gitignore
+  elif ! grep -qxF "$entry" .gitignore; then
+    echo "$entry" >> .gitignore
+  fi
+done
 ```
 
 The same way, add to `.gitignore`:

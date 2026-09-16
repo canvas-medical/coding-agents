@@ -35,16 +35,18 @@ If the environment validation fails, resolve the reported environment issue firs
 
 The Canvas ruff ruleset lives in `${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml` — a verbatim, CI-synced copy of `canvas-plugins/pyproject.toml`, the same rules that gate every other Canvas Python repo.
 
+Every ruff command below passes `--extend-exclude .venv`. That ruleset sets `exclude`, which *replaces* ruff's built-in exclusions rather than adding to them, and `.venv` is one of the defaults it drops. Without the flag, ruff walks into the plugin's own virtualenv and `--fix` rewrites installed dependency source. It must be `--extend-exclude` and not `--exclude`: `--exclude` replaces the ruleset's own list, which would un-exclude `canvas_generated/` and `canvas_cli/templates/`. The flag belongs here rather than in the config file, which a weekly workflow overwrites verbatim.
+
 ### Step 2: Format
 
 ```bash
-uv run ruff format --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+uv run ruff format --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
 ```
 
 ### Step 3: Lint, auto-fix, then fix the rest
 
 ```bash
-uv run ruff check --fix --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+uv run ruff check --fix --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
 ```
 
 ruff fixes what it can automatically. For every remaining violation — commonly a missing google-style docstring (`D` rules), an unused name, or a simplification (`SIM`) — edit the code to resolve it, then run this step again. Repeat until ruff reports nothing left.
