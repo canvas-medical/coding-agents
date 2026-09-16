@@ -319,22 +319,13 @@
         - Adding Vaccine Lots via Vaccine Lots Settings
     - Administer Vaccines
 - [Managing Provider Availability](https://help.canvasmedical.com/articles/6105998178-managing-provider-availability)
-    - Overview of Calendar Integration
-    - Calendar Types and Naming Conventions
-        - Organization Admin Calendar
-        - Provider Clinic Calendar
-        - Provider Admin Calendar
-        - Same-Day Hold Calendar
-        - Next-Day Hold Calendar
-    - Accessing Google Calendar
-    - Creating New Provider Calendars
-    - Setting Provider Availability
-    - Updating Calendar Events
-    - Sharing Calendar Access with Providers
-    - Limiting Availability by Note Type
-    - Manual Calendar Synchronization
-        - Provider Blocks Missing from the Schedule View
-        - Timezone Error on the Schedule View
+    - Overview
+    - Managing provider schedules
+    - Bulk importing availability
+    - Same-day and next-day holds
+    - Limiting availability by visit or note type
+    - Troubleshooting
+    - FAQ
     - Related Resources
 - [Creating Custom Labels for Tasks, Claims and Appointments](https://help.canvasmedical.com/articles/7708474806-task-claim-labels)
     - Understanding Label Types
@@ -490,7 +481,7 @@
     - FAQs
     - Tips & Tricks
     - Step by Step
-        - Creating Facility blocks
+        - Creating facility records
 - [Admin | Fax Cover Sheet](https://help.canvasmedical.com/articles/5885566398-fax-cover-sheet)
     - Introduction
     - Tips & Tricks

@@ -1070,64 +1070,58 @@ Not directly, but some billable note types may be configured to require signatur
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2395218732-facility-group-scheduling
-Canvas understands the importance of accurate provider scheduling. Facility calendar blocks allow users to set recurring facility visits with an association to patients within these facilities. Facility blocks provide administrative staff with a clear view as to when a provider is and isn't available for direct patient appointments.
-Facility blocks are defined through Google Calendar's advanced scheduling capabilities with a provider's administrative calendar, and directly reflected on Canvas' scheduling view with a link to our Patient View denoting the individuals associated to the corresponding facility. 
+Canvas understands the importance of accurate provider scheduling. Facility blocks help administrative staff understand when a provider is scheduled for facility-based work and when they are unavailable for direct patient appointments.
+**Implementation note:** For new implementations, provider availability should be managed through the Provider Availability plugin rather than a Canvas-created Google Calendar setup. Some legacy organizations may still use Google Calendar-based facility blocks. If your organization is on a legacy setup, continue following your existing support guidance or contact Canvas Support before changing the workflow.
 ## FAQs
-**Q: Will facilities blocks only appear on specific practice location schedules?**
-**A** : As there is no specific practice location associated with the facility block, this block will appear across all locations that the provider is associated with
-**Q: What happens to a provider's schedule with facility blocks? Will there be a potential issue of patient appointments being scheduled over facility blocks?**
-**A** : These facility blocks will be taken into account when providing users with provider availability for scheduling appointments
+**Q: Will facility blocks only appear on specific practice location schedules?**
+**A:** As there is no specific practice location associated with the facility block, this block appears across all locations that the provider is associated with.
+**Q: What happens to a provider's schedule with facility blocks? Will patient appointments be scheduled over facility blocks?**
+**A:** Facility blocks are taken into account when Canvas shows provider availability for scheduling appointments.
 **Q: Will facility blocks automatically create appointments on all patients' charts associated with the facility?**
-**A** : Facility blocks do not create appointments or visit notes within a patients chart. Given that there are multiple patients associated to one facility, Canvas provides users with the flexibility of creating a visit note at the time they have see a patient. Facility blocks allow for understanding which patients should be seen during a facility visit through the priority protocols
-**Q: If a provider is no longer able to go to a specific appointment what can they do?**
-**A** : If there is a specific facility block for which a provider will not attend because of a holiday, PTO, sick day, or any other reason can be removed at any time within Google Calendar, this change will be reflect on the Canvas calendar. If a specific facility visit is being completed by another provider at the organization, ensure to create a one time facility block within Google Calendar on the appropriate provider so that their Canvas schedule reflects the correct information and so that the time is blocked from being scheduled for another type of visit
+**A:** No. Facility blocks do not create appointments or visit notes within patient charts. Because multiple patients may be associated with one facility, Canvas lets users create a visit note when they see a patient. Facility blocks help users understand which patients should be seen during a facility visit through priority protocols.
+**Q: If a provider is no longer able to go to a specific facility visit, what can they do?**
+**A:** Update or remove the facility block in the organization's active provider availability workflow. For new implementations, use the Provider Availability plugin. For legacy Google Calendar-based implementations, update the appropriate provider administrative calendar so the Canvas schedule reflects the correct information.
 ## Tips & Tricks
-  - Ensure that the name of the facility created within Canvas admin page exactly matches the title of the Google Calendar event
-  - For recurring facility visits, utilize the Google Calendar repeating event capabilities so the facility block only has to be created once
-  - Any customized information when it comes to timing and repetitiveness of the event can be modified within Google Calendar at any time
+  - Confirm whether the organization uses the Provider Availability plugin or a legacy Google Calendar-based workflow before making schedule changes.
+  - For new implementations, manage facility-related provider blocks in the Provider Availability plugin.
+  - For legacy Google Calendar-based workflows, the facility name in Canvas must exactly match the title of the calendar event.
+  - For recurring facility visits, use the recurrence controls available in the organization's active availability workflow.
 ## Step by Step
-### **Creating Facility blocks**
-#### **Add Facilities within your administrative settings**
-  - From the hamburger menu on the top left, select "Settings"
-  - Within the Practice heading click on Facilities and click `ADD FACILITY +` on the top right corner
-  - When adding a facility, ensure to fill in all required information and any other relevant information
-    - **Name (required)** \- name of facility (will also be what the Google Calendar event must be titled)
-    - Line1 (optional) - Facility address line 1 (street number and name) 
-    - Line2 (optional) - Facility address line 2 (suite number or other specifics)
-    - **City (required)** \- City in which the facility is located
-    - District (optional) - District in which the facility is located
-    - **State code (required)** \- Two digit state code of facility location
-    - **Postal code (required)** \- Postal zip code of facility location
-    - NPI number (optional) - NPI number of facility
-    - Phone number (optional**)** \- Phone number of facility
-    - **Active check box** \- in order for the facility to appear on patient chart and be utilized for facility block schedule ensure that it is checked for active
-#### **Add facility blocks to Google calendar**
-  - Navigate to your organization Google Calendar account that is integrated into the Canvas Scheduling
-  - Navigate to the Administrative Calendar for the appropriate provider 
-    - If the provider for which the facility visits does not have an administrative Google calendar, ensure to create one. Steps can be found here. 
-  - For creating the Facility event, either drag on the date and time for the facility visit or click `+ Create` on the top left of the google calendar and select "Event"
-  - Within the Google Calendar event input the name of the facility as the title of the event
-    - Example: "Loving Care Memory Home Visit"
-  - Customize the start and end times of the event
-  - Customize if the event repeats. This can be done by selecting the date of the event and selecting an option from the "does not repeat" dropdown
-  - Verify the event is added to the correct provider's administrative calendar. Select **Save.**
-  - Navigate to the schedule view within Canvas and refresh your browser, you now see the facility block on the providers schedule beginning the first day for which the Google Calendar event was created (and repeating on all the dates for which the recurring settings were set within Google calendar)
+### **Creating facility records**
+#### **Add facilities within your administrative settings**
+  - From the hamburger menu on the top left, select **Settings**.
+  - Within the Practice heading, click **Facilities** , then click `ADD FACILITY +` in the top-right corner.
+  - When adding a facility, fill in all required information and any other relevant information:
+    - **Name (required)** \- name of facility.
+    - Line1 (optional) - facility address line 1.
+    - Line2 (optional) - facility address line 2.
+    - **City (required)** \- city in which the facility is located.
+    - District (optional) - district in which the facility is located.
+    - **State code (required)** \- two-digit state code of the facility location.
+    - **Postal code (required)** \- postal ZIP code of the facility location.
+    - NPI number (optional) - NPI number of the facility.
+    - Phone number (optional) - phone number of the facility.
+    - **Active checkbox** \- check this so the facility appears on the patient chart and can be used for facility block scheduling.
+#### **Add facility blocks to the provider schedule**
+  - Open the organization's active provider availability workflow.
+  - For new implementations, use the **Provider Availability** app in Canvas.
+  - Select the appropriate provider.
+  - Create the facility block for the date and time of the facility visit.
+  - If applicable, configure whether the block repeats.
+  - Save the block.
+  - Navigate to the schedule view in Canvas and refresh your browser to confirm the facility block appears on the provider's schedule.
+**Legacy Google Calendar note:** If the organization is still on a Google Calendar-based setup, add the facility event to the appropriate provider administrative calendar and title the event with the facility name exactly as it appears in Canvas.
 #### **Associating patients to facilities**
-Within the patient chart, navigate to the "Addresses" section
-  - Add a new address and select "Facility"
-  - Select the appropriate facility from the drop down menu
-  - Ensure that if the patient has a room number, that it is inputted within the room number field
-  - Select "Physical and Postal" or "Only Physical" radio button 
-  - Select "Add" in order to confirm adding the facility to the patient chart
-  - Navigate back to the schedule view and the first date of the Google Calendar facility event created
-  - By clicking the facility calendar block you will see a link denoting the number of patients associated to the facility
-  - Clicking the link will direct users to the patient view with the corresponding facility auto-selected as the filter, here users will see the list of patients with the following information:
-    - Patient name, age, sex at birth, and date of birth
-    - Care Team
-    - Facility and Room # (room number can be added, updated, or removed from the patient's chart at any time)
-    - Protocols associated to each patient (here will be listed the priority flag for patients that should be seen within each facility visit by the provider)
-    - Last Seen date and reason for visit
-Patients can be added or removed from this facility list view, by removing or adding the facility to the patient chart
+Within the patient chart, navigate to the **Addresses** section.
+  - Add a new address and select **Facility**.
+  - Select the appropriate facility from the dropdown menu.
+  - If the patient has a room number, enter it in the room number field.
+  - Select **Physical and Postal** or **Only Physical**.
+  - Select **Add** to confirm adding the facility to the patient chart.
+  - Navigate back to the schedule view and the first date of the facility block.
+  - Click the facility calendar block to see a link showing the number of patients associated with the facility.
+  - Clicking the link directs users to the patient view with the corresponding facility selected as the filter. Users can see patient name, age, sex at birth, date of birth, care team, facility and room number, protocols, and last seen date and reason for visit.
+Patients can be added to or removed from this facility list view by adding or removing the facility from the patient chart.
 ----- END PAGE https://help.canvasmedical.com/articles/2395218732-facility-group-scheduling
 
 
@@ -6903,152 +6897,54 @@ A: No. ePrescribing enrollment is per provider, not per location. One enrollment
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6105998178-managing-provider-availability
-Managing provider availability is essential for effective patient scheduling and optimal practice workflow. Canvas Medical integrates with Google Calendar to synchronize provider schedules, allowing you to control and display availability directly within Canvas while maintaining the flexibility of calendar-based scheduling management.
+Managing provider availability is essential for effective patient scheduling and practice workflow. For new implementations, Canvas manages provider availability through the **Provider Availability plugin**.
+The Provider Availability plugin lets administrators configure provider schedules and scheduling rules directly in Canvas. Use this workflow for new provider availability implementations.
 # User's Guide
-## Overview of Calendar Integration
-Patient appointments are scheduled within Canvas, while provider availability is managed through an integration with Google Calendar. This setup enables centralized availability control that automatically syncs with Canvas scheduling systems.
-## Calendar Types and Naming Conventions
-Canvas uses specific calendar types to manage provider and organizational availability across multiple practice locations. Each calendar type serves a distinct scheduling purpose and must follow exact naming conventions for proper synchronization.
-![calendar blocks](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1731085453509-1730587265781-calendar-blocks.png-d7e4b87e-b754-49e8-a11f-f74182ea7fb9-4ee8c74e-e335-4829-b02e-453f3cb0e2ac?Expires=253370764800&Signature=s1R0o25um3PXw02AtQJL39QQmo2iHAr2JBtpWK32qEO7LAQTM341xs-S7dOMQQrkGIowEW6nkE0cENaNljaOQVVsfvnVJEAAlXpNEdZ46IvijD9oAHrLOYxAJ7ovjKTvZvAbfgbm78v4W1Vo91QrI-LDtnZo2spSmbs~63WoT23Q3k69d3y8C3FVMUGA-o3Qu9BgUYO-NL4HwP~ocmTkqjQSoz8PS8iE96XAkO0MxF8XH-eI9zpGsb8m2B9~xlosgjkOSDmQVz614ebQQPZj7KZE5hJH9SGB4DaOGSX35zrjDVU9ZtCd8KEELJrHyzIHH6j8y26opVpkcMuU2~pkTw__&Key-Pair-Id=K3NV4LZ47N8M46)
-### Organization Admin Calendar
-Defines times when the entire organization is unavailable, such as during all-staff meetings.
-**Naming format:**
-  - **All locations** : Organization Admin
-  - **Specific location** : Organization Admin: Canvas Clinic Oakland
-### Provider Clinic Calendar
-Shows when a provider is available for patient appointments. Each provider requires an individual calendar.
-**Naming format:**
-  - **All locations** : Jane Doe: Clinic
-  - **Specific location** : Jane Doe: Clinic: Canvas Clinic Oakland
-**Important:** The location name in Google Calendar must exactly match the practice location name in Canvas.
-### Provider Admin Calendar
-Marks times when a provider is unavailable for patient appointments due to vacation, sick leave, or administrative tasks.
-**Naming format:**
-  - **All locations** : Jane Doe: Admin
-  - **Specific location** : Jane Doe: Admin: Canvas Clinic Oakland
-### Same-Day Hold Calendar
-Reserves slots for same-day appointments. These slots remain hidden until the morning of the appointment day.
-**Naming format:**
-  - **All locations** : Same-Day Hold
-  - **Specific location** : Same-Day Hold: Canvas Clinic Oakland
-  - **Provider-specific, all locations** : Jane Doe: Same-Day Hold
-  - **Provider-specific, specific location** : Jane Doe: Same-Day Hold: Canvas Clinic Oakland
-### Next-Day Hold Calendar
-Reserves time slots for next-day appointments, which become visible the morning before the appointment.
-**Naming format:**
-  - **All locations** : Next-Day Hold
-  - **Specific location** : Next-Day Hold: Canvas Clinic Oakland
-  - **Provider-specific, all locations** : Jane Doe: Next-Day Hold
-  - **Provider-specific, specific location** : Jane Doe: Next-Day Hold: Canvas Clinic Oakland
-## Accessing Google Calendar
-To maintain current provider availability in Canvas, each provider's Google Calendar must be properly configured. Access the calendar system using GSuite credentials provided by Canvas.
-  1. Open an incognito window to prevent conflicts with existing Google accounts or sessions
-  2. Navigate to [calendar.google.com](http://calendar.google.com)
-  3. Log in with Canvas-provided GSuite credentials
-# Configuration & Set Up
-## Creating New Provider Calendars
-When adding new providers to the system, you must create their calendars in Google Calendar following Canvas naming conventions.
-  1. Navigate to Settings (⚙) in the upper right corner of Google Calendar
-  2. Select **Add Calendar**
-  3. Choose **Create new calendar**
-  4. Enter the calendar name following the [outlined naming conventions](https://canvas-medical.help.usepylon.com/articles/6105998178-managing-provider-availability#calendar-types-and-naming-conventions-4)
-  5. Add the provider's staff key from their Canvas staff profile to the calendar description to ensure sync continuity during future updates.
-  6. Click **Create calendar**
-![new-gcal](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1731082293010-1730587222800-new-gcal.png-c1874999-45ef-4720-8cd6-b25b8cb1a018-9144ee55-2849-4678-aeef-f056e53b875f?Expires=253370764800&Signature=WKTgu5nT1nPorksWuA9SXAJRkVwqCqwep4sYeLjAST0Z5JDVQeRgef8K18XPiYL0AHq0xGuCYC8KhxOVFgwFgZwa1MxgdDEkjfvSwCHoHYNM4iranlv1TPlNPV0ra36BxldDjXppLoDDqoJELKhUh~kxCN8fb6e6MCoucWH7wtmh67eE-crp9DPP8X8zH-ozPHaBncLkFjJKbs8-WFB3MZt0gMoTfe4gLnfxx1kIr6WoJjD-9ZAK52jVLr-gl22bkHGVn88Josh~XKIx0T4y5-DJHrIWH-bPqDdSwk9U0TWpMK~FVeatk--tY12R0H0vTycYjq2Bj3fqv3S3UJDZ5A__&Key-Pair-Id=K3NV4LZ47N8M46)
-## Setting Provider Availability
-After creating the necessary calendars, you can begin scheduling availability blocks.
-**To create availability blocks:**
-  1. Return to the main Google Calendar schedule view
-  2. Click and drag on the desired date to select appropriate time slots
-  3. When the event modal appears, complete the following:
-     - **Event Name:** Assign a clear, descriptive name
-       - Admin calendar names appear on admin blocks in Canvas
-       - Clinic calendar names are not displayed in Canvas but are strongly recommended for maintaining organization and easily identifying which providers are associated with specific events.
-     - **Repetition:** Configure recurrence settings if the event repeats
-     - **Calendar Selection:** Verify the event is assigned to the correct calendar before saving
-![2024-12-16_12-09-27.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734369066791-2024-12-16_12-09-27.png?Expires=253370764800&Signature=eQj3F0TeXTch8xFgOHQQQIKj1aQF6503J3RRxH6EPdfiAv9KJ38vTTWth9nel0i9vcqkFxQR4o8aElpTIpANBaw67EI5YAWUwlJQtSCAWl9lM4uWO9q122g9UMr2o2NoaO04q~mDLJykM5tJg0uJZZZMObuOkuSSlINXLoCKILdGIw0GHC8fSWEHfqOit4131~KiGuu~fT19A7E6F7IKoFdLOqBMS7WQThSRAXjCRVgthi0mxjulQ1FG0iuVwnL8r07r2dCNc02q1jS7UJB2FMPbwGYcmtCeafDtNR12dGy4em5PEiGue9xKuLT88Ah0maMo-ZKySY3dVltd3MbhIg__&Key-Pair-Id=K3NV4LZ47N8M46)
-## Updating Calendar Events
-We strongly suggest cancelling an event and recreating whenever possible rather than rescheduling. Google does not always register the reschedule correctly which can cause missing event blocks in Canvas.
-**To modify existing calendar events:**
-  1. Click on the event in Google Calendar to open the appointment card
-  2. Click **Edit** ✏
-  3. Make necessary adjustments
-  4. Click **Save**
-  5. For recurring events, choose whether to edit the specific event or all events in the series
-## Sharing Calendar Access with Providers
-At the practice's discretion, Canvas Google Calendar access can be shared with providers, allowing them to manage their own availability directly.
-**To share calendar access:**
-  1. Navigate to the provider's calendar settings
-  2. Select **Share with specific people or groups**
-  3. Click **Add People and groups**
-  4. Enter the provider's email address
-  5. Select **Make changes and manage sharing** from the permission dropdown
-![2024-12-16_11-54-28.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734368155929-2024-12-16_11-54-28.png?Expires=253370764800&Signature=GcehPQ3eVnMXC4pBfaQgBiB4eyCBBDCe1xKRPhE127bmkUuxMia7V8kY4E4HGthCGWmO7XfczPWte~YOXg-0tqhxtFZ7nqO~KX-M-iBRD~q2CS3VtW6NUD~tYiAoxF0t2n0hI-tLKF1XdjGzLhaqBSdjhNal0qRsl3Tp1u8PHFp7dbqg6q6rpWh7OR~WKrcMk35f9ZQM55QG2PJqbtventkONhHg3ZmW6YQ-sVE4iO0YcLvNsEop043GWETKAx9TfRAkfATjfvx8JG~RnVmi88zywZvF5W7whm6mW1Je2Iptge8NjTMk3f46O-J3EFjqmk1G3iJ5grsLbJ2DkSg1Qw__&Key-Pair-Id=K3NV4LZ47N8M46)
-**Provider activation process:**
-  1. The provider receives an email invitation to access the shared calendar
-  2. The provider must click **Add** to integrate the Canvas calendar into their personal account
-  3. Once added, the provider can manage their availability directly from their own Google account
-## Limiting Availability by Note Type
-Canvas offers beta functionality to restrict availability based on specific note types, providing more granular scheduling control.
-**How it works:**
-  - Events created in Google Calendar sync to Canvas in the Calendar Events table within admin settings
-  - Each event includes an **Allowed Note Types** setting in Canvas admin
-  - Admins can select which schedulable note types are permitted during specific availability periods
-  - Settings apply to the entire recurrence pattern
-  - Individual event modifications within a recurrence require separate updates in Canvas admin
-**Important notes:**
-  - Note type restrictions are not visible on the calendar interface
-  - Appointment slots are filtered in the appointment modal to reflect restrictions
-  - Consider naming Google Calendar events to reflect allowed note types for easier admin management
-## Manual Calendar Synchronization
-Occasionally, the Google API may experience notification failures, causing some Google events to not appear in Canvas. Canvas provides manual synchronization capabilities to capture missed events.
-### Provider Blocks Missing from the Schedule View
-  1. Navigate to admin settings
-  2. Go to **Google Accounts** under the **Google_Calendar** heading
-  3. Select the checkbox next to the relevant Google Account name
-  4. From the action menu dropdown, select **Sync Google Calendar events**
-  5. Click **Go** to initiate the sync
-### Timezone Error on the Schedule View
-  1. From the schedule view, there will be an error stating the timezones do not match
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730152199219-1729876617149-Screenshot2024-10-25at1.16.21PM.png-a3e45c0b-637d-4879-ad0a-f9878b47852b?Expires=253370764800&Signature=bK7kaVXmx-da1MwtThNVrgZQzQSZgNQBckGqp1Ya2WK7CmztF5bbCZCzwJgkJPdaWoN9qWTlL6SMLO4msfSZJeVO6brAsQ-4qnZfsbTQvhITTtrH8rQOgxFTMGLDbkPL1mP24jXPsz6h5bkNbRry10IjSLswBxsOgvRF7L3l9n~Q1nbfV4VIPgB1tO4EXlPk2gi3fR7k5DcFLbgnGUfiy29VqT3g8SrhFxV-A25ahE-ndWGD3qL~T7GqiZVtql-VtdrJy2de8czaOvFD61Tr0Scio37Jm4QufVV1hr5cQlbzQcYp9DjIxIzuPkfgtOky35E-LTycLPmiFaqENYVtvw__&Key-Pair-Id=K3NV4LZ47N8M46)
-  2. Go to **Calendars: Calendars** under settings
-  3. Review the timezone column to see which calendar is mismatched
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1753726229355-image.png?Expires=253370764800&Signature=akaifmild~jETAU0WLyPSUgVm71sGWg2tfQo05K17lc~5sJFtLouUhisaV7xv5GncEahXSVFKMgfh8AHCOdeY9Ffotlgt9snds3dnhttRYqVJlvXXgODk3btQWsAiurpB-rTxv8KbwH8e6VSoV~fniO5uan5dpr5vh2JYkCKIuSKz66VwYqtsuCjqU-PdwbxlbMablMnLbawg9I-wu56AfFq17InS5Sfmf4qkSUW3yWtgS~swauW4ZDaw7fJvLd4WEmj544rMY6BcfqdvUuYLXmPFd6525wIb70aFKZbdl611HGIvCoUSDxRFifFCS4NN6AO1vTh7n4h-E2gxxpt~A__&Key-Pair-Id=K3NV4LZ47N8M46)
-  4. Within the Google Calendar
-     - Click the triple dot on the calendar that is incorrect in Canvas
-     - Select **Settings and sharing** from the dropdown
-     - Update the timezone to the instance timezone
-       - There are times when the timezone will be correct. This means Google did not correctly sync the correct data.
-  5. From the Canvas setting
-     - Back in admin navigate to Google Calendar: Google Account.
-     - Select the check mark next to the account name
-     - Select **Sync with Google Calendar** from the **Action** dropdown
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1754236955629-screenshot-primary08032025001588%25402x.jpg?Expires=253370764800&Signature=LYHRsN~RLW5XTb0apeUSkQ9fXBqFVsLtsxbo0YBFtzQQPNNsugeB-WXdsbDipd3vSkK7PPh4YN6kpVsao~x~HOaSIRIvzi-DhqNaOibUdQoKr2ApygXTXS1~gI82~vtXV5iPn-wXvlOnOrFhNgeQ3GDCSKN-t3yaAC3~wjIwtARrBSVYxMfaN-PVVRNYc9l71hOEZCvGr2be5L~8DYClgQQjxTVMQnPkOI8poVAP2oPdgMtdO-inRU0K9ZG8HNxn6z6R8An50ApEosrGHctM8Kms6XWMLVGSuEzgCqyHdno-tODKaMSDdUzJlqQDC245NEF3Hl-x3ffUegTtehB62A__&Key-Pair-Id=K3NV4LZ47N8M46)
-     - Click **Go** to run the sync
-  6. Return to schedule view to make sure error is no longer visible and calendar loaded correctly
-If synchronization issues persist, [contact Canvas Support](https://portal.usepylon.com/canvas-medical/forms/standard) for assistance
-# FAQ & Troubleshooting
-**Q: Why isn't my provider's schedule appearing in Canvas?**
-A: First, ensure that the calendar names strictly adhere to Canvas naming conventions. Verify that all calendars are correctly configured, including the exact staff key of the provider from their Canvas staff profile is included in the description field on Google Calendar. If the issue persists, attempt a manual synchronization through the admin settings. Should synchronization still fail, reach out to Canvas Support for further assistance.
-**Q: Can providers manage their own availability?**
-A: Yes, if calendar sharing is enabled by the practice. Providers must accept the calendar sharing invitation and integrate the Canvas calendar into their personal Google account to manage their own availability.
-**Q: What should I do if I get timezone errors during synchronization?**
-A: First confirm all calendars are set to the correct timezone in Google Calendar. Then use the "Sync with Google Calendar" option from the admin action menu. If errors persist, contact Canvas Support.
-**Q: How do overlapping calendar blocks affect scheduling?**
-A: Overlapping blocks (such as Clinic and Admin blocks at the same time) can create scheduling conflicts. Best practice is to schedule blocks sequentially without time overlaps.
-**Q: What happens to same-day and next-day hold appointments?**
-A: Same-day hold slots become visible on the morning of the appointment day, while next-day hold slots become visible the morning before the appointment. These slots remain hidden until their designated reveal times.
-**Q: How does the beta note type restriction feature work?**
-A: This feature allows admins to specify which note types can be scheduled during specific availability periods. Settings are configured in Canvas admin after Google Calendar events sync, and restrictions are applied during **appointment booking.**
-**Q: Why should I include staff keys in calendar descriptions?**
-A: Including provider staff keys in calendar descriptions ensures synchronization continues to work properly if provider names change in the future, maintaining system integrity.
-**Q: How often does Google Calendar sync with Canvas?**
-A: Synchronization typically occurs automatically through Google API notifications. If automatic sync fails, manual synchronization is available through Canvas admin settings.
+## Overview
+Patient appointments are scheduled in Canvas. Provider availability is managed through the Provider Availability plugin, which calculates available appointment slots based on configured provider schedules, appointment rules, holds, blocks, and related scheduling settings.
+Some legacy implementations may still use Google Calendar sync for provider availability. Google Calendar setup guidance applies only to organizations already on that legacy workflow. If you are unsure which workflow your organization uses, contact Canvas Support.
+## Managing provider schedules
+After the Provider Availability plugin is installed for your organization, authorized users can manage availability from the **Provider Availability** app in Canvas.
+  1. Open the provider menu in Canvas.
+  2. Select **Provider Availability**.
+  3. Choose the provider whose schedule you want to manage.
+  4. Add or update the provider's recurring availability, one-time availability, blocks, holds, buffers, and related scheduling rules as needed.
+  5. Save your changes and confirm that the schedule view reflects the expected available slots.
+## Bulk importing availability
+For larger schedule updates, use the plugin's CSV import workflow where available. Bulk import is useful when setting up many providers, migrating schedules, or making broad schedule changes.
+  1. Prepare the provider availability CSV according to your implementation team's format.
+  2. Import the CSV through the Provider Availability workflow.
+  3. Review the imported schedules for accuracy.
+  4. Confirm that appointment slots appear as expected in Canvas scheduling.
+## Same-day and next-day holds
+The Provider Availability plugin can support same-day and next-day holds. These holds reserve appointment slots until the configured release time, helping teams protect urgent or near-term access.
+  - **Same-day holds** reserve slots that become available on the day of the appointment.
+  - **Next-day holds** reserve slots that become available before the next appointment day.
+## Limiting availability by visit or note type
+Availability can be configured to support more granular scheduling rules, such as limiting certain appointment slots to specific visit or note types. When these restrictions are configured, Canvas filters appointment slots during booking so users only see appropriate options.
+## Troubleshooting
+If a provider's availability does not appear as expected:
+  - Confirm the Provider Availability plugin is installed and enabled for the environment.
+  - Confirm the user has access to the Provider Availability app.
+  - Review the provider's configured schedule, blocks, holds, buffers, and appointment-type restrictions.
+  - Confirm the provider is associated with the relevant practice location and schedulable staff configuration.
+  - For bulk imports, confirm the CSV was imported successfully and that provider identifiers matched the expected Canvas records.
+  - If the organization is on a legacy Google Calendar sync workflow, confirm the legacy calendar sync configuration with Canvas Support.
+## FAQ
+**Q: Do new implementations need Canvas-created Google Calendars for provider availability?**
+A: No. New implementations should use the Provider Availability plugin.
+**Q: Can providers or administrators manage availability directly?**
+A: Yes, authorized users can manage schedules through the Provider Availability app in Canvas.
+**Q: Does provider availability create patient appointments?**
+A: No. Provider availability controls when appointments can be booked. Patient appointments are still created in Canvas.
+**Q: What if my organization already uses Google Calendar sync?**
+A: Some legacy organizations may still use Google Calendar sync. Continue following your existing support guidance unless Canvas Implementation or Support migrates your organization to the Provider Availability plugin.
 ## Related Resources
-  - [Managing Staff Members](https://canvas-medical.help.usepylon.com/articles/4283873790-add-a-new-staff-member)
+  - [Managing Staff Members](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member)
+  - [Provider Availability plugin](https://github.com/canvas-medical/gtm-extensions/tree/main/provider-availability/provider_availability)
 * * *
-**Keywords:** provider availability, Google Calendar integration, calendar management, appointment scheduling, provider scheduling, calendar synchronization, staff scheduling, practice management
-**Categories:** Practice Management, Scheduling, Integration, Provider Management, Calendar Management
+**Keywords:** provider availability, Provider Availability plugin, scheduling, appointment scheduling, provider scheduling, availability management, bulk import, same-day holds, next-day holds
+**Categories:** Practice Management, Scheduling, Provider Management, Administrative Configurations
 ----- END PAGE https://help.canvasmedical.com/articles/6105998178-managing-provider-availability
 
 
