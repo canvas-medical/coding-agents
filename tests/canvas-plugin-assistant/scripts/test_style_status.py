@@ -914,6 +914,8 @@ class TestRuffStaysOutOfTheVirtualenv:
         unformatted = "import os,sys\ndef f( a,b ):\n  return a+b\n"
         paths = {
             "vendored": tmp_path / ".venv" / "site-packages" / "vend" / "v.py",
+            "vendored_venv": tmp_path / "venv" / "site-packages" / "vend" / "v.py",
+            "vendored_tox": tmp_path / ".tox" / "py" / "site-packages" / "vend" / "v.py",
             "generated": tmp_path / "canvas_generated" / "g.py",
             "source": tmp_path / "src" / "s.py",
         }
@@ -925,18 +927,26 @@ class TestRuffStaysOutOfTheVirtualenv:
     def test_a_vendored_file_is_left_untouched(
         self, tmp_path: Path, capsys, monkeypatch, shipped_ruff_config: str
     ) -> None:
-        """ruff neither reformats nor --fixes anything under .venv."""
+        """ruff touches nothing under a virtualenv the ruleset would walk into.
+
+        Covers `.venv` and the other virtualenv/tooling names the Canvas ruleset
+        drops from ruff's defaults -- a bare `venv` and a `.tox` env -- not just
+        `.venv`, since a plugin whose virtualenv has any of those names hits the
+        same defect.
+        """
         paths = self._tree(tmp_path, monkeypatch)
-        before = paths["vendored"].read_bytes()
+        vendored = ("vendored", "vendored_venv", "vendored_tox")
+        before = {name: paths[name].read_bytes() for name in vendored}
 
         outcomes = style_status.run_checks(
             tmp_path, ruff_config=shipped_ruff_config, mypy_config=None
         )
 
-        assert paths["vendored"].read_bytes() == before
+        for name in vendored:
+            assert paths[name].read_bytes() == before[name], f"{name} was rewritten"
         # Proves the run had a non-zero denominator: ruff did look at this tree
-        # and did report on it, so "nothing under .venv" is a real exclusion
-        # rather than a run that checked nothing at all.
+        # and did report on it, so "nothing under a virtualenv" is a real
+        # exclusion rather than a run that checked nothing at all.
         assert outcomes["ruff"] == "fail"
         assert "src/s.py" in capsys.readouterr().err
 

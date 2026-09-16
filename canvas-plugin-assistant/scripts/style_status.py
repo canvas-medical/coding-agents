@@ -197,11 +197,13 @@ _MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 
 # Keeps ruff out of the plugin's own virtualenv. The Canvas ruleset sets
 # `exclude`, which REPLACES ruff's built-in exclusions rather than adding to
-# them, and `.venv` is one of the defaults it drops -- so without this, `ruff
-# format` and `ruff check --fix` walk into `.venv` and rewrite installed
-# dependency source. `respect-gitignore` only covers it inside a git repo whose
-# .gitignore lists `.venv`, which a plugin checked out as a plain directory is
-# not.
+# them, so every virtualenv and tooling dir ruff excludes by default -- `.venv`,
+# a bare `venv`, `env`, `.tox`, `.nox`, `.direnv` -- is back in scope, and
+# without this `ruff format` and `ruff check --fix` walk into it and rewrite
+# installed dependency source. Re-adding only `.venv` misses a plugin whose
+# virtualenv is named `venv` or is built by tox/direnv. `respect-gitignore` only
+# covers these inside a git repo whose .gitignore lists them, which a plugin
+# checked out as a plain directory is not.
 #
 # It is expressed as an inline config override rather than a command-line
 # exclude flag, because the two subcommands do not accept the same flags:
@@ -221,7 +223,10 @@ _MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 # in `config/pyproject.toml`: that file is a verbatim mirror of canvas-plugins'
 # own pyproject, which `.github/workflows/update-canvas-ruff-config.yml`
 # overwrites and pushes on a weekly cron. An edit there regresses within a week.
-_RUFF_SCOPE_ARGS = ("--config", 'extend-exclude=[".venv"]')
+_RUFF_SCOPE_ARGS = (
+    "--config",
+    'extend-exclude=[".venv", "venv", "env", ".tox", ".nox", ".direnv"]',
+)
 
 
 def find_manifest(plugin_dir: Path) -> Path | None:
