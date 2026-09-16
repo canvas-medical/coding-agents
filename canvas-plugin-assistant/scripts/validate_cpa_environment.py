@@ -4,6 +4,7 @@ Validates CPA environment variables before commands are executed.
 Usage:
     uv run python validate_cpa_environment.py --require-plugin-dir
     uv run python validate_cpa_environment.py --plugin-dir-optional
+    uv run python validate_cpa_environment.py --require-plugin-dir --require-style-tools
 """
 
 import argparse
@@ -12,13 +13,21 @@ import sys
 from pathlib import Path
 
 from constants import Constants
+from style_status import BOUNDED_MYPY, PINNED_RUFF, tool_available
 
 
 class CpaEnvironmentValidator:
     """Validates CPA environment variables for Canvas plugin commands."""
 
     @classmethod
-    def run(cls, cpa_running: str, workspace_dir: str, plugin_dir: str, require_plugin_dir: bool) -> None:
+    def run(
+        cls,
+        cpa_running: str,
+        workspace_dir: str,
+        plugin_dir: str,
+        require_plugin_dir: bool,
+        require_style_tools: bool = False,
+    ) -> None:
         """
         Validate environment variables and exit with appropriate code.
 
@@ -27,6 +36,7 @@ class CpaEnvironmentValidator:
             workspace_dir: Value of CPA_WORKSPACE_DIR env var
             plugin_dir: Value of CPA_PLUGIN_DIR env var
             require_plugin_dir: Whether CPA_PLUGIN_DIR is required
+            require_style_tools: Whether ruff and mypy must be resolvable
         """
         # Check CPA_RUNNING
         if cpa_running != "1":
@@ -63,6 +73,9 @@ This command requires an existing plugin. To work on a plugin:
   {Constants.CPA_PLUGIN_DIR}: {plugin_dir}
   {Constants.CPA_WORKSPACE_DIR}: {workspace_dir}""")
 
+        if require_style_tools:
+            cls.check_style_tools(Path(plugin_dir or workspace_dir))
+
         # Validation passed
         if plugin_dir:
             print(f"Environment validated. Working in plugin: {Path(plugin_dir).name}")
@@ -70,6 +83,32 @@ This command requires an existing plugin. To work on a plugin:
             print("Environment validated. Ready for new plugin creation.")
 
         sys.exit(0)
+
+    @classmethod
+    def check_style_tools(cls, cwd: Path) -> None:
+        """Confirm uv can resolve the pinned style toolchain.
+
+        Opt-in, because only /cpa:style needs it. Checking here turns an
+        unresolvable toolchain into a setup error stated up front, instead of a
+        verdict of `null` discovered several steps later -- the tools are
+        resolved through uv rather than assumed on PATH, and nothing else
+        verifies they arrive.
+        """
+        missing = [
+            spec
+            for spec, tool in ((PINNED_RUFF, "ruff"), (BOUNDED_MYPY, "mypy"))
+            if not tool_available(spec, tool, cwd)
+        ]
+        if missing:
+            cls.exit_with_error(
+                "uv could not resolve the style toolchain: "
+                + ", ".join(missing)
+                + """
+
+/cpa:style resolves ruff and mypy with `uv run --no-project --with <spec>`.
+Confirm uv is installed and can reach its package index, then re-run."""
+            )
+        print("Style toolchain resolved: " + ", ".join([PINNED_RUFF, BOUNDED_MYPY]))
 
     @classmethod
     def exit_with_error(cls, message: str) -> None:
@@ -84,6 +123,7 @@ This command requires an existing plugin. To work on a plugin:
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument("--require-plugin-dir", action="store_true")
         group.add_argument("--plugin-dir-optional", action="store_true")
+        parser.add_argument("--require-style-tools", action="store_true")
         args = parser.parse_args()
 
         cls.run(
@@ -91,6 +131,7 @@ This command requires an existing plugin. To work on a plugin:
             workspace_dir=os.environ.get(Constants.CPA_WORKSPACE_DIR, ""),
             plugin_dir=os.environ.get(Constants.CPA_PLUGIN_DIR, ""),
             require_plugin_dir=args.require_plugin_dir,
+            require_style_tools=args.require_style_tools,
         )
 
 

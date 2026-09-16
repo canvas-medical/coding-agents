@@ -212,13 +212,18 @@ class TestToolFailureIsNotACheckFailure:
     """Exit 2 means the tool could not run, so the check is skipped not failed."""
 
     def _stub_runs(self, monkeypatch, ruff, mypy):
-        """Make run_checks see the given (returncode, output) pairs."""
+        """Make run_checks see the given (returncode, output) pairs.
+
+        Resolution is stubbed as succeeding so these cases isolate what the tool
+        itself reported; the probe has its own tests.
+        """
         calls = iter([("format", 0, ""), ("ruff", *ruff), ("mypy", *mypy)])
 
         def fake_run(cmd, cwd, timeout):
             _name, code, out = next(calls)
             return code, out
 
+        monkeypatch.setattr(style_status, "tool_available", lambda spec, tool, cwd: True)
         monkeypatch.setattr(style_status, "_run", fake_run)
 
     def test_ruff_exit_2_is_a_skip(self, tmp_path: Path, monkeypatch) -> None:
@@ -932,3 +937,113 @@ class TestRuffStaysOutOfTheVirtualenv:
         assert "canvas_generated" not in reported
         assert "src/s.py" in reported
         assert paths["generated"].read_bytes() == before
+
+
+class TestPinnedToolchain:
+    """The pinned versions must agree everywhere they are written down.
+
+    The specs appear in this script, in three command docs, and in the sync
+    workflow. A drifted pin means the workflow validates the ruleset against a
+    ruff that is not the one the checks run, which is exactly the determinism
+    this ticket exists to buy -- so it is a test rather than a comment asking
+    the next person to remember.
+    """
+
+    _CPA = Path(__file__).parents[3] / "canvas-plugin-assistant"
+    _WORKFLOW = (
+        Path(__file__).parents[3]
+        / ".github"
+        / "workflows"
+        / "update-canvas-ruff-config.yml"
+    )
+
+    def test_the_ruff_pin_is_the_same_in_every_document(self) -> None:
+        """style.md, check-setup.md and new-plugin.md all name this script's pin."""
+        for relative in (
+            "commands/style.md",
+            "commands/check-setup.md",
+            "commands/new-plugin.md",
+        ):
+            text = (self._CPA / relative).read_text(encoding="utf-8")
+            assert style_status.PINNED_RUFF in text, (
+                f"{relative} does not name {style_status.PINNED_RUFF}"
+            )
+
+    def test_the_mypy_bound_is_the_same_in_every_document(self) -> None:
+        """The same for the mypy bound, which is a range rather than a pin."""
+        for relative in (
+            "commands/style.md",
+            "commands/check-setup.md",
+            "commands/new-plugin.md",
+        ):
+            text = (self._CPA / relative).read_text(encoding="utf-8")
+            assert style_status.BOUNDED_MYPY in text, (
+                f"{relative} does not name {style_status.BOUNDED_MYPY}"
+            )
+
+    def test_the_sync_workflow_validates_against_the_same_ruff(self) -> None:
+        """The workflow writes the version bare, so compare the version alone.
+
+        It installs `ruff==${{ env.PINNED_RUFF }}` to parse the ruleset before
+        pushing it. If that drifts from the ruff the checks run, the sync can
+        green-light a config the real ruff rejects.
+        """
+        workflow = self._WORKFLOW.read_text(encoding="utf-8")
+        version = style_status.PINNED_RUFF.split("==")[1]
+
+        assert f"PINNED_RUFF: {version}" in workflow
+
+    def test_the_checks_invoke_the_pinned_specs(self) -> None:
+        """The argv the script builds carries the pin, not a bare tool name."""
+        assert style_status.tool_cmd(style_status.PINNED_RUFF, "ruff", "--version") == [
+            "uv", "run", "--no-project", "--with", style_status.PINNED_RUFF,
+            "ruff", "--version",
+        ]
+
+
+class TestAnUnresolvableToolchainIsASkip:
+    """uv's own failure must not read as the tool reporting violations.
+
+    `uv run` passes the child's exit code through, and uv exits 1 when it cannot
+    resolve `--with` -- an unsatisfiable pin, or a cache miss with no network.
+    That is indistinguishable from ruff exiting 1 with diagnostics. Recording it
+    as a failure would assert `style_clean: false` about code nothing examined,
+    and a false failure blocks a deploy where a skip does not.
+    """
+
+    def test_ruff_that_cannot_resolve_is_skipped_not_failed(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        """An exit-1 resolution failure records a skip, leaving the verdict unknown."""
+        monkeypatch.setattr(
+            style_status, "tool_available", lambda spec, tool, cwd: False
+        )
+
+        outcomes = style_status.run_checks(
+            tmp_path, ruff_config="whatever.toml", mypy_config=None
+        )
+
+        assert outcomes["ruff"] == "skip"
+        assert build_payload(outcomes)["style_clean"] is None
+
+    def test_the_probe_rejects_a_nonzero_exit(self, tmp_path: Path, monkeypatch) -> None:
+        """Only exit 0 counts as resolved; uv's exit 1 does not."""
+        monkeypatch.setattr(
+            style_status, "_run", lambda cmd, cwd, timeout: (1, "unsatisfiable")
+        )
+
+        assert (
+            style_status.tool_available(style_status.PINNED_RUFF, "ruff", tmp_path)
+            is False
+        )
+
+    def test_the_probe_accepts_a_clean_exit(self, tmp_path: Path, monkeypatch) -> None:
+        """The negative case above is only meaningful if the positive one passes."""
+        monkeypatch.setattr(
+            style_status, "_run", lambda cmd, cwd, timeout: (0, "ruff 0.15.14")
+        )
+
+        assert (
+            style_status.tool_available(style_status.PINNED_RUFF, "ruff", tmp_path)
+            is True
+        )

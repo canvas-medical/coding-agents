@@ -178,7 +178,7 @@ uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_ses
 ```
 
 - **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
-  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
+  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 13) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
   uv run --with 'canvas>=1.2.0' canvas login
@@ -196,7 +196,17 @@ Each line is `<slug> test_instance=<true|false> production=<true|false> logs=<tr
 - **If no line has `test_instance=true`**: Report a note only: a Deploy manager or Organization admin designates a test instance on the instance's Plugin management tab in Canvas Platform. This is not a failure.
 - **If it exits non-zero**: Report a note only, with its message. This is not a failure.
 
-### 11. Check Claude Model
+### 11. Check the style toolchain
+
+```bash
+uv run --no-project --with ruff==0.15.14 ruff --version
+uv run --no-project --with "mypy>=1.19.0,<2" mypy --version
+```
+
+- **If both print a version**: Report "Style toolchain resolves (ruff, mypy)" and continue
+- **If either fails**: Report which one, and that `/cpa:style` cannot produce a verdict until it resolves. Both are fetched on demand rather than installed, so this needs uv to reach its package index; it does not need either tool on PATH.
+
+### 12. Check Claude Model
 
 Identify which Claude model you are currently running (you know this from your system context).
 
@@ -211,7 +221,7 @@ Identify which Claude model you are currently running (you know this from your s
   To switch, use the /model command or update your .claude/settings.json file to set "model": "opus".
   ```
 
-### 12. Report Results
+### 13. Report Results
 
 If all checks pass, report:
 

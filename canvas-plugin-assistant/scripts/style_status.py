@@ -104,6 +104,28 @@ _RUFF_TIMEOUT = 60
 _MYPY_TIMEOUT = 120
 _MANIFEST_TIMEOUT = 15
 
+# Resolving a tool on a cold uv cache downloads it, so the probe gets its own
+# budget rather than borrowing the check's.
+_PROBE_TIMEOUT = 120
+
+# The style toolchain, resolved through uv instead of assumed present on PATH.
+# Neither tool is declared by the plugins this runs against -- the example
+# plugins' pyproject mentions ruff nowhere and Studio-generated repos have no
+# pyproject at all -- so a bare `uv run ruff` exits 2, "Failed to spawn: ruff",
+# and a bare `ruff` depends on whatever the machine happens to have.
+#
+# `--no-project` is what keeps this from creating a `.venv` inside the plugin
+# directory, which is the same virtualenv `_RUFF_SCOPE_ARGS` exists to keep ruff
+# out of. `--with` pins the version, so the verdict is reproducible rather than
+# a property of the host.
+#
+# These specs are duplicated in `commands/style.md`, `commands/new-plugin.md`
+# and `.github/workflows/update-canvas-ruff-config.yml`; a test asserts all
+# four agree, because a drifted pin means the workflow validates against a ruff
+# that is not the one running.
+PINNED_RUFF = "ruff==0.15.14"
+BOUNDED_MYPY = "mypy>=1.19.0,<2"
+
 # Directories the digest never descends into: the record's own home, and the
 # caches and virtualenvs that churn without the plugin's sources changing.
 # Getting this set wrong is the failure that matters: too narrow and the digest
@@ -447,6 +469,28 @@ def _run(cmd: list[str], cwd: Path, timeout: int) -> tuple[int, str] | None:
     return proc.returncode, proc.stdout.decode("utf-8", errors="ignore").strip()
 
 
+def tool_cmd(spec: str, *args: str) -> list[str]:
+    """The argv for running one style tool through uv at a pinned version."""
+    return ["uv", "run", "--no-project", "--with", spec, *args]
+
+
+def tool_available(spec: str, tool: str, cwd: Path) -> bool:
+    """Whether ``tool`` resolves and runs, checked before trusting its exit code.
+
+    This is not a nicety. ``uv run`` passes the child's exit code through, but
+    when uv cannot resolve ``--with`` itself -- an unsatisfiable pin, a cache
+    miss with no network -- uv exits **1**, which is indistinguishable from the
+    tool running and reporting diagnostics. Without this probe an outage would
+    record ``style_clean: false`` against code nothing examined, and a false
+    failure blocks a deploy where a skip does not.
+
+    Measured against uv 0.12.5: an unresolvable package and ``--offline`` with a
+    cold cache both exit 1, while a malformed version string exits 2.
+    """
+    probe = _run(tool_cmd(spec, tool, "--version"), cwd, _PROBE_TIMEOUT)
+    return probe is not None and probe[0] == 0
+
+
 def run_checks(
     plugin_dir: Path, ruff_config: str, mypy_config: str | None
 ) -> dict[str, str]:
@@ -457,23 +501,38 @@ def run_checks(
     """
     outcomes: dict[str, str] = {}
 
-    _run(
-        ["ruff", "format", *_RUFF_SCOPE_ARGS, "--config", ruff_config, "."],
-        plugin_dir,
-        _RUFF_TIMEOUT,
-    )
+    if not tool_available(PINNED_RUFF, "ruff", plugin_dir):
+        print(
+            f"style_status: could not resolve {PINNED_RUFF} through uv — "
+            "skipping the ruff check",
+            file=sys.stderr,
+        )
+        check = None
+    else:
+        _run(
+            tool_cmd(
+                PINNED_RUFF,
+                "ruff", "format",
+                *_RUFF_SCOPE_ARGS,
+                "--config", ruff_config,
+                ".",
+            ),
+            plugin_dir,
+            _RUFF_TIMEOUT,
+        )
 
-    check = _run(
-        [
-            "ruff", "check", "--fix",
-            *_RUFF_SCOPE_ARGS,
-            "--config", ruff_config,
-            "--output-format", "concise",
-            ".",
-        ],
-        plugin_dir,
-        _RUFF_TIMEOUT,
-    )
+        check = _run(
+            tool_cmd(
+                PINNED_RUFF,
+                "ruff", "check", "--fix",
+                *_RUFF_SCOPE_ARGS,
+                "--config", ruff_config,
+                "--output-format", "concise",
+                ".",
+            ),
+            plugin_dir,
+            _RUFF_TIMEOUT,
+        )
     if check is None:
         outcomes["ruff"] = "skip"
     else:
@@ -486,9 +545,20 @@ def run_checks(
             if returncode != 0:
                 print(output, file=sys.stderr)
 
-    if mypy_config and Path(mypy_config).is_file():
+    if not (mypy_config and Path(mypy_config).is_file()):
+        outcomes["mypy"] = "skip"
+    elif not tool_available(BOUNDED_MYPY, "mypy", plugin_dir):
+        print(
+            f"style_status: could not resolve {BOUNDED_MYPY} through uv — "
+            "skipping the mypy check",
+            file=sys.stderr,
+        )
+        outcomes["mypy"] = "skip"
+    else:
         mypy = _run(
-            ["mypy", "--config-file", mypy_config, "."], plugin_dir, _MYPY_TIMEOUT
+            tool_cmd(BOUNDED_MYPY, "mypy", "--config-file", mypy_config, "."),
+            plugin_dir,
+            _MYPY_TIMEOUT,
         )
         if mypy is None:
             outcomes["mypy"] = "skip"
@@ -501,8 +571,6 @@ def run_checks(
                 outcomes["mypy"] = "pass" if returncode == 0 else "fail"
                 if returncode != 0:
                     print(output, file=sys.stderr)
-    else:
-        outcomes["mypy"] = "skip"
 
     manifest = plugin_dir / "CANVAS_MANIFEST.json"
     if manifest.is_file():
