@@ -44,20 +44,24 @@ If the environment validation fails, resolve the reported environment issue firs
 
 The Canvas ruff ruleset lives in `${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml` — a verbatim, CI-synced copy of `canvas-plugins/pyproject.toml`, the same rules that gate every other Canvas Python repo.
 
-Every ruff command below passes `--extend-exclude .venv`. That ruleset sets `exclude`, which *replaces* ruff's built-in exclusions rather than adding to them, and `.venv` is one of the defaults it drops. Without the flag, ruff walks into the plugin's own virtualenv and `--fix` rewrites installed dependency source. It must be `--extend-exclude` and not `--exclude`: `--exclude` replaces the ruleset's own list, which would un-exclude `canvas_generated/` and `canvas_cli/templates/`. The flag belongs here rather than in the config file, which a weekly workflow overwrites verbatim.
+Every ruff command below passes a second `--config` carrying `extend-exclude=[".venv"]`. That ruleset sets `exclude`, which *replaces* ruff's built-in exclusions rather than adding to them, and `.venv` is one of the defaults it drops, so without this ruff walks into the plugin's own virtualenv and `--fix` rewrites installed dependency source.
+
+Use this form rather than an exclude flag. `ruff format` does not accept `--extend-exclude` and exits 2 on it, which stops formatting happening while still leaving `.venv` alone, so it looks like it worked. `--exclude` is accepted by both subcommands and is wrong for both: it replaces the ruleset's list and un-excludes `canvas_generated/` and `canvas_cli/templates/`. The override belongs on the command line rather than in the config file, which a weekly workflow overwrites verbatim.
 
 ### Step 2: Format
 
 ```bash
 uv run --no-project --with ruff==0.15.14 \
-  ruff format --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+  ruff format --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" \
+       --config 'extend-exclude=[".venv"]' .
 ```
 
 ### Step 3: Lint, auto-fix, then fix the rest
 
 ```bash
 uv run --no-project --with ruff==0.15.14 \
-  ruff check --fix --extend-exclude .venv --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" .
+  ruff check --fix --config "${CLAUDE_PLUGIN_ROOT}/config/pyproject.toml" \
+       --config 'extend-exclude=[".venv"]' .
 ```
 
 ruff fixes what it can automatically. For every remaining violation — commonly a missing google-style docstring (`D` rules), an unused name, or a simplification (`SIM`) — edit the code to resolve it, then run this step again. Repeat until ruff reports nothing left.

@@ -203,16 +203,25 @@ _MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 # .gitignore lists `.venv`, which a plugin checked out as a plain directory is
 # not.
 #
-# It must be `--extend-exclude`, never `--exclude`: `--exclude` replaces the
-# ruleset's own list, which would un-exclude `canvas_generated/` and
-# `canvas_cli/templates/` and trade one defect for another. Measured against
-# ruff 0.15.14 on a tree holding all three directories.
+# It is expressed as an inline config override rather than a command-line
+# exclude flag, because the two subcommands do not accept the same flags:
+# `ruff check` takes `--extend-exclude` but `ruff format` does not, and rejects
+# it with "unexpected argument" (exit 2) -- which stops formatting happening at
+# all while leaving `.venv` untouched, so it looks like the fix working.
+# `--exclude` is accepted by both and is wrong for both: it REPLACES the
+# ruleset's list, un-excluding `canvas_generated/` and `canvas_cli/templates/`.
+#
+# A second `--config` carrying a `key=value` override is accepted by both and
+# extends rather than replaces, so it also tracks whatever the synced ruleset
+# excludes instead of restating it. Measured against ruff 0.15.14 on a tree
+# holding `.venv/`, `canvas_generated/` and `src/`: format rewrites only `src`,
+# and check reports only `src`.
 #
 # This lives here, and in the same commands in `commands/style.md`, rather than
 # in `config/pyproject.toml`: that file is a verbatim mirror of canvas-plugins'
 # own pyproject, which `.github/workflows/update-canvas-ruff-config.yml`
 # overwrites and pushes on a weekly cron. An edit there regresses within a week.
-_RUFF_SCOPE_ARGS = ("--extend-exclude", ".venv")
+_RUFF_SCOPE_ARGS = ("--config", 'extend-exclude=[".venv"]')
 
 
 def find_manifest(plugin_dir: Path) -> Path | None:
@@ -580,24 +589,34 @@ def run_checks(
         )
         check = None
     else:
-        _run(
+        formatted = _run(
             tool_cmd(
                 PINNED_RUFF,
                 "ruff", "format",
-                *_RUFF_SCOPE_ARGS,
                 "--config", ruff_config,
+                *_RUFF_SCOPE_ARGS,
                 ".",
             ),
             plugin_dir,
             _RUFF_TIMEOUT,
         )
+        # Formatting has no outcome of its own -- it is applied, not reported --
+        # but a formatter that could not run at all has to say so. Silence here
+        # is indistinguishable from a clean format, and the two subcommands do
+        # not accept the same flags, so an argument `ruff format` rejects stops
+        # formatting happening while every other check still passes.
+        if formatted is not None and formatted[0] not in TOOL_REPORTED_ON_CODE:
+            print(
+                f"style_status: ruff format could not run: {formatted[1]}",
+                file=sys.stderr,
+            )
 
         check = _run(
             tool_cmd(
                 PINNED_RUFF,
                 "ruff", "check", "--fix",
-                *_RUFF_SCOPE_ARGS,
                 "--config", ruff_config,
+                *_RUFF_SCOPE_ARGS,
                 "--output-format", "concise",
                 ".",
             ),
