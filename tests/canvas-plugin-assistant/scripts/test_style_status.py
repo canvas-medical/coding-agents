@@ -566,6 +566,48 @@ class TestTreeDigest:
 
         assert covered == {"handler.py", "CANVAS_MANIFEST.json", "mypy.ini"}
 
+    def test_covers_type_stubs(self, tmp_path: Path) -> None:
+        """Both tools read `.pyi`, so a stub is an input like any source.
+
+        ruff lints and formats stubs directly, and mypy prefers a `foo.pyi` over
+        its `foo.py` sibling for what it reports, so a stub can decide a verdict
+        with no `.py` file changing.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "vendor.pyi").write_text("def add(a: int) -> int: ...\n", encoding="utf-8")
+
+        covered = {str(path) for path in style_status.digest_files(tmp_path)}
+
+        assert covered == {"handler.py", "vendor.pyi"}
+
+    def test_moves_when_a_stub_changes(self, tmp_path: Path) -> None:
+        """Editing a stub stales the record, the same as editing a source."""
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        stub = tmp_path / "vendor.pyi"
+        stub.write_text("def add(a: int) -> int: ...\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+
+        stub.write_text("def add(a: int) -> str: ...\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) != before
+
+    def test_a_nested_config_copy_is_not_an_input(self, tmp_path: Path) -> None:
+        """Only the top-level mypy.ini and manifest are read, so only those count.
+
+        The gate runs mypy against ``plugin_dir/mypy.ini`` and formats
+        ``plugin_dir/CANVAS_MANIFEST.json``. A nested copy changes no verdict, so
+        digesting it would stale a record over a file nothing read.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "mypy.ini").write_text("[mypy]\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+        nested = tmp_path / "vendored"
+        nested.mkdir()
+        (nested / "mypy.ini").write_text("[mypy]\nstrict = True\n", encoding="utf-8")
+        (nested / "CANVAS_MANIFEST.json").write_text("{}", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) == before
+
     def test_moves_when_the_plugin_mypy_config_changes(self, tmp_path: Path) -> None:
         """A plugin's own mypy.ini wins over the fallback, so it decides the verdict.
 
