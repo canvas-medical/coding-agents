@@ -122,16 +122,23 @@ _DIGEST_SKIP_DIRS = frozenset(
     }
 )
 
-# What the checks actually read: Python sources for ruff and mypy, the manifest
-# for the formatter, and a plugin's own mypy.ini, which wins over the fallback
-# ruleset and so decides what mypy reports. A change anywhere else cannot change
-# a verdict, so folding it in would only invalidate records for no reason.
+# What the checks actually read. Both tools are pointed at the plugin dir and
+# both read stubs as well as sources: ruff lints and formats `.pyi`, and mypy
+# prefers a `foo.pyi` over its `foo.py` sibling for what it reports, so a stub
+# can decide a verdict with no `.py` changing at all.
+_DIGEST_SUFFIXES = frozenset({".py", ".pyi"})
+
+# Configuration the checks read, matched at the top level only, because that is
+# where the gate looks: it runs mypy against ``plugin_dir/mypy.ini`` when that
+# exists, in preference to the fallback ruleset, and formats
+# ``plugin_dir/CANVAS_MANIFEST.json``. A nested copy of either is not an input,
+# so digesting it would stale a record for a file nothing read.
 #
 # The ruff ruleset is deliberately absent: it is passed by path from outside the
-# plugin, so a per-plugin digest cannot see it. Its version is pinned and its
-# content is CI-synced, which is what holds it steady instead.
-_DIGEST_SUFFIXES = frozenset({".py"})
-_DIGEST_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
+# plugin, and ``ruff --config <file>`` replaces hierarchical discovery entirely,
+# so a plugin-local ruff config is never read either. The version pin and the CI
+# sync are what hold the ruleset steady instead.
+_DIGEST_TOP_LEVEL_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
 
 
 def digest_files(plugin_dir: Path) -> list[Path]:
@@ -143,7 +150,10 @@ def digest_files(plugin_dir: Path) -> list[Path]:
             continue
         if not path.is_file():
             continue
-        if path.suffix in _DIGEST_SUFFIXES or path.name in _DIGEST_NAMES:
+        top_level_config = (
+            len(relative.parts) == 1 and relative.name in _DIGEST_TOP_LEVEL_NAMES
+        )
+        if path.suffix in _DIGEST_SUFFIXES or top_level_config:
             found.append(relative)
     return sorted(found)
 
