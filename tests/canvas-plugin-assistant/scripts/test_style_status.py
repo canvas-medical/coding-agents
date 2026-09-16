@@ -886,8 +886,16 @@ class TestRuffStaysOutOfTheVirtualenv:
     interaction between that file's `exclude` and the command line.
     """
 
-    def _tree(self, tmp_path: Path) -> dict[str, Path]:
-        """A non-git plugin dir holding a vendored file, generated code and a source."""
+    def _tree(self, tmp_path: Path, monkeypatch) -> dict[str, Path]:
+        """A non-git plugin dir holding a vendored file, generated code and a source.
+
+        mypy is switched off for this class so the captured output is ruff's
+        alone; otherwise mypy's own findings on the same files would satisfy
+        assertions meant to be about ruff's file selection.
+        """
+        monkeypatch.setattr(
+            style_status, "resolve_mypy_config", lambda plugin_dir, mypy_config: None
+        )
         unformatted = "import os,sys\ndef f( a,b ):\n  return a+b\n"
         paths = {
             "vendored": tmp_path / ".venv" / "site-packages" / "vend" / "v.py",
@@ -900,10 +908,10 @@ class TestRuffStaysOutOfTheVirtualenv:
         return paths
 
     def test_a_vendored_file_is_left_untouched(
-        self, tmp_path: Path, capsys, shipped_ruff_config: str
+        self, tmp_path: Path, capsys, monkeypatch, shipped_ruff_config: str
     ) -> None:
         """ruff neither reformats nor --fixes anything under .venv."""
-        paths = self._tree(tmp_path)
+        paths = self._tree(tmp_path, monkeypatch)
         before = paths["vendored"].read_bytes()
 
         outcomes = style_status.run_checks(
@@ -918,7 +926,7 @@ class TestRuffStaysOutOfTheVirtualenv:
         assert "src/s.py" in capsys.readouterr().err
 
     def test_generated_code_stays_excluded(
-        self, tmp_path: Path, capsys, shipped_ruff_config: str
+        self, tmp_path: Path, capsys, monkeypatch, shipped_ruff_config: str
     ) -> None:
         """The narrower flag must not un-exclude what the ruleset excludes.
 
@@ -926,7 +934,7 @@ class TestRuffStaysOutOfTheVirtualenv:
         `canvas_generated/` back into scope. Only `--extend-exclude` adds to it,
         so this fails if the flag is ever swapped.
         """
-        paths = self._tree(tmp_path)
+        paths = self._tree(tmp_path, monkeypatch)
         before = paths["generated"].read_bytes()
 
         style_status.run_checks(
@@ -1047,3 +1055,84 @@ class TestAnUnresolvableToolchainIsASkip:
             style_status.tool_available(style_status.PINNED_RUFF, "ruff", tmp_path)
             is True
         )
+
+
+class TestMypyConfigFallback:
+    """A plugin with no mypy.ini still gets a real verdict.
+
+    Without a fallback, mypy is skipped without ever being invoked, and because
+    mypy is required that leaves `style_clean` null and `--check` answering
+    UNKNOWN however many rounds run. Of five recently sampled Studio-generated
+    plugins, none shipped a mypy.ini, so this is the normal case.
+    """
+
+    def test_the_canonical_config_ships(self) -> None:
+        """The fallback is only a fallback if the file is actually there."""
+        assert style_status.FALLBACK_MYPY_CONFIG.is_file()
+        assert "[mypy]" in style_status.FALLBACK_MYPY_CONFIG.read_text(encoding="utf-8")
+
+    def test_falls_back_when_the_plugin_has_none(self, tmp_path: Path) -> None:
+        """The canonical ruleset is used when the named config does not exist."""
+        assert (
+            style_status.resolve_mypy_config(tmp_path, "mypy.ini")
+            == style_status.FALLBACK_MYPY_CONFIG
+        )
+
+    def test_falls_back_when_no_config_is_named(self, tmp_path: Path) -> None:
+        """Naming nothing is the same case as naming something absent."""
+        assert (
+            style_status.resolve_mypy_config(tmp_path, None)
+            == style_status.FALLBACK_MYPY_CONFIG
+        )
+
+    def test_the_plugins_own_config_wins(self, tmp_path: Path) -> None:
+        """A plugin that ships a mypy.ini keeps deciding its own verdict."""
+        own = tmp_path / "mypy.ini"
+        own.write_text("[mypy]\n", encoding="utf-8")
+
+        assert style_status.resolve_mypy_config(tmp_path, "mypy.ini") == own
+
+    def test_a_relative_config_resolves_against_the_plugin_dir(
+        self, tmp_path: Path
+    ) -> None:
+        """--run takes --plugin-dir, so a relative config is not cwd-relative.
+
+        The recording step is invoked with a bare `mypy.ini`; resolving that
+        against the process's cwd rather than the plugin would find the wrong
+        file, or nothing, depending on where the agent happened to be standing.
+        """
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+        own = plugin / "mypy.ini"
+        own.write_text("[mypy]\n", encoding="utf-8")
+
+        assert style_status.resolve_mypy_config(plugin, "mypy.ini") == own
+
+    def test_mypy_runs_and_the_verdict_is_real(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        """With no mypy.ini present, mypy is invoked and style_clean is a boolean.
+
+        This is the defect in one assertion: the old guard skipped mypy without
+        invoking it, so `style_clean` could never be anything but null.
+        """
+        (tmp_path / "handler.py").write_text("def f(a, b):\n    return a + b\n")
+        invoked: list[list[str]] = []
+
+        def fake_run(cmd, cwd, timeout):
+            invoked.append(cmd)
+            return 0, ""
+
+        monkeypatch.setattr(style_status, "tool_available", lambda spec, tool, cwd: True)
+        monkeypatch.setattr(style_status, "_run", fake_run)
+
+        outcomes = style_status.run_checks(
+            tmp_path, ruff_config="whatever.toml", mypy_config="mypy.ini"
+        )
+
+        assert outcomes["mypy"] == "pass"
+        assert build_payload(outcomes)["style_clean"] is True
+        assert any(
+            "mypy" in cmd and str(style_status.FALLBACK_MYPY_CONFIG) in cmd
+            for cmd in invoked
+        ), invoked

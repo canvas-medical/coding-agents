@@ -217,51 +217,13 @@ omit = ["tests/*"]
 
 Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
 
-**Add `mypy.ini` file to the container directory:**
+**Add `mypy.ini` file to the container directory** by copying the canonical Canvas ruleset:
 
-```ini
-[mypy]
-explicit_package_bases = True
-
-check_untyped_defs = True
-disallow_incomplete_defs = True
-disallow_untyped_calls = True
-; Exempt three third-party packages that ship no usable annotations. Same
-; exclusion canvas-plugins uses, for the reason it cites (typeshed#10592).
-; Must stay on its own line: mypy's config parser has no inline comments.
-untyped_calls_exclude = canvas_generated,factory,redis
-disallow_untyped_decorators = False
-disallow_untyped_defs = True
-error_summary = True
-
-show_error_context = True
-strict_equality = True
-strict_optional = True
-
-warn_no_return = True
-warn_redundant_casts = True
-warn_return_any = True
-warn_unreachable = True
-warn_unused_configs = True
-warn_unused_ignores = True
-
-follow_imports = silent
-ignore_missing_imports = True
-; ignore_missing_imports already makes an un-stubbed third-party import Any.
-; import-untyped fires only on the subset whose stubs happen to be published to
-; PyPI but are absent here, so without this the verdict turns on packaging
-; trivia: `import dateutil` is an error while an obscure library is silently
-; Any. It is also the one class of finding a plugin author cannot act on, since
-; stubs can only be installed into the Studio image. canvas-plugins instead
-; installs the types-* packages it needs; that does not transfer, because the
-; set of libraries a plugin might import is open-ended.
-disable_error_code = import-untyped
-no_implicit_optional = True
-pretty = False
-
-python_version = 3.12
-exclude = debug
+```bash
+cp "${CLAUDE_PLUGIN_ROOT}/config/mypy.ini" mypy.ini
 ```
+
+Copy it rather than writing the settings out here. That file is the only copy of the ruleset: `/cpa:style` falls back to it for a plugin that ships no `mypy.ini`, and Studio's deploy gate mirrors it under a test that pins the two equal. A hand-transcribed second copy is how the scaffold and the gate come to disagree about what clean means.
 
 #### Step 6: Commit the Scaffolded Plugin
 
