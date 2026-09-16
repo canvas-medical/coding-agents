@@ -175,17 +175,25 @@ _DIGEST_SKIP_DIRS = frozenset(
 # can decide a verdict with no `.py` changing at all.
 _DIGEST_SUFFIXES = frozenset({".py", ".pyi"})
 
-# Configuration the checks read, matched at the top level only, because that is
-# where the gate looks: it runs mypy against ``plugin_dir/mypy.ini`` when that
-# exists, in preference to the fallback ruleset, and formats
-# ``plugin_dir/CANVAS_MANIFEST.json``. A nested copy of either is not an input,
-# so digesting it would stale a record for a file nothing read.
+# mypy's config, matched at the top level only, because that is the only place
+# anything looks for it: ``resolve_mypy_config`` reads ``plugin_dir/mypy.ini``
+# in preference to the canonical ruleset. A nested copy is not an input, so
+# digesting it would stale a record for a file nothing read.
+#
+# The manifest is not listed here because it is not found by name at a fixed
+# depth -- see ``find_manifest``, whose result the digest covers wherever it
+# resolved.
 #
 # The ruff ruleset is deliberately absent: it is passed by path from outside the
 # plugin, and ``ruff --config <file>`` replaces hierarchical discovery entirely,
 # so a plugin-local ruff config is never read either. The version pin and the CI
 # sync are what hold the ruleset steady instead.
-_DIGEST_TOP_LEVEL_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
+_DIGEST_TOP_LEVEL_NAMES = frozenset({"mypy.ini"})
+
+# Manifests that belong to the tooling rather than to the plugin. canvas-cli
+# ships template manifests inside its own package, so a plugin that has synced a
+# virtualenv contains several.
+_MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 
 # Keeps ruff out of the plugin's own virtualenv. The Canvas ruleset sets
 # `exclude`, which REPLACES ruff's built-in exclusions rather than adding to
@@ -207,8 +215,46 @@ _DIGEST_TOP_LEVEL_NAMES = frozenset({"CANVAS_MANIFEST.json", "mypy.ini"})
 _RUFF_SCOPE_ARGS = ("--extend-exclude", ".venv")
 
 
+def find_manifest(plugin_dir: Path) -> Path | None:
+    """The plugin's CANVAS_MANIFEST.json, which is not always at ``plugin_dir``.
+
+    The canonical layout puts the manifest in the inner snake_case package while
+    CPA_PLUGIN_DIR is the kebab-case container, so looking only at
+    ``plugin_dir/CANVAS_MANIFEST.json`` finds nothing on exactly the layout
+    /cpa:new-plugin creates.
+
+    Prefers the manifest whose own directory basename equals its ``name`` field,
+    which is the directory ``canvas install`` names the plugin after; among
+    equal candidates the shallowest wins. That is deliberately the same rule
+    Studio resolves with, so the two enforcement points agree about which
+    manifest is the plugin's.
+    """
+    candidates = [
+        path
+        for path in plugin_dir.rglob("CANVAS_MANIFEST.json")
+        if path.is_file()
+        and not _MANIFEST_SKIP_DIRS.intersection(path.relative_to(plugin_dir).parts)
+    ]
+    if not candidates:
+        return None
+
+    matching = [path for path in candidates if path.parent.name == _manifest_name(path)]
+    pool = matching or candidates
+    return min(pool, key=lambda path: len(path.relative_to(plugin_dir).parts))
+
+
+def _manifest_name(manifest: Path) -> str | None:
+    """The ``name`` a manifest declares, or None if it is unreadable."""
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return data.get("name") if isinstance(data, dict) else None
+
+
 def digest_files(plugin_dir: Path) -> list[Path]:
     """The files the digest covers, sorted, relative to ``plugin_dir``."""
+    manifest = find_manifest(plugin_dir)
     found = []
     for path in plugin_dir.rglob("*"):
         relative = path.relative_to(plugin_dir)
@@ -219,7 +265,7 @@ def digest_files(plugin_dir: Path) -> list[Path]:
         top_level_config = (
             len(relative.parts) == 1 and relative.name in _DIGEST_TOP_LEVEL_NAMES
         )
-        if path.suffix in _DIGEST_SUFFIXES or top_level_config:
+        if path.suffix in _DIGEST_SUFFIXES or top_level_config or path == manifest:
             found.append(relative)
     return sorted(found)
 
@@ -608,8 +654,8 @@ def run_checks(
                 if returncode != 0:
                     print(output, file=sys.stderr)
 
-    manifest = plugin_dir / "CANVAS_MANIFEST.json"
-    if manifest.is_file():
+    manifest = find_manifest(plugin_dir)
+    if manifest is not None:
         formatter = Path(__file__).parent / "format_manifest.py"
         result = _run(
             [sys.executable, str(formatter), str(manifest)],
