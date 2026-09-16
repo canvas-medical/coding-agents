@@ -618,12 +618,13 @@ class TestTreeDigest:
 
         assert style_status.tree_digest(tmp_path) != before
 
-    def test_a_nested_config_copy_is_not_an_input(self, tmp_path: Path) -> None:
-        """Only the top-level mypy.ini and manifest are read, so only those count.
+    def test_a_nested_mypy_config_is_not_an_input(self, tmp_path: Path) -> None:
+        """Only the top-level mypy.ini is read, so only that one counts.
 
-        The gate runs mypy against ``plugin_dir/mypy.ini`` and formats
-        ``plugin_dir/CANVAS_MANIFEST.json``. A nested copy changes no verdict, so
-        digesting it would stale a record over a file nothing read.
+        ``resolve_mypy_config`` reads ``plugin_dir/mypy.ini`` and nothing deeper,
+        so a nested copy changes no verdict and digesting it would stale a record
+        over a file nothing read. The manifest is different -- it is resolved
+        rather than named, so it is digested wherever it resolves.
         """
         (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
         (tmp_path / "mypy.ini").write_text("[mypy]\n", encoding="utf-8")
@@ -631,7 +632,21 @@ class TestTreeDigest:
         nested = tmp_path / "vendored"
         nested.mkdir()
         (nested / "mypy.ini").write_text("[mypy]\nstrict = True\n", encoding="utf-8")
-        (nested / "CANVAS_MANIFEST.json").write_text("{}", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) == before
+
+    def test_only_the_resolved_manifest_is_an_input(self, tmp_path: Path) -> None:
+        """A second manifest that is not the plugin's changes no verdict.
+
+        The check formats one manifest, the one ``find_manifest`` resolves, so
+        that is the only one whose contents can decide anything.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "CANVAS_MANIFEST.json").write_text('{"name": "x"}', encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+        decoy = tmp_path / "fixtures"
+        decoy.mkdir()
+        (decoy / "CANVAS_MANIFEST.json").write_text("{}", encoding="utf-8")
 
         assert style_status.tree_digest(tmp_path) == before
 
@@ -1136,3 +1151,160 @@ class TestMypyConfigFallback:
             "mypy" in cmd and str(style_status.FALLBACK_MYPY_CONFIG) in cmd
             for cmd in invoked
         ), invoked
+
+
+class TestFindManifest:
+    """The manifest is not always at the plugin dir.
+
+    The canonical layout puts CANVAS_MANIFEST.json in the inner snake_case
+    package while CPA_PLUGIN_DIR is the kebab-case container, so looking only at
+    `plugin_dir/CANVAS_MANIFEST.json` misses it on exactly the layout
+    /cpa:new-plugin creates. The consequence was a recorded `style_clean: true`
+    with the manifest never checked.
+    """
+
+    def _nested(self, tmp_path: Path, body: str = '{"name": "ai_note_titles"}') -> Path:
+        """The canonical layout: container dir, inner package, manifest inside it."""
+        package = tmp_path / "ai_note_titles"
+        package.mkdir()
+        manifest = package / "CANVAS_MANIFEST.json"
+        manifest.write_text(body, encoding="utf-8")
+        return manifest
+
+    def test_finds_a_nested_manifest(self, tmp_path: Path) -> None:
+        """The defect in one assertion."""
+        manifest = self._nested(tmp_path)
+
+        assert style_status.find_manifest(tmp_path) == manifest
+
+    def test_finds_a_flat_manifest(self, tmp_path: Path) -> None:
+        """The flat layout keeps working — it was the only one that ever did."""
+        manifest = tmp_path / "CANVAS_MANIFEST.json"
+        manifest.write_text('{"name": "custom_data_uat"}', encoding="utf-8")
+
+        assert style_status.find_manifest(tmp_path) == manifest
+
+    def test_none_when_there_is_no_manifest(self, tmp_path: Path) -> None:
+        """A plugin without a manifest still has to produce a verdict."""
+        assert style_status.find_manifest(tmp_path) is None
+
+    def test_prefers_the_manifest_matching_its_directory(self, tmp_path: Path) -> None:
+        """The install directory's basename must equal the manifest name.
+
+        `canvas install <dir>` names the plugin after the basename, and the
+        runner rejects handlers from a foreign package, so the manifest whose
+        directory matches its own `name` is the plugin's. This is the same rule
+        Studio resolves with, so the two agree.
+        """
+        shallow = tmp_path / "CANVAS_MANIFEST.json"
+        shallow.write_text('{"name": "something_else"}', encoding="utf-8")
+        matching = self._nested(tmp_path)
+
+        assert style_status.find_manifest(tmp_path) == matching
+
+    def test_shallowest_wins_when_none_match(self, tmp_path: Path) -> None:
+        """With no better signal, the shallowest candidate is the plugin's."""
+        shallow = tmp_path / "CANVAS_MANIFEST.json"
+        shallow.write_text('{"name": "mismatched"}', encoding="utf-8")
+        deep = tmp_path / "pkg" / "inner"
+        deep.mkdir(parents=True)
+        (deep / "CANVAS_MANIFEST.json").write_text('{"name": "also_wrong"}', encoding="utf-8")
+
+        assert style_status.find_manifest(tmp_path) == shallow
+
+    def test_skips_manifests_inside_a_virtualenv(self, tmp_path: Path) -> None:
+        """canvas-cli ships template manifests inside its own package."""
+        vendored = tmp_path / ".venv" / "site-packages" / "canvas_cli" / "templates"
+        vendored.mkdir(parents=True)
+        (vendored / "CANVAS_MANIFEST.json").write_text('{"name": "templates"}', encoding="utf-8")
+
+        assert style_status.find_manifest(tmp_path) is None
+
+    def test_an_unreadable_manifest_is_still_a_candidate(self, tmp_path: Path) -> None:
+        """A malformed manifest is precisely what the check exists to catch.
+
+        Its `name` cannot be read, so it cannot match its directory, but
+        discarding it would make the check silently skip the one case that most
+        needs reporting.
+        """
+        manifest = self._nested(tmp_path, body="{not json")
+
+        assert style_status.find_manifest(tmp_path) == manifest
+
+
+class TestTheManifestCheckRunsOnTheCanonicalLayout:
+    """End to end: the manifest check and the digest both reach a nested manifest."""
+
+    def _plugin(self, tmp_path: Path) -> Path:
+        """A nested plugin whose manifest is malformed: 4-space indent, wrong order."""
+        package = tmp_path / "my_plugin"
+        package.mkdir()
+        (package / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        manifest = package / "CANVAS_MANIFEST.json"
+        manifest.write_text(
+            '{\n    "readme": "./README.md",\n    "name": "my_plugin"\n}\n',
+            encoding="utf-8",
+        )
+        return manifest
+
+    def test_the_manifest_check_is_recorded(self, tmp_path: Path, monkeypatch) -> None:
+        """`manifest` appears in checks instead of being silently absent.
+
+        Previously this key was missing on every nested plugin, so a record could
+        read `style_clean: true` with the manifest unformatted.
+        """
+        self._plugin(tmp_path)
+        monkeypatch.setattr(style_status, "tool_available", lambda spec, tool, cwd: True)
+        monkeypatch.setattr(style_status, "_run", lambda cmd, cwd, timeout: (0, ""))
+
+        outcomes = style_status.run_checks(
+            tmp_path, ruff_config="whatever.toml", mypy_config=None
+        )
+
+        assert outcomes["manifest"] == "pass"
+        assert "manifest" in build_payload(outcomes)["checks"]
+
+    def test_the_real_formatter_canonicalizes_the_nested_manifest(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        """Run against the real format_manifest.py, not a stub."""
+        manifest = self._plugin(tmp_path)
+        monkeypatch.setattr(style_status, "tool_available", lambda spec, tool, cwd: False)
+
+        outcomes = style_status.run_checks(
+            tmp_path, ruff_config="whatever.toml", mypy_config=None
+        )
+
+        assert outcomes["manifest"] == "pass"
+        rewritten = manifest.read_text(encoding="utf-8")
+        assert '"name"' in rewritten
+        assert "    " not in rewritten, "still 4-space indented"
+
+    def test_editing_the_nested_manifest_stales_the_record(self, tmp_path: Path) -> None:
+        """The digest covers the manifest wherever it resolved.
+
+        Injecting a key into a nested manifest used to leave the verdict at a
+        clean exit 0, because the digest only matched config names at depth 1.
+        """
+        manifest = self._plugin(tmp_path)
+        before = style_status.tree_digest(tmp_path)
+
+        manifest.write_text('{"name": "my_plugin", "injected": true}\n', encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) != before
+
+    def test_a_clean_record_reads_back_as_clean(self, tmp_path: Path) -> None:
+        """The control: a fresh record on this layout is readable as clean.
+
+        Without this, the staleness test above could pass for the wrong reason.
+        """
+        self._plugin(tmp_path)
+        write_status(
+            tmp_path,
+            build_payload(
+                {"ruff": "pass", "mypy": "pass", "manifest": "pass"},
+                style_status.tree_digest(tmp_path),
+            ),
+        )
+
+        assert style_status.inspect_status(tmp_path).verdict == style_status.CLEAN
