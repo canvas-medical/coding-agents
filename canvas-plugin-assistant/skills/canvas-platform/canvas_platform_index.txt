@@ -320,7 +320,8 @@
     - Administer Vaccines
 - [Managing Provider Availability](https://help.canvasmedical.com/articles/6105998178-managing-provider-availability)
     - Overview
-    - Managing provider schedules
+    - Managing provider schedules with the Provider Availability plugin
+    - Managing provider schedules with Google Calendar sync
     - Bulk importing availability
     - Same-day and next-day holds
     - Limiting availability by visit or note type

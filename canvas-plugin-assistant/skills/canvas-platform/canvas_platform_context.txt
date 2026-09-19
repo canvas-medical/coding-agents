@@ -481,7 +481,7 @@ Lab results can be reviewed through the Schedule View or the patient's chart
 ### Reviewing Results from the Panel
   1. Use the **search bar** in the Schedule View to locate and open the patient's chart.
   2. Click the **Labs** icon located in the top-right panel.
-  3. Select the card of the lab report you wish to review to expand it. Reports pending review will display a red badge in the upper-right corner of the card. The sorting logic for the cards is as follows:
+  3. Select the card of the lab report you wish to review to expand it. Reports pending review will display a red badge in the upper-right corner of the card. A red exclamation point indicates that one or more lab result values are abnormal. When the result card is expanded, abnormal values are highlighted in the value table. Abnormal values may be identified from the source lab's abnormal flag or from values above or below configured thresholds. The sorting logic for the cards is as follows:
      - Documents requiring review by the logged in user will be listed first
      - Documents that need review and are assigned to a team the logged-in user is part of will show second
      - All other documents not assigned to the logged in user or their team(s) will be sorted by descending occurrence date
@@ -6902,14 +6902,22 @@ The Provider Availability plugin lets administrators configure provider schedule
 # User's Guide
 ## Overview
 Patient appointments are scheduled in Canvas. Provider availability is managed through the Provider Availability plugin, which calculates available appointment slots based on configured provider schedules, appointment rules, holds, blocks, and related scheduling settings.
-Some legacy implementations may still use Google Calendar sync for provider availability. Google Calendar setup guidance applies only to organizations already on that legacy workflow. If you are unsure which workflow your organization uses, contact Canvas Support.
-## Managing provider schedules
+Some legacy implementations may still use Google Calendar sync for provider availability. If your organization uses Google Calendar sync, follow the Google Calendar guidance in this article. If you are unsure which workflow your organization uses, contact Canvas Support.
+## Managing provider schedules with the Provider Availability plugin
 After the Provider Availability plugin is installed for your organization, authorized users can manage availability from the **Provider Availability** app in Canvas.
   1. Open the provider menu in Canvas.
   2. Select **Provider Availability**.
   3. Choose the provider whose schedule you want to manage.
   4. Add or update the provider's recurring availability, one-time availability, blocks, holds, buffers, and related scheduling rules as needed.
   5. Save your changes and confirm that the schedule view reflects the expected available slots.
+## Managing provider schedules with Google Calendar sync
+Some legacy organizations manage provider availability through Google Calendar sync. For those organizations, Canvas reads availability from calendars that follow the expected Canvas naming and configuration conventions.
+Canvas uses separate calendar types to determine when a provider can be booked, when they are unavailable, and which appointment types are allowed. When configuring or troubleshooting Google Calendar availability, confirm the following:
+  - The provider has the required Canvas-managed Google calendars for availability, blocks, and appointment-type-specific availability.
+  - Calendar names follow the expected Canvas naming convention, including the correct location suffix when availability is location-specific.
+  - The staff key is included in the calendar description where required so Canvas can associate the calendar with the correct provider.
+  - Appointment-type restrictions are represented on the appropriate availability calendar so Canvas only shows slots for the intended visit or note types.
+**Needs feature-owner confirmation before publishing:** confirm the exact four Google Calendar types Canvas currently reads, the precise location suffix format, and the current staff-key description requirement.
 ## Bulk importing availability
 For larger schedule updates, use the plugin's CSV import workflow where available. Bulk import is useful when setting up many providers, migrating schedules, or making broad schedule changes.
   1. Prepare the provider availability CSV according to your implementation team's format.
@@ -6922,14 +6930,17 @@ The Provider Availability plugin can support same-day and next-day holds. These 
   - **Next-day holds** reserve slots that become available before the next appointment day.
 ## Limiting availability by visit or note type
 Availability can be configured to support more granular scheduling rules, such as limiting certain appointment slots to specific visit or note types. When these restrictions are configured, Canvas filters appointment slots during booking so users only see appropriate options.
+For Provider Availability plugin implementations, configure visit- or note-type restrictions in the Provider Availability app.
+For legacy Google Calendar implementations, appointment-type-specific availability is controlled by the relevant Google Calendar configuration. Confirm that the calendar name, location suffix, staff-key description, and appointment-type restriction match the intended scheduling behavior.
 ## Troubleshooting
 If a provider's availability does not appear as expected:
-  - Confirm the Provider Availability plugin is installed and enabled for the environment.
-  - Confirm the user has access to the Provider Availability app.
+  - Confirm whether the organization uses the Provider Availability plugin or legacy Google Calendar sync.
+  - For Provider Availability plugin implementations, confirm the plugin is installed and enabled for the environment.
+  - Confirm the user has access to the Provider Availability app, if using the plugin workflow.
   - Review the provider's configured schedule, blocks, holds, buffers, and appointment-type restrictions.
   - Confirm the provider is associated with the relevant practice location and schedulable staff configuration.
   - For bulk imports, confirm the CSV was imported successfully and that provider identifiers matched the expected Canvas records.
-  - If the organization is on a legacy Google Calendar sync workflow, confirm the legacy calendar sync configuration with Canvas Support.
+  - For legacy Google Calendar sync, confirm the provider's calendars follow the expected Canvas naming convention, location suffix rule, staff-key description requirement, and appointment-type restriction setup.
 ## FAQ
 **Q: Do new implementations need Canvas-created Google Calendars for provider availability?**
 A: No. New implementations should use the Provider Availability plugin.
@@ -6938,12 +6949,12 @@ A: Yes, authorized users can manage schedules through the Provider Availability 
 **Q: Does provider availability create patient appointments?**
 A: No. Provider availability controls when appointments can be booked. Patient appointments are still created in Canvas.
 **Q: What if my organization already uses Google Calendar sync?**
-A: Some legacy organizations may still use Google Calendar sync. Continue following your existing support guidance unless Canvas Implementation or Support migrates your organization to the Provider Availability plugin.
+A: Some legacy organizations may still use Google Calendar sync. Follow the Google Calendar guidance in this article and confirm your organization's current workflow with Canvas Support if anything is unclear.
 ## Related Resources
   - [Managing Staff Members](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member)
   - [Provider Availability plugin](https://github.com/canvas-medical/gtm-extensions/tree/main/provider-availability/provider_availability)
 * * *
-**Keywords:** provider availability, Provider Availability plugin, scheduling, appointment scheduling, provider scheduling, availability management, bulk import, same-day holds, next-day holds
+**Keywords:** provider availability, Provider Availability plugin, Google Calendar sync, scheduling, appointment scheduling, provider scheduling, availability management, bulk import, same-day holds, next-day holds, visit type availability, note type availability
 **Categories:** Practice Management, Scheduling, Provider Management, Administrative Configurations
 ----- END PAGE https://help.canvasmedical.com/articles/6105998178-managing-provider-availability
 
