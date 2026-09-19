@@ -327,13 +327,14 @@ for encounter in encounters:
 This command can be run standalone or is called by `/cpa:wrap-up`:
 
 ```
-/cpa:check-setup              →  Verify environment tools
-/cpa:new-plugin               →  Create plugin from requirements
-/cpa:deploy                   →  Deploy to Canvas instance for UAT
-/cpa:coverage                 →  Check test coverage (aim for 90%), save report
-/cpa:security-review          →  Comprehensive security audit
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
+/cpa:deploy           →  Deploy to Canvas instance for UAT
+/cpa:coverage         →  Check test coverage (aim for 90%)
+/cpa:security-review  →  Comprehensive security audit
 /cpa:database-performance-review  →  Database query optimization  ← YOU ARE HERE
-/cpa:wrap-up                  →  Final checklist before delivery
+/cpa:wrap-up          →  Final checklist before delivery
 ```
 
 After a successful performance review, guide the user to the next step in the workflow.

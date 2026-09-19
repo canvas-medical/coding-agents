@@ -92,10 +92,35 @@ grep -rn "\.objects\." --include="*.py" .
 ### 3. Type checking
 
 ```bash
-uv run mypy --config-file=mypy.ini .
+mypy_ini=mypy.ini
+[ -f "$mypy_ini" ] || mypy_ini="${CLAUDE_PLUGIN_ROOT}/config/mypy.ini"
+uv run --no-project --with "mypy>=1.19.0,<2" \
+  mypy --config-file="$mypy_ini" .
 ```
 
 **If errors exist:** Flag this as a blocker.
+
+### 3a. Canvas Code Style
+
+Read back the style status recorded by `/cpa:style`:
+
+```bash
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/style_status.py" --check
+```
+
+It prints the verdict and exits:
+
+| Exit | Meaning | What to do |
+|------|---------|------------|
+| 0 | every check passed | Mark style as passing. |
+| 1 | a check failed | Flag as a blocker and offer to run `/cpa:style`. |
+| 3 | unknown | Run `/cpa:style`, then re-check. |
+
+Exit 3 covers no record, an unreadable one, an unrecognized version, a required check that never ran, and a record describing code that has changed since. All of them mean nothing has assessed the code in front of you. Treat it as "not yet checked," never as a pass.
+
+That last case is why a `0` can be trusted: the record carries a digest of the sources the checks ran against, so editing a `.py` or the manifest after `/cpa:style` turns a stale `0` into a `3` rather than leaving it to look current.
+
+Add `--json` to the same command for the full report (the verdict, the per-check booleans, and the names of the failing checks) when you want to act on which check failed rather than just whether one did. The exit code is identical either way.
 
 ### 4. Test Coverage
 
@@ -521,6 +546,7 @@ This command is the **final step** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
