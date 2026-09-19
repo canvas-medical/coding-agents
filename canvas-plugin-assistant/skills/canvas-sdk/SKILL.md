@@ -1,6 +1,6 @@
 ---
 name: canvas-sdk
-description: Canvas SDK reference and documentation. Use whenever a question, claim, or piece of code touches Canvas SDK capabilities, API usage, implementation patterns, or testing — including quick conversational questions ("how do I ingest ADTs?", "what's the import for X?", "does Canvas support Y?"). The bundled docs are the source of truth; do not answer Canvas SDK questions from memory.
+description: Canvas SDK reference and documentation. Use whenever a question, claim, or piece of code touches Canvas SDK capabilities, API usage, implementation patterns, or testing — including quick conversational questions ("how do I ingest ADTs?", "what's the import for X?", "how is Y modeled in the SDK?"). For whether Canvas already does something natively, with no plugin at all, that is canvas-platform. The bundled docs are the source of truth; do not answer Canvas SDK questions from memory.
 ---
 
 # Canvas SDK Reference
@@ -14,7 +14,7 @@ This skill provides comprehensive documentation for the Canvas Medical SDK, enab
 Before stating any specific class name, import path, effect/event name, field name, method, or supported value:
 1. Read `coding_agent_context.txt` from this skill's directory (see Usage below) and `grep`/search it for the relevant term.
 2. Base your answer on what the bundled docs actually say.
-3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line, so derive the link text from the URL's last path segment, de-hyphenated and title-cased — `/sdk/clients-twilio/` → `[Twilio Client](https://docs.canvasmedical.com/sdk/clients-twilio/)`, `/guides/custom-landing-page/` → `[Custom Landing Page](https://docs.canvasmedical.com/guides/custom-landing-page/)`. If the page body does open with a heading that names the page, prefer that. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
+3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line, so build the link text from the URL's last path segment: de-hyphenate, title-case, and reorder or singularize where that reads more naturally — `/sdk/clients-twilio/` → `[Twilio Client]`, `/guides/custom-landing-page/` → `[Custom Landing Page]`. The URL is what grounds the citation, so the link text only has to name the page recognizably; keep every word from the slug and add none, but you do not have to preserve its order. If the page body opens with a heading that names the page, prefer that. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
 
 This applies to a one-line verbal question just as much as to code generation. If a question is even partially about an SDK capability and you have not yet consulted this skill in the current conversation, consult it first, then answer.
 
