@@ -107,7 +107,7 @@ The schedule view can be customized to suit individual preferences, ensuring eff
 ## Provider's Weekly Schedule View
 When an individual provider is selected from the Clinician list or by clicking on their image on the schedule, the view will shift to display that provider's schedule for the week. By default, the week view shows Monday through Friday, but there a setting in **Constance: Config** called `ENABLE_SCHEDULE_FULL_WEEK` that displays a providers full 7-day rather than five when enabled.
 ![schedule week.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730917885095-scheduleweek.png?Expires=253370764800&Signature=Dz86Pq0XFcp9xNQn-Q7nhEYJv38fkgmYsDpFQFFy9VzHJTxb9CLkPsvlJh4qRLqJzYM-r2~0oQ~TMP4hDl7Ijw7TYZXn-HbrV9cCqTI5-donRm1s3gZFEK3-vw4PbEDKS2RGxTsK5iUF8XN7AXR0RjAqlL7T9e5NBzRJ4arFd20vNfz~-Xnkpz3cCRiYzxbXI0iyfALLOR8Nc7ClkV-8esxc75g6JDm332XC3Lw2y3808HgDPvalJD-HfNqTFuUeyY2u~Z6raBxqZ7SBN9NClDnmSVO-~DTqRXaqg8IcLR5tYY58N-MTSVuHS~WUktBB3Xsd6~atQEEQzp7wXuSpSg__&Key-Pair-Id=K3NV4LZ47N8M46)
-[📄 Managing Appointments](/articles/4617508394) to learn how to schedule appointments
+[Managing Appointments](/articles/4617508394) to learn how to schedule appointments
 ----- END PAGE https://help.canvasmedical.com/articles/1131763313-navigate-canvas-home-screen
 
 
@@ -1273,8 +1273,8 @@ A: Yes, users can annotate a document within Data Integration and forward the sa
 **Q: Are keyboard shortcuts supported?**
 A: Yes, within the Apryse modal all Apryse native keyboard shortcuts are supported. View the full list at [Apryse Keyboard Shortcuts](https://docs.apryse.com/uwp/guides/faq/keyboard-shortcuts).
 ## **Related Resources**
-  - [📄 Creating and Managing Letters](/articles/8181146406)
-  - [📄 Faxing in Canvas](/articles/3320683943)
+  - [Creating and Managing Letters](/articles/8181146406)
+  - [Faxing in Canvas](/articles/3320683943)
   - [Apryse Keyboard Shortcuts](https://docs.apryse.com/uwp/guides/faq/keyboard-shortcuts)
 * * *
 **Keywords:** PDF annotations, document annotation, electronic signatures, clinical document review, Data Integration, patient charts, document modification, Canvas workflows
@@ -1450,7 +1450,7 @@ This badge IS NOT an indication of if the image order was sent or not. It indica
 ![2025-01-06_17-12-41.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1736201748254-2025-01-06_17-12-41.png?Expires=253370764800&Signature=TKouhIhiZ4YzEIQn44xlOAWKZWH1e1P~ciN6OH93EeAxY7yFf9jyFtjtfbx1nWQVf~UvYqvNnP9M-fH9ejK2VRZffIMyQTJgCJ34hcB4x5-Aw1P2mkHGZ7dEiUJi0Drias1Db5zmDb6v8oFDIeJRdEW~pCBIXwIcUk0SCaSXUE8kIJoaIUTc8uY13MkWnPB1~GRPejfH0K6k9BxUXlvNfGXBve0NnxzQGnrtxF1rt3Xd69tbcj~XJ-wnkDCKs2TwCHnpSLl5FbXYIJ3XamOp4taOsf70Pf3UWHlcxq6nl3onm-To2LTBPdQud98ONQVGwhxfBXEACL2y6DE0qyM1cA__&Key-Pair-Id=K3NV4LZ47N8M46)
 # FAQs
 **Q: Why is the Imaging Center I'm looking for not listed in the command?**
-A: If the desired imaging center does not appear in the dropdown menu or the saved directory, it can be added to the referral database. [📄 Managing Referral Contacts](/articles/9919617000)
+A: If the desired imaging center does not appear in the dropdown menu or the saved directory, it can be added to the referral database. [Managing Referral Contacts](/articles/9919617000)
 For cases where manual entry is preferred or necessary, the imaging center information can be added as free text. Use the **To** field to specify the imaging center's name and the **Fax number** field to include the appropriate fax number. This ensures that the imaging order can still be processed even if the center is not pre-registered in the system.
 ![2025-01-06_17-32-24.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1736202838244-2025-01-06_17-32-24.png?Expires=253370764800&Signature=H1NpQA6U5WbscR3le-44CSL-eog6yNAUzib73fR3Kc5g4Th9~Ela4Bx9yMrWlMuQJROzAvRV9hExHQfslXW1eSas1vXmIvRfFFhuXKVou4BKJoSbMdTyWL~GwkuQkRY~n2fjG3bSJxW16bwz3H7H7wf3o9~wWANj2EF-~RUlBtCbW4zSSARWVd6OYWJTBo6cwO4xvJSHajAfhF50PuGFAu8NctUkC7nRucXguJ6o4XngXuLNXlmYIzsXTMN5J2ooatKeBtIP225jzZ9h-DVVNQozswditOgzbAYlMvnQ3qqaZ1IAdT14j-wXCeYlTndqSQy8DCzLxtEdN0U0DBA~sA__&Key-Pair-Id=K3NV4LZ47N8M46)
 # Resources
@@ -2290,9 +2290,9 @@ Commands already staged on the appointment note remain on the note when the appo
 ## How do I avoid duplicate lab orders?
 Only sign the prepared Lab Order when you intend to send it to the lab. If you need to make changes before the visit, edit the uncommitted command rather than creating and signing a separate order for the same tests.
 # Related Resources
-  - [📄 Introduction to Commands](/articles/4129367510)
-  - [📄 Ordering Labs](/articles/3065191197)
-  - [📄 How to Order Labs Not Integrated with Health Gorilla](/articles/3296538159)
+  - [Introduction to Commands](/articles/4129367510)
+  - [Ordering Labs](/articles/3065191197)
+  - [How to Order Labs Not Integrated with Health Gorilla](/articles/3296538159)
 * * *
 **Keywords:** lab order, precharting, prep orders, scheduled visit, appointment note, uncommitted commands, commit, sign and send
 **Categories:** Clinical Documentation, Commands, Labs, Appointments
@@ -3011,8 +3011,8 @@ A: Once resolved, a condition cannot be automatically reactivated. If the condit
 **Q: How can I see resolved conditions in the patient summary?**
 A: When resolving a condition, toggle on "Show on conditions list." Resolved conditions will appear at the bottom of the Patient Summary in gray non-bolded text.
 ## Related Resources
-  - [📄 Documenting New Diagnoses](/articles/9221634314)
-  - [📄 Assessing and Updating Conditions](/articles/7989321964)
+  - [Documenting New Diagnoses](/articles/9221634314)
+  - [Assessing and Updating Conditions](/articles/7989321964)
 **Keywords:** past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
@@ -3503,9 +3503,9 @@ Contact support if:
   - the reason for the error still cannot be determined
 When you contact support, include the exact error text and whether the issue occurs for controlled or non-controlled prescriptions.
 ## Related Articles
-  - [📄 Managing Medications](/articles/5128727084)
-  - [📄 Troubleshooting EPCS Authentication Errors](/articles/5551249431)
-  - [📄 Electronic Prescribing of Controlled Substances (EPCS) Enrollment](/articles/8630998726)
+  - [Managing Medications](/articles/5128727084)
+  - [Troubleshooting EPCS Authentication Errors](/articles/5551249431)
+  - [Electronic Prescribing of Controlled Substances (EPCS) Enrollment](/articles/8630998726)
 ----- END PAGE https://help.canvasmedical.com/articles/4252387326-troubleshooting-prescription-errors
 
 
@@ -4162,7 +4162,7 @@ If your clinic uses Stripe connected accounts, payment methods are tied to the c
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1739133376138-screenshot-202502093557%25402x.jpg?Expires=253370764800&Signature=SJJK3fXQl95xB27W9V2stR01uFTmmCw5EbM5StPjhzxEEghqOhXl1Pp2u0JBlK7ZQbjf3hK9ViV7orb-gwI35vs9dbWod~bicMMA62SHuO5xkl9agnp2shjGQAyGGN2FF1oiwpzNV2u-NqZOFZFeNVuRmzx6XruckKgW8Q5B2zngoVIDJHPuDg6KrUrqBlALVoP7~nJd03g4G2kEYiQg-YYGdlYT80GM8x~gta3zEXgfvYGPFyOXICOHttb-Cg-RWNiAA~oPJuhN-iAkRDSggiZFikE5nOkRNdy~xUdMg8e0pmd7aEHm0Zbdnb~LzaDldliMJHT7niZEBlhkBAWUpA__&Key-Pair-Id=K3NV4LZ47N8M46)
 ### Patient Management of Stored Payment Methods
 Patients can manage their payment methods within the Patient Portal, including using previously saved payment methods, adding new ones, or removing existing ones.
-Refer to [📄 Managing the Patient Portal](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/957aa7cb-cbf2-4744-bb1a-b98e28abbd00) for further details
+Refer to [Managing the Patient Portal](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/957aa7cb-cbf2-4744-bb1a-b98e28abbd00) for further details
 # Configuration & Set Up
 ## Stripe Configuration
   - Within admin navigate to the **Constance: Config** setting
@@ -4228,7 +4228,7 @@ _Canvas Support must manually disconnect the payment method before it can be rea
 _Business lines must be enabled in Constance Config. Your clinic administrator or Canvas Support can assist._
 # Related Resources
   - [Video: Collect a Payment](https://www.loom.com/share/6bc5f6a8210a48528515bb1f26c4cb27)
-  - [📄 Managing the Patient Portal](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/957aa7cb-cbf2-4744-bb1a-b98e28abbd00)
+  - [Managing the Patient Portal](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/957aa7cb-cbf2-4744-bb1a-b98e28abbd00)
   - [Extension: Stripe Payments](https://www.canvasmedical.com/extensions/stripe-payments-integration)
 # Keywords & Metadata
 **Keywords:** payments, patient payments, guarantor payments, copays, Stripe, Stripe configuration, Stripe connected accounts, business lines, payment routing, API keys, stored payment methods, card on file, patient app, patient portal, statements, Constance config, payment method errors.
@@ -4257,7 +4257,7 @@ A: Additional profile fields must be configured by a developer. If your organiza
 **Q: Can I edit the dropdown options for select fields?**
 A: Dropdown options are set during development and cannot be changed through the Canvas interface.
 ## **Related Resources**
-  - [📄 Patient Demographics ](/articles/8802451810)
+  - [Patient Demographics ](/articles/8802451810)
   - [How to add additional profile fields (Developer Guide)](https://docs.canvasmedical.com/guides/profile-additional-fields/)
 * * *
 **Keywords:** custom profile fields, patient metadata, additional demographics, patient information, custom data collection
@@ -5010,8 +5010,8 @@ There is no specific configuration to enable note filters. Note filters must be 
 **Q: Why aren't my filters working?**
 **A:** Ensure **Apply** was clicked after selecting filters. Also, confirm that the filters you've selected would logically return results (e.g., dates within a valid range).
 ## Related Resources
-[📄 Event and Note Types](/articles/6785045644)
-[📄 Staff Profile](/articles/4283873790)
+[Event and Note Types](/articles/6785045644)
+[Staff Profile](/articles/4283873790)
 **Keywords & Metadata**
   - **Keywords:** timeline, patient chart, filters, note type, date range, Canvas support, office visits
   - **Categories:** Charting, User Interface, Patient Timeline
@@ -5959,8 +5959,8 @@ A: Yes. When assessing a coding gap, select "Refute" as the status, document the
 **Q: Why can I add multiple diagnoses to a single coding gap?**
 A: The Create Coding Gap command supports multiple ICD-10 codes to represent a detected issue. Each code serves as evidence for the coding gap, supporting a one-to-many relationship. Common use cases include buddy codes (related diagnoses often documented together) and related conditions that collectively represent a single clinical issue. When you assess the coding gap, each ICD-10 code becomes a distinct condition in the patient's record.
 ## Related Resources
-  - [📄 Documenting New Diagnoses](/articles/9221634314)
-  - [📄 Assessing and Updating Conditions](/articles/7989321964)
+  - [Documenting New Diagnoses](/articles/9221634314)
+  - [Assessing and Updating Conditions](/articles/7989321964)
 **Keywords:** coding gaps, HCC, risk adjustment, diagnosis coding, validate coding gap, defer coding gap, assess coding gap, billing compliance, documentation accuracy
 **Categories:** Clinical Documentation, Condition Management, Risk Adjustment
 ----- END PAGE https://help.canvasmedical.com/articles/5456716623-understanding-coding-gaps
@@ -6314,7 +6314,7 @@ External care team members are sourced from the Canvas Medical Science directory
   - Maintains up-to-date contact information
   - Links providers by name and address matching
   - Updates provider information when changes are made in the science directory
-Each organization is allowed up to two dedicated resources to manage referral contacts. For detailed guidance, please review [📄 Managing Referral Contacts](/articles/9919617000).
+Each organization is allowed up to two dedicated resources to manage referral contacts. For detailed guidance, please review [Managing Referral Contacts](/articles/9919617000).
 ## FAQ & Troubleshooting
 **Q: How do external care team members get updated if their information changes?**
 **A:** External providers are linked to the [Canvas Medical Science](https://help.canvasmedical.com/articles/9919617000-managing-referral-contacts) directory. When information is updated in the directory, it will be reflected the next time that provider is added to any care team, and existing instances will be updated automatically.
@@ -6327,8 +6327,8 @@ Each organization is allowed up to two dedicated resources to manage referral co
 **Q: Why don't I see an external provider I'm looking for?**
 **A:** External providers must exist in the [Canvas Medical Science](https://help.canvasmedical.com/articles/9919617000-managing-referral-contacts) directory. If a provider isn't available, check if they're listed under a different name or contact your organizations dedicated resource or Canvas Support to have them added to the directory.
 ## **Related Resources**
-  - [📄 Managing Referral Contacts](/articles/9919617000)
-  - [📄 Data Integration and Document Management](/articles/7371085164)
+  - [Managing Referral Contacts](/articles/9919617000)
+  - [Data Integration and Document Management](/articles/7371085164)
   - Care Team [SDK](https://docs.canvasmedical.com/sdk/data-care-team/) and [API](https://docs.canvasmedical.com/api/careteam/) Reference
 * * *
 **Keywords:** care teams, care team lead, team members, patient care coordination, messaging routing, team roles, healthcare team management, external providers, internal staff, outside providers, provider directory
@@ -7126,9 +7126,9 @@ A: Selecting this checkbox sets the charge to $0.00 and indicates the payor-spec
 **Q: How do I handle expired procedure codes?**
 A: Add an end date to make the code inactive. This prevents the code from being used going forward while preserving historical data.
 # Related Resources
-  - [📄 Claim Management](/articles/9992348572)
-  - [📄 Command | Perform](/articles/5988007695)
-  - [📄 Vaccine Inventory Management](/articles/6442909989)
+  - [Claim Management](/articles/9992348572)
+  - [Command | Perform](/articles/5988007695)
+  - [Vaccine Inventory Management](/articles/6442909989)
 * * *
 **Keywords:** fee schedule, procedure codes, CPT codes, HCPCS, payor-specific charges, billing, revenue cycle, claims, insurance, transactors, capitated payments
 **Categories:** Revenue Management, Billing, Fee Schedules, Insurance
@@ -7328,7 +7328,7 @@ Within this same admin page you can document lots or you can go directly to the 
 Once you save you will also see the _On hand inventory:_ field populate with the total number of available vaccines
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1729629108780-Screenshot2024-10-22at4.31.00PM.png?Expires=253370764800&Signature=ugHQ7Ri5PNT-K-GSyU1FySwjSUDfVoFVriMm~DrBrNWBuMJJyGaa41uZL3JzDY~QIdneU5DW5vEKjmhuuQ-gztwQsbxeYt82jCZUigrRLw1Jo3rjRNDb0zyi4gBqP3LLuT3CDu-r5d1VE~Rbe8i27izlRwl6PfUbErsXR53C~HtQDTFFHVj~-j2KovhHM4iLJrsTSuGl1B~BnLya0FGHJO7kQc1IKrwVVGEpgOUV1g5xeJMihyyRNRi989~7UYOcZF74fX-rY5H7bn1bmT3gH1zMd16aB~uqIBh1GK0Kwuu6ixA5m1ZBPPb9651-gz3fMxjB5Ob75TZKkGApw4J6tg__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Administer Vaccines
-Vaccines are administered using the vaccine command [📄 Command | Immunize](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/ddfc58f2-51b0-49cc-9236-16b27c8d0101).
+Vaccines are administered using the vaccine command [Command | Immunize](/docs/447665cb-4c0e-4b82-ae0c-7aaef5e51287/articles/ddfc58f2-51b0-49cc-9236-16b27c8d0101).
 The Immunize command will only populate immunizations that have been registered within the vaccine inventory of the clinic
 ----- END PAGE https://help.canvasmedical.com/articles/6442909989-vaccines-vaccine-lots
 
@@ -7352,10 +7352,10 @@ Use this to record the physician supervising the encounter — for example, when
   3. Select **Save**.
 Once saved, the supervising provider appears in the note header alongside the provider, for example:
 > On Tuesday, 6/16/26 at 5:46 PM EDT with Canvas Support, AD, MD (supervised by Allison Doctor, MD) at Canvas Los Angeles Office
-**What this does:** The supervising provider you set here carries onto the claim when it's created from the note. It does **not** by itself bill the claim incident-to — incident-to is turned on separately on the claim. See [📄 Claim Management](/articles/9992348572) for billing a claim incident-to.
+**What this does:** The supervising provider you set here carries onto the claim when it's created from the note. It does **not** by itself bill the claim incident-to — incident-to is turned on separately on the claim. See [Claim Management](/articles/9992348572) for billing a claim incident-to.
 > **Note:** A supervising provider must have a first and last name, a valid NPI, and a phone and work address on their profile — the same requirements as for prescribing. Incident-to claims can't be submitted if the supervising provider is missing a valid NPI.
 ## Future Appointments
-If you want to change the provider for a future appointment, see the how-to guide [📄 Managing Patient Appointments](/articles/4617508394)
+If you want to change the provider for a future appointment, see the how-to guide [Managing Patient Appointments](/articles/4617508394)
 ----- END PAGE https://help.canvasmedical.com/articles/6535221480-chart-note-change-provider
 
 
@@ -8830,7 +8830,7 @@ Patient Portal messaging allows patients and care teams to communicate securely.
 Depending on configuration, patients may be able to complete forms in the portal upon logging in. They are presented through a plugin (e.g. intake forms tied to an upcoming appointment). See the [Patient Portal Forms guide](https://docs.canvasmedical.com/guides/patient-portal-forms/).
 ![patient forms](http://localhost:3000/assets/images/patient-forms.png)
 ### Consents
-Depending on configuration, patients may be able to complete consents in the portal upon logging in. When configuring a consent in Settings, three settings control the portal experience (but for more information on configuring consents see [📄 Managing Consents](/articles/8144965836):
+Depending on configuration, patients may be able to complete consents in the portal upon logging in. When configuring a consent in Settings, three settings control the portal experience (but for more information on configuring consents see [Managing Consents](/articles/8144965836):
   - **Document** — a PDF of the consent; the patient sees a link to review it.
   - **Description** — a title/summary shown in the patient's list of consents.
   - **Is Mandatory** — whether it is required by a patient to consent to before being able to access their portal.
@@ -10094,7 +10094,7 @@ When adding or editing a contact in a patient's profile:
 **Q: What happens if I delete a contact category that's already in use?**
 **A:** If a contact category is deleted, the user is presented with all of the patient contact points that will be removed along with it.
 ## **Related Resources**
-  - [📄 Patient Demographics ](/articles/8802451810)
+  - [Patient Demographics ](/articles/8802451810)
 * * *
 **Keywords:** contact categories, patient contacts, practice settings, contact tags, emergency contacts, power of attorney
 **Categories:** Practice Management, Patient Information, Configuration
@@ -11025,9 +11025,9 @@ A: Diagnosis codes cannot be added manually. Canvas updates ICD-10 codes in acco
 **Q: What if I enter the wrong diagnosis?**
 A: Use the Change Diagnosis command to update the condition while preserving historical data. If historical data is not needed, enter the diagnose command in error and enter new.
 ## Related Resources
-  - [📄 Assessing and Updating Conditions](/articles/7989321964)
-  - [📄 Managing Historical Conditions](/articles/3935780129)
-  - [📄 Understanding Coding Gaps](/articles/5456716623)
+  - [Assessing and Updating Conditions](/articles/7989321964)
+  - [Managing Historical Conditions](/articles/3935780129)
+  - [Understanding Coding Gaps](/articles/5456716623)
 * * *
 **Keywords:** diagnose command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions
 **Categories:** Clinical Documentation, Condition Management
