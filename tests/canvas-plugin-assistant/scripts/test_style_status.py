@@ -690,6 +690,25 @@ class TestTreeDigest:
 
         assert style_status.tree_digest(tmp_path) == before
 
+    def test_ignores_virtualenvs_by_any_name(self, tmp_path: Path) -> None:
+        """A dependency's source under any virtualenv name must not stale the digest.
+
+        ruff and the manifest search skip a bare `venv`, `.tox`, `.direnv` and the
+        rest, not just `.venv`. The digest has to skip the identical set, or on a
+        plugin whose virtualenv is a non-dot `venv/` it hashes installed-dependency
+        files and churns on every dependency change, so `--check` reads UNKNOWN
+        against unchanged plugin sources.
+        """
+        (tmp_path / "handler.py").write_text("x = 1\n", encoding="utf-8")
+        before = style_status.tree_digest(tmp_path)
+        for directory in ("venv", "env", ".tox", ".nox", ".direnv"):
+            nested = tmp_path / directory / "site-packages" / "dep"
+            nested.mkdir(parents=True)
+            (nested / "installed.py").write_text("y = 2\n", encoding="utf-8")
+            (nested / "installed.pyi").write_text("y: int\n", encoding="utf-8")
+
+        assert style_status.tree_digest(tmp_path) == before
+
     def test_moves_when_a_source_changes(self, tmp_path: Path) -> None:
         """Editing a checked file changes the digest."""
         source = tmp_path / "handler.py"
@@ -1031,6 +1050,7 @@ class TestPinnedToolchain:
             "commands/style.md",
             "commands/check-setup.md",
             "commands/new-plugin.md",
+            "commands/wrap-up.md",
         ):
             text = (self._CPA / relative).read_text(encoding="utf-8")
             assert style_status.BOUNDED_MYPY in text, (
