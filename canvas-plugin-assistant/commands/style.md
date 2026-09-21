@@ -72,10 +72,13 @@ ruff fixes what it can automatically. For every remaining violation — commonly
 mypy_ini=mypy.ini
 [ -f "$mypy_ini" ] || mypy_ini="${CLAUDE_PLUGIN_ROOT}/config/mypy.ini"
 uv run --no-project --with "mypy>=1.19.0,<2" \
-  mypy --config-file="$mypy_ini" .
+  mypy --config-file="$mypy_ini" \
+       --exclude '(^|/)(\.venv|venv|env|\.tox|\.nox|\.direnv)($|/)' .
 ```
 
 The plugin's own `mypy.ini` wins; the fallback is the canonical Canvas ruleset, which is also what Step 6 records against. A plugin CPA did not scaffold usually has no `mypy.ini` at all, and passing a path that does not exist makes mypy exit 2 without reporting on the code.
+
+The `--exclude` keeps mypy out of the plugin's own virtualenv, matching what ruff and the style digest already exclude. mypy auto-skips dot-prefixed dirs but walks a bare `venv/` or `env/`, so without this a stray module under one fails a required check against code that is not the plugin's. The canonical `config/mypy.ini` carries the same rule; the flag covers a plugin whose own `mypy.ini` does not.
 
 For each mypy error, edit the code to fix it (add the missing annotation, correct the type, handle the `None` case), then re-run. Repeat until mypy passes with no errors.
 

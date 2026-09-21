@@ -95,7 +95,8 @@ grep -rn "\.objects\." --include="*.py" .
 mypy_ini=mypy.ini
 [ -f "$mypy_ini" ] || mypy_ini="${CLAUDE_PLUGIN_ROOT}/config/mypy.ini"
 uv run --no-project --with "mypy>=1.19.0,<2" \
-  mypy --config-file="$mypy_ini" .
+  mypy --config-file="$mypy_ini" \
+       --exclude '(^|/)(\.venv|venv|env|\.tox|\.nox|\.direnv)($|/)' .
 ```
 
 **If errors exist:** Flag this as a blocker.

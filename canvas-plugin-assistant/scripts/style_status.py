@@ -58,6 +58,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -234,6 +235,20 @@ _RUFF_SCOPE_ARGS = (
     "--config",
     f"extend-exclude={json.dumps(list(_VENV_DIRS))}",
 )
+
+# Keeps mypy out of the same virtualenv/tooling dirs. mypy walks a directory
+# argument the way ruff does, but auto-skips only DOT-prefixed names, so `.venv`,
+# `.tox`, `.nox` and `.direnv` are already ignored while a bare `venv/` or `env/`
+# is walked and any top-level module inside it type-checked. mypy is a required
+# check, so a stray error under a virtualenv would set `style_clean` false about
+# code that is not the plugin's. `config/mypy.ini` carries the same exclusion for
+# the fallback and scaffold paths; this covers a plugin that ships its own
+# mypy.ini without the rule. The real dependency sources under
+# `venv/lib/pythonX.Y/site-packages/` are already unreachable -- the dotted
+# `pythonX.Y` component is not a valid module name, so discovery stops there --
+# but the bare-dir walk still needs closing.
+_MYPY_EXCLUDE = "(^|/)(" + "|".join(re.escape(name) for name in _VENV_DIRS) + ")($|/)"
+_MYPY_SCOPE_ARGS = ("--exclude", _MYPY_EXCLUDE)
 
 
 def find_manifest(plugin_dir: Path) -> Path | None:
@@ -672,6 +687,7 @@ def run_checks(
                 BOUNDED_MYPY,
                 "mypy",
                 "--config-file", str(resolved_mypy_config),
+                *_MYPY_SCOPE_ARGS,
                 ".",
             ),
             plugin_dir,
