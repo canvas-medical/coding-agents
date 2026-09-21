@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -32,6 +33,13 @@ SHIPPED_RUFF_CONFIG = (
     Path(__file__).parents[3] / "canvas-plugin-assistant" / "config" / "pyproject.toml"
 )
 
+# The real mypy ruleset the scaffold copies and /cpa:style falls back to. Its
+# `exclude` is what keeps a required check out of the plugin's virtualenv, so a
+# test about that behavior has to read this file rather than a subset.
+SHIPPED_MYPY_CONFIG = (
+    Path(__file__).parents[3] / "canvas-plugin-assistant" / "config" / "mypy.ini"
+)
+
 
 @pytest.fixture
 def shipped_ruff_config() -> str:
@@ -41,6 +49,18 @@ def shipped_ruff_config() -> str:
     if not SHIPPED_RUFF_CONFIG.is_file():
         pytest.skip(f"shipped ruff config is missing at {SHIPPED_RUFF_CONFIG}")
     return str(SHIPPED_RUFF_CONFIG)
+
+
+@pytest.fixture
+def shipped_mypy_config() -> str:
+    """The shipped mypy ruleset, skipping when the mypy toolchain is unavailable."""
+    if not SHIPPED_MYPY_CONFIG.is_file():
+        pytest.skip(f"shipped mypy config is missing at {SHIPPED_MYPY_CONFIG}")
+    if not style_status.tool_available(
+        style_status.BOUNDED_MYPY, "mypy", SHIPPED_MYPY_CONFIG.parent
+    ):
+        pytest.skip("mypy toolchain is not resolvable through uv")
+    return str(SHIPPED_MYPY_CONFIG)
 
 
 class TestBuildPayload:
@@ -1012,6 +1032,103 @@ class TestRuffStaysOutOfTheVirtualenv:
         assert "canvas_generated" not in reported
         assert "src/s.py" in reported
         assert paths["generated"].read_bytes() == before
+
+
+class TestMypyStaysOutOfTheVirtualenv:
+    """mypy, a required check, must not walk into the plugin's own virtualenv.
+
+    mypy walks a directory argument the way ruff does, but auto-skips only
+    dot-prefixed names, so a bare `venv/` or `env/` is walked and any top-level
+    module inside it type-checked. An error there would set `style_clean` false
+    against code that is not the plugin's. These run the real shipped ruleset,
+    because the behavior under test is that file's `exclude` plus the command
+    line, exactly as the ruff class above does.
+    """
+
+    def _tree(self, tmp_path: Path) -> dict[str, Path]:
+        """A plugin dir with a top-level module inside each virtualenv name.
+
+        The modules sit directly under the virtualenv dir, not under
+        `lib/pythonX.Y`, because the dotted component already stops mypy
+        discovery there -- the bare-dir walk is the gap this closes.
+        """
+        untyped = "def leaked(value):\n    return value\n"
+        paths = {
+            "venv": tmp_path / "venv" / "vendored.py",
+            "env": tmp_path / "env" / "vendored.py",
+            "source": tmp_path / "src" / "s.py",
+        }
+        for path in paths.values():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(untyped, encoding="utf-8")
+        return paths
+
+    def test_the_shipped_config_excludes_virtualenv_dirs(
+        self, tmp_path: Path, shipped_mypy_config: str
+    ) -> None:
+        """`config/mypy.ini`'s own `exclude` keeps mypy out of `venv/` and `env/`.
+
+        Invokes mypy with the config alone -- no command-line `--exclude` -- so
+        the assertion is about the shipped ruleset, which is what the scaffold
+        copies, `/cpa:style` falls back to, and out-of-band mypy runs use.
+        Without the rule mypy names `venv/vendored.py` and `env/vendored.py`;
+        with it, only the real source remains.
+        """
+        self._tree(tmp_path)
+
+        result = style_status._run(
+            style_status.tool_cmd(
+                style_status.BOUNDED_MYPY,
+                "mypy",
+                "--config-file", shipped_mypy_config,
+                ".",
+            ),
+            tmp_path,
+            style_status._MYPY_TIMEOUT,
+        )
+
+        assert result is not None, "mypy could not run"
+        returncode, reported = result
+        # Non-zero denominator: mypy did look at this tree and reported on the
+        # real source, so "not under a virtualenv" is a real exclusion rather
+        # than a run that checked nothing.
+        assert returncode == 1
+        assert "src/s.py" in reported
+        assert "venv/vendored.py" not in reported
+        assert "env/vendored.py" not in reported
+
+    def test_run_checks_passes_the_exclusion_to_mypy(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        """The control: the invocation carries `--exclude` with the venv regex.
+
+        The behavioral test above rides on the shipped `config/mypy.ini`, whose
+        `exclude` also covers these dirs. This asserts the command-line flag
+        independently, so the coverage for a plugin shipping its own `mypy.ini`
+        without the rule cannot silently regress.
+        """
+        captured: list[list[str]] = []
+
+        def fake_run(cmd, cwd, timeout):
+            captured.append(cmd)
+            return (0, "")
+
+        monkeypatch.setattr(
+            style_status, "tool_available", lambda spec, tool, cwd: True
+        )
+        monkeypatch.setattr(style_status, "_run", fake_run)
+
+        style_status.run_checks(tmp_path, ruff_config="unused.toml", mypy_config=None)
+
+        mypy_cmds = [cmd for cmd in captured if "mypy" in cmd and "--version" not in cmd]
+        assert mypy_cmds, "mypy was never invoked"
+        mypy_cmd = mypy_cmds[0]
+        assert "--exclude" in mypy_cmd
+        regex = mypy_cmd[mypy_cmd.index("--exclude") + 1]
+        for name in style_status._VENV_DIRS:
+            assert re.search(regex, f"prefix/{name}/module.py"), (
+                f"{name} is not excluded by {regex!r}"
+            )
 
 
 class TestPinnedToolchain:
