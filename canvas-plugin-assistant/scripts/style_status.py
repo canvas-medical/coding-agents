@@ -79,8 +79,10 @@ STATUS_PATH = Path(".cpa-workflow-artifacts") / "style-status.json"
 SCHEMA_VERSION = 2
 
 # Checks that must have run for `style_clean` to be a real answer. The manifest
-# check is excluded: it only applies to a plugin that has a CANVAS_MANIFEST.json,
-# formatting is auto-applied, and it never blocks.
+# check is excluded because a plugin may legitimately have no CANVAS_MANIFEST.json,
+# so a skipped manifest must not force the whole record to UNKNOWN. It is not
+# harmless when it does run: a present-but-malformed manifest fails the check,
+# which sets `style_clean` false and blocks wrap-up like any other failure.
 REQUIRED_CHECKS = ("ruff", "mypy")
 
 CHECK_NAMES = ("ruff", "mypy", "manifest")
@@ -151,21 +153,31 @@ def resolve_mypy_config(plugin_dir: Path, mypy_config: str | None) -> Path | Non
         return FALLBACK_MYPY_CONFIG
     return None
 
+# Virtualenv and tooling directory names that ruff excludes by default and that
+# never hold a plugin's own sources. Held in one place because three things must
+# agree on exactly this set -- the digest, the manifest search, and ruff's scope.
+# When they disagree the digest walks into installed-dependency `.py`/`.pyi`
+# files while ruff ignores them, so the digest churns on every dependency change
+# and every `--check` read answers UNKNOWN against unchanged plugin sources.
+# A tuple so ruff's `extend-exclude` list below is built deterministically.
+_VENV_DIRS = (".venv", "venv", "env", ".tox", ".nox", ".direnv")
+
 # Directories the digest never descends into: the record's own home, and the
 # caches and virtualenvs that churn without the plugin's sources changing.
 # Getting this set wrong is the failure that matters: too narrow and the digest
 # moves on its own, every read answers UNKNOWN, and the nudge becomes noise
-# people learn to click past.
-_DIGEST_SKIP_DIRS = frozenset(
+# people learn to click past. `site-packages` is folded in for the rare case of
+# one sitting outside a recognized virtualenv name.
+_DIGEST_SKIP_DIRS = frozenset(_VENV_DIRS) | frozenset(
     {
         ".cpa-workflow-artifacts",
         ".git",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
-        ".venv",
         "__pycache__",
         "node_modules",
+        "site-packages",
     }
 )
 
@@ -189,11 +201,6 @@ _DIGEST_SUFFIXES = frozenset({".py", ".pyi"})
 # so a plugin-local ruff config is never read either. The version pin and the CI
 # sync are what hold the ruleset steady instead.
 _DIGEST_TOP_LEVEL_NAMES = frozenset({"mypy.ini"})
-
-# Manifests that belong to the tooling rather than to the plugin. canvas-cli
-# ships template manifests inside its own package, so a plugin that has synced a
-# virtualenv contains several.
-_MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 
 # Keeps ruff out of the plugin's own virtualenv. The Canvas ruleset sets
 # `exclude`, which REPLACES ruff's built-in exclusions rather than adding to
@@ -225,7 +232,7 @@ _MANIFEST_SKIP_DIRS = _DIGEST_SKIP_DIRS | {"site-packages"}
 # overwrites and pushes on a weekly cron. An edit there regresses within a week.
 _RUFF_SCOPE_ARGS = (
     "--config",
-    'extend-exclude=[".venv", "venv", "env", ".tox", ".nox", ".direnv"]',
+    f"extend-exclude={json.dumps(list(_VENV_DIRS))}",
 )
 
 
@@ -242,12 +249,16 @@ def find_manifest(plugin_dir: Path) -> Path | None:
     equal candidates the shallowest wins. That is deliberately the same rule
     Studio resolves with, so the two enforcement points agree about which
     manifest is the plugin's.
+
+    Skips the same virtualenv/tooling dirs the digest does: canvas-cli ships
+    template manifests inside its own package, so a plugin that has synced a
+    virtualenv contains several under ``site-packages`` that are not its own.
     """
     candidates = [
         path
         for path in plugin_dir.rglob("CANVAS_MANIFEST.json")
         if path.is_file()
-        and not _MANIFEST_SKIP_DIRS.intersection(path.relative_to(plugin_dir).parts)
+        and not _DIGEST_SKIP_DIRS.intersection(path.relative_to(plugin_dir).parts)
     ]
     if not candidates:
         return None
