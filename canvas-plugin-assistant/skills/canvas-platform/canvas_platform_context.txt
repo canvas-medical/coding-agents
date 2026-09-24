@@ -10606,12 +10606,15 @@ Register your VIP Access token with DrFirst.
   2. Click **Add** under **Code Generator**
 > **Do NOT select IPrescribe** **Push Notification** — Canvas is not set up for IPrescribe. Click **Code Generator** to register your VIP Access token
   3. Open the VIP Access app on your phone
-  4. Locate the **Credential ID** in the app
-  5. Enter the Credential ID in DrFirst
-  6. Create a nickname for your token so you can identify it later — don't use underscores
-  7. Return to the VIP Access app to view the current OTP Code — a 6-digit code that changes every 30 seconds
-  8. Enter the OTP Code in DrFirst before it expires
-  9. Submit the token registration
+  4. Fill out the token fields in DrFirst as follows:
+     - **Token Manufacturer** : Symantec
+     - **Token Type** : Soft Token
+     - **Token Issuer** : DrFirst
+     - **Token Nickname** : A name so you can identify the token later, such as the make and model of your phone. Don't use underscores
+     - **Token Credential ID** : The Credential ID from the VIP Access app, which starts with **SYMC**. Type the SYMC prefix and all of the numbers with no spaces
+     - **Token OTP** : The current 6-digit OTP Code from the VIP Access app. It changes every 30 seconds, so enter it before it expires
+  5. Submit the token registration
+> **Your Canvas token starts with SYMC** — The token you register here is the one associated with Canvas. When DrFirst asks you to choose a token, choose the SYMC token that matches the Credential ID shown in your VIP Access app.
 > **Register for backup** — DrFirst recommend registering at least 2 tokens. If you lose access to your only token, you'll have to repeat the entire enrollment process. DEA regulations also require your token to be on a different device than the one you use to prescribe.
 ### Step 6: Verification code
 Enter the verification code to confirm your contact information.
@@ -10635,7 +10638,7 @@ Create a passphrase you'll use to sign controlled substance prescriptions.
   - No more than 2 of the same letter or number in a row
 > **Worried about forgetting?** There's no password recovery option. Store your passphrase somewhere safe like a password manager.
 ### Step 8: Grant activation
-You're almost there! The final step requires your EPCS Administrator to activate your grant. 
+You're almost there! The final step requires your EPCS Administrator to activate your grant.
   1. Let your practice administrator know you've completed the steps above.
   2. Pair with the EPCS admin to activate your grant with DrFirst
 ## After Enrollment is Complete
@@ -10690,7 +10693,7 @@ A: For VIP Access app issues, passphrase resets, token problems, or account lock
   - [Resetting Your EPCS Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase)
   - [Troubleshooting EPCS Authentication Errors](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors)
 * * *
-**Keywords:** EPCS, DrFirst, controlled substances, identity proofing, VIP Access app, OTP token, passphrase, grant activation, Experian, EPCS enrollment
+**Keywords:** EPCS, DrFirst, controlled substances, identity proofing, VIP Access app, OTP token, passphrase, grant activation, Experian, EPCS enrollment, SYMC, Symantec, Credential ID
 **Categories:** Provider Enrollment, EPCS, DrFirst
 **Roles:** Providers
 ----- END PAGE https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment
