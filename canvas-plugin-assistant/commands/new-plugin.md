@@ -163,16 +163,18 @@ $CPA_WORKSPACE_DIR/
 
 #### Step 5: Configure Plugin Directory
 
-**Ensure `.gitignore` includes `.claude`** (to keep Claude Code local settings out of the repo):
+**Ensure `.gitignore` includes `.claude` and `.venv/`** (the first keeps Claude Code local settings out of the repo; the second keeps the virtualenv out, which also narrows what the style tooling walks):
 
 ```bash
 cd "$CPA_WORKSPACE_DIR/$plugin_name"
 
-if [ ! -f .gitignore ]; then
-  echo ".claude" > .gitignore
-elif ! grep -q "^\.claude$" .gitignore; then
-  echo ".claude" >> .gitignore
-fi
+for entry in ".claude" ".venv/"; do
+  if [ ! -f .gitignore ]; then
+    echo "$entry" > .gitignore
+  elif ! grep -qxF "$entry" .gitignore; then
+    echo "$entry" >> .gitignore
+  fi
+done
 ```
 
 The same way, add to `.gitignore`:
@@ -201,7 +203,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.19.0",
+    "mypy>=1.19.0,<2",
+    "ruff==0.15.14",
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
     "pytest-django>=4.7.0",
@@ -214,38 +217,13 @@ omit = ["tests/*"]
 
 Add runtime dependencies (arrow, httpx, etc.) to `dependencies` only as needed during implementation.
 
-**Add `mypy.ini` file to the container directory:**
+**Add `mypy.ini` file to the container directory** by copying the canonical Canvas ruleset:
 
-```ini
-[mypy]
-explicit_package_bases = True
-
-check_untyped_defs = True
-disallow_incomplete_defs = True
-disallow_untyped_calls = True
-disallow_untyped_decorators = False
-disallow_untyped_defs = True
-error_summary = True
-
-show_error_context = True
-strict_equality = True
-strict_optional = True
-
-warn_no_return = True
-warn_redundant_casts = True
-warn_return_any = True
-warn_unreachable = True
-warn_unused_configs = True
-warn_unused_ignores = True
-
-follow_imports = silent
-ignore_missing_imports = True
-no_implicit_optional = True
-pretty = False
-
-python_version = 3.12
-exclude = debug
+```bash
+cp "${CLAUDE_PLUGIN_ROOT}/config/mypy.ini" mypy.ini
 ```
+
+Copy it rather than writing the settings out here. That file is the only copy of the ruleset: `/cpa:style` falls back to it for a plugin that ships no `mypy.ini`, and Studio's deploy gate mirrors it under a test that pins the two equal. A hand-transcribed second copy is how the scaffold and the gate come to disagree about what clean means.
 
 #### Step 6: Commit the Scaffolded Plugin
 
@@ -382,6 +360,7 @@ This command is **step 2** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
