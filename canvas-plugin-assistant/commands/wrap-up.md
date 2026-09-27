@@ -69,6 +69,7 @@ This covers:
 - **FHIR API Client Security** - Token scopes, patient-scoped tokens, token storage
 - **Application Scope** - Manifest scope alignment with token usage
 - **Secrets Declaration** - All tokens properly declared
+- **Template and HTML Output Safety** - No `|safe`/`autoescape off` on untrusted data, no JSON in `<script>` blocks, no secrets sent to the browser
 
 The command saves a report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
 

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Trends</title>
+  </head>
+  <body>
+    <table id="trends"></table>
+    <script>
+      const points = {{ points_json|safe }};
+      const table = document.getElementById("trends");
+      for (const point of points) {
+        const row = table.insertRow();
+        row.insertCell().textContent = point.when;
+        row.insertCell().textContent = point.name;
+        row.insertCell().textContent = `${point.value} ${point.units}`;
+      }
+    </script>
+  </body>
+</html>
