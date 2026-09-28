@@ -188,27 +188,22 @@
         - Patient data
         - Multi-location
     - Related Articles
-- [Electronic Prescribing of Controlled Substances (EPCS) Enrollment](https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment)
-        - What you'll learn
-    - What EPCS Enables
-    - DrFirst Enrollment Process
-        - Step 1: Open your DrFirst invite
-        - Step 2: Download VIP Access app
-        - Step 3: Evidence collection
-        - Step 4: Identity document
-        - Step 5: Token registration
-        - Step 6: Verification code
-        - Step 7: Create passphrase
-        - Step 8: Grant activation
-    - After Enrollment is Complete
-    - Frequently Asked Questions
-        - Timeline and process
-        - Identity proofing
-        - 24-hour window
-        - Technical issues
-        - Getting help
-    - Related Articles
-- [Activating EPCS Grants with DrFirst](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst)
+- [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment)
+    - Before you start
+    - Step 1: Open your email invite
+    - Step 2: Enter your invite details
+    - Step 3: Review the reminder of what you need and click "Continue"
+    - Step 4: Complete identity proofing
+    - Step 5: Identity Proofing Process: Evidence Collection
+    - Step 6: Verify your ID on your phone
+    - Step 7: Register your token
+    - Step 8: Create your passphrase and security question
+    - Step 9: Enter your verification code
+    - Step 10: You're done enrolling with DrFirst
+    - Step 11: Activate your access with your EPCS administrator
+    - Step 12: Wait for Canvas Support to finalize setup
+    - Related articles
+- [Activating EPCS Grants with DrFirst (for EPCS Administrators)](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst)
         - What you'll learn
     - Prerequisites
     - Accessing the EPCS Dashboard
@@ -248,7 +243,7 @@
     - Next Steps
     - Frequently Asked Questions
     - Related Articles
-- [Troubleshooting DrFirst Error | Authentication failed. Access is denied](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors)
+- [Troubleshooting DrFirst Error "Authentication failed. Access is denied."](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors)
         - What you'll learn
     - Common Causes
     - How to Troubleshoot
@@ -258,6 +253,14 @@
     - Next Steps
     - Frequently Asked Questions
     - Related Articles
+- [EPCS Enrollment FAQ for Providers](https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers)
+    - Timeline and process
+    - Identity proofing
+    - Sessions and time limits
+    - Tokens and codes
+    - Passphrase and sign-in
+    - Getting help
+    - Related articles
 
 ### Support & FAQs
 - [Canvas Support Resources](https://help.canvasmedical.com/articles/5542576212-canvas-support-resources)

@@ -7194,6 +7194,7 @@ A: [Contact Canvas Support](https://portal.usepylon.com/canvas-medical/forms/sta
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst
+> **This article is for your practice's EPCS administrator.** If you're a provider enrolling in EPCS, see [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers).
 After a provider completes their DrFirst EPCS enrollment, you'll need to activate their grant before they can prescribe controlled substances. This process requires both you and the provider to be available at the same time.
 > **Different from the Provider Enrollment Dashboard?** Yes—this article covers the DrFirst EPCS Dashboard where you activate grants. For submitting enrollment requests, see [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard).
 ### What you'll learn
@@ -7215,19 +7216,19 @@ Before you can activate a provider's grant
   3. Click **Launch Logical Access Area** again
 ![2026-01-31_12-35-09 \(1\).gif](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F24ea1c23-fa7c-4e99-b06d-9f7ddb60f99c-1769881007565-2026-01-31_12-35-09%2525281%252529.gif-53341978-4dea-40fd-8f7f-214a21ce3d27?Expires=253370764800&Signature=YeYePsJ1Sja32aNoK5N3pOKpn--cJEaiX3jGrJ34W5Oqzf8T2dGR9Fjb9Hv-s9-e~qQv-5O1AFiKlfa5ufb~ySxJApW9ac3BWDMekj2Ta-Nz7q1jCG~m75UC6GJxqSwwNcwEcd9UFckWhcXGU0v1cFydcKly1nXsMYEDLNy~sa0xhaZxckvZn~8vO4SDtwGWqyWv9~OOixHe5~cNy~HYzKw3eZ3Jd5WPdeDPsT3Hd5pv0E~Wm44pomCaNLSWbjMdI-Z~7zYe-csGbjLimWgQxEIkhQUH34VdWAurnHYq4Rn2SUi9pO4GOtN2W-FXDclT6ckCV7SMOdrdjS9IpIifpQ__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Activating Provider Grants
-You'll need to coordinate with the provider for this process since they'll enter their passphrase and token during activation.
+You'll need to coordinate with the provider for this process, because they'll give you their passphrase and a fresh code from their VIP Access app during activation.
   1. Use the search field to find the provider by name or NPI number
   2. Select the **Active** radio button to authorize the provider for EPCS
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fecb569d4-6c93-4928-9be6-79f83ec075f7-1769881810313-image.png-19af7b48-7507-4ea6-a957-970e11115e3f?Expires=253370764800&Signature=pD2qL2CUWVUrQzSS~IkRre0WtpdeAfsRVtBHW0Gud-RzH6TT0mXEEbAIP6EpC5sXZcyQoKqVtwz-U-VejabXtQEIpbFShBiuhEevQaQyzSfawyo8vBYH1LfoXTUI4WG~R6HPEkNr7fxcIirranu8pzPDL8~Lws2Xipvf4D3PmewHBpZDDjSUbCv1wJruYK4XFUlOfPe6cEjKhlr~l9gR60~sy9cDP3VoeJj33-qcmmNEnhKj539hu8Q9UCVQ4d0T2AdxDxm69EBH-5jhnfQIdgxzxkteL6SYWRk2FkCfBGapQNqqQrCd~bWUBcrWq9O7EathwsYLmiOQ-o7m-8jpog__&Key-Pair-Id=K3NV4LZ47N8M46)
+![DrFirst Logical Access Control screen with the Active grant option highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff1a59d26-48b3-41ea-89de-b6d4737cf74c-18-grant-lac-deid.png?Expires=253370764800&Signature=Mo0mkpKJEMdNK-MyIJGLYJB1U21wu~K9YLCkSK6JSFYX29XTB3G-RcnpdN0sxmbgE40UZd5PyQCgbkicfVYA8N9lgBtoocX7HKtkN1oeS2Oiy6tyOQ1lN1sJiMZ5nz2z0PQYatPjN2IAdOTNkbOCcStX44FphQT9osmvqp2agShAoIQ~0lCHEVxVMsuZwegsQYfZe8e2qThT53Q6XB7lMCXViMcSfx-4dRFqWoKqISI8AvO~0WDjGb3ur2siNI356zHdb8iTEwti5Igkko4dFnndleEAiHoiOXSoXx9vqKYkcwUVAmFAiUlA0TPnKGX8SNRZDd1~NfemHfYXNN10XQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Enter your name as shown at the top of the screen — this serves as your electronic signature and will be included in DEA auditable event records
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff01e7a61-9aed-4ab1-84c5-2759eb678fcf-1769881899480-image.png-1ee24d91-882a-4b43-894b-1035cc207442?Expires=253370764800&Signature=NWaElI7aPBxn7-CPDOQCbt1Fmf1b93CHfQnjp0piofeJIBcSI5IfWu33i5cdRV9dtworW-6vbC~~T8FZ4xc1RqGPxHfS5DqnpabpKl6MX8BQfpOvo-d~OldmuiVoLJ17ymbN2dGdLNdQ03c5AcunZb-aC1LDufJ3eGpOk3fAc5uc4Q9yI5ihxVF-rymSbkbspILNBcjT9QKqxkVYGfi86w6AqjloN-xAOfPisXn8GqsJdedWBGUPrWiG6i1hBzszwoPr5jyn0l7dIuB4o3M82DOpVhUIA0ulsxTGYxZYYEC~nuMJJEq3sp1P~oSBPF3a2Xhx2nhC6Jzb6qWbBCEFKQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   4. Enter the provider's NPI number in the **Authorizing Prescriber** field
   5. Click **Validate**
   6. Additional authentication fields will appear
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa42534c1-20d2-4456-b61a-884ec5c98501-1769882301341-image.png-a3317255-2755-4301-98ce-4017a74eb526?Expires=253370764800&Signature=eKULfrTKnrfGRwMKO2yE1JAlovsWsb7lK2-ocXetxyXiRqtcXgwVDNxhVVk83Y8cC4W7nIaFirwlcutLx8PqSZ0rCExQDbTVTH-Z5Yn3XBJqMv44r6luu26iYhkegFpbXkO5gNepBYeRscYPtOrysbz3ogAyvuPXSssvGFtOsVC18WFgq-KbqlXlvEtHfPxIHCDgmOBrYZnb-HM5g3QkbFU-mHi7-acQk3SsQ0pNVhngJlbUmDTW~W3wHZcLWu2nadVLeohuJnn4MW4lG88DqPK9Uq-xmq2-KL4c9izvcke7jKBX8eKD5TJi2CdVxB58MDRAR6ZND~F1yY18D2oeUA__&Key-Pair-Id=K3NV4LZ47N8M46)
-  7. Have the provider enter their passphrase and OTP token into the appropriate fields
+  7. Ask the provider for their passphrase and the current code from their VIP Access app, and enter them into the appropriate fields
   8. Click **Authorize** immediately after the passphrase and token are entered — the token expires every 30 seconds
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5786fea9-78c9-44fb-ad85-75e3db267edf-1769882579357-image.png-301026ac-d8d7-488c-b624-02e1d3fe3f8d?Expires=253370764800&Signature=GPkqjKcPTy8caK-inuoIcQag~EAcqpeKX90b~RQSu-~uSrlCKUovh~zDhbNzaGghaJHYFq2D9WTO-kw--w2zTo1SKuTOrMQM2CAeEu1KowYoC5ohnp70yK9ov-pgvNESmra~HJ5PUBRqSBUd83Og-LIUgoRtj9hAaK8biR2xRWY8IT4HlyFpXH4Sb7bXW8t97njpyjklYuauWG16PL-wBKY2vM1-EiV-iXhOvyUMuy2F1ltaqfXxJqzRBSBr8CBn61D-lQG3F07kEv-dnW06rr5l9CzogKfJkZuWEZuuCRvXDmdGYhXcvcW9BbrQPvO3tkGxXa2a5gbRrrG3oN44dw__&Key-Pair-Id=K3NV4LZ47N8M46)
+![DrFirst grant activation signature screen with the device, signing passphrase, and one-time pin fields](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe351022a-af69-461b-bbbf-d08a6db60a15-19-grant-signature-provider.png?Expires=253370764800&Signature=GdyIEMesZuKC1li4xxQXUNSQb6CgDNdTJBQyh4osikXbj-eK-LTnZgaPI0ehzpox4m-p1deMI3O3~BU4aChLtB0WrRy7R58sZkrpCbJJscqaCYsLc81YPF8vO6E8Dl5J9pgY5ztmn7JXyXFf5nI~bFTgflpKQ-EKxiQ~VwzJva78v8z09nIo8pQbT6-QsTUK2B2Y-K21kkQUF22gG9m9BjTwD2B0eAJfwX7D4P3xXwIwnvK3l7jxsnPfrkUC27e5wBbjDv19-1lhzpZ6KILBe5cSEK7RXiVYPHwuyYLKOxhIJKKiGgnkpgS4CBG6wAZiEZ8wt5GRrYB-w6nDKYTS~A__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## After Activation
 Once activation is successful:
   1. The LAC will show the provider was updated to Active
@@ -7271,7 +7272,7 @@ A: The verification code was sent via postal mail and can take up to 2 weeks to 
 A: Yes. Follow the deactivation process. To reactivate, you'll need to complete the full activation process again.
 ## Related Articles
   - [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard)
-  - [Electronic Prescribing of Controlled Substances (EPCS) Enrollment](https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment)
+  - [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers)
   - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
   - [ePrescribing (eRx) Enrollment](https://help.canvasmedical.com/articles/6085016786-eprescribing-erx-enrollment)
 * * *
@@ -10548,154 +10549,101 @@ By default Canvas shows all Drug/Drug Interaction Warnings as well as all Allerg
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment
-After your practice submits an EPCS enrollment request through the [Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard), you'll receive a DrFirst invite at your work email. You'll need to complete a multi-step enrollment process including identity verification, token setup, and passphrase creation before you can prescribe controlled substances.
-### What you'll learn
-  - What EPCS enables
-  - Prerequisites before enrollment begins
-  - How to complete the DrFirst enrollment process
-  - What happens after you finish
-## What EPCS Enables
-Once enrolled, you can electronically prescribe Schedule II-V controlled substances directly to pharmacies.
-> **Haven't completed ePrescribing yet?** You'll need an SPI first before EPCS enrollment can begin. Check with your practice administrator on the status.
-## DrFirst Enrollment Process
-You'll complete all steps below to enroll in EPCS. This includes identity verification, security token setup, and passphrase creation.
-### Step 1: Open your DrFirst invite
-  1. Open the invite email from [DO-NOT-REPLY-EPCS@drfirst.com](mailto:DO-NOT-REPLY-EPCS@drfirst.com)
-  2. Click **Enroll now**
-  3. Find the **I have an Invite** section on the DrFirst website
-  4. Enter your NPI number and Invite ID from the email
-  5. Click **Proceed**
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F9ca3d966-a264-4a28-93fd-ecc0845df0ef-1771312973891-image.png-0ac8937f-c73b-44f1-93b2-85caab766f4a?Expires=253370764800&Signature=KXyDl4K8mw4y2tM68x6RjixOYkaxyxQ~5ERfrcAFgK6X4wBmBnQTvJbgp3DzHoeZYTLHvNOHCqWiowHCDMesokmf596kbIa0kUUFrXlCKksBe2ehwNQoX8Cm5csEm5hHOYBN1mrVSpfC2hDmttRtFTI7MtqZEwcYP8CtnE9ST-nXoFRkiRWOTD63qXJVj6FDNhmoDbVpoLc4DA4NR1gTpe73LK1cmXp-vL0C~kELfWhg2uSrvQLvTVTsvZZCccLa29hqBrag4tyumUirTWkb9avJonn5NzdOC4ec5YHIctlkvLOmzPRVeD2NT8Fdw9FeFvZ4p0wh-m7NzpIm5nvWEQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-### Step 2: Download VIP Access app
-You'll need the VIP Access app to generate time-based security codes for prescribing controlled substances.
-  1. Install VIP Access on your phone
-     - **iOS** — [Download from App Store](https://apps.apple.com/us/app/vip-access-for-iphone/id307658513)
-     - **Android** — [Download from Google Play](https://play.google.com/store/apps/details?id=com.verisign.mvip.main&hl=en_US&gl=US)
-  2. After installing, click **Continue** on the DrFirst website
-### Step 3: Evidence collection
-Experian uses this information to confirm your identity. Passing identity proofing depends on an exact match between what you enter and what's in your credit report.
-> **Before you begin** — Check your credit report at [annualcreditreport.com](http://annualcreditreport.com) so you know exactly what Experian has on file.
-  1. Complete all fields for identification
-  2. Click **Continue** to submit your information to Experian
-  3. If Experian can't match your demographic information, you'll get 3-5 security questions based on your credit report.
-**Tips for entering your information**
-  - **Name** : Remove any periods. If your name has a period in it, you may need to temporarily update your NPI Registry to pass.
-  - **Address:** Remove special characters and periods. For example, "1 E. Main St. Apt. # 204" should be entered as "1 E Main St Apt 204"
-  - **Address type** : If your credit history is associated with a P.O. Box, use that instead of your residential address
-  - **Location** : You must have a U.S. address associated with your credit history
-  - **Mobile number** : Enter a personal mobile number where you can receive text messages
-**If identity proofing fails**
-Your EPCS Admin will see the **IDPFAILED** status on the EPCS dashboard. If that happens, you can make 3 more attempts **that day** to pass. After 3 attempts, your account locks for 24 hours—this is an Experian security measure and can't be unlocked early.
-> **Still can't pass?** Contact [DrFirst Support](https://help.drfirst.com/hc/en-us) for next steps. Have your NPI and invite ID handy.
-### Step 4: Identity document
-You'll use Experian's documentation capture workflow to verify your identity.
-  1. Follow the prompts in Experian to upload documentation and submit a photo
-  2. Upload your government-issued ID — driver's license or passport
-  3. Take a photo of yourself
-  4. Return to the DrFirst page and click **Check Status**
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fd162f203-53d7-4efc-896b-91e148a0e332-ebe9c146-4069-4c49-a794-254513f531d4-1769785251854-image.png-4bbc8c46-80f6-4f83-a196-efe963978130-bb5e552f-db09-4e33-b6ed-5901cbb3b4c1?Expires=253370764800&Signature=KoCh0B-j7whZ1JqKJrfn6~0wQu0LNJ1PFogoDZkqy1TDFUoPAr8OyM0~8qcCi2wQ-JxKmkr4RkFRL1ia5FQYUrj126oIn1vWteCQKf1SRW9jdY~pV5EmbZgikSUyLFN3ZuxwGawN5RNWoDKKzY36NcE2ingWvFiuZgqItRjzr45SZvhP9znTDlWZ38FSQrdWlyDodBRqyp32PkYqwiR55BjQ38CGrjvs~LBiOnj4~ulFjvb54h-c35NP~SBZD2GCMaGpMnjZ4GN3qNWmdG4HtibK~TkA4fs6lW7EymW-Tc3PUld5hSL820u3T3qvk~0WjkV-WBWkNXCW3gcCPsyKqg__&Key-Pair-Id=K3NV4LZ47N8M46)
-> **DON'T FORGET TO CLICK!** This is a commonly missed step. If you don't click **Check Status** within 24 hours, your enrollment gets stuck and you'll need a new invite. Write down the session key too—if you get disconnected, you can use it to get back in without starting over.
+This guide walks you through enrolling in Electronic Prescribing of Controlled Substances (EPCS) with DrFirst as a provider on Canvas. When you finish, your practice's EPCS administrator will activate your access with you using your passphrase and token.
+**Prefer to click through the screens?** Use the arrows in the walkthrough below to step through each screen, then use the steps further down for the details.
+Having trouble opening the slides above? Use the direct link [here](https://docs.google.com/presentation/d/1qTY3-x_h3AeEYMl2tT7DsLJbEIBUPzIowT0gBRl1_68/edit?usp=sharing).
+## Before you start
+  - **Put aside a half hour to complete the session:** The ID photo step has to be done within an hour, and your token has to be added within 24 hours of starting.
+  - **Find your invite email** from `epcs-do-not-reply@drfirst.com` .
+  - **Gather the following items:** your phone, your driver's license, state ID, or passport, NPI and your Social Security number, and a credit card (it won't be charged).
+  - **Install the VIP Access app** (by Symantec/Broadcom) from the [App Store](https://apps.apple.com/us/app/vip-access-for-iphone/id307658513) or [Google Play](https://play.google.com/store/apps/details?id=com.verisign.mvip.main). It generates the 6-digit codes you'll use to sign controlled-substance prescriptions.
+**iPhone:** [VIP Access for iPhone](https://apps.apple.com/us/app/vip-access-for-iphone/id307658513)
+![VIP Access for iPhone listing in the Apple App Store, developer Broadcom Inc](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5c68ce4e-a516-4558-baa5-d206c4fc0770-14-vip-access-app-store.png?Expires=253370764800&Signature=XwmCNHNqjvik~nxt8UVbpRhg~LIUCMy060g99crGNKqrHQvHflu05H~4H12xFF6fgw8HJgEdtMG9fOKbMj7s665V8M2Uc70UA237d-FXR9DEXtYOU7Wv5-O9ArTnHH5czf5w4IdblhY8awBHY9DgFkcTS5rqazSJ1Pr-gT1EXWp-R1mjzyo2wvupZmM5YY40xdO7u94uWRtlRYOJS-ly8Z-Rdo5xgYErNLDWf5c11QM9exlKzjUsmFqUUnl~2oyNotp593zaTxqavqmiEAAwJ~tuUd9g6YM1j1TCoBi5Ke6YsBlSwE4hAhVBKldjtLasNDr69SCEtegouaTe8wgI4Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Android:** [VIP Access](https://play.google.com/store/apps/details?id=com.verisign.mvip.main)
+![VIP Access listing in Google Play, by Symantec VIP](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F9c4afb92-c502-4ab8-86d1-4fd0eadaff65-15-vip-access-google-play.png?Expires=253370764800&Signature=iGYyer3bGSXyA2rwU6MoxsbKA1uJLYohd9gRdzB~ceqq~nueTnObi0QB7nEynU6qA8yFylLcaqL6-O2diksIj20Z0xxxTdLH4g8u0OhwsNUY-olQE12AVb3XySgrUlFX~Q~JgjxUUqKCYdqHvb-lXlT71hMiNumsJNrRgbxlcdeOQ-aA0fcol6EuawJX0TPDU9NotKubbNRUwMevPDwDQ87M3nAdz9CmYsmqgpCnZm3EMLXrKZVx8WoY7nkrVOnWC3BIJ0H4vJVmrY670-GLkwgauGAZM9v4SvIIwlTk0XyyWOwzhZRiX6etUDZIagIBTMNIGIxu9aY~JboySUeAyQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 1: Open your email invite
+Open the DrFirst invite email from `epcs-do-not-reply@drfirst.com` and click **Enroll now**.
+![DrFirst invite email with the Enroll now link highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F54535fe7-183b-4030-b0a8-df2b56d469a9-01-invite-email.png?Expires=253370764800&Signature=OKgkOwBzC2Pq42WsTJjQx0FA60Ffd4huxmeLIjGfwXHf21OFXrt1-cVGnWb3RGbA6h12ZyfINR~hBNlVr3kiB4TfGBsyD6ty92Ac4xBl~Yy2QlF6Oh~fjz3tbNO2mcpwKoOutGKIxSOBbpKATz-Q8wpVrusTuayd9sK77nBSJHi-KczgjdzElbAowKXkDT~xvfqY~mZOSjrJESPs-MTT7HlPynp6x1RZGkDyf8F1ItAd3veqCGQSOBQccNTDnTmdpxsQoOTUrwsQO9YJQJIAdRt~jJxPd3-JhilVCYLJ61CxWjjc3dpj4Wr399lZi7Tgn3vyAboLWXrMWhOfev1DKw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 2: Enter your invite details
+  1. On the DrFirst page, locate the "**I have an Invite"** section on the right.
+  2. Check that your **NPI** and **Invite ID** are already filled in. Clicking **Enroll now** in the email fills them in for you.
+  3. Click **Proceed**.
+![DrFirst EPCS Gold page with the I have an Invite section highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F2c66b803-7b1d-4cd5-b058-8b40fe5955ca-02-drfirst-invite.png?Expires=253370764800&Signature=teYTlw~7a-u9XH5fst2K8f4VsNXeV44svQhGQiFqaen2AH4wuM2KC1WriMqSvY30kXqe1kEQbhoLi7DpOHwyW3I-9~eND6YqOvsDcc-re~d6h50-GuMu9Ea1zd1tlQdKPKydOe6yPiuG~rp0B0JlaXJ4VK-VfL3jhr2Pv-fUdHuF634x7SJhXuVk5avTmyEBTEO1aYyJwMy6KbwvzmtNy-iukqUjz165BsPfeeXyuwzWvOcLYvYPhFFnabT9zsq3wXVhs4o2Q4qH9me1kHm4rpGNGeIxJyAEma5ndp-PHuUgyT19cxBN~swpVsuxkLs71rerK9y67v35z7OfDYhaIQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 3: Review the reminder of what you need and click "Continue"
+**IMPORTANT** This screen suggests OneSpan or iPrescribe - **you don't need either one**. Canvas uses the **VIP Access app** instead which is**available for free**.
+![DrFirst reminder screen with the Continue button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F0f9db93a-b4ec-4473-a394-c17bcb219d82-03-stop-reminder.png?Expires=253370764800&Signature=YHWRXdqVdidSZMgrK1NZNTmZUYoSb7B69R2h4Km6oRJkeT3lrgGKLe7OjRm8j9R1AUuIdLYJboZEAU52DwVaaJJXYub9q2pyosbT~AZJStP4iDmppo7bgi5uMS~csMHrvKWBQQLih1hS6nNOspCFBKHZ3l-C1cIDNxZTPgEnh8JQCEpDxcuLisSOoaHpW1DROCgCwX4DLBFdsSXLj-2A4WmO2m3EmfjdJofJkJlwqIGwC-GcnSjOdTY9VoJu0pFyie56XNtLwkcPII5zfR6aj6LZW44r4FgPRjDqmlrNHv5KG5~GUpvemIATEqiQkNwWaRff9ZeU8BlhTnI96Je13A__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 4: Complete identity proofing
+If you've done DrFirst identity proofing before, at any practice, DrFirst will ask how you if you want to use your existing credentials or complete the identity proofing process again.
+Click **Complete the identity proofing process again** , even if you've used DrFirst or iPrescribe somewhere else.
+![DrFirst screen offering Use my existing authentication credentials or Complete the identity proofing process again, with the second option highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3108e8a2-9db4-4b57-898d-109c50dcc330-16-existing-or-restart.png?Expires=253370764800&Signature=ug46nnP-tr3FV5kxh~lWpDbTewj5vn7S0TsM56-CvwH5Nq351ggTINNJhereT6DbA3MPqB0OpgdAks5GelgUh5KEOZLyDFCjjTFi3GRXpkesBEZVMAi48FzjquJQN65fr2R6SDvj7ETp1GUgGWvn-yZnkEYGhy-FOyI1tMCGk8Hc1PXq8vdlcXY0TCL72lZPqmQWGR~xbvbU6g6zCgfx7F32dfvWxWp1szfgWCYOzsrbOZuCnFPhkSaz5qBbIRLzxX7NoifJiJRO3sNmI2MANwGNZDmCTkCnqQ24v0R0ilUnbsZSIuubdQRf~0iiR0z6GqlwfjRq0aTgvT4Y3gq72g__&Key-Pair-Id=K3NV4LZ47N8M46)
+If you click **Use my existing authentication credentials** by mistake, you'll land on the screen below asking for your passphrase and a token. Click **Cancel** or your browser's back button, and choose **Complete the identity proofing process again** instead.
+![The existing credentials sign-in screen, which you should back out of](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fbc3a93e9-e8cf-4b11-80b3-6dc76e8f6603-05-existing-credentials.png?Expires=253370764800&Signature=qXBWoM1X2sKEq028VhxKZCWCdHsFLud2rusYs5ZEG2-Wh2~V6RH~8txNkIsfMmznJ2rf3C~Sc8xdYh~lvK77ubKVH7Mp71xArIfvZ4lQ1MWcKGSZpmbmVzmtlKN7Rlwxkm7zm~pEv4sbDa06K6E6Sa6Cb0Jzh8L~bVHP~eaShKTX24cGRYmKVNQvMq6MfmJhbxr3g1Vi78wl8qMJJCgvrPz8Uy0CWHtnfXViIva9ZfPkkT7I8wwDZTY4BIm32Yy6Id8edd~7edIdk1iIkuP4hqovHKSFSRkLjlmsJfmkxwq3~hzTT~K7l3~VkGbBMRYAGQHbGV1MmEeXLUi5QDuJFg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 5: Identity Proofing Process: Evidence Collection
+DrFirst uses Experian to confirm who you are. Your details need to match your credit report exactly.
+  1. Fill in your home address, date of birth, mobile phone number, and Social Security number. Use your **personal** mobile number, not your office line.
+  2. Leave periods and special characters out of your address (for example, "1 E Main St Apt 204" instead of "1 E. Main St. Apt. #204").
+  3. Enter a Visa or Mastercard credit card number, it will not be charged.
+  4. Click **Continue**. If Experian can't match you right away, it asks 3 to 5 questions based on your credit history.
+![Identity proofing evidence collection form](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb967d8bb-71cc-40ba-b920-59d0d89fc92a-04-evidence-collection.png?Expires=253370764800&Signature=ecjwmNZNeMkRwzkjbPK93HQBeguRkmavxc9pU9wPHK0m5qsW3H1ZfSTPQtS1lp1PmWf7ic5iwjFB5r-7KWsGzs65Om-~zgvVOn4IW7y4VXA-UstpkoJnp4l89hzl6a7ldQwNmHGApZLt22wdohnXxVlBNcbU7s8n6RSNjqUG2OPcg1kUQMETMJL5h~1~l0Rc0l6VjtZW7W0ssQtO9jw102xtvOi~u5ciFjnxixnxxdrPeiKrTJUC2ibaVynnw3y01XJdj8-aUPoL-VhjqIyxlvYTD5sLHW93~LIVDg5PG43eOCiRoDHUGmV7K6Bbls67Y0dmBb4HjQbMu-GVufLtsA__&Key-Pair-Id=K3NV4LZ47N8M46)
 **Tips for capturing your ID**
   - Use your phone or tablet camera
   - Center your ID on a darker background
   - If the image won't focus, try moving your device closer or farther from your ID
   - Allow camera access when prompted
-### Step 5: Token registration
-Register your VIP Access token with DrFirst.
-  1. Click **Add New Token**
-  2. Click **Add** under **Code Generator**
-> **Do NOT select IPrescribe** **Push Notification** — Canvas is not set up for IPrescribe. Click **Code Generator** to register your VIP Access token
-  3. Open the VIP Access app on your phone
-  4. Fill out the token fields in DrFirst as follows:
-     - **Token Manufacturer** : Symantec
-     - **Token Type** : Soft Token
-     - **Token Issuer** : DrFirst
-     - **Token Nickname** : A name so you can identify the token later, such as the make and model of your phone. Don't use underscores
-     - **Token Credential ID** : The Credential ID from the VIP Access app, which starts with **SYMC**. Type the SYMC prefix and all of the numbers with no spaces
-     - **Token OTP** : The current 6-digit OTP Code from the VIP Access app. It changes every 30 seconds, so enter it before it expires
-  5. Submit the token registration
-> **Your Canvas token starts with SYMC** — The token you register here is the one associated with Canvas. When DrFirst asks you to choose a token, choose the SYMC token that matches the Credential ID shown in your VIP Access app.
-> **Register for backup** — DrFirst recommend registering at least 2 tokens. If you lose access to your only token, you'll have to repeat the entire enrollment process. DEA regulations also require your token to be on a different device than the one you use to prescribe.
-### Step 6: Verification code
-Enter the verification code to confirm your contact information.
-  1. Check your phone for a text message with the verification code
-  2. Enter the verification code in DrFirst
-  3. Submit
-> **Can't receive texts?** No worries — DrFirst will mail you a physical verification code. It can take up to 2 weeks, so sit tight.
-### Step 7: Create passphrase
-Create a passphrase you'll use to sign controlled substance prescriptions.
-  1. Open the email from Experian with your Transaction Number
-  2. Navigate to the passphrase setup page using the link provided
-  3. Enter the Transaction Number
-  4. Create a passphrase meeting the requirements below
-  5. Confirm your passphrase
-  6. Submit
-**Passphrase requirements**
-  - 8-20 characters
-  - At least 1 uppercase letter
-  - At least 1 number
-  - No special characters
-  - No more than 2 of the same letter or number in a row
-> **Worried about forgetting?** There's no password recovery option. Store your passphrase somewhere safe like a password manager.
-### Step 8: Grant activation
-You're almost there! The final step requires your EPCS Administrator to activate your grant.
-  1. Let your practice administrator know you've completed the steps above.
-  2. Pair with the EPCS admin to activate your grant with DrFirst
-## After Enrollment is Complete
-Once your grant is activated and Canvas Support finalizes enrollment, you can start prescribing controlled substances in Canvas. Your practice administrator will let you know when everything is ready.
-## Frequently Asked Questions
-### Timeline and process
-**Q: How long does EPCS enrollment take?**
-A: Timelines vary, but it is typically 3-5 days if there are no delays such as the provider and EPCS admin setting time to activate the grant
-**Q: After final authorization is complete, when should controlled-substance prescribing start working?**
-A: After the EPCS admin completes final authorization and Canvas applies the final service level, successful prescriptions may still take up to 24 hours depending on when the pharmacy updates its directory.
-**Q: Why is EPCS enrollment so complicated?**
-A: Federal regulations for controlled substances require extra security to prevent abuse and diversion. All the steps—identity proofing, OTP tokens, passphrases—are legally mandated.
-**Q: Can I complete identity proofing before ePrescribing is done?**
-A: No. You'll only receive the DrFirst invite after ePrescribing enrollment is complete. The systems work in a specific order that can't be changed.
-### Identity proofing
-**Q: Do I need to turn off fraud alerts before identity proofing?**
-A: No. Fraud alerts don't need to be turned off.
-**Q: Why am I getting security questions after entering my information?**
-A: If Experian can't match your demographic information to your credit report, you'll get 3-5 security questions based on your credit history. Having your credit report handy helps you answer them correctly.
-### 24-hour window
-**Q: What if I forget to click Check Status after uploading documents?**
-A: You have 24 hours to complete this step. After that, your enrollment gets stuck and you'll need a new invite from Canvas Support.
-**Q: What if I get disconnected during the 24-hour window?**
-A: If you saved the session key, you can use it to resume. Otherwise, contact your practice administrator to request a new invite from Canvas Support.
-### Technical issues
-**Q: What if I can't scan the QR code?**
-A: Open your phone's camera and hold it so the QR code appears in the viewfinder. Try moving your device closer or farther until it focuses. Once recognized, tap the website banner that appears. You may need to try a few times.
-**Q: Why isn't my OTP token working?**
-A: Check that your phone's time and date are set to automatic—tokens are time-synchronized. Also make sure you're using the current code, as it expires every 30 seconds.
-**Q: What do I do if I clicked iPrescribe Push Notification?**
-A: This will depend on how far you got in the IPrescribe set up.
-  - If you registered a token and made a payment for IPrescribe, you will need to contact [Canvas Support](https://portal.usepylon.com/canvas-medical/forms/standard) and request a new invite to redo your enrollment. You will also need to contact [DrFirst Support](https://help.drfirst.com/hc/en-us) and request a refund for the purchase you made for IPrescribe
-  - If you did not register your token and make a payment for IPrescribe, you can route yourself back to the token registration page and correct your selection. Follow the steps below to get back on track.
-    - Return to your **DrFirst invite email**
-    - Click **Enroll Now**
-    - Enter your **temporary session code** if you wrote it down. If not, repeat the identity verification process.
-    - On the token page, click **Add new token**
-    - Click **Add** under **Code Generator**
-**Q: What if I forget my passphrase?**
-A: You can reset it through DrFirst's website. See [Resetting Your EPCS Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase) for step-by-step instructions.
-**Q: Stuck at "IDP Verified"?**
-A: If your EPCS status shows **IDP Verified** , identity proofing is complete but enrollment is not finished. In current support cases, this status means the provider still needs to return to the original DrFirst browser session and click **Check Status**. If that step is completed within 24 hours, enrollment can continue. After 24 hours, Canvas Support needs to send a new invite.
-### Getting help
-**Q: Where do I get help with DrFirst issues?**
-A: For VIP Access app issues, passphrase resets, token problems, or account lockouts, contact [DrFirst Support](https://help.drfirst.com/hc/en-us). Have your NPI and invite ID handy.
-## Related Articles
-  - [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard)
-  - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
-  - [ePrescribing (eRx) Enrollment](https://help.canvasmedical.com/articles/6085016786-eprescribing-erx-enrollment)
+## Step 6: Verify your ID on your phone
+DrFirst shows a QR code and a session code.
+  1. **Save the session code.** If your session times out, it lets you pick up where you left off.
+  2. Open your phone's **camera** and scan the QR code.
+  3. On your phone, follow the prompts to photograph your ID and take a selfie. The QR code works only once, and this part must be finished within an hour.
+  4. When your phone says you're done, go back to your computer and click **Check Status**. If it says it's still waiting for your identity, wait a minute and click it again.
+![Identity documents screen with the resume code and Check Status button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F33286d97-779e-4a81-af36-27bd52519320-06-identity-documents.png?Expires=253370764800&Signature=FSdLn5q67Ecaqeiip4PpVZXHaQ9xL3UTA8W0INFoQBeAbGe1YXMorZy2fu1C32Eclk-9hSkj11-raXP1fwc9otRhZZ6qR062nWPDulDzTE4vEEMzZCAd883b19i58Z8I2toBJaZ37e5lLTkJ6ZL1L~~tp5IMO218~rkNomAo7RrBYAjgWX~H4W1vO7Ura5FOs50LOZnx4duT4ucOPymx1vpgjf9LBalcPukARCIcqOrCheFdX0a2OY2hJzeVFEAjPvkNoYCzwhrUK5yQiO46VUG5W91SEzJJ0rkZWD7r0FMXpEjdo52CfFuqwomq0VeXDfeWM3l7cpLvyZawPQ2Hxw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 7: Register your token
+When identity proofing succeeds, you'll see **Progress saved!** with your session code. You have 24 hours from when you started to add a token.
+  1. Click **Add New Token**. If you've used DrFirst before, you may see old tokens in the list. You can leave them there.
+![Token Management screen with the Add New Token button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb9068a3e-1e6a-48e3-aaef-19c399dde647-07-token-management.png?Expires=253370764800&Signature=Ut8G8NZ0Okz2fxY4rhtLb7SJ8LKDKsaU-Q0sNNHYRs6juBUrpMRTLfLgLpNwO-Td-afUOF05Gow6c0zf5kkGyP10jeIPyby2qZvCin7~C4fPZMu-gbMBHxSVMLnZZrzh0pRPp-MLDnBXVcb-TjqlqvANsk4VkNyQT8MSD2PD-b5YSS3PumedvXOTcDj~WwlwhDptu1rjrR8vuP~MPpVWoRjmYxeGLEw1HFQyRkkuVdB~OISakoogs~QC7KDwSO27XEX17HGtnpgl0fgECH8OQYbpsMWiWBl~k2GAJurSe9IqGggYyZ~7-kyNP-jXjao-0k-ByN5RhU1VU~vGlZj7jw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  2. Under **Code Generator** , click **Add**.
+     - Don't choose Push Notification (iPrescribe Authenticator).
+![Select Your 2FA Method with the Code Generator Add button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fdc9dd972-0550-43f1-b89b-8899651987a9-08-select-2fa-method.png?Expires=253370764800&Signature=CIYPzN77FVghgX58OJUu2Qy0EnQ83RXs6xNDYp01vJeG2nYpGk5w4Hq2Uyvyxh3gmYoyYCRxytkVM8zrZsIZz8F-73kfNhy2MzTVKd19JBUp8z~TGHCj0IcrZ1wC289rl2ViiWdFgwthgoC4T60E8EtuESEXs8E3jxL08M3eCRO-kv151kHJ2WNuQNaaTL7VtiNlB2xreI~rBl90yqIrO13qEKKpXh9zbXQYBUXvzPE5MXliOklnTKegjluw~iC0RRPCBXfJzt9t47DYiDo0G~lJfNVqfa5VcXsoxD0ttUybPlzUlsfFIgBu7Q6Vuhh7vFI0~IGpLzIk2MqxcRHxAw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Fill in the form:
+     - **Token Manufacturer:** SYMANTEC
+     - **Token Issuer:** DRFIRST
+     - **Token Type:** OTP SOFT TOKEN
+     - **Token Nickname:** anything that helps you recognize it, like "Canvas"
+     - **Serial Number or Credential ID:** the Credential ID shown in your VIP Access app, starting with **SYMC**. Type it with no spaces.
+     - **One Time Pin (OTP):** the current 6-digit code in **VIP Access** that changes every 30 seconds.
+  4. Click **Save**.
+![Add Two-Factor Authentication Token form filled in with Symantec, DrFirst, OTP Soft Token, and a nickname](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F38f10340-6a46-4a46-9aed-74b3d897e306-09-token-form.png?Expires=253370764800&Signature=dpWnxeh3CqvjAGBKKUttb2LrkDIy42IgfajwS6x~x-8R1cCaDY86bUpUcFAgHD3exIr97JMKGDMxcPHYnnpa54Vrdm~PuYoVq9Youw~91fVdkw4WvjkuC5MgxRFbEHu4uN0fyQTZ~viPQT9~rVe2GyqA40h8Wkt4iOMIlQdzej~ptf0Rb2azAmbp5swoTRTABqgJbevC90TJjI4~WRtF4UZO79cZHj~JI-pX3s3IF3mycyRU-THup8qkSgqKh5lDdt0cgckSvlBTPHho2zdgLYwIBntQ35cG0TRZVwmTLvR4IpkCVG-NH1dupKoLifZZuDC0S47UW3XQoO~ozOoHCg__&Key-Pair-Id=K3NV4LZ47N8M46)
+  5. Your new token shows **ACTIVATED** , and the Continue button becomes clickable. Click **Continue**.
+![Token successfully added and marked ACTIVATED, with the Continue button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F98bf540f-e258-453b-8667-eee042d1c704-10-token-added.png?Expires=253370764800&Signature=EenWz~JeJHrMjv4AUfot9dEMZKQlCAlB8z6dpbla1tHngVfmt9nSILxfEAz3hAYythqOyeGtJW~0~s51vvtFRyutiA9PDTNigP~S2lUtwKnx56Z9xaFf7q8h6Rso-9ZVn8J~NUlMzDi3CXdAaXWCRg4slHpGXUq2OtOLGoDGnH~Bu8t3T9zlmoV8d1vKK4iTl2LG8U9WzkoQXMP9qmXtfhsUapTogLsZVmgivSeMBmmsG3v3ybe9N4Frv4c~ScauI2bcV1dyyTAREXiG81vEIH3f0LcqasuGvcp7qKEkZxniiqD1dSPnH7Q5mABSbMNtWDqVI7cgGAOr7oxRQBkEMw__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Your Canvas token starts with SYMC.** If DrFirst ever shows you more than one token (for example, one starting with TID), always pick the SYMC one for Canvas.
+## Step 8: Create your passphrase and security question
+You'll enter this passphrase every time you sign a controlled-substance prescription. Fill in all four fields: Passphrase, Confirm Passphrase, Security Question, and Security Answer. DrFirst uses the security question if you ever need to recover your passphrase.
+Your passphrase must have:
+  - 8 to 20 characters
+  - At least 1 uppercase letter, 1 lowercase letter, and 1 number
+  - **No special characters** (no `*`, `!`, `#`, and so on)
+  - No more than 2 of the same character in a row
+**This screen may accept a passphrase with special characters, but it will fail later** with "Authentication failed. Access is denied." Stick to letters and numbers, and store your passphrase in a password manager.
+![Passphrase Creation screen with the passphrase and security question fields highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5dbf3da2-117a-4387-9023-2d24423a79c8-11-passphrase.png?Expires=253370764800&Signature=NXnEabKwpwuGJj3M0XhHNIqT~nBoc96XSAbcf1CcsudpZZfqrHFGmdwhMUQeplrBjXXiOziOttNqWIJmiAA4q3ty4CCQ1NEr~jIyfEOGFXtVS6ulq8mFKQul6WQFp6wq3x5hhEMDoOelXS5V2erWCPKq8visdVjdTYsAkWZTfqAnGRtTnb~WUs3JGBq5IsY0o2MqS0Hjt0WoH7xKmdpoNo7PrED96IbG8YQCmxZh1ue3REvDUg2CAymJ0QgPd-UctRF9ngnViiRFZM5~Ob9wsCIxjVOHaZFH8Z2x5tGbrvnbywZ~NtixPhWtbtSM2U7FDtltuxgEpUuIk0o1NJkgCQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 9: Enter your verification code
+DrFirst texts a code to the mobile number you entered. It can take up to 5 minutes to arrive. Type it into **Verification Code** and click **Continue**. If it doesn't come, click **Didn't receive your code?**
+![Verification Code screen with the code field highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5ad2a225-daa2-4c88-82c0-51d11ded6061-12-verification-code.png?Expires=253370764800&Signature=h0PjrfLBAkWZiAKUiad41-CcEkvoi0ZuCL2EFN~e8GMhatf6hV~kCmfAmwnn0az-4p-Gf8CFH3kEnhxf-CSjA4S--AEyXErr7SZNJfdRoMyHfFpLniu-6XCWzH2uFd~e2jGT0DjowiAmnOZ5M~2ec39j~AG~E8xpwgarMm3jK7y1-DCvynaDBy7eJqWEsuTK0W4TRhxcrSeHQVlvcOqdKlsc0HY6f~-d65~NJC0oS7IONmKb4HSJtNt~l~BBYZfbtyTPYAkjCv-O5QmljdtSvrGcp5~yp-QkfN1Luv7-SMrk6r1CNWg-tqofoTZmdSfhod~Lw48d2TvkRn8IV7~QKw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 10: You're done enrolling with DrFirst
+You'll see **Congratulations! You have completed the Identity Proofing and EPCS Enrollment Process!** Your part on DrFirst is finished. Before you can prescribe controlled substances, your practice's EPCS administrator has to grant you access.
+![Congratulations screen telling you to contact your organization's administrator](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F13b385e9-cf17-4b64-972e-7e4e62be1018-13-congratulations.png?Expires=253370764800&Signature=CwkGP4Ah7fWj8tIXA9UvpTzwVbK9AKZYAx7AUjBP2Dtd6KhAT9uro9ZHvGTptqfabK3pttkCY3fMLvr9NVhohgYQSqa~mgMWnT1kjSQn8k9JL~RQfDN6uTQiYmerUH3SBt0WBt0wyRZQtHSfvko51TgTrk~JE~2RimVv76ZTfAqyFfuvUH89DgzjryFpPQMJ~~prsHAPdZGKUYoWmygVxsHThTd5Sixh0ACcnbtKSg63kRRpn1HMZi6RvS7wJSQxelNSuhwBD1UrosufxepCsKLNrNSwN20LOUNHNy11~gquDV-jbjtALdOBy966NSEl5Nk9~4yTFPeQrgXaQjRNBQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 11: Activate your access with your EPCS administrator
+Tell your practice's EPCS administrator you've finished enrollment. You'll need to be available at the same time, because you'll give them your passphrase and a fresh VIP Access code while they enter them. Your administrator's steps are in [Activating EPCS Grants with DrFirst](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst).
+  1. Your administrator searches for you by name or NPI in DrFirst.
+  2. They select your **SYMC** token.
+  3. You give them your passphrase and the current code from VIP Access.
+  4. The admin clicks **Authorize** before the code changes.
+![DrFirst grant activation signature screen with the device, signing passphrase, and one-time pin fields highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe351022a-af69-461b-bbbf-d08a6db60a15-19-grant-signature-provider.png?Expires=253370764800&Signature=GdyIEMesZuKC1li4xxQXUNSQb6CgDNdTJBQyh4osikXbj-eK-LTnZgaPI0ehzpox4m-p1deMI3O3~BU4aChLtB0WrRy7R58sZkrpCbJJscqaCYsLc81YPF8vO6E8Dl5J9pgY5ztmn7JXyXFf5nI~bFTgflpKQ-EKxiQ~VwzJva78v8z09nIo8pQbT6-QsTUK2B2Y-K21kkQUF22gG9m9BjTwD2B0eAJfwX7D4P3xXwIwnvK3l7jxsnPfrkUC27e5wBbjDv19-1lhzpZ6KILBe5cSEK7RXiVYPHwuyYLKOxhIJKKiGgnkpgS4CBG6wAZiEZ8wt5GRrYB-w6nDKYTS~A__&Key-Pair-Id=K3NV4LZ47N8M46)
+If your administrator can't find you right after you finish, have them refresh the page and try again in a few minutes.
+## Step 12: Wait for Canvas Support to finalize setup
+After activation, tell **Canvas Support** to finalize your enrollment. This can take up to 24 hours. Your EPCS administrator will let you know when you're ready.
+## Related articles
+  - [EPCS Enrollment FAQ for Providers](https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers)
   - [Activating EPCS Grants with DrFirst](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst)
-  - [Setting Up VIP Access on a New Phone](https://help.canvasmedical.com/articles/4577696191-setting-up-vip-access-on-a-new-phone)
-  - [Resetting Your EPCS Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase)
-  - [Troubleshooting EPCS Authentication Errors](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors)
-* * *
-**Keywords:** EPCS, DrFirst, controlled substances, identity proofing, VIP Access app, OTP token, passphrase, grant activation, Experian, EPCS enrollment, SYMC, Symantec, Credential ID
-**Categories:** Provider Enrollment, EPCS, DrFirst
-**Roles:** Providers
 ----- END PAGE https://help.canvasmedical.com/articles/8630998726-electronic-prescribing-of-controlled-substances-epcs-enrollment
 
 
@@ -10896,6 +10844,59 @@ To add an ID card to a patient profile, you will need the **Canvas Remote** app 
   - Adjust the image if necessary and tap **Done** to save changes.
   - Refresh the patient profile in Canvas and the image will appear under **ID Cards**
 ----- END PAGE https://help.canvasmedical.com/articles/8802451810-patient-demographics
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers
+Answers to common questions about enrolling in Electronic Prescribing of Controlled Substances (EPCS) with DrFirst. For the full walkthrough, see [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers).
+## Timeline and process
+**How long does EPCS enrollment take?**  
+Timelines vary, but it typically takes 3 to 5 days. The most common delay is finding a time for you and your EPCS administrator to activate your access together.
+**Can I start identity proofing before ePrescribing is set up?**  
+No. You only receive the DrFirst invite after your ePrescribing enrollment is complete. The steps have to happen in that order.
+**Why is EPCS enrollment so complicated?**  
+Federal regulations for controlled substances require extra security to prevent misuse and diversion. Identity proofing, two-factor tokens, and passphrases are all required by law.
+**After my access is activated, when can I prescribe controlled substances?**  
+After your EPCS administrator activates your access and Canvas Support finalizes your enrollment, it can take up to 24 hours before prescriptions go through, depending on when pharmacies update their directories.
+## Identity proofing
+**Do I need to turn off fraud alerts on my credit report?**  
+No. Fraud alerts don't need to be turned off.
+**What if I don't pass identity proofing?**  
+Your EPCS administrator will see an IDPFAILED status. You can try up to 3 more times that day. After 3 failed attempts, Experian locks your account for 24 hours, and it can't be unlocked early. Before trying again, check your details against your credit report at [annualcreditreport.com](https://www.annualcreditreport.com). If your credit history uses a P.O. box, enter that instead of your home address. You need a U.S. address on your credit history to pass. If you still can't pass, contact DrFirst Support.
+**What does "IDP Verified" mean?**  
+Identity proofing is done, but enrollment isn't finished. Go back to the DrFirst page and click **Check Status**. If more than 24 hours have passed, you'll need a new invite.
+## Sessions and time limits
+**What if I forget to click Check Status?**  
+If you don't click **Check Status** within 24 hours of starting, your enrollment gets stuck and you'll need a new invite. Ask your practice administrator to request one from Canvas Support.
+**What if I get disconnected or my session times out?**  
+Open the link in your invite email and enter the resume code DrFirst showed you on the identity documents screen. It's also shown on the **Progress saved** screen. If you don't have the code, ask your practice administrator to request a new invite from Canvas Support.
+## Tokens and codes
+**I can't scan the QR code.**  
+Open your phone's camera and hold it so the QR code is in the viewfinder. Move your phone closer or farther until it focuses, then tap the banner that appears. You may need to try a few times.
+**My VIP Access code isn't working.**  
+Make sure you're entering the current code, since it changes every 30 seconds. Check that your phone's date and time are set to automatic, because the codes depend on the clock. When DrFirst asks you to choose a token, pick the one that starts with **SYMC**.
+**I chose Push Notification (iPrescribe Authenticator) by mistake.**  
+It depends on how far you got. If you registered a token and paid for iPrescribe, ask your practice administrator to request a new invite from Canvas Support, then contact DrFirst Support about a refund. If you didn't register a token or pay, go back to the token page: open the link in your invite email, enter your resume code (or repeat identity proofing if you don't have it), click **Add New Token** , and click **Add** under **Code Generator**.
+**Should I register a backup token?**  
+DrFirst recommends it. If you lose access to your only token, you'll have to repeat the entire identity proofing process.
+**I'm getting a new phone.**  
+In the VIP Access app menu, choose **Migrate** to move your credential to the new phone. See [Setting Up VIP Access on a New Phone](https://help.canvasmedical.com/articles/4577696191-setting-up-vip-access-on-a-new-phone).
+## Passphrase and sign-in
+**I forgot my passphrase.**  
+You can reset it through DrFirst using the security question you set during enrollment. See [Resetting Your DrFirst Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase).
+**I'm seeing "Authentication failed. Access is denied."**  
+Check three things: you picked the SYMC token, you're using the current code, and your passphrase has no special characters. See [Troubleshooting DrFirst Error | Authentication failed. Access is denied](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors).
+**I'm locked out after several failed tries.**  
+DrFirst locks your account for about 15 minutes, even if the screen doesn't say so. Wait, then try again with a fresh code. You can't reset your passphrase while you're locked out.
+## Getting help
+**Where do I get help with DrFirst?**  
+For VIP Access, passphrase, token, or lockout problems, contact [DrFirst Support](https://help.drfirst.com/hc/en-us). Their chat bubble gets the fastest response. Have your NPI and Invite ID ready. For a new invite, ask your practice administrator to request one from Canvas Support.
+## Related articles
+  - [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers)
+  - [Activating EPCS Grants with DrFirst](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst)
+  - [Resetting Your DrFirst Passphrase](https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase)
+  - [Setting Up VIP Access on a New Phone](https://help.canvasmedical.com/articles/4577696191-setting-up-vip-access-on-a-new-phone)
+  - [Troubleshooting DrFirst Error | Authentication failed. Access is denied](https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors)
+----- END PAGE https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8912630951-discounts
