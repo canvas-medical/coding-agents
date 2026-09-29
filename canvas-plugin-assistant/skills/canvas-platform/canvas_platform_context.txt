@@ -2958,7 +2958,7 @@ Find the plugin to install at <https://github.com/Medical-Software-Foundation/ca
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
 ## Introduction
-Patient conditions evolve over time. Some resolve, others require diagnostic updates, and many remain relevant as historical context. This article explains how to document past medical history, resolve active conditions, and change diagnoses in Canvas Medical while preserving important clinical information.
+Patient conditions evolve over time. Some resolve, others require diagnostic updates, and many remain relevant as historical context. This article explains how to document past medical history, take an entry back off the chart, resolve active conditions, and change diagnoses in Canvas Medical while preserving important clinical information.
 ## User's Guide
 ### Documenting Past Medical History
 The Past Medical History command documents conditions that are no longer active but may still impact clinical decision-making.
@@ -2975,6 +2975,20 @@ The Past Medical History command documents conditions that are no longer active 
   - Searches ICD-10 codes similarly to the Diagnose command
   - Supports entering the code directly in addition to text search
   - Use free-text date entries for flexibility
+### Removing a Past Medical History Entry
+The Remove Past Medical History command removes a past medical history condition from the patient's chart and records the rationale why. Reach for it when an entry turns out to be wrong for the patient, for example one brought in by an import or taken from a history the patient has since corrected.
+The note that originally recorded the entry is left exactly as it is, so the chart still shows what was documented and when. There is no need to amend or correct that earlier note.
+**To remove a past medical history entry:**
+  1. Add the **Remove Past Medical History** command to a new or existing note. It is in the note's History section.
+  2. Complete the command fields. The only required field is the condition.
+     - **Condition** : Search the patient's resolved conditions and select the one to remove
+     - **Rationale** : Reason the entry is being removed (up to 512 characters)
+  3. Click **Record** to remove the entry. It comes off the patient's conditions list.
+**Key points:**
+  - Any of the patient's resolved conditions that carry no assessment are offered, whichever command recorded them. That covers Past Medical History entries, and conditions recorded with Add Condition or Diagnose that have since been resolved.
+  - An entry that has an assessment is not offered for removal, because the assessment would be left describing nothing
+  - Active conditions and surgical history are not offered, since each has its own command
+  - To reverse a removal, enter the Remove Past Medical History command in error. The entry returns to the patient's chart.
 ### Resolving Active Conditions
 The Resolve Condition command closes active conditions for patients when they are no longer relevant for tracking.
 **To resolve a condition:**
@@ -3002,18 +3016,22 @@ When the note is billable, the Change Diagnosis command ensures the billing foot
 **Historical data preservation:**
 The Change Diagnosis command creates a new condition with the updated diagnosis while preserving historical data from the original condition. See the article on Assessing and Updating Conditions for details on how timelines are affected.
 ## Configuration & Set Up
-No special configuration is required. Past Medical History, Resolve Condition, and Change Diagnosis commands are available by default in all patient charts.
+No special configuration is required. Past Medical History, Remove Past Medical History, Resolve Condition, and Change Diagnosis commands are available by default in all patient charts.
 ## FAQ & Troubleshooting
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving the historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
 **Q: Can I undo a resolved condition?**
 A: Once resolved, a condition cannot be automatically reactivated. If the condition becomes active again, add a new Diagnose command to document the recurrence.
+**Q: Can I undo removing a past medical history entry?**
+A: Yes. Enter the Remove Past Medical History command in error and the entry returns to the patient's chart.
+**Q: Why isn't the entry I want to remove in the list?**
+A: The command offers resolved conditions that have no assessment. A condition that carries an assessment is left out, an active condition is resolved with the Resolve Condition command first, and a surgical history entry is handled by the Surgical History command.
 **Q: How can I see resolved conditions in the patient summary?**
 A: When resolving a condition, toggle on "Show on conditions list." Resolved conditions will appear at the bottom of the Patient Summary in gray non-bolded text.
 ## Related Resources
   - [Documenting New Diagnoses](/articles/9221634314)
   - [Assessing and Updating Conditions](/articles/7989321964)
-**Keywords:** past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates
+**Keywords:** past medical history, remove past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
 
@@ -9542,13 +9560,19 @@ The Assess Condition command updates and documents progress for existing conditi
      - Hover over the condition in the Patient Summary and click **Assess**
 If the cursor is not positioned in a note before clicking **Assess** , a Chart Review note will be created to store the command.
   2. Complete the fields within the command
-     - **Background** : The most recent background details from prior Diagnose or Assess commands carry forward automatically. Update if necessary.
+     - **Background** : Carries forward automatically from the condition's current background. Update if necessary.
      - **Status** : Select the current condition status:
        - 🟢 **Improved**
        - 🔘 **Unchanged**
        - 🔴 **Deteriorated**
      - **Today's Assessment** : Update observations made at the current visit based on condition status
   3. Click **Record** to update the patient's record
+### How a Condition's Background Stays Current
+A condition carries a background of its own, and that background follows the most recent assessment of the condition. Recording an assessment with background details updates the condition to match, so the next Assess Condition command starts from what was most recently documented rather than from the original diagnosis.
+**Key points:**
+  - The condition is first given the background entered on the command that recorded it, whether that was Diagnose or Add Condition
+  - Each recorded assessment that includes background supersedes it
+  - Entering an assessment in error steps the background back to the assessment before it. Entering the only assessment in error restores the background the condition was recorded with.
 ### Using Carry Forward
 To transfer data from a previous Diagnose or Assess Condition command:
   1. Click the triple dot menu on the new Assess Condition command
@@ -9586,13 +9610,15 @@ No special configuration is required. The Assess Condition command and condition
 **Q: How do I access the condition timeline?**
 A: Click on any condition in the Patient Summary to open a modal that displays the comprehensive timeline, background information, associated medications, and all historical assessments.
 **Q: Why doesn't my new assessment show the previous background information?**
-A: Background information carries forward automatically from the most recent Diagnose or Assess command. If it's not appearing, the previous command may not have included background details.
+A: Background carries forward from the condition's current background, which follows the most recent assessment of it. If nothing appears, neither the command that recorded the condition nor any assessment since included background details.
+**Q: What happens to the background if I enter an assessment in error?**
+A: The condition's background steps back to the assessment before the one entered in error. If it was the only assessment, the background returns to what the condition was recorded with.
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
 ## Related Resources
-  - [📄 Documenting New Diagnoses](/articles/9221634314)
-  - [📄 Managing Historical Conditions](/articles/3935780129)
-**Keywords:** assess condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history
+  - [Documenting New Diagnoses](/articles/9221634314)
+  - [Managing Historical Conditions](/articles/3935780129)
+**Keywords:** assess condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions
 
@@ -11005,7 +11031,7 @@ The Review of Systems command is a micro-template command in Canvas that allows 
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/9221634314-new-diagnoses
-Accurately documenting new diagnoses is essential for maintaining comprehensive patient records and ensuring proper clinical care. This article explains how to use the Diagnose command in Canvas Medical to record new conditions, prevent duplicate entries, and create structured clinical documentation.
+Accurately documenting active conditions is essential for maintaining comprehensive patient records and ensuring proper clinical care. This article explains how to use the Diagnose and Add Condition commands in Canvas Medical to record conditions, prevent duplicate entries, and create structured clinical documentation.
 ## User's Guide
 ### Adding a New Diagnosis
 The Diagnose command creates a clear and structured entry for new patient conditions in the chart.
@@ -11021,9 +11047,29 @@ The Diagnose command creates a clear and structured entry for new patient condit
 ### Preventing Duplicate Diagnoses
 If the patient has already been diagnosed with a condition in Canvas, the system displays: _"This patient has already been diagnosed with this condition"_ to prevent duplication.
 **Best Practice:** Use the [Assess Condition command](https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions) to update existing diagnoses rather than creating duplicates.
+### Adding a Condition Without Assessing It
+The Add Condition command records a coded (ICD-10) condition on the patient's Conditions list as active, without opening an assessment for it. Use it when a condition was diagnosed previously and is still active, such as one carried over from an outside record or an intake form, where there is nothing to assess at today's visit.
+**To add a previously diagnosed condition:**
+  1. Open the patient's chart
+  2. Add the **Add Condition** command to a new or existing note. It is in the note's History section.
+  3. Complete the command fields. The only required field is the condition.
+     - **Condition** : Search for the condition using free text or ICD-10 code. This is the same picker the Diagnose command uses.
+     - **Background** : Provide history of the condition
+     - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015")
+     - **Comments** : Additional notes pertaining to the condition (up to 1000 characters)
+  4. Click **Record** to add the condition. It appears in the patient summary as an active entry.
+**Key points:**
+  - No assessment is opened for the condition, and the visit is not documented as having assessed it
+  - If the condition is already on the patient's Conditions list, Canvas displays: _"This condition is already on the patient's conditions list."_
+  - Once the condition has been assessed, the Add Condition command can no longer be entered in error, because doing so would remove the condition the assessment describes
 ## Configuration & Set Up
-No special configuration is required. The Diagnose command is available by default in all patient charts.
+No special configuration is required. The Diagnose and Add Condition commands are available by default in all patient charts.
 ## FAQ & Troubleshooting
+**Q: Should I use Diagnose, Add Condition, or Past Medical History?**
+A: It depends on whether the condition is active now, and whether you are assessing it.
+  - **Diagnose** : the condition is active and you are assessing it for the first time
+  - **Add Condition** : the condition was diagnosed previously and is still active
+  - **Past Medical History** : you are backfilling a condition the patient had in the past that is not active now
 **Q: How can I add a diagnosis/ICD-10 code that's not in the system?**
 A: Diagnosis codes cannot be added manually. Canvas updates ICD-10 codes in accordance with CMS on April 1 and October 1 every year.
 **Q: What if I enter the wrong diagnosis?**
@@ -11033,7 +11079,7 @@ A: Use the Change Diagnosis command to update the condition while preserving his
   - [Managing Historical Conditions](/articles/3935780129)
   - [Understanding Coding Gaps](/articles/5456716623)
 * * *
-**Keywords:** diagnose command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions
+**Keywords:** diagnose command, add condition command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/9221634314-new-diagnoses
 

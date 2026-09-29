@@ -1037,6 +1037,7 @@
     - User's Guide
         - Adding a New Diagnosis
         - Preventing Duplicate Diagnoses
+        - Adding a Condition Without Assessing It
     - Configuration & Set Up
     - FAQ & Troubleshooting
     - Related Resources
@@ -1044,6 +1045,7 @@
     - Introduction
     - User's Guide
         - Adding an Assessment
+        - How a Condition's Background Stays Current
         - Using Carry Forward
         - Viewing Condition History
         - Understanding Timeline Behavior After Diagnosis Changes
@@ -1054,6 +1056,7 @@
     - Introduction
     - User's Guide
         - Documenting Past Medical History
+        - Removing a Past Medical History Entry
         - Resolving Active Conditions
         - Changing a Diagnosis
     - Configuration & Set Up
