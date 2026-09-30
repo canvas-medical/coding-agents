@@ -14,7 +14,7 @@ This skill provides comprehensive documentation for the Canvas Medical SDK, enab
 Before stating any specific class name, import path, effect/event name, field name, method, or supported value:
 1. Read `coding_agent_context.txt` from this skill's directory (see Usage below) and `grep`/search it for the relevant term.
 2. Base your answer on what the bundled docs actually say.
-3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line, so build the link text from the URL's last path segment: de-hyphenate, title-case, and reorder or singularize where that reads more naturally — `/sdk/clients-twilio/` → `[Twilio Client]`, `/guides/custom-landing-page/` → `[Custom Landing Page]`. The URL is what grounds the citation, so the link text only has to name the page recognizably; keep every word from the slug and add none, but you do not have to preserve its order. If the page body opens with a heading that names the page, prefer that. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
+3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line, so build the link text from the URL's last path segment: de-hyphenate, title-case, and reorder or singularize where that reads more naturally — `/sdk/clients-twilio/` → `[Twilio Client]`, `/guides/custom-landing-page/` → `[Custom Landing Page]`. The URL is what grounds the citation, so the link text only has to name the page recognizably; keep every slug word (singular or plural) and add none, but you do not have to preserve its order. If the page body opens with a heading that names the page, prefer that. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
 
 This applies to a one-line verbal question just as much as to code generation. If a question is even partially about an SDK capability and you have not yet consulted this skill in the current conversation, consult it first, then answer.
 
@@ -28,9 +28,9 @@ Use this skill whenever a question, claim, or piece of code involves — even in
 - Handler types (BaseHandler, SimpleAPI, Application, CronTask)
 - Canvas CLI commands
 - Plugin manifest structure
-- Whether Canvas "supports" some capability, and how it is modeled
+- How a capability is modeled in the SDK (whether Canvas already does it natively is `canvas-platform`)
 
-This includes short conversational questions, not just plugin-building work. Examples that REQUIRE consulting this skill before answering: "how do I ingest ADTs?", "what's the import path for the external event effect?", "what fields does X take?", "does Canvas have a built-in HL7 parser?". Do not answer any of these from memory.
+This includes short conversational questions, not just plugin-building work. Examples that REQUIRE consulting this skill before answering: "how do I ingest ADTs?", "what's the import path for the external event effect?", "what fields does X take?", "how do I parse an incoming HL7 message in a plugin?". Do not answer any of these from memory.
 
 ## Terminology / Aliases
 

@@ -9,13 +9,21 @@ This skill is the reference for **what Canvas already does natively — without 
 
 ## Scope
 
-The situations that call for this skill are enumerated in its `description` above — read them there rather than looking for a second copy. Three rules govern how to apply them:
+Use this skill whenever an answer depends on Canvas's shipped, no-code behavior:
+
+- **Feasibility**: "can Canvas do X, and how?", plus adjacent native capabilities the user didn't ask about.
+- **Config-first alternatives**: a setting, role, permission, template, questionnaire, or protocol instead of code.
+- **Out-of-the-box behavior and debugging**: how a workflow or screen behaves by default, and whether a reported bug is documented native behavior.
+- **Term mapping**: a clinical or operational term ("recall", "superbill", "care gap") that names a Canvas feature.
+- **Compliance and integrations**: the native and configuration side of EPCS, billing, and consent, and of FHIR, pharmacy, lab, and partner integrations.
+
+Three rules govern how to apply them:
 
 **Reach for it early and cheaply.** The trigger is that an answer *depends* on Canvas's shipped, no-code behavior, even in passing. A one-line conversational question counts as much as plugin-building work.
 
 **Redundancy avoidance is one case, not the purpose.** Deciding a plugin shouldn't be built is the narrowest thing this skill does. Config-first alternatives, out-of-the-box behavior, adjacent capabilities the user didn't ask about, and plain "how does Canvas do X?" education matter just as often.
 
-**Answer only the native half.** Anything about what you can *build* belongs to `canvas-sdk`: event types and contexts, effect types and payloads, SDK data models and their field and import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface and handler terminology, `sdk_version` and deprecations, and build patterns. When a question has both a native side and a build side, answer the native side from here and hand the build side to `canvas-sdk`.
+**Answer only the native half.** Anything about what you can *build* belongs to `canvas-sdk`: event types and contexts, effect types and payloads, SDK data models and their field and import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface and handler terminology, `sdk_version` and deprecations, and build patterns. When a question has both a native side and a build side, answer the native side from here and hand the build side to `canvas-sdk`. If `canvas-sdk` is not available in this session, answer the native side and stop there.
 
 ## Grounding Rule — Read Before Answering
 
