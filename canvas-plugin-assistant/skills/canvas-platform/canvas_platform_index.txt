@@ -1412,6 +1412,30 @@
     - Billing
     - Troubleshooting
     - Install the Plugin
+
+## Canvas for Administrative Developers
+- [Enable Automated Patient Statements and Payment Reminders via Email](https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email)
+    - Overview
+    - Required role and permissions
+    - Before you start
+    - Step 1: Configure Constance settings
+    - Step 2 (optional): Set an initial send delay
+    - What patients receive
+    - Who receives statements
+    - Verify it is working
+    - Turning it off
+    - Related articles
+- [Verify Your Sending Domain for Canvas Managed Email  via SendGrid](https://help.canvasmedical.com/articles/5049000425-verify-your-sending-domain-for-canvas-managed-email-via-sendgrid)
+    - Overview
+    - Who does what
+    - Required role and permissions
+    - Before you start
+    - Step 1: Confirm your sending address in Canvas
+    - Step 2: Add the DNS records
+    - Step 3: Test
+    - If you change your sending address or domain
+    - Troubleshooting
+    - Related articles
 - [Canvas Patient Safety Scale](https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale)
     - Introduction
     - Scale

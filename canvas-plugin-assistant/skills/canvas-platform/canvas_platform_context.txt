@@ -3036,6 +3036,68 @@ A: When resolving a condition, toggle on "Show on conditions list." Resolved con
 ----- END PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email
+## Overview
+Automated patient statements let Canvas email patients with an outstanding balance on a recurring schedule. Each email tells the patient a statement is ready and links them to the Payments page of the patient portal, where they can view the statement and pay by card. Canvas keeps resending on a set interval until the balance is paid.
+This article walks an administrator through turning this on for their instance.
+## Required role and permissions
+To complete this setup, you need a Canvas user with access to Admin and the following permissions, granted by the **Administrative** group:
+  - **Staff status** , which allows the user to open **Settings**
+  - **constance | config | Can change config** , required to change the Constance settings below
+  - **api | organization | Can change organization** , required to save changes on the Organization page
+  - **api | organization setting | Can add organization setting** and **Can change organization setting** , required only if you set an initial send delay (optional step below)
+If you do not see **Constance: Config** under Settings, or the settings are read-only, you are not in the Administrative group. Ask an existing administrator on your instance to add you to it.
+## Before you start
+  - **Your sending domain must be verified.** Statement emails are sent from the address in your organization's `defaultEmail` setting, and that address's domain must be authenticated with Canvas's email provider. See [Verify Your Sending Domain for Canvas Email (SendGrid Domain Authentication)](/articles/5049000425)
+  - **Stripe must be configured.** Patients pay through the portal using Stripe. Confirm Stripe API keys are entered in the **Stripe Configuration** section of Constance: Config. See [Collect Patient Payments: Configuration & Set Up.](https://help.canvasmedical.com/articles/4431910086-Collect-Patient-Payments#configuration-set-up)
+  - **Review outstanding patient balances.** The first time the job runs, it sends a statement to every patient who currently has a patient balance, not only to new balances. Confirm those balances are accurate before enabling.
+  - **Automated statements only send from production instances.** Enabling these settings on a sandbox, staging, or demo instance does not send any emails.
+## Step 1: Configure Constance settings
+  1. From the Schedule View, open the triple line menu, select **Settings** , and then select **Config** under the **Constance** heading.
+  2. Scroll to the **Billing** section and set the following:
+Setting| Set to  
+---|---  
+`AUTOMATED_INVOICING`| True  
+`ALLOW_EMAIL_FOR_INVOICING`| True  
+`INVOICE_INTERVAL`| Number of days(default 15)  
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F505f831d-ab30-46bd-92e2-a88bbf0d4132-constance-billing-automated-statements-846.png?Expires=253370764800&Signature=oMyjhQT5oBtKzZdLqKE~cDRTHPxTyjzhWRUd6--Tb8ICvbob6A53FKzWGktmq669cNSOQW797zBj98fl0VlCpDfFKDqSm3~uCkngNHirOZ615EaOwQ~~TbuFn8KF65tJA8Z5NkesyqS0YGFBK0sUl2c-nPghuvEaM3n~j3nc-24qCS~c7NTztbnWPKRwx6grnhehPY8uAzkRvZzKcS1SmGPocmeXpDgbH6V-QpbZGYe0n-gSqwCRx0ThUE4BBz~Y-SOW1gGpKNV5jk9DJ~h-L7ruXQrVdK7dV6RbNQvv3~qpYqPSLBfFCk1l4kb5crpyL3TGk502In5~sE9ax~-rDA__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Scroll to the **Patient App** section and confirm both of these are **True** :
+Setting| Set to  
+---|---  
+`PATIENT_APP_PAYMENTS`| TRUE  
+`ENABLE_PATIENT_PORTAL`| TRUE  
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fbb6f4381-4ed0-49a1-89cc-aeee56e43ca4-constance-patient-app-automated-statements-846.png?Expires=253370764800&Signature=vtrxQIiKOXrQm-rkARWtcspl6PKkztmRf9aFhiW16shvvcY6k59in4oKEznmjaH3wrqBmQSWTrkhXgeph1BcodehhHBlE3DK4G6ub0uLiCTTi~wGzCOIsYIMFnLgHh5kcs4whcKOqO3FmQwb4tckvDXNd--jlWXfv53~BnNUQCpSNwC0Vjn6BSCK2-qbayQ0NMstTuCecbtv~wtVWlbTbsr9zvcs6doVVFVjIZZc4klCDzcjsFpu9O6wC48x4rbRjoUJWHAR6qwRsfuB0wQYI8IJ8egaxonIp3GfI5su6MqOu0THl8BAMLPoQ7opPpnNPBVHUPWQ3QFp7xrjRlaIug__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Click **Save**.
+## Step 2 (optional): Set an initial send delay
+By default, a patient can receive a statement as soon as they have a balance. To give your team a grace period first, add a delay measured from the date of service.
+  1. From the triple line menu, select **Settings** , then **Organizations** , and select your organization.
+  2. In the **Organization settings** section, add a setting (or edit it if it already exists):
+     - **Name:** `patientInvoiceSendDelay`
+     - **Value:** `{"days": 7}`, replacing 7 with the number of days you want
+  3. Click **Save**.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fc15f7f4e-ff67-485a-bca2-4b2fd1e5eafb-org-setting-patient-invoice-send-delay.png?Expires=253370764800&Signature=ooePT04hpf3u9WrEsBjDyz29P4AZ-MBVIqhV6MSwTsLYboaULFyojvFy~R5bzJhXDCPuENwO2uO7rtggUhUFGebWlmSgJkzo7aT7XJO3etG8BWEKazd-ut2mHwXuz2Du3aPh0Z-hLqPk7wIcjYZISN5UvYI~FYyduxINyHc~2OdAaTPdTW4nGvMQ90BPNTxnHBvd7HtEmTN~oYkEqcYtqKD8NtolZhj8ZGJrDu063FT~Ev6MPpNjftccMvysnkgFAIgkynS754-2BvKsR7IYkrVeEBLEQLb-Mp0MrSY6qwFjVuF6giQarF9256xtEJq3NFcQIrqfwiV~TGjC9LvWvw__&Key-Pair-Id=K3NV4LZ47N8M46)
+The delay counts from the **date of service** , not from the date the balance moved to patient responsibility.
+## What patients receive
+  - **Subject:** "Payment due for [your practice short name]"
+  - **Body:** the patient's name, a note that your practice has sent them a statement, a link to the Payments page in the patient portal, and your practice's main phone number for questions.
+From the portal, the patient can view the statement, pay the full balance or edit the amount, and use a saved or one-time card.
+## Who receives statements
+  - Statements go to every patient with an outstanding patient balance, regardless of which billing queue the claim is in.
+  - When a patient has a guarantor who can be contacted, the statement is addressed to the guarantor and includes the balances of their dependents.
+  - An email is sent only to an email address on the patient's profile that is **verified** , has **consent** for contact, and is **active**. If a patient has no qualifying email, their statement is recorded with an error and not delivered.
+  - After a statement is sent, the same patient is not sent another until the `INVOICE_INTERVAL` has passed.
+## Verify it is working
+The job runs once a day. The day after enabling, open a patient who had an outstanding balance, select the document icon, and then **Statement**. The statements list should show a new statement with **Workflow** `automated` and **Originator** Canvas Bot. Open the PDF to review what the patient received.
+The list shows that a statement was created, not whether the email was delivered. If a patient reports not receiving a statement, confirm their email address on their profile is verified, has consent for contact, and is active.
+## Turning it off
+Set `AUTOMATED_INVOICING` to **False** in Constance: Config and save. No further automated statements are created or sent. Manual statements (one-off and batch) are not affected.
+## Related articles
+  - [Claim Management](https://help.canvasmedical.com/articles/9992348572-Claim-Management) (Invoicing and Statements)
+  - [Collect Patient Payments](https://help.canvasmedical.com/articles/4431910086-Collect-Patient-Payments)
+  - [Config | Constance Settings](https://help.canvasmedical.com/articles/4646004700-Config-%7C-Constance-Settings)
+----- END PAGE https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4083957452-print-batch-statement
 ## Introduction
 Users have the ability to generate and print batch statements. 
@@ -5289,6 +5351,59 @@ To modify an existing Diagnostic Theater view:
 **Keywords:** diagnostic theater, laboratory results, questionnaire scores, LOINC codes, patient trends, data visualization, chart documentation
 **Categories:** Patient Charts, Laboratory Management, Data Analysis, Clinical
 ----- END PAGE https://help.canvasmedical.com/articles/5041695251-diagnostic-theater
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5049000425-verify-your-sending-domain-for-canvas-managed-email-via-sendgrid
+## Overview
+Canvas sends patient-facing email through SendGrid, an email delivery service that Canvas configures for your instance. These emails include:
+  - Patient portal login and invitation links
+  - Contact verification emails
+  - New message notifications
+  - Appointment reminders
+  - Patient statements (when automated statements are enabled)
+These emails are sent from your practice's own email address. For inbox providers to trust that address, your email domain must be **authenticated** in SendGrid. Domain authentication proves your practice owns the domain, removes the "via sendgrid.net" label that some inboxes show, and improves the chance that your emails reach the inbox instead of spam.
+Domain authentication is a shared task. Canvas manages the SendGrid account and its API key. Your team owns your sending address and your domain's DNS records, and only your team can add the records that complete verification. This article covers your team's part.
+## Who does what
+Your team| Canvas  
+---|---  
+Chooses the sending address and keeps it current in Canvas| Configures SendGrid and its API key on your instance  
+Identifies the DNS provider for your domain and who can make changes there| Starts domain authentication for your domain and walks you through setup  
+Adds the DNS records exactly as provided| Confirms verification once the records propagate  
+Contacts Canvas before changing the sending address or domain| Re-runs authentication for a new domain  
+## Required role and permissions
+There are two kinds of access involved, and they are often held by different people.
+  - **In Canvas:** to view or change your sending address, you need a user in the **Administrative** group, which grants **Staff status** (to open Settings), **api | organization | Can change organization** , and **api | organization setting | Can add organization setting** and **Can change organization setting**.
+  - **At your DNS provider** (for example GoDaddy, Cloudflare, Namecheap, or Amazon Route 53): someone who can add records to your domain's DNS. This is often your IT team, web host, or whoever manages your website. Identify this person before you start, because verification cannot be completed without them.
+The SendGrid API key in **Constance: Config** (SendGrid Configuration section) is managed by Canvas. 
+## Before you start
+  - **Use a domain your practice controls.** Choose an address on your own root domain, for example `billing@yourpractice.com`. Addresses on free email providers such as gmail.com, yahoo.com, or outlook.com cannot be authenticated, because only the provider can change those domains' DNS records.
+  - **Use the root domain.** Authenticate the domain itself (for example `yourpractice.com`), not a subdomain.
+  - **Use an address patients will recognize.** Patients see this address on every email Canvas sends, and the sender name shown is your organization's full name.
+## Step 1: Confirm your sending address in Canvas
+  1. From the triple line menu, select **Settings** , then **Organizations** , and select your organization.
+  2. In the **Organization settings** section, find the setting named `defaultEmail`. Its value is the address Canvas sends from.
+  3. If the address is on a domain your practice does not control, or is not the address you want patients to see, contact Canvas Support before changing it. A new domain has to be authenticated before emails from it will deliver reliably.
+## Step 2: Add the DNS records
+  1. Contact your Canvas team (through your shared Slack channel or Canvas Support) to start domain authentication. Share the domain you are sending from and the name of your DNS provider.
+  2. Your Canvas team starts authentication for your domain in SendGrid and sends you a spreadsheet, **SendGrid Info to Add to Domain** , listing the DNS records generated for your domain. It typically contains three CNAME records and one DMARC TXT record, each with a Type, Host, and Value.
+  3. Your DNS administrator adds each record at your DNS provider exactly as provided: the same record type, host or name, and value. Do not edit or combine them.
+  4. Let your Canvas team know once the records are added.
+DNS changes can take up to 48 hours to propagate. Your Canvas team confirms verification once SendGrid can see the records.
+## Step 3: Test
+After verification is confirmed, send yourself an email from Canvas, for example by resending a patient portal invitation to a test patient whose email address is your own. Confirm it arrives in your inbox, shows your practice's address as the sender, and does not show "via sendgrid.net."
+**Testing on a sandbox, staging, or demo instance:** non-production instances only send email to addresses that are explicitly allowed. Add your test address to the `emailAddressAllowList` organization setting (in the same **Organization settings** section, as a list, for example `["you@yourpractice.com"]`). Emails to any other external address are not sent from non-production instances. Canvas staff addresses are always allowed.
+## If you change your sending address or domain
+Contact Canvas Support before changing `defaultEmail` to an address on a different domain. The new domain needs its own authentication and DNS records, and emails sent from an unauthenticated domain are more likely to land in spam or be rejected. Changing to another address on the same, already authenticated domain does not require new records.
+## Troubleshooting
+  - **Verification has not completed after 48 hours.** Use a public DNS lookup tool to confirm each record appears on your domain with the exact host and value provided. Missing records and typos in the host or value are the most common causes.
+  - **Your domain has more than one DMARC record.** A domain should have only one DMARC record (a TXT record at `_dmarc.yourpractice.com`). Work with your DNS administrator to keep the correct one before removing anything.
+  - **Emails are not arriving from a sandbox, staging, or demo instance.** Check that the recipient is on the `emailAddressAllowList` setting.
+  - **Emails arrive but go to spam.** Confirm with your Canvas team that authentication for your current `defaultEmail` domain is verified.
+## Related articles
+  - [Enable Automated Patient Statements and Payment Reminders via Email](https://help.canvasmedical.com/articles/3981780818-Enable-Automated-Patient-Statements-and-Payment-Reminders-via-Email)
+  - [Config | Constance Settings](https://help.canvasmedical.com/articles/4646004700-Config-%7C-Constance-Settings)
+  - [SendGrid: How to set up domain authentication](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/how-to-set-up-domain-authentication)
+----- END PAGE https://help.canvasmedical.com/articles/5049000425-verify-your-sending-domain-for-canvas-managed-email-via-sendgrid
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5063046583-change-document-type
