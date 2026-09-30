@@ -23,7 +23,7 @@ Three rules govern how to apply them:
 
 **Redundancy avoidance is one case, not the purpose.** Deciding a plugin shouldn't be built is the narrowest thing this skill does. Config-first alternatives, out-of-the-box behavior, adjacent capabilities the user didn't ask about, and plain "how does Canvas do X?" education matter just as often.
 
-**Answer only the native half.** Anything about what you can *build* belongs to `canvas-sdk`: event types and contexts, effect types and payloads, SDK data models and their field and import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface and handler terminology, `sdk_version` and deprecations, and build patterns. When a question has both a native side and a build side, answer the native side from here and hand the build side to `canvas-sdk`. If `canvas-sdk` is not available in this session, answer the native side and stop there.
+**Answer only the native half.** Anything about what you can *build* belongs to `canvas-sdk`: event types and contexts, effect types and payloads, SDK data models and their field and import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface and handler terminology, `sdk_version` and deprecations, and build patterns. When a question has both a native side and a build side, answer the native side from here and hand the build side to `canvas-sdk`. If `canvas-sdk` is not available in this session, answer the native side and stop there, do not answer it from memory.
 
 ## Grounding Rule — Read Before Answering
 
