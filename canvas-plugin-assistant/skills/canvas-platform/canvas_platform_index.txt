@@ -35,6 +35,13 @@
     - Privacy and security
     - FAQ
     - Keywords
+- [Studio and Onboarding are moving to Canvas Platform](https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform)
+    - Canvas Platform brings the tools you use to build on, operate, and manage Canvas into one place.
+    - What's changing
+        - What stays the same
+        - When your organization moves
+        - Signing in for the first time
+    - FAQ
 
 ## Getting Started
 

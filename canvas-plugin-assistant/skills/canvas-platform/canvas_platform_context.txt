@@ -10365,6 +10365,44 @@ A: The requirement is specific to copayments that need to link to a Candid encou
 ----- END PAGE https://help.canvasmedical.com/articles/8260430747-processing-claims-in-canvas-for-candid
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform
+## Canvas Platform brings the tools you use to build on, operate, and manage Canvas into one place.
+We're moving organizations on a rolling basis over the coming weeks. Studio and Onboarding are the first experiences moving to Platform, with more of Canvas coming soon. There's nothing you need to do yet: keep using Studio and Onboarding as usual until your Canvas team lets you know your move is scheduled.
+## **What's changing**
+  - **Where you open Studio.** Studio and Onboarding will live at Canvas Platform instead of inside your Canvas instance.
+  - **How you sign in.** You'll sign in to Canvas Platform with your email. See "Signing in for the first time" below.
+### **What stays the same**
+  - **Your work moves with you.** Your Studio projects, project history, and onboarding board will already be there when you sign in.
+  - **Studio and Onboarding work the way you know them.**
+  - **Your Canvas instance keeps running.** Your Canvas settings, patients, and deployed plugins are not affected.
+### **When your organization moves**
+  1. Your Canvas team will tell you ahead of time, in your Slack channel or by email.
+  2. On the day of your move, in Studio, you'll see a notice that Studio has moved, with a link to Canvas Platform.
+### **Signing in for the first time**
+  - Follow the link from the notice in Studio to set up your password, then you'll land on your Studio projects.
+  - If you already have created a Platform account, you will be able to sign in as usual.
+## **FAQ**
+**Do I need to do anything before my organization moves?**
+No. Keep using Studio and Onboarding as usual.
+**Can I still use Studio or Onboarding inside Canvas after the move?**
+No. Once your organization moves, opening Studio in Canvas shows a notice with a link to Canvas Platform. Links you already have to Studio projects take you to the same project on Platform.
+**Who on my team gets access?**
+Everyone who uses Studio and/or Onboarding at your organization today. Your access carries over:
+  - **Studio user:** builds plugins in Studio on their own projects and the ones shared with them.
+  - **Studio admin:** oversees Studio, every project without being added to it, and sets how Studio releases plugins and who can access Studio.
+  - **Onboarding admin:** manages your organization's onboarding projects and access to the Onboarding agent.
+Organization admins on Canvas Platform can add and invite more of your team to use Studio and Onboarding. Studio and Onboarding admins can add and invite more of your team to use Studio and Onboarding, respectively.
+**How do I add a teammate?**
+An organization admin invites them from the Users page on Canvas Platform and gives them a specific role. The teammate gets an email with a link to set their password. If your organization signs in with single sign-on, they sign in there instead. Someone who already has a Canvas Platform account is simply added to your organization, with no new password.
+**Do I need a new password?**
+The first time you open Canvas Platform, you set a password from the link in Studio's notice. If your organization uses single sign-on, you sign in with it as usual, and no password is needed.
+**Will my projects, chats, and shared projects be there?**
+Yes. Your projects, project history, the projects others shared with you, and your onboarding board move with you. Plugins you've already deployed keep running in your Canvas instance.
+**Who do I contact with questions?**
+Feel free to message us in your organization's shared Canvas Slack channel or submit a ticket to our team using [this form](https://canvas-medical.portal.usepylon.com/forms/platform-support).
+----- END PAGE https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8319995182-patient-groups
 Canvas supports the ability to define patient groups. These groups can be used for a variety of purposes,**most importantly permissions**. In the context of permissions, users can be given access to a patient group, which gives them access to all patients in that patient group. This article describes how to manage patient groups.
 ## Adding patient groups
