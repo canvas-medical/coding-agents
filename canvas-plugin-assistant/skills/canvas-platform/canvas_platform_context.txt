@@ -5337,6 +5337,13 @@ To modify an existing Diagnostic Theater view:
   3. Select the name of the diagnostic view that is being modified
   4. Make adjustments to any fields
   5. Select **Save** to apply the modifications
+## Deleting a Diagnostic Theater View
+Diagnostic views can be hard-deleted in Canvas when the user's role has the `delete_diagnosticview` permission.
+  - To delete a view, navigate to **Settings** , select **Diagnostic View** under **Practice** , open the view, and select **Delete**.
+  - **Deletion cannot be undone.** If the deleted view is referenced in an existing patient note, that reference will appear empty afterward.
+  - If **Delete** appears in one environment but not another, the environments may have different role permissions. Contact support to grant the `delete_diagnosticview` permission to the appropriate administrative role in the affected environment.
+  - After the permission is granted, log out and back in or perform a hard refresh if the **Delete** option does not appear immediately.
+Canvas does not currently support deactivating diagnostic views. Deactivation is not an alternate setting for deletion.
 # FAQ & Troubleshooting
 **Q: What types of data can I track in Diagnostic Theater views?**
 **A:** You can track laboratory results (identified by **LOINC codes**) and questionnaire scores (using system codes defined in questionnaire templates).
