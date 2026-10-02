@@ -266,6 +266,7 @@ class TestMain:
                 workspace_dir=str(workspace_dir),
                 plugin_dir=str(plugin_dir),
                 require_plugin_dir=True,
+                require_style_tools=False,
             )
         ]
         assert mock_run.mock_calls == exp_run_calls
@@ -290,6 +291,79 @@ class TestMain:
                 workspace_dir=workspace_dir,
                 plugin_dir="",
                 require_plugin_dir=False,
+                require_style_tools=False,
             )
         ]
         assert mock_run.mock_calls == exp_run_calls
+
+
+class TestCheckStyleTools:
+    """Tests for the opt-in style-toolchain check.
+
+    /cpa:style resolves ruff and mypy through uv rather than assuming them on
+    PATH. Checking up front turns an unresolvable toolchain into a stated setup
+    error instead of a verdict of `null` discovered several steps later.
+    """
+
+    def test_missing_tools_are_a_setup_error(self, tmp_path, capsys):
+        """Both tools unresolvable exits 1 and names each spec."""
+        tested = CpaEnvironmentValidator
+
+        with patch(
+            "validate_cpa_environment.tool_available", return_value=False
+        ), pytest.raises(SystemExit) as exc_info:
+            tested.check_style_tools(tmp_path)
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "could not resolve the style toolchain" in captured.out
+        assert "ruff==" in captured.out
+        assert "mypy>=" in captured.out
+
+    def test_resolvable_tools_do_not_exit(self, tmp_path, capsys):
+        """The negative case above only means something if this one passes."""
+        tested = CpaEnvironmentValidator
+
+        with patch("validate_cpa_environment.tool_available", return_value=True):
+            tested.check_style_tools(tmp_path)
+
+        assert "Style toolchain resolved" in capsys.readouterr().out
+
+    def test_the_check_is_opt_in(self, tmp_path, capsys):
+        """Without the flag, run() never probes — the other commands are untouched.
+
+        new-plugin, wrap-up and deploy call this script too, and must not start
+        failing on a toolchain they do not use.
+        """
+        tested = CpaEnvironmentValidator
+
+        with patch("validate_cpa_environment.tool_available") as probe, pytest.raises(
+            SystemExit
+        ) as exc_info:
+            tested.run(
+                cpa_running="1",
+                workspace_dir=str(tmp_path),
+                plugin_dir="",
+                require_plugin_dir=False,
+            )
+
+        assert exc_info.value.code == 0
+        probe.assert_not_called()
+
+    def test_the_flag_makes_run_probe(self, tmp_path, capsys):
+        """With the flag, an unresolvable toolchain fails the whole validation."""
+        tested = CpaEnvironmentValidator
+
+        with patch(
+            "validate_cpa_environment.tool_available", return_value=False
+        ), pytest.raises(SystemExit) as exc_info:
+            tested.run(
+                cpa_running="1",
+                workspace_dir=str(tmp_path),
+                plugin_dir="",
+                require_plugin_dir=False,
+                require_style_tools=True,
+            )
+
+        assert exc_info.value.code == 1
+        assert "could not resolve the style toolchain" in capsys.readouterr().out
