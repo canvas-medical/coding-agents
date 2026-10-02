@@ -103,6 +103,9 @@ Create `$WORKSPACE_DIR/.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 | case_001 | 1 | ? | ? |
 | case_002 | 2 | ? | ? |
 | case_003 | 2 | ? | ? |
+| case_004 | 1 | ? | ? |
+| case_005 | 1 | ? | ? |
+| case_006 | 1 | ? | ? |
 
 ## Detailed Results
 

@@ -193,6 +193,45 @@ which is extremely difficult to unwind.
 
 **Automated commits must not push.** An unattended process may commit locally, but pushing is outward-facing and must stay a deliberate user action.
 
+## Templates: Render Untrusted Data Safely
+
+**CRITICAL: Never generate `|safe`, `{% autoescape off %}`, or `mark_safe` in plugin templates or HTML responses, and never put secrets in template context.**
+
+`render_to_string` uses Django's template engine, which escapes every `{{ value }}` by default. That escaping is what stops HTML from a patient, an integration, a note, a message, a questionnaire, FHIR input, or an external API from running as script in the session of the staff member who opens the page. Turning it off turns that data into stored XSS.
+
+### What NOT to do
+
+```html
+<!-- BAD - message bodies come from patients and integrations; this runs their script -->
+<div class="message">{{ message.content|safe }}</div>
+
+<!-- BAD - json.dumps does not escape </script>, so any value containing it closes the tag -->
+<script>
+  const vitals = {{ vitals_json|safe }};
+  const apiKey = "{{ api_key }}";  // BAD - a secret sent to the browser is readable there
+</script>
+```
+
+```python
+# BAD - secrets in template context
+render_to_string("templates/index.html", {"api_key": self.secrets["API_KEY"]})
+```
+
+### What to do instead
+
+- **Plain text** (names, notes, most fields): `{{ value }}`. Use `{{ value|linebreaksbr }}` to keep line breaks.
+- **HTML that must keep its formatting** (message bodies): `{{ value|sanitize_html }}` in templates, or `from canvas_sdk.utils.html import sanitize_html` in Python. It keeps `p br b strong i em u ul ol li a span div` and `http`/`https`/`mailto` links, and removes everything else. It needs a canvas SDK release that ships `canvas_sdk.utils.html`; if `canvas validate` reports it as not an allowed import, render the value as plain text instead.
+- **Data for JavaScript**: pass the Python object (not a `json.dumps` string) in the context and use Django's `json_script` filter:
+
+```html
+{{ vitals|json_script:"vitals-data" }}
+<script>
+  const vitals = JSON.parse(document.getElementById("vitals-data").textContent);
+</script>
+```
+
+- **Secrets**: keep `self.secrets[...]` server-side. When the page needs an external API, add a `SimpleAPIRoute` that makes the call with the secret and returns only the data the page needs, and have the page `fetch()` that route.
+
 ## Cache Busting: Version-Stamp HTML and JavaScript Content
 
 **CRITICAL: All HTML templates that reference external resources (scripts, stylesheets, or plugin-served static files) MUST include cache busting.**

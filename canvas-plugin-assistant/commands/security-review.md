@@ -114,7 +114,33 @@ grep -rn "eyJ\|['\"][A-Za-z0-9_-]\{30,\}['\"]" --include="*.py" .
 
 ---
 
-### 5. Generate Security Report
+### 5. Template and HTML Output Safety
+
+Check every template and every HTML/JavaScript the plugin sends to a browser (`render_to_string`, `HTMLResponse`, `LaunchModalEffect(content=...)`, widget/section `content`):
+
+```bash
+grep -rnE "\|\s*safe\b|autoescape off|mark_safe|format_html\(" --include="*.html" --include="*.py" --include="*.js" .
+grep -rnE "self\.secrets\[" --include="*.py" .
+grep -rnE "<script" --include="*.html" .
+```
+
+**If the plugin renders no HTML:** Mark as N/A
+
+**Flag each of these as a HIGH finding, with file:line and the fix:**
+
+| Pattern | Why it is a finding | Fix |
+|---------|---------------------|-----|
+| `{{ value\|safe }}`, `{% autoescape off %}`, or `mark_safe(...)` on data from patients, integrations, notes, messages, questionnaires, FHIR input, or any external API | Stored XSS: the data runs as script in the viewing staff member's session | Plain `{{ value }}` (or `\|linebreaksbr`) for text; `{{ value\|sanitize_html }}` / `canvas_sdk.utils.html.sanitize_html(value)` for HTML that must keep formatting |
+| JSON printed into a `<script>` block, e.g. `const x = {{ data_json\|safe }};` or an f-string building `<script>` content | `json.dumps` does not escape `</script>`, so a value containing it closes the tag and injects HTML | Pass the Python object in the context and use `{{ data\|json_script:"element-id" }}`, read with `JSON.parse(document.getElementById("element-id").textContent)` |
+| A `self.secrets[...]` value (or anything derived from it, like an auth header) placed in template context, an `HTMLResponse`, inline JavaScript, or modal content | Anything sent to the browser is readable there, so the secret leaks to every user who opens the page | Keep the secret server-side: add a `SimpleAPIRoute` that calls the external API and returns only the data the page needs, and have the page `fetch()` that route |
+
+To trace a secret, follow each `self.secrets[...]` variable to where it is used; a secret that reaches a `render_to_string` context dict, a response body, or a string containing `<script` is a finding.
+
+`|safe` on a value the plugin fully controls (a constant, or HTML the plugin built only from escaped parts) is not a finding; say why in the report so the reader can check it.
+
+---
+
+### 6. Generate Security Report
 
 Get the workspace directory:
 ```bash
@@ -137,6 +163,7 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/security-review.md`, over
 | FHIR API Client Security | ✅ Pass / ⚠️ X issues / N/A | ... |
 | Application Scope | ✅ Pass / ⚠️ X issues / N/A | ... |
 | Secrets Declaration | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Template and HTML Output Safety | ✅ Pass / ⚠️ X issues / N/A | ... |
 
 ## Detailed Findings
 
@@ -155,6 +182,10 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/security-review.md`, over
 ### Secrets Declaration
 
 [Secrets audit findings]
+
+### Template and HTML Output Safety
+
+[`|safe` / `autoescape off` / `mark_safe` on untrusted data, JSON in `<script>` blocks, secrets reaching the browser]
 
 ## Recommendations
 
@@ -177,7 +208,7 @@ Tell the user the report path.
 
 ---
 
-### 6. Offer to Fix Issues
+### 7. Offer to Fix Issues
 
 If issues were found, use AskUserQuestion:
 
@@ -203,8 +234,9 @@ If issues were found, use AskUserQuestion:
 2. For missing authentication: add `authenticate()` method with appropriate validation
 3. For token issues: move to secrets, add validation
 4. For scope issues: recommend manifest changes or token scoping
-5. After fixes, re-run the security checks to confirm resolution
-6. Update the report with "RESOLVED" status
+5. For template issues: replace `|safe` with `|sanitize_html` (or plain escaping), JSON-in-script with `json_script`, and secrets in the browser with a `SimpleAPIRoute` proxy
+6. After fixes, re-run the security checks to confirm resolution
+7. Update the report with "RESOLVED" status
 
 ---
 
