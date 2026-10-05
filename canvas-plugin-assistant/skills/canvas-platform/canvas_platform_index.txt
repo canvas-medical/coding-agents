@@ -709,7 +709,7 @@
         - Configuring Alternate Payers for Submissions and ERA Retrieval
         - Image Upload Settings
     - Related Resources
-- [Patient Profile ](https://help.canvasmedical.com/articles/8802451810-patient-demographics)
+- [Patient Profile](https://help.canvasmedical.com/articles/8802451810-patient-demographics)
     - Managing Demographics
     - Managing Patient Status
     - Adding a Consent

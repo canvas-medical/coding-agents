@@ -2584,7 +2584,7 @@ Consolidated Clinical Document Architecture (C-CDA) files help healthcare provid
   1. Within **Settings** , locate **CCDAs**
   2. In the upper right corner select **import**
   3. Attach your CCDA xml file
-  4. You will get a pop-up notification confirming success 
+  4. You will get a pop-up notification confirming success
   5. You can then review the CCDA and status in **Ccda imports**
 ![screenshot-training.canvasmedical.com says06202025000298.jpg](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1750458510902-screenshot-training.canvasmedical.comsays06202025000298.jpg?Expires=253370764800&Signature=js7-orkpPtorYp1V~GCDO3gZQfHY54-fqYfW-lkB~l~tAzJWD6ax4GH2QG8H4WlaInapzjexBIlSHq6yElTsFzBi0Cn1aGTZLzs1wPwcfKaNmklzvgWbe2p-vXXs6E3uhAhe5Hpg8oWVeIjf7DhJSdi6uIVCDRkHeyin4JQIcogsJKlVmUn0iwb9IPUkWNm9e9~bIw8cSn96QWwW5Zb4-QVSElbPRZkfYwcWvX8pXEXxtWD3DHV36rnxkgUDefh-IbAdoPcOZCp733OHhr02EC4hpxc7PNGjJDF~bzGiVj~1AQtEE9bx6K8uu1yegu6rFW4J2Wnw2Flkb5bXQrd~Aw__&Key-Pair-Id=K3NV4LZ47N8M46)
 #### **Import Status Tracking**
@@ -2646,6 +2646,7 @@ C-CDA files can be generated as either Continuity of Care Documents (CCD) or Ref
      - Select document type: **CCD** or **Referral Note**
      - Enter **start date** and **end date** for records
      - Select **GENERATE**
+**Transmission limitation:** C-CDA exports, including date-range exports, cannot be sent by fax. Send them only by secure email or Direct message. Do not download a C-CDA export and fax it from Data Integration; this limitation is specific to C-CDA exports and does not change other Canvas fax workflows.
 #### **Export Status Tracking**
 Canvas tracks all C-CDA export attempts with detailed status monitoring:
 **Export Status Progression:**
@@ -8714,6 +8715,7 @@ Canvas offers nine core report types that cover different aspects of practice op
     - Staff involvement in appointment booking and management processes
     - Same-day booking and cancellation patterns
     - Overall appointment volume and scheduling efficiency
+For a patient-specific appointment list, generate the Appointments report with the appropriate date range and select **Patient** in the **Group By** option. Opening an appointment card or a patient chart is useful for reviewing individual appointment details, but it does not generate a downloadable report.
   - **Production** : Tracks procedure charges, units, and RVUs (Relative Value Units). Critical for understanding practice productivity through:
     - Identification of high-performing CPT codes and procedure categories
     - Analysis of procedure demand for each provider
@@ -8734,11 +8736,12 @@ Some reports will include a **Data** and **Dashboard** tab
 **Data Tab** \- Contains the raw data fields selected during generation, providing access to all underlying information for custom analysis.
 **Dashboard Tab** \- Includes a pivot table configured based on the Group By selection (only available when a Group By option was selected during generation).
 ## Generating Reports
-  1. Navigate to **Reports: Report Jobs** in the Canvas settings. 
+  1. Navigate to **Settings > Reports > Report Jobs** in Canvas.
   2. Choose the desired report from the list on the left
   3. Specify the start and end dates for data capture
   4. Use the **Group By** dropdown to organize the report by relevant parameters such as:
      - Provider
+     - Patient
      - CPT code
      - Payment method
      - Other applicable categories
@@ -8760,7 +8763,7 @@ This feature allows users to verify report settings and understand exactly what 
 ## Permission Requirements
 Access to Report Jobs requires specific permissions within Canvas. If users do not have access to Report Jobs, they should contact Canvas Support to update their user permissions.
 ## Email Notifications
-The system automatically sends email notifications for report status updates 
+The system automatically sends email notifications for report status updates
   - **Completion notifications** include a direct download link when reports are ready
   - **Failure notifications** alert users if report generation encounters issues
 # FAQ & Troubleshooting
@@ -8814,23 +8817,21 @@ In addition to your role specific training and orientation, we also have several
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7316720617-scheduled-reports
-Reporting is key to understanding how your care model is performing. There will be data that you may want to reference on a regular basis. Scheduled reports allow you to automate the reporting process in Canvas using Google Delivered Planned Reports. 
+Reporting is key to understanding how your care model is performing. There will be data that you may want to reference on a regular basis. Scheduled reports allow you to automate the reporting process in Canvas using Google Delivered Planned Reports.
 ## Adding Google Delivered Planned Reports
   - Select to the **Google Delivered Planned Reports** under Settings
   - Click **Add Google Delivered Planned Reports +** in the top right corner and then complete the field
     - **Title** : Name for the report being created
     - **Command:** Canvas has standard reports that can be selected from the dropdown or select **Custom SQL Query** to run a custom report
     - **Google Spreadsheet ID** : ID from the Google Sheets URL that the report will run on. To generate a new spreadsheet for the report:
-      - Go to the Google Drive shared with Canvas
-      - Open the folder for stored reports
+      - Go to the shared drive configured for your Canvas instance
+      - Open an existing folder or create a new folder for stored reports
       - Right click and select **Google Sheets** to create a new sheet
       - Title the spreadsheet the name of the report
       - Copy the spreadsheet ID from the URL. The highlighted section in the image below is the spreadsheet ID. It is the string of text between `/d/` and `/edit`
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1757713415473-image.png?Expires=253370764800&Signature=IjaqYuzo4twiDZlbS8Diex3VlIODF2wyIIVZUmTzNEu58Iy6GtJbS7A8wZqWHvu9LahN-DWC77z9b5sD~4nIMnCj0-3guyrq-x3BONyxH3VCNueas5VF5MWIP29AZmRMlcc3irQdvrkNbJqYbKEKYU5agjOGgXD2U7rtZtpzHvZlgIrxEK-TrXkqN2sb98aV2IDW42xNHbzpn0DUsyN1z1vjVBsewAwaWW0ZIR0uFmzeLW-GX6jqliPulnjo~QDGfd9q5Zf9gdt0349xIzF44jQIJRKs1AFR4f1rT2HFLTybCGgtRboSfYZntmScVLChcBZmd9XqMr2KvVJ1h5HYVg__&Key-Pair-Id=K3NV4LZ47N8M46)
       - Paste the spreadsheet ID into the **Google Spreadsheet ID** field in Canvas
-The Google sheet must be located in the Resources folder of the Google Drive that was shared during implementation. The folder contains Canvas user with write permissions needed to load the data into the sheet. The two users are:
-        - [canvas-sheets@astute-nuance-203013.iam.gserviceaccount.com](mailto:canvas-sheets@astute-nuance-203013.iam.gserviceaccount.com)
-        - dev-canvas-sheets@astute-nuance-203013.iam.gserviceaccount.com
+The Google sheet can be located in any folder inside the shared drive configured for your Canvas instance; it does not need to be in a specific `Resources` folder. Share the sheet with both Canvas service accounts as **Editor**. If a report fails because the shared drive destination is not configured correctly, the issue is with the instance-level Google Drive destination setting rather than the sheet's folder. Contact Canvas Support to verify or update that setting.
     - **Frequency:** How often the report will run: daily, weekly or monthly options.
     - **Planned day of week:** Required if **weekly** is selected for frequency
     - **Planned day of month:** Required if **monthly** is selected
@@ -8978,7 +8979,7 @@ Depending on configuration, patients may be able to complete consents in the por
   - **Show in Patient Portal** — only consents with this checked appear in the portal.
 When a patient logs in, the portal checks for outstanding consents and prompts them to complete any that are required. **Mandatory** consents must be agreed to before continuing; non-mandatory consents can be skipped. Responses are recorded on the patient profile — accepted consents show _"accepted via patient portal"_ and skipped ones show _"rejected via patient portal."_
 ![consents](http://localhost:3000/assets/images/portal-consents.png)
-When a patient responds, Canvas records the acknowledgment on their profile (accepted or rejected via portal, with the date) — it does not generate or store a separate signed copy of the consent PDF. 
+When a patient responds, Canvas records the acknowledgment on their profile (accepted or rejected via portal, with the date) — it does not generate or store a separate signed copy of the consent PDF.
 ![consents in profile](http://localhost:3000/assets/images/portal-consents-profile.png)
 ### Documents
 Patient document workflows may include patient uploads, staff review, or document visibility in the portal. Enabled through `ALLOW_PATIENT_DOCUMENT_UPLOADS` in Constance config. Documents added within the portal will populate a new channel in Data Integration.
@@ -8990,6 +8991,7 @@ Enabling the appointments section within constance allows all patients to:
   - See their past appointments
   - Join telehealth appointments
   - Cancel upcoming appointments
+**If an upcoming appointment was mistakenly checked in before the visit:** Open the appointment note and choose **Revert** to return it to the booked state. This restores the schedule actions, including the patient's ability to cancel the appointment from the portal. Revert does not delete the appointment or override late-cancellation rules; if the visit is within your practice's late-cancellation window, review your applicable policy.
 Further customization can be accomplished through the Canvas SDK.
 ### Patient Self-Scheduling
 You can also now allow patients to self schedule. Note types have two new settings, `Is scheduleable via patient portal` and `Online duration:`. If any note types have these set, patients will have the option to schedule an appointment from the appointment section or home page.
@@ -10925,7 +10927,7 @@ Once a profile is created, key patient details are displayed in the **Patient Ba
 The **Demographics** section captures key patient details and allows for updates:
   - Click **Edit** to modify any field. Required fields, indicated by a red asterisk (*), must be completed to save changes.
 ## Managing Patient Status
-  - **Active/Inactive Status** : Toggle the checkbox at the top of the demographics form. When a patient is marked inactive, an **Inactive** badge appears on the banner.
+  - **Active/Inactive Status** : Toggle the checkbox at the top of the demographics form. When a patient is marked inactive, an **Inactive** badge appears on the banner. Status changes are manual; Canvas does not provide a built-in way to schedule a patient to become inactive on a future date, so change the status manually at the intended time.
   - **Deceased Workflow** : Marking a patient as deceased triggers automated workflows:
     - Cancels future appointments and removes follow-up requests
     - Marks contact information as **unverified** to block outgoing messages
