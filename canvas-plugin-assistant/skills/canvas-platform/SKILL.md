@@ -1,30 +1,29 @@
 ---
 name: canvas-platform
-description: Canvas native-feature reference. Use whenever an answer depends on what Canvas already does without a plugin — feasibility ("can Canvas do X, and how?"), config-first alternatives (a setting, role, template, or protocol instead of code), out-of-the-box workflows and UI behavior, adjacent native capabilities worth suggesting, mapping a clinical term to a native feature, the native/configuration side of compliance (EPCS, billing, consent) and integrations (FHIR, pharmacy, labs), debugging something that may be expected native behavior, plain "how does Canvas do X?" education, and avoiding building something Canvas already ships. Not for SDK build questions (events, effects, data models, handlers, manifest, CLI) — that is canvas-sdk. The bundled docs are the source of truth; do not answer from memory.
+description: Canvas native-feature reference. Use whenever an answer depends on what Canvas already does without a plugin — feasibility ("can Canvas do X, and how?"), config-first alternatives (a setting, role, template, or protocol instead of code), out-of-the-box workflows and UI behavior, adjacent native capabilities worth suggesting, mapping a clinical term to a native feature, the native/configuration side of compliance (EPCS, billing, consent) and integrations (FHIR, pharmacy, labs), debugging something that may be expected native behavior, plain "how does Canvas do X?" education, and avoiding building something Canvas already ships. Not for SDK build questions (events, effects, data models, handlers, manifest, CLI, import paths, class names) — that is canvas-sdk. The bundled docs are the source of truth; do not answer from memory.
 ---
 
 # Canvas Native-Feature Reference
 
 This skill is the reference for **what Canvas already does natively — without a plugin**. It bundles a two-tier native-feature reference drawn from the Canvas Help Center: a grep-able index plus a full-body corpus.
 
-## What This Skill Answers
+## Scope
 
-Use this skill whenever the answer depends — even in passing — on Canvas's shipped, no-code behavior. Concretely:
+Use this skill whenever an answer depends on Canvas's shipped, no-code behavior:
 
-- **Feasibility routing** — "can Canvas do X?" Check here first for a native path, then hand off to `canvas-sdk` for the build path if there isn't one.
-- **Config-first alternatives** — the ask may be a setting, role, permission, template, questionnaire, or protocol rather than code.
-- **Platform behavior claims** — how a workflow, default, or screen behaves out of the box, before any customization.
-- **Adjacent native capability** — Canvas also ships Y, which the user probably wants to know about even though they didn't ask.
-- **Concept and terminology mapping** — a clinical or operational term ("recall", "superbill", "care gap") that maps onto a named Canvas feature.
-- **Compliance surfaces** — the native handling and configuration side of EPCS, billing, and consent.
-- **Integration cooperation** — the native behavior and configuration side of FHIR, pharmacy, lab, and partner integrations.
-- **Debugging** — whether the behavior someone is calling a bug is in fact documented native behavior.
-- **Non-build education** — "how does Canvas do X?" asked with no intention of building anything.
-- **Redundancy avoidance** — a native feature already covers the ask, so the plugin shouldn't be built.
+- **Feasibility**: "can Canvas do X, and how?", plus adjacent native capabilities the user didn't ask about.
+- **Config-first alternatives**: a setting, role, permission, template, questionnaire, or protocol instead of code.
+- **Out-of-the-box behavior and debugging**: how a workflow or screen behaves by default, and whether a reported bug is documented native behavior.
+- **Term mapping**: a clinical or operational term ("recall", "superbill", "care gap") that names a Canvas feature.
+- **Compliance and integrations**: the native and configuration side of EPCS, billing, and consent, and of FHIR, pharmacy, lab, and partner integrations.
 
-This applies to a one-line conversational question just as much as to plugin-building work. Redundancy avoidance is the last item on that list, not the point of the skill.
+Three rules govern how to apply them:
 
-**Not this skill — use `canvas-sdk` instead** for anything about what you can *build*: event types and contexts, effect types and payloads, SDK data models and their field/import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface/handler terminology, `sdk_version` and deprecations, and build patterns. If a question has both a native side and a build side, answer the native side from here and the build side from `canvas-sdk`.
+**Reach for it early and cheaply.** The trigger is that an answer *depends* on Canvas's shipped, no-code behavior, even in passing. A one-line conversational question counts as much as plugin-building work.
+
+**Redundancy avoidance is one case, not the purpose.** Deciding a plugin shouldn't be built is the narrowest thing this skill does. Config-first alternatives, out-of-the-box behavior, adjacent capabilities the user didn't ask about, and plain "how does Canvas do X?" education matter just as often.
+
+**Answer only the native half.** Anything about what you can *build* belongs to `canvas-sdk`: event types and contexts, effect types and payloads, SDK data models and their field and import names, handler types, `CANVAS_MANIFEST.json` structure, the Canvas CLI, surface and handler terminology, `sdk_version` and deprecations, and build patterns. When a question has both a native side and a build side, answer the native side from here and hand the build side to `canvas-sdk`. If `canvas-sdk` is not available in this session, answer the native side and stop. Do not answer the build side from memory.
 
 ## Grounding Rule — Read Before Answering
 
@@ -77,6 +76,6 @@ The retrieval order matters:
 Route by what the *answer* is about:
 
 - **`canvas-platform` (this skill) — native / no-code.** "Is there a shipped feature, setting, or admin workflow that does X **without a plugin**?" Source: the bundled Help Center corpus.
-- **`canvas-sdk` — build / model.** "Can I build or model X with the SDK, and how?" Events, effects, data models, handlers, manifest. Source: the bundled docs-site corpus. Use it to scaffold once this skill has established that nothing native covers the need — or alongside this skill when the answer has both a native and a build half.
+- **`canvas-sdk` — build / model.** "Can I build or model X with the SDK, and how?" Events, effects, data models, handlers, manifest. Source: the bundled docs-site corpus. When `canvas-sdk` is available in this session, use it to scaffold once this skill has established that nothing native covers the need, or alongside this skill when the answer has both a native and a build half. If `canvas-sdk` is not available, answer only what Canvas does natively, as found by the two-tier lookup; if nothing native covers the need, say so plainly. Do not scaffold or describe how to build a plugin (see Scope).
 - **Omniplug MCP tools — instance state and plugin inventory.** "What plugins does this customer already have, what does each one do, and where does its UI land?" Use `get_customer_plugins` (name, version, manifest description, match status), `describe_plugin` (manifest, README, match status, file listing — it falls back to the reference index, so it also answers "what does this Canvas-managed plugin we don't have do?"), `get_plugin_placement` (scope, menu position, menu order, panel visibility from the live instance database), and `list_reference_plugins` (what exists to install, with install and divergence counts). These answer questions about *one instance's state*, which is not Canvas's native surface and not the SDK.
 - **`instance-analyze`** — the local-dev path to the same instance picture, via the Canvas admin portal. It needs a root password from a local `~/.canvas/credentials.ini`, so it is for a developer working against an instance directly, not for Studio sessions.
