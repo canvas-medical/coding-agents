@@ -184,6 +184,36 @@ A: Yes. Contact Canvas Support immediately in the enrollment ticket and they can
 ----- END PAGE https://help.canvasmedical.com/articles/1295159245-lab-ordering-enrollment
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/1321535923-best-practices-for-configuring-your-twilio-campaign
+Before Canvas can send text messages for your practice (portal invites, appointment reminders, secure message alerts), US carriers have to approve your texting registration, called an A2P 10DLC campaign. A carrier reviewer checks your website, your privacy policy, your terms, and how patients agree to receive texts. Best practices are listed below improve your chances of a successful submission.
+## 1\. Add a text messaging section to your privacy policy
+Your privacy policy must be on a public page titled "Privacy Policy," and it must name your practice exactly as it's registered.
+  - Update the privacy policy so it clearly states that mobile information and messaging consent are not shared with third parties or affiliates for marketing or promotional purposes.
+  - Make sure the privacy policy explains what customer data you collect and how that data is used in your messaging program.
+  - If your opt-in flow happens on a website, include the required messaging disclosures in the privacy policy, including message frequency and "message and data rates may apply."
+  - Remove duplicate or conflicting privacy policies so reviewers can verify one clear policy for the registered brand and campaign.
+## 2\. Publish a terms and conditions page with your texting terms
+Carriers require a terms and conditions (or terms of use) page in addition to the privacy policy.
+  - The URL must be publicly accessible, not behind a login, and point to terms and conditions relevant to your registered brand.
+  - Update your terms and conditions and consent flow so end users give consent directly to your brand and mobile opt-in data is not shared with third parties or affiliates for marketing or promotional purposes. For more information, see [_A2P 10DLC campaign approval requirements_](https://help.twilio.com/articles/11847054539547-A2P-10DLC-Campaign-Approval-Requirements "A2P 10DLC campaign approval requirements").
+  - If your campaign uses a prohibited use case, such as affiliate marketing or third-party lead generation, resubmitting will not resolve the rejection. Remove the prohibited use case before submitting another campaign registration. For details, see [_Forbidden message categories for SMS and MMS in the US and Canada_](https://help.twilio.com/articles/360045004974-Forbidden-message-categories-for-SMS-and-MMS-in-the-US-and-Canada "Forbidden message categories for SMS and MMS in the US and Canada").
+  - After you update the terms and conditions and consent flow, resubmit the campaign for review in Console or retry the campaign submission through the API.
+## 3\. Keep your business details consistent
+  - Use the same legal business name, address, EIN, and website everywhere: your registration, your website, your privacy policy, and your terms.
+  - Check that no placeholder text is left in your registration or on your pages, such as [Brand Name] or [Practice Name].
+  - Make sure your website is live and publicly reachable.
+## If your campaign is rejected
+Carriers return an error code rather than a detailed explanation. The two most common:
+  - **30908, compliant privacy policy required:** the privacy policy is missing, can't be verified, is missing the "we do not sell or share" statement, or conflicts with another policy. See step 1.
+  - **30882, terms and conditions issue:** the terms page is missing, is the same page as the privacy policy, lacks the texting terms, or consent isn't shown directly. See steps 2 and 3.
+Fix the issue on your website, then let your Canvas team know so the campaign can be resubmitted. Each resubmission goes through carrier review again.
+## Related
+  - [Twilio: A2P 10DLC Campaign Onboarding Guide](https://support.twilio.com/hc/en-us/articles/11847054539547-A2P-10DLC-Campaign-Onboarding-Guide)
+  - [Twilio: Error 30908](https://www.twilio.com/docs/api/errors/30908)
+  - [Twilio: Error 30882](https://www.twilio.com/docs/api/errors/30882)
+----- END PAGE https://help.canvasmedical.com/articles/1321535923-best-practices-for-configuring-your-twilio-campaign
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1377016230-social-determinants
 ## Introduction
 Social determinants of health are the economic and social conditions that influence an individual health, functioning, and quality-of-life outcomes and risks. Examples include the following:
@@ -421,6 +451,38 @@ Begin with the desired patient's chart open.
 # Resources
 ### [Video: Print Medications and Allergies](https://www.loom.com/share/d2654447588a4dd5b6d20bd4b70d8b5e?sid=95efff16-c45e-4311-a4b3-f7c50beeb217)
 ----- END PAGE https://help.canvasmedical.com/articles/1484925805-print-medication-and-allergies
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/1505402219-change-idle-logout-timeout
+Canvas automatically logs a user out after a period with no activity. This protects patient information on computers that are left unattended. Each practice sets its own time limit, and new Canvas accounts start at 15 minutes. This article shows how to change that time limit.
+## Required role and permissions
+To change this setting, you need a Canvas user in the **Administrative** group, which grants the following permissions:
+  - api | organization | Can change organization, required to open and save the Organization page
+  - api | organization setting | Can change organization setting, required to edit the Idle Logout In Minutes value
+Every Canvas staff user has Staff status, which allows the user to open Settings.
+If you do not see Organizations under the Practice heading in Settings, or the organization settings are read-only, you are not in the Administrative group. Ask an existing administrator on your instance to add you to it.
+## Before you start
+  - **Choose a value of 60 minutes or less.** A longer limit means an unattended computer stays logged in to patient records for longer. Choose the shortest limit that works for your team.
+  - **The change applies to everyone at your practice.** There is one time limit for all staff users.
+## Steps
+### 1\. From the left hand menu, open Settings
+### 2\. Open Organizations
+Settings shows a long list of sections. Scroll down to the **Practice** section and click **Organizations**.
+Tip: to find it faster, type **organ** in the **Start typing to filter…** box at the top left of any Settings page that has a left-hand menu, then click **Organizations** in the filtered list.
+![The Practice section of Settings with Organizations highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F0da67fdf-00ed-4fd0-8e19-145bd5ee24da-2-admin-practice-organizations.png?Expires=253370764800&Signature=e7o7KdrNWOQ7lJ0Vc7yWKvFGgl7x5FtCOLMQD8i3tgwFJmT9NLuPPxpTVaGDnsZ7mPTpIRMNJVw6mYUBK7lW~Uj1QKMJD1EyuLSK746Jx4FOrvoPui6QZjf8kCBvrljE6xa~ubAf3Vr~BFfKpsLFiXAzVnn9bFCR3R3sWW30VCxvkU34G0tj1DzCm5uF7J~24inCeO~bLZbu0a6WN-64tdBcnb0eqAuj0R1H9jXtH72ToSRL8puEcH9awj1yogkTLrGzt2FhRU6iYzrg795b~4SZh-gHavbziTc2WgNUhjmUYApMwURz~CYdSTHFHBAUXBjHhNWpHttBBEU0OwPVFg__&Key-Pair-Id=K3NV4LZ47N8M46)
+### 3\. Open your organization
+Click your organization's name. Most practices have only one.
+![The organization list with the organization name highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F9795b6d9-e5ba-4d85-9672-799d6a6fd048-3-organization-list.png?Expires=253370764800&Signature=gD5nIS3sJzERuWJW0IBGj827e8R-iBLzoT-2fKwDI5ejnjOmsK1zEJqa7pf1Y2dhAUOG8ao46vxa1RYPVgO7U~1Va1XcqjksQCfXw1PdqeP7WWYG4WRWBBTkQRHQLb5EwX54U3HOw59m-3ZvtcrTFgMdkFj3AXc7-fat~rHWcTWHMfNrcr-k8B6iDeWIiLuLW2G5LENYMQIZg9N7WKbjia8HIibkQ~IIMHd~ByHQPsHoEhJp93oAzpB1oAdpTppm-f7Ih520D4SUTSEOU9Qr28fW6KmAqdtheBEUi3b5sJ95HSI9uJf4Jvl6roDLA2rLDaFqQKTa7~WcGDtp5Q4vrA__&Key-Pair-Id=K3NV4LZ47N8M46)
+### 4\. Find the Idle Logout In Minutes setting
+Scroll down past the address and contact details to the list of organization settings. Find the box titled **Organization setting: Idle Logout In Minutes**. Its **Name** field reads `idleLogoutInMinutes`.
+Tip: press **Ctrl+F** (Windows) or **⌘+F** (Mac) and search for **Idle Logout** to jump straight to it.
+In the **Value** field, replace the current number with the number of minutes you want. For example, type `60` for one hour.
+Type the number only, with no quotation marks or other text.
+![The Idle Logout In Minutes setting with the value changed to 60](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb8c533cf-6697-4a1d-a582-c9be128864a0-4-idle-logout-setting.png?Expires=253370764800&Signature=QRDrAzqd~6BklR~BSH4apQt0I8MAck5rqikWIZzZLnqCRZIqM9uaU5CJ9JCXNiLih-j4OHPH5xbAiZNhLLir2cL~mObllllT32IjUOegfmJytXACHqXvQ6w6UbuG1Ixeg8fF0Q-xx7Nz0lzU8nxM0xJboZkAovUuPUl7cqWA9LYOReWb2RIJgYfUJbnoNKzK7oNx-Lc4UzVF6QqX772tSjlcfP4-ctDNJgCz8CClunI5sW-eDd~YPKVb~jkxhiU38db3fcBeNEqGkKcIB8p4HnE8Xe-elERuK4hKcQ9-3YeXUAkAg2EufR3RbcMBGEeQVHo9kz98VGuhGAHkxkFPTA__&Key-Pair-Id=K3NV4LZ47N8M46)
+### 5\. Save
+Scroll to the bottom of the page and click **Save**.
+![The Save button at the bottom of the page](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb906463b-d473-4a2e-8524-eb0c3aace6af-5-save-button.png?Expires=253370764800&Signature=Hpxtjp4vYlpnH0UzN0ftjbmod1CV4KNDja2oVrYuxGjhkiXv3bQdzptFz9CBbLFOGZ7jr36I4UA5pqFGBosSNRtGNdrB2NNkW4fARMZg1K6zvC1CBLhRyufnGOmmlZILuFfLT5V4bLu2pqW8xrCtR3HM4UiBuc7pHIadOgYObThIc5UBQKUutQNPOCwNy6AvvP-W5knvgoXEXbVtmSu2C6FL-CaEgrijuSVDlc4w173wHe2VFGGj6ieQ3mrOfWFkhv6868s6uoW011wqmzyJK440jO66ngEEmUMO6LTv1~FruzZrv1KZgVQX31D5hz1XfPUeE4Rtbik5ONBtee1cQg__&Key-Pair-Id=K3NV4LZ47N8M46)
+----- END PAGE https://help.canvasmedical.com/articles/1505402219-change-idle-logout-timeout
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1652834476-processing-lab-reports

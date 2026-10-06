@@ -142,6 +142,12 @@
         - Forms, appointments, or documents are not appearing
     - Best practices
     - When to contact Canvas support
+- [Best Practices for Configuring Your Twilio Campaign](https://help.canvasmedical.com/articles/1321535923-best-practices-for-configuring-your-twilio-campaign)
+    - 1. Add a text messaging section to your privacy policy
+    - 2. Publish a terms and conditions page with your texting terms
+    - 3. Keep your business details consistent
+    - If your campaign is rejected
+    - Related
 
 #### New Provider Onboarding
 - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
@@ -617,7 +623,7 @@
 ## Charting & Documentation
 
 ### Chart Overview
-- [Print Medications and Allergies opens in the browser print flow](https://help.canvasmedical.com/articles/1484925805-print-medication-and-allergies)
+- [Administrative Menu | Print Medication and Allergies](https://help.canvasmedical.com/articles/1484925805-print-medication-and-allergies)
     - Introduction
     - Step by Step
         - Video: Print Medications and Allergies
@@ -739,7 +745,7 @@
 - [Patient Summary | Medications](https://help.canvasmedical.com/articles/1245715343-medications-in-the-patient-summary)
     - Step-by-step
     - Adjust prescription commands
-- [Filtering Notes in Patient Timeline](https://help.canvasmedical.com/articles/4791996458-filter-notes-in-patient-timeline)
+- [Filter Notes in Patient Timeline](https://help.canvasmedical.com/articles/4791996458-filter-notes-in-patient-timeline)
     - Filtering the Patient Timeline
         - Available Filter Options
     - Sticky filter
@@ -1433,7 +1439,7 @@
     - Verify it is working
     - Turning it off
     - Related articles
-- [Verify Your Sending Domain for Canvas Managed Email  via SendGrid](https://help.canvasmedical.com/articles/5049000425-verify-your-sending-domain-for-canvas-managed-email-via-sendgrid)
+- [Verify Your Sending Domain for Canvas Managed Email  via SendGrid ](https://help.canvasmedical.com/articles/5049000425-verify-your-sending-domain-for-canvas-managed-email-via-sendgrid)
     - Overview
     - Who does what
     - Required role and permissions
@@ -1444,6 +1450,15 @@
     - If you change your sending address or domain
     - Troubleshooting
     - Related articles
+- [Change the Canvas idle logout timeout setting](https://help.canvasmedical.com/articles/1505402219-change-idle-logout-timeout)
+    - Required role and permissions
+    - Before you start
+    - Steps
+        - 1. From the left hand menu, open Settings
+        - 2. Open Organizations
+        - 3. Open your organization
+        - 4. Find the Idle Logout In Minutes setting
+        - 5. Save
 - [Canvas Patient Safety Scale](https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale)
     - Introduction
     - Scale
