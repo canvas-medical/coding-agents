@@ -217,17 +217,17 @@
     - Step 12: Wait for Canvas Support to finalize setup
     - Related articles
 - [Activating EPCS Grants with DrFirst (for EPCS Administrators)](https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst)
-        - What you'll learn
-    - Prerequisites
-    - Accessing the EPCS Dashboard
-    - Activating Provider Grants
-    - After Activation
-    - Provider Status Reference
-    - Frequently Asked Questions
-        - Grant activation process
-        - Administrator access
-        - Provider status
-    - Related Articles
+    - Before you start
+    - Open the DrFirst Logical Access Area
+    - Complete the Grant Activation
+    - Enter the information from the provider's VIP Access App
+    - After you click Authorize
+    - Update Provider's Enrollment Status with Canvas Support
+    - Reading the EPCS Dashboard
+        - EPCS Status
+        - Directory Status
+    - Frequently asked questions
+    - Related articles
 - [Lab Ordering Enrollment](https://help.canvasmedical.com/articles/1295159245-lab-ordering-enrollment)
         - What you'll learn
     - What Lab Ordering Enables

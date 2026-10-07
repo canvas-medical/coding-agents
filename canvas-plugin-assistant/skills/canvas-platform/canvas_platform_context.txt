@@ -7397,91 +7397,86 @@ A: [Contact Canvas Support](https://portal.usepylon.com/canvas-medical/forms/sta
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst
-> **This article is for your practice's EPCS administrator.** If you're a provider enrolling in EPCS, see [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers).
-After a provider completes their DrFirst EPCS enrollment, you'll need to activate their grant before they can prescribe controlled substances. This process requires both you and the provider to be available at the same time.
-> **Different from the Provider Enrollment Dashboard?** Yes—this article covers the DrFirst EPCS Dashboard where you activate grants. For submitting enrollment requests, see [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard).
-### What you'll learn
-  - Prerequisites before activating a grant
-  - How to access the DrFirst EPCS Dashboard
-  - Step-by-step grant activation process
-  - Provider status meanings
-  - When to notify Canvas Support
-## Prerequisites
-Before you can activate a provider's grant
-  - Provider has completed all DrFirst enrollment steps
-  - Provider's status shows **NO_ACTIVE_GRANT** in the EPCS Dashboard
-  - You have the EPCS Administrator role assigned in your staff profile
-  - Provider is available to complete two-factor authentication with you
-> **Need EPCS Administrator access?** Contact your practice administrator to have the role assigned to your staff profile.
-## Accessing the EPCS Dashboard
-  1. Go to **Settings > EPCS Dashboard**
-  2. Click **Launch DrFirst Logical Access Area**
-  3. Click **Launch Logical Access Area** again
-![2026-01-31_12-35-09 \(1\).gif](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F24ea1c23-fa7c-4e99-b06d-9f7ddb60f99c-1769881007565-2026-01-31_12-35-09%2525281%252529.gif-53341978-4dea-40fd-8f7f-214a21ce3d27?Expires=253370764800&Signature=YeYePsJ1Sja32aNoK5N3pOKpn--cJEaiX3jGrJ34W5Oqzf8T2dGR9Fjb9Hv-s9-e~qQv-5O1AFiKlfa5ufb~ySxJApW9ac3BWDMekj2Ta-Nz7q1jCG~m75UC6GJxqSwwNcwEcd9UFckWhcXGU0v1cFydcKly1nXsMYEDLNy~sa0xhaZxckvZn~8vO4SDtwGWqyWv9~OOixHe5~cNy~HYzKw3eZ3Jd5WPdeDPsT3Hd5pv0E~Wm44pomCaNLSWbjMdI-Z~7zYe-csGbjLimWgQxEIkhQUH34VdWAurnHYq4Rn2SUi9pO4GOtN2W-FXDclT6ckCV7SMOdrdjS9IpIifpQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-## Activating Provider Grants
-You'll need to coordinate with the provider for this process, because they'll give you their passphrase and a fresh code from their VIP Access app during activation.
-  1. Use the search field to find the provider by name or NPI number
-  2. Select the **Active** radio button to authorize the provider for EPCS
-![DrFirst Logical Access Control screen with the Active grant option highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff1a59d26-48b3-41ea-89de-b6d4737cf74c-18-grant-lac-deid.png?Expires=253370764800&Signature=Mo0mkpKJEMdNK-MyIJGLYJB1U21wu~K9YLCkSK6JSFYX29XTB3G-RcnpdN0sxmbgE40UZd5PyQCgbkicfVYA8N9lgBtoocX7HKtkN1oeS2Oiy6tyOQ1lN1sJiMZ5nz2z0PQYatPjN2IAdOTNkbOCcStX44FphQT9osmvqp2agShAoIQ~0lCHEVxVMsuZwegsQYfZe8e2qThT53Q6XB7lMCXViMcSfx-4dRFqWoKqISI8AvO~0WDjGb3ur2siNI356zHdb8iTEwti5Igkko4dFnndleEAiHoiOXSoXx9vqKYkcwUVAmFAiUlA0TPnKGX8SNRZDd1~NfemHfYXNN10XQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-  3. Enter your name as shown at the top of the screen — this serves as your electronic signature and will be included in DEA auditable event records
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff01e7a61-9aed-4ab1-84c5-2759eb678fcf-1769881899480-image.png-1ee24d91-882a-4b43-894b-1035cc207442?Expires=253370764800&Signature=NWaElI7aPBxn7-CPDOQCbt1Fmf1b93CHfQnjp0piofeJIBcSI5IfWu33i5cdRV9dtworW-6vbC~~T8FZ4xc1RqGPxHfS5DqnpabpKl6MX8BQfpOvo-d~OldmuiVoLJ17ymbN2dGdLNdQ03c5AcunZb-aC1LDufJ3eGpOk3fAc5uc4Q9yI5ihxVF-rymSbkbspILNBcjT9QKqxkVYGfi86w6AqjloN-xAOfPisXn8GqsJdedWBGUPrWiG6i1hBzszwoPr5jyn0l7dIuB4o3M82DOpVhUIA0ulsxTGYxZYYEC~nuMJJEq3sp1P~oSBPF3a2Xhx2nhC6Jzb6qWbBCEFKQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-  4. Enter the provider's NPI number in the **Authorizing Prescriber** field
-  5. Click **Validate**
-  6. Additional authentication fields will appear
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa42534c1-20d2-4456-b61a-884ec5c98501-1769882301341-image.png-a3317255-2755-4301-98ce-4017a74eb526?Expires=253370764800&Signature=eKULfrTKnrfGRwMKO2yE1JAlovsWsb7lK2-ocXetxyXiRqtcXgwVDNxhVVk83Y8cC4W7nIaFirwlcutLx8PqSZ0rCExQDbTVTH-Z5Yn3XBJqMv44r6luu26iYhkegFpbXkO5gNepBYeRscYPtOrysbz3ogAyvuPXSssvGFtOsVC18WFgq-KbqlXlvEtHfPxIHCDgmOBrYZnb-HM5g3QkbFU-mHi7-acQk3SsQ0pNVhngJlbUmDTW~W3wHZcLWu2nadVLeohuJnn4MW4lG88DqPK9Uq-xmq2-KL4c9izvcke7jKBX8eKD5TJi2CdVxB58MDRAR6ZND~F1yY18D2oeUA__&Key-Pair-Id=K3NV4LZ47N8M46)
-  7. Ask the provider for their passphrase and the current code from their VIP Access app, and enter them into the appropriate fields
-  8. Click **Authorize** immediately after the passphrase and token are entered — the token expires every 30 seconds
-![DrFirst grant activation signature screen with the device, signing passphrase, and one-time pin fields](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe351022a-af69-461b-bbbf-d08a6db60a15-19-grant-signature-provider.png?Expires=253370764800&Signature=GdyIEMesZuKC1li4xxQXUNSQb6CgDNdTJBQyh4osikXbj-eK-LTnZgaPI0ehzpox4m-p1deMI3O3~BU4aChLtB0WrRy7R58sZkrpCbJJscqaCYsLc81YPF8vO6E8Dl5J9pgY5ztmn7JXyXFf5nI~bFTgflpKQ-EKxiQ~VwzJva78v8z09nIo8pQbT6-QsTUK2B2Y-K21kkQUF22gG9m9BjTwD2B0eAJfwX7D4P3xXwIwnvK3l7jxsnPfrkUC27e5wBbjDv19-1lhzpZ6KILBe5cSEK7RXiVYPHwuyYLKOxhIJKKiGgnkpgS4CBG6wAZiEZ8wt5GRrYB-w6nDKYTS~A__&Key-Pair-Id=K3NV4LZ47N8M46)
-## After Activation
-Once activation is successful:
-  1. The LAC will show the provider was updated to Active
-  2. Click **Refresh** in the LAC utility to confirm the status changed to ENROLLED
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fdf5bdcef-0868-4e88-8657-bd3bd218eac0-1769882845382-image.png-21adb849-eb39-4b1c-bd7c-a97a6c0dc4c6?Expires=253370764800&Signature=C7bYHvaNA2PM3CXTsAnc0WUBt~Pz4zRiIsj7RjdcVOAsHWadWyyrly4LSivFnm9dbVKmTied-PYrOL8cVYQTJeOK51Yb78pOa8oVpnthbdq8xdCci4JhCAWF4jAN3hW3kRB9LdDLbURG3n344QPHJO2WuNzZ1QQHecLBYu9NHPWzRv75EXvRL8KyYmGyD9nhPtSno4tysQ0azO6-T4uT4S5s2-Wea5yFJUsf9hFETyOUT4BffWY58dGjwU5Kctmq7o6UwLdiCOPKdzLrRzFAzM-iaHHCrEB4CuYFLm7pnhV67y9gzkn59BdrME~V8IBB0LmqzwQETwGXGqdUzXm3Wg__&Key-Pair-Id=K3NV4LZ47N8M46)
-  3. Notify Canvas Support in the enrollment ticket that the grant has been activated. It can 24 hours for the status to update with DrFirst
-  4. Canvas Support finalizes enrollment once status updates and provides an update once complete.
-The provider can prescribe controlled substances once Canvas Support confirms enrollment is finalized.
-## Provider Status Reference
-You can find these statuses under **Settings > EPCS Dashboard** in the provider table under EPCS Status.
-  - **INVITED** : Canvas sent the DrFirst invite. Provider needs to start enrollment.
-  - **IDPVERIFIED** : Identity proofing is done, but the provider didn't click **Check Status**. If within 24 hours, provider needs to return to DrFirst and click it. After 24 hours, they need a new invite.
-  - **IDPFAILED** : Provider did not pass identity proofing with Experian. They have 3 attempts to pass identity proofing. If not, you will need to request we send a new invite to the provider.
-  - **TOKENBOUND** : Verification code was sent via postal mail. Can take up to 2 weeks to arrive.
-  - **NO_ACTIVE_GRANT** : Provider completed all steps. Ready for you to activate their grant.
-  - **ENROLLED** : Grant is active. Notify Canvas Support to finalize.
-  - **DISABLED** : EPCS access has been turned off. Provider must re-enroll from scratch.
-![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5895d8f5-7080-4322-ad58-bb1be873be5d-1769884094367-image.png-ced6b8db-6aa8-47af-bf57-cc476c48f8f3?Expires=253370764800&Signature=tv~vzAPs~PqT5EkjdVvGvdBuXlearz7CWb6qQm4cxsC4p6olMVAHQKW0F~Q9i~e-9rz2fh108h7S81O29HEmvSVyhiZ8aCPYCDT0Td3CmsTbYxRBGBd1u5BB5moRX~KwGcpU8fbN3StCtVEJyHSidAG9ccb-~onLRZTqYpKNnXI~73~InKC~yEo6peBkpjQV~QvYpavdE7hfAfUts0XPwgoLIPkuZehP5JfvHlVKAHK5v~RWcgYzdL6xorb2isX-uQ65gpXWtBIe0oZzdBQt21BKZdpTLRXHRrfbnEvE88fIQbQUIRn~mafY9W0EmQp0xudK-ijkDdzznAZYyROhqw__&Key-Pair-Id=K3NV4LZ47N8M46)
-## Frequently Asked Questions
-### Grant activation process
-**Q: How long does grant activation take?**
-A: The activation process itself takes 5-10 minutes if all information is ready. However, it can take up to 24 hours after activation to update in DrFirst. Canvas can't finalize enrollment until the grant shows as Active.
-**Q: Can I activate multiple providers at once?**
-A: No. Each provider requires individual grant activation with separate two-factor authentication.
+> **This article is for your practice's EPCS administrator.** If you're a provider enrolling in EPCS, start with [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers).
+Before a provider can prescribe controlled substances in Canvas:
+  1. **The provider** enrolls with DrFirst on their own. That proves who they are and sets up their passphrase and VIP Access app.
+  2. **The EPCS administrator (someone at the practice with the EPCS Administrator Role in Canvas)** then activates the provider's grant. This is the practice confirming that the provider is authorized to prescribe controlled substances for your organization and that their DEA registration is active.
+**Prefer to click through the screens?** Use the arrows in the walkthrough below to step through each screen, then use the steps further down for the details.
+Having trouble opening the slides above? Use the direct link [here](https://docs.google.com/presentation/d/1EG09SpZWy0bcWyZD1MnlYY8BsEmdqT7VoN_oK_MSizA/edit?usp=sharing).
+## Before you start
+  - **Confirm you have the EPCS Administrator role** on your Canvas staff profile. The EPCS administrator can be any staff member, including office or operations staff; it doesn't have to be a prescriber.
+  - **The provider has finished their DrFirst enrollment.**
+    - In Settings > EPCS Dashboard, their EPCS Status shows **NO_ACTIVE_GRANT**.
+  - **The provider has their phone with the VIP Access app and knows their passphrase.** They'll read you their DrFirst passphrase (created during enrollment) and the current 6-digit code from the VIP Access app. If they aren't sure of their passphrase, have them reset it before the call ([Resetting Your DrFirst Passphrase](/articles/5514693639)).
+## Open the DrFirst Logical Access Area
+  - In Canvas, go to **Settings > EPCS Dashboard**.
+  - Click **Launch DrFirst Logical Access Area**.
+![Canvas DrFirst EPCS Dashboard with the Launch DrFirst Logical Access Area button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1dfeac76-baeb-4be7-9934-9221112093ad-step-a-dashboard.png?Expires=253370764800&Signature=g3iUPiSKpNNq~GJazMAFt6Yc9agLHGnENQY46LWWSoG57DxhgK1IO6fKaqWuZL5TRqmYOcTw4DrftP7XqpXpICwKegfsgGNzpYNP0GUEZ2S8754N274DqmZYRcGyPkGpyJzhoPCxnpxe-odvDFaaX5aToy3mlarC7wuonpIZ6zSNBUk-UR5d6rH1ZjfHKqQjSJQRLh88th8K4WjHLY0bF2w2MlIhhZaHDZYK-cRziswfMUn5O2i5IVOUizStuokf7kk~g4NV2oj-J4UOpdwblZgAyca2-rvEDJSxlPuuXloHnJNG2DAZZYvPDQvrWPL5bBjFwtROB8zInIsROJOOrA__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Click **Launch Logical Access Area.**
+![Launch Logical Access page with the Launch Logical Access Area button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb4d49de3-0300-4aed-a152-31d6e0c76e01-step-b-launch.png?Expires=253370764800&Signature=LQ9tXEHR-usgUxDFV~zGiP5Jd9z3zQIDClvvXaljwQalCSrImLccc-IvZdAEB02X99QUlRcq8pfMJD0AHxItHBY~CAP~Cbn9c5UBWc5~sq09HkLM3fhLZoGvsLd-myz50OOuTuTm3ierZb0TOpEU9h27XXZwJYB47NxTspfaAizd9ikALXe0kMOW8q-8xpVm5qnPEuCRBKkqh2HI8ek9SBMpg6Pnaff0TaDEGAYXlIQ3~fna3qt8rz4iVAWaWtGhzJMnyoNulXiIH8TFi3~32PguItuyGj-CZ0acm-qdb8jB6ly154P4PG5lZhRjs71c5LEMWGVeAtyd3RMumMHZjg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Complete the Grant Activation
+  - **Select** select **Active** next to the provider's name.
+  - **"Please confirm your first and last name"**
+    - Enter the EPCS administrator's name, typed exactly as it appears next to "Administrator:" at the top of the screen. This is your electronic signature and is recorded in DEA audit records.
+  - **Authorizing Prescriber (NPI):** Enter the provider's NPI who is enrolling to prescribe controlled substances. It must belong to the same person who enters the passphrase and code.
+  - **Device, passphrase, and OTP token:** the provider's VIP Access device, DrFirst passphrase, and the current code from their VIP Access app.
+![DrFirst Logical Access Control screen with the Active button highlighted next to the prescriber](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fcb75e47e-aaa8-4b81-bdb8-9377e77c4d59-step-c-select-active.png?Expires=253370764800&Signature=mltqPLZnWf5vgqxlnATeK-jUSYgynEeExT6rV4xcPD0N38b6LCHY7X6hOtIqC~CPKNEiwrwYbuhxIrNxLe37drklkI9LsOAzKwD0omOc7h4XVat-F8OTyELzxI6jPiHRl~PmV0xYEE6iBhqW8YQUoWLv~4UVwRu0jFELnFBabCm3aJaMAPeEEPDHewx-yAlsIj8oMqmHsk-xEZFS0HdmF12CiW1iKrF92Hx8~2YWT-NFzrRxzVZLgDD6iH0Km3zD09tIvfyZLRF6k5OEUJLoiCBuvLr-clUOsUSxF3fg1pGkkEA4yH7LPnFt3jm1GeyZZBbFYSm1jTEmINerRIn4Lw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Enter the information from the provider's VIP Access App
+  - **Choose the provider's VIP Access device** from the list (the one starting with SYMC)
+  - **Enter the passphrase** the provider reads to you.
+  - **Ask the provider for the current code in their VIP Access app** , enter it, and click **Authorize** right away. The code changes every 30 seconds, so if it expires, ask for the new one.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe351022a-af69-461b-bbbf-d08a6db60a15-19-grant-signature-provider.png?Expires=253370764800&Signature=GdyIEMesZuKC1li4xxQXUNSQb6CgDNdTJBQyh4osikXbj-eK-LTnZgaPI0ehzpox4m-p1deMI3O3~BU4aChLtB0WrRy7R58sZkrpCbJJscqaCYsLc81YPF8vO6E8Dl5J9pgY5ztmn7JXyXFf5nI~bFTgflpKQ-EKxiQ~VwzJva78v8z09nIo8pQbT6-QsTUK2B2Y-K21kkQUF22gG9m9BjTwD2B0eAJfwX7D4P3xXwIwnvK3l7jxsnPfrkUC27e5wBbjDv19-1lhzpZ6KILBe5cSEK7RXiVYPHwuyYLKOxhIJKKiGgnkpgS4CBG6wAZiEZ8wt5GRrYB-w6nDKYTS~A__&Key-Pair-Id=K3NV4LZ47N8M46)
+> **If you see an error after clicking Authorize,** check that the SYMC device is selected, the code is the current one, and the passphrase was entered exactly. Don't keep retrying: DrFirst locks the provider out for about 15 minutes after several failed tries. If the provider isn't sure of their passphrase, they can reset it (see [EPCS Enrollment FAQ for Providers](https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers)). If it still fails, send a screenshot of the error to Canvas Support.
+## After you click Authorize
+A confirmation screen shows the provider's NPI with **Status: ACTIVE**.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fdf5bdcef-0868-4e88-8657-bd3bd218eac0-1769882845382-image.png-21adb849-eb39-4b1c-bd7c-a97a6c0dc4c6?Expires=253370764800&Signature=C7bYHvaNA2PM3CXTsAnc0WUBt~Pz4zRiIsj7RjdcVOAsHWadWyyrly4LSivFnm9dbVKmTied-PYrOL8cVYQTJeOK51Yb78pOa8oVpnthbdq8xdCci4JhCAWF4jAN3hW3kRB9LdDLbURG3n344QPHJO2WuNzZ1QQHecLBYu9NHPWzRv75EXvRL8KyYmGyD9nhPtSno4tysQ0azO6-T4uT4S5s2-Wea5yFJUsf9hFETyOUT4BffWY58dGjwU5Kctmq7o6UwLdiCOPKdzLrRzFAzM-iaHHCrEB4CuYFLm7pnhV67y9gzkn59BdrME~V8IBB0LmqzwQETwGXGqdUzXm3Wg__&Key-Pair-Id=K3NV4LZ47N8M46)
+> **The Canvas EPCS Dashboard won't update right away.** Canvas checks a provider's DrFirst status about once a day, so the dashboard can keep showing NO_ACTIVE_GRANT for up to 24 hours after a successful activation. This is expected. Don't repeat the activation.
+## Update Provider's Enrollment Status with Canvas Support
+  1. Let Canvas Support know the grant is activated, in your enrollment ticket or your Canvas support channel.
+  2. Canvas Support refreshes the provider's status so it shows **ENROLLED** and lets you know. Once it shows **ENROLLED** , the provider can prescribe controlled substances. If nobody refreshes it, it updates on its own within 24 hours.
+## Reading the EPCS Dashboard
+Settings > EPCS Dashboard lists your providers with two status columns.
+### EPCS Status
+  - **INVITED:** Canvas sent the DrFirst invite. The provider needs to start enrollment.
+  - **IDPVERIFIED:** Identity proofing is done, but the provider didn't click Check Status. Within 24 hours, the provider can return to DrFirst and click it. After 24 hours, they need a new invite.
+  - **IDPFAILED:** The provider didn't pass identity proofing with Experian. They have 3 attempts. After that, ask Canvas Support to send a new invite.
+  - **TOKENBOUND:** A verification code was sent by postal mail. It can take up to 2 weeks to arrive.
+  - **NO_ACTIVE_GRANT:** The provider finished enrollment and is ready for you to activate their grant. It also keeps showing for up to 24 hours after you activate, until Canvas refreshes the status.
+  - **ENROLLED:** The grant is active and Canvas has picked it up. The provider can prescribe controlled substances.
+  - **DISABLED:** EPCS access has been turned off. The provider must re-enroll from scratch.
+![Canvas DrFirst EPCS Dashboard showing EPCS Status, Directory Status, and Grants columns](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F4df1214b-ffc9-431e-b495-393d094a9aa8-staging-dashboard.png?Expires=253370764800&Signature=BUFv1bgqV1bY5I-WHHR3g0fu7C1wC1jtEhtl8~HejwVOsBpSmANvJY3yt-RC1382Tzb-2dBAPytCqjCjxQC9sW5yzHUmkxbsbuDXhMfefTzNbx0BsjNr1Q3NXKXhTE6tOEbRnwj3XiPjno01IQtMbudnFajhUzWo47mDAulPwWZqi8H0PBYNv0opnwZxCjjS5qErFunItdNJPZ-GZv6lYp4AqkQsDf25Oy2QcQzdRy0pk5leVUi~EtuJg4BfE~MoS7c9CYceoYyTSxm1j0lwEHhp3hfSjgKa5ofMjdUNhU5VdW6XWLrHHJKWdsuvGxHM7OEL5-EEzqyrLJJNBpmhNw__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Directory Status
+This column compares the provider's name in Canvas with their listing in the Surescripts prescriber directory.
+  - **OK:** The names match.
+  - **Name Mismatch: FIRST LAST:** The names differ, and the directory's version is shown. The directory usually stores names in all capitals, so a provider whose name is spelled the same way in both places can still show a mismatch. If the only difference is capitalization, you can ignore it; it doesn't block activation or prescribing. If the spelling itself is different (a typo, a missing or extra name, a name change), contact Canvas Support.
+  - **Missing SPI** or **SPI not found:** The provider isn't set up for electronic prescribing yet. See [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard).
+## Frequently asked questions
+**Q: Why does an administrator have to do this if the provider already enrolled?**
+A: The provider's enrollment proves who they are to DrFirst. Activation is the practice confirming that this provider is authorized to prescribe controlled substances for your organization. DEA rules require both steps, done by two different people.
+**Q: Which name goes in the name box, mine or the provider's?**
+A: Yours. It's the administrator's signature. Type it exactly as shown next to "Administrator:" at the top of the screen.
+**Q: Whose NPI goes in Authorizing Prescriber?**
+A: The NPI of the person entering the passphrase and code. Usually that's the provider you're activating.
 **Q: What if the provider being activated isn't available?**
-A: Another EPCS-enabled provider with a valid passphrase and token can complete the two-factor authentication step on their behalf.
-**Q: How long is the one-time pin valid?**
-A: The OTP token expires every 30 seconds. You must click Authorize before the pin expires.
-### Administrator access
-**Q: Who can be an EPCS Administrator?**
-A: An EPCS Administrator can be an administrative staff member and does not need to be a prescribing provider. The key restriction is that the EPCS Administrator cannot be someone who is actively prescribing medications.
-More than one staff member can have the EPCS Administrator role, but we recommend limiting the number of staff with this access.
+A: Another provider at your practice who already has active EPCS can authorize instead. In that case, enter their NPI, device, passphrase, and code.
+**Q: The DrFirst screen said ACTIVE, but the Canvas dashboard still says NO_ACTIVE_GRANT. Did it fail?**
+A: No. The Canvas dashboard can take up to 24 hours to reflect the change. Let Canvas Support know and they'll refresh it.
+**Q: Does one activation cover all of our practice locations?**
+A: Yes, for every practice location in your Canvas instance. The provider still needs DEA registration that covers the states they prescribe in.
+**Q: Can I activate multiple providers at once?**
+A: No. Each provider is activated separately, with their own passphrase and code.
+**Q: Who can be an EPCS administrator?**
+A: Any staff member with the EPCS Administrator role, including non-clinical staff. More than one person can have the role, but we recommend keeping the number small.
 **Q: Can any staff member activate grants?**
-A: No. Only users with EPCS Administrator permissions can access the EPCS Dashboard and activate grants.
-### Provider status
-**Q: What does IDPVERIFIED status mean?**
-A: The provider completed identity proofing but didn't return to DrFirst to click Check Status. If it's been more than 24 hours, they need a new invite to restart.
-**Q: Provider status shows TOKENBOUND for 3 weeks. What should I do?**
-A: The verification code was sent via postal mail and can take up to 2 weeks to arrive. If it's been more than 3 weeks and no letter has arrived, contact [DrFirst support](https://help.drfirst.com/hc/en-us).
-**Q: Can I deactivate a provider's EPCS access temporarily?**
+A: No. Only staff with the EPCS Administrator role can open the Logical Access Area.
+**Q: The provider has been in TOKENBOUND for 3 weeks. What should I do?**
+A: The verification letter can take up to 2 weeks. If it's been longer than 3 weeks with no letter, contact DrFirst support.
+**Q: Can I turn off a provider's EPCS access temporarily?**
 A: Yes. Follow the deactivation process. To reactivate, you'll need to complete the full activation process again.
-## Related Articles
-  - [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard)
+## Related articles
   - [Enrolling in EPCS with DrFirst: Step-by-Step Guide for Providers](https://help.canvasmedical.com/articles/8630998726-enrolling-in-epcs-with-drfirst-step-by-step-guide-for-providers)
-  - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
-  - [ePrescribing (eRx) Enrollment](https://help.canvasmedical.com/articles/6085016786-eprescribing-erx-enrollment)
-* * *
-**Keywords:** EPCS grant activation, DrFirst EPCS Dashboard, administrator, grant management, provider status, signing passphrase, OTP token
-**Categories:** Provider Enrollment, EPCS, Administrator Tools
-**Roles:** EPCS Administrator, Provider
+  - [EPCS Enrollment FAQ for Providers](https://help.canvasmedical.com/articles/8907360408-epcs-enrollment-faq-for-providers)
+  - [Using the Provider Enrollment Dashboard](https://help.canvasmedical.com/articles/3654117054-using-the-provider-enrollment-dashboard)
 ----- END PAGE https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst
 
 
