@@ -1,0 +1,29 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-006",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.lookup:LookupAPI",
+        "description": "Lookup view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.lookup:LookupApp",
+        "name": "Formulary Lookup",
+        "description": "Formulary lookup",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [
+    {
+      "name": "FORMULARY_API_KEY",
+      "sensitive": true
+    }
+  ],
+  "readme": "./README.md"
+}
