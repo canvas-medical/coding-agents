@@ -8984,12 +8984,26 @@ When Clipboard is active, Canvas captures pasted text in a Clipboard command. AI
 The Canvas Patient Portal gives patients a secure way to access parts of their care experience online. Depending on your organization's configuration, patients can use the portal to send messages, complete forms or consents, view health information, manage appointments, upload documents, and access other patient-facing workflows.
 **Customizing the portal?** Everything in this article is standard, configuration-only functionality. To go further — add your own pages or landing-page cards, apply custom scheduling rules, or build a fully branded experience — your development team can use the Canvas SDK. Point them to the [Choosing Your Patient Experience](https://docs.canvasmedical.com/guides/choosing-your-patient-experience/) developer guide.
 ## Before you begin
-Patient Portal access and available features depend on your organization's configuration. Some portal capabilities may require Canvas support or implementation assistance to enable.
+Patient Portal access and available features depend on your organization's configuration. Most portal settings are on and off switches your team can change yourself in Settings (see **Changing portal settings** below). Beta pages and custom workflows are set up by Canvas.
 Common configuration areas include:
   - Enabling the Patient Portal for your instance
   - Configuring the portal login page and banner
   - Enabling portal features, such as appointments, consents, registration, messaging, payments, contact, or My Health
   - Configuring scheduling availability, forms, documents, or custom workflows
+## Changing portal settings
+The main portal switches are instance-level settings in **Constance: Config**. Anyone on your team in the **Administrative** permissions group can change them.
+  1. From the left-hand menu, open **Settings**.
+  2. Under the **Constance** heading, select **Config**.
+  3. Scroll to the **Patient App** section and change the setting you need. Checkbox settings are on or off; the banner is a text box.
+  4. Scroll to the bottom of the page and click **Save**. A **Live settings updated successfully** banner confirms the change.
+Changes take effect immediately for every patient on the instance, and each setting has a **Reset to default** link beneath it.
+The **Patient App** section contains:
+  - `ENABLE_PATIENT_PORTAL` turns the patient portal on or off.
+  - `PATIENT_APP_MESSAGING`, `PATIENT_APP_PAYMENTS`, `PATIENT_APP_LABS`, and `PATIENT_APP_CONTACT` show or hide the Messaging, Payment, Lab, and Contact pages.
+  - `PATIENT_APP_USERS_EMAIL_ONLY` has the portal ask patients for an email address only. See [Require email for patient portal invites and sign-up](https://help.canvasmedical.com/articles/6776168549) before you turn it on.
+  - `PATIENT_APP_BANNER` is the message shown above the login card.
+  - `ALLOW_PATIENT_DOCUMENT_UPLOADS` lets patients upload documents on the My Health page.
+Portal pages still in beta (My Health, self-scheduling, consents, and self-registration) are in the **Patient Portal Beta Features** section, which Canvas configures for you. Contact Canvas support to turn one on.
 ## Patient Portal URL
 Patients typically access the portal at:
     https://[your-practice-name].canvasmedical.com/app/
@@ -9002,12 +9016,11 @@ To invite a patient:
   4. Send the portal invite by email or phone, depending on your configured workflow.
   5. The patient follows the invite link to create their login credentials.
 If the patient's invite link expires, send a new invite or password reset link from this view at any time.
-![description](http://localhost:3000/assets/images/patient-reg.gif)
 ## Patient self-registration
 If self-registration is enabled, patients can register from the portal login page.
 Patients should use the same identifying information your organization has on file. If a patient registers more than once using different contact information, this may create duplicate patient records. Canvas does not automatically merge duplicate charts, so your team should follow your internal duplicate chart process if this happens.
 ## Logging in
-Patients log in using their portal credentials. Canvas supports username, email, or phone number, plus a password login for the Patient Portal. If you'd prefer patients be identified by **email only** , Canvas support can enable that.
+Patients log in using their portal credentials. Canvas supports username, email, or phone number, plus a password login for the Patient Portal. To have the portal ask patients for an **email address only** , turn on the `PATIENT_APP_USERS_EMAIL_ONLY` setting yourself. See [Require email for patient portal invites and sign-up](https://help.canvasmedical.com/articles/6776168549) for what it changes and what to do first.
 If a patient cannot log in:
   1. Confirm they are using the correct portal URL.
   2. Confirm they are using the correct username, email or phone_number, depending on their setup.
@@ -9018,7 +9031,7 @@ If a patient cannot log in:
 ## Branding the login page
 You can put your organization's identity on the portal:
   - **Logo** — your organization's logo appears on the login page and throughout the portal. Until you provide one, the default Canvas logo is shown. Contact Canvas support to set it.
-  - **Login banner** — a short message shown above the login card. You can use HTML to style the text. Contact support to set it.
+  - **Login banner** — a short message shown above the login card. You can use HTML to style the text. Set it yourself with the `PATIENT_APP_BANNER` setting (see **Changing portal settings** below).
   - **Email sender** — messages and notifications to patients are sent with your organization's name as the sender, from your organization's default email address. Contact support to use a custom address.
 The portal URL and the sign-in and verification screens are provided by Canvas and aren't customizable.
 ## Portal features
@@ -9027,7 +9040,6 @@ Available portal features vary by configuration.
 Patient Portal messaging allows patients and care teams to communicate securely. Messaging behavior may differ from email-only communication, so confirm that your team understands how portal messages are routed and reviewed.
 ### Forms
 Depending on configuration, patients may be able to complete forms in the portal upon logging in. They are presented through a plugin (e.g. intake forms tied to an upcoming appointment). See the [Patient Portal Forms guide](https://docs.canvasmedical.com/guides/patient-portal-forms/).
-![patient forms](http://localhost:3000/assets/images/patient-forms.png)
 ### Consents
 Depending on configuration, patients may be able to complete consents in the portal upon logging in. When configuring a consent in Settings, three settings control the portal experience (but for more information on configuring consents see [Managing Consents](/articles/8144965836):
   - **Document** — a PDF of the consent; the patient sees a link to review it.
@@ -9035,12 +9047,9 @@ Depending on configuration, patients may be able to complete consents in the por
   - **Is Mandatory** — whether it is required by a patient to consent to before being able to access their portal.
   - **Show in Patient Portal** — only consents with this checked appear in the portal.
 When a patient logs in, the portal checks for outstanding consents and prompts them to complete any that are required. **Mandatory** consents must be agreed to before continuing; non-mandatory consents can be skipped. Responses are recorded on the patient profile — accepted consents show _"accepted via patient portal"_ and skipped ones show _"rejected via patient portal."_
-![consents](http://localhost:3000/assets/images/portal-consents.png)
 When a patient responds, Canvas records the acknowledgment on their profile (accepted or rejected via portal, with the date) — it does not generate or store a separate signed copy of the consent PDF.
-![consents in profile](http://localhost:3000/assets/images/portal-consents-profile.png)
 ### Documents
 Patient document workflows may include patient uploads, staff review, or document visibility in the portal. Enabled through `ALLOW_PATIENT_DOCUMENT_UPLOADS` in Constance config. Documents added within the portal will populate a new channel in Data Integration.
-![landing page](http://localhost:3000/assets/images/patient-upload.png)
 ### Appointments
 Patients can now manage their appointments through the portal
 Enabling the appointments section within constance allows all patients to:
@@ -9052,7 +9061,6 @@ Enabling the appointments section within constance allows all patients to:
 Further customization can be accomplished through the Canvas SDK.
 ### Patient Self-Scheduling
 You can also now allow patients to self schedule. Note types have two new settings, `Is scheduleable via patient portal` and `Online duration:`. If any note types have these set, patients will have the option to schedule an appointment from the appointment section or home page.
-![scheduling settings](http://localhost:3000/assets/images/portal-scheduling-settings.png)
 If configured, patients can:
   - See their upcoming appointments
   - See their past appointments
@@ -9063,7 +9071,6 @@ If configured, patients can:
 When scheduling, the appointment search allows the patient to select the appointment type (note type), location, a provider (optional), and date (optional). They are then presented within open slots across one or many providers to choose from.
 The scheduling form includes a note which will translate to the comment within the reason for visit Command.
 The audit trail in the note footer will show that the appointment was created by the patient user.
-![description](http://localhost:3000/assets/images/patient-scheduling.gif)
 ### My Health
 The My Health section gives patients a summary of their chart. It mirrors the filters used in the default chart view — if you see it in Canvas, the patient sees it in the portal. The chart summary shows:
   - **Conditions** — all conditions marked to show in summary (active conditions and past medical history), with the last assessed date and the provider who last assessed it.
@@ -9072,7 +9079,6 @@ The My Health section gives patients a summary of their chart. It mirrors the fi
   - **Uploading documents:** if enabled, patients can upload documents from My Health. Uploaded documents appear in a dedicated Data Integration channel for staff to review.
 ### Landing page
 Canvas supports a Patient Portal landing page experience. Organizations may customize the landing experience to guide patients to the most important next steps. See the [developer guide](https://docs.canvasmedical.com/guides/choosing-your-patient-experience/) for more information.
-![landing page](http://localhost:3000/assets/images/landing-page.png)
 ## Troubleshooting
 ### The patient cannot access the portal
 Check the following:
@@ -9109,20 +9115,6 @@ Feature-specific portal capabilities are often configuration-dependent.
   - Test portal workflows in a non-production environment before rollout.
   - Provide patients with simple instructions for registration, login, and password reset.
   - Document your internal process for duplicate patient records created through registration.
-## When to contact Canvas support
-Contact Canvas support if:
-  - Multiple patients cannot access the portal.
-  - A patient receives repeated login errors after password reset.
-  - A patient sees a 403 or unexpected error.
-  - Portal features are enabled but not visible.
-  - You need help enabling or configuring portal functionality.
-Include:
-  - Patient MRN or chart URL, if applicable
-  - Portal URL
-  - Screenshots
-  - Error messages
-  - Browser and device information
-  - Approximate time the issue occurred
 ----- END PAGE https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal
 
 

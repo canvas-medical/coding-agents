@@ -120,6 +120,7 @@
     - Disabling Canvas Chat
 - [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)
     - Before you begin
+    - Changing portal settings
     - Patient Portal URL
     - Inviting a patient to the portal
     - Patient self-registration
@@ -141,7 +142,6 @@
         - The patient sees a 403 error
         - Forms, appointments, or documents are not appearing
     - Best practices
-    - When to contact Canvas support
 - [Best Practices for Configuring Your Twilio Campaign](https://help.canvasmedical.com/articles/1321535923-best-practices-for-configuring-your-twilio-campaign)
     - 1. Add a text messaging section to your privacy policy
     - 2. Publish a terms and conditions page with your texting terms
