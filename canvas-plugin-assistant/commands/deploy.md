@@ -51,21 +51,25 @@ Save the resolved hostname — you will pass it to the agent and use it for log 
 
 Run this before log monitoring starts so a blocking finding never leaves a log tail running.
 
-If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md` does not exist, skip to Step 4.
+If `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md` does not exist, skip to Step 4. (`/cpa:new-plugin` moves `.cpa-workflow-artifacts` into the plugin directory once it exists.)
 
 Use the **reference-reviewer** agent with this brief:
 
 ```
-contract: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
-ledger: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/reference-review.json
+contract: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+ledger: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/reference-review.json
 repo: $CPA_PLUGIN_DIR
-base_sha: <plugin_sha of the last ledger entry, or empty>
+base_sha: <plugin_sha of the last ledger entry that has "findings" (a completed review), or empty>
 head_sha: <output of git rev-parse HEAD>
-prior_findings: <findings already in the ledger>
+prior_findings: <findings already in the ledger, with their dispositions>
 ```
 
-- If it returns findings, show them and ask the user whether to fix first or deploy anyway. Record the choice as each finding's `disposition` in the ledger (`fixed`, or `declined: <reason>`).
-- If the reviewer fails, record `review skipped: <reason>` in the ledger and continue.
+The reviewer diffs `base_sha` against the working tree, so uncommitted changes that this deploy is about to ship are reviewed too.
+
+- If it returns findings, show them and ask the user whether to fix first or deploy anyway.
+  - **Fix first:** stop the deploy here. Fix the code, set each fixed finding's `disposition` to `fixed`, then run `/cpa:deploy` again.
+  - **Deploy anyway:** set each finding's `disposition` to `declined: <reason>` and continue.
+- If the reviewer fails without writing a ledger entry, append `{"plugin_sha": "<head_sha>", "status": "review skipped: <reason>"}` to the ledger and continue.
 
 ### Step 4: Start Log Monitoring (BEFORE install)
 
@@ -98,7 +102,7 @@ After the agent returns and the install is complete, check the logs **in the par
    1. Stop log monitoring (KillShell)
    2. Show the errors to the user
    3. Analyze root cause and fix the code
-   4. Re-deploy (repeat from step 4)
+   4. Re-deploy (repeat from step 3, so the fix is reviewed too)
 5. **If no errors:** leave log monitoring running and continue to UAT
 
 ### Step 7: UAT
