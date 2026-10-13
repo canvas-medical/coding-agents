@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import os
+import shlex
 from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
@@ -433,3 +435,246 @@ class TestCreateServer:
         expected = "mocked"
         assert result == expected
         assert mock_method.mock_calls == [call("p", "i", "c")]
+
+
+# Scenario tests: the deployer driven through a fake `uv` on PATH, so the real subprocess and secrets-file paths run.
+
+SDK_MANIFEST: dict = {
+    "name": PLUGIN,
+    "variables": [{"name": "WEBHOOK_ID", "sensitive": True}, {"name": "AUTH_TOKEN", "sensitive": True}],
+}
+CLI_CONSENT_STDOUT = (
+    "Pushed 3f2a9c1d0b7e to main.\n"
+    "Deploying acme__vitals_alert@3f2a9c1d0b7e to acme-staging…\n"
+    "Deployment 6f1c created.\n"
+    "\n"
+    "This deployment needs consent (1 request(s)):\n"
+    "\n"
+    "  • beta__reader asks for read access to the custom data namespace 'acme__intake' on acme-staging.\n"
+    "\n"
+    "Deployment 6f1c is waiting on these requests, and there is no terminal to ask at. "
+    "Run the command again at a terminal, without --yes, to approve or deny them.\n"
+)
+CLI_DEPLOY_OK_STDOUT = (
+    "Pushed 3f2a9c1d0b7e to main.\n"
+    "Deploying acme__vitals_alert@3f2a9c1d0b7e to acme-staging…\n"
+    "Deployment 6f1c created.\n"
+    "  in_progress…\n"
+    "  succeeded…\n"
+    "  acme__vitals_alert on acme-staging: succeeded\n"
+    "Deploy of acme__vitals_alert succeeded.\n"
+)
+CLI_CONFIG_OK_STDOUT = (
+    "Stored 2 value(s) for acme__vitals_alert on acme-staging.\n"
+    "Deployment 7a2d created.\n"
+    "  acme__vitals_alert on acme-staging: succeeded\n"
+    "Configuring acme__vitals_alert succeeded.\n"
+)
+UV_NOISE = "Installed 52 packages in 87ms"
+
+
+def install_fake_uv(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    deploy: tuple[str, str, int],
+    config: tuple[str, str, int] = (CLI_CONFIG_OK_STDOUT, "", 0),
+) -> Path:
+    """Put a fake `uv` first on PATH that logs its argv and answers like the canvas CLI.
+
+    Args:
+        tmp_path (Path): Where the fake and its canned output live.
+        monkeypatch (pytest.MonkeyPatch): Used to prepend the fake to PATH.
+        deploy (tuple[str, str, int]): stdout, stderr and exit code for `canvas deploy`.
+        config (tuple[str, str, int]): stdout, stderr and exit code for `canvas config set`.
+
+    Returns:
+        Path: The argv log, one record per call.
+    """
+    fake_dir = tmp_path / "fake-bin"
+    fake_dir.mkdir()
+    for label, (out, err, _) in {"deploy": deploy, "config": config}.items():
+        (fake_dir / f"{label}.out").write_text(out, encoding="utf-8")
+        (fake_dir / f"{label}.err").write_text(err, encoding="utf-8")
+    log = fake_dir / "argv.log"
+    script = fake_dir / "uv"
+    script.write_text(
+        "#!/bin/bash\n"
+        f'printf "%s\\0" uv "$@" >> "{log}"\n'
+        f'printf "\\036" >> "{log}"\n'
+        'case "$3" in\n'
+        f'  deploy) cat "{fake_dir}/deploy.out"; cat "{fake_dir}/deploy.err" >&2; exit {deploy[2]};;\n'
+        f'  config) cat "{fake_dir}/config.out"; cat "{fake_dir}/config.err" >&2; exit {config[2]};;\n'
+        "esac\n"
+        "exit 99\n",
+        encoding="utf-8",
+    )
+    script.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake_dir}{os.pathsep}{os.environ['PATH']}")
+    return log
+
+
+def read_argv_log(log: Path) -> list[list[str]]:
+    """Return the argv of each fake `uv` call, in order."""
+    if not log.exists():
+        return []
+    records = log.read_text(encoding="utf-8").split("\x1e")
+    return [record.split("\0")[:-1] for record in records if record]
+
+
+def write_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, content: dict | None) -> Path:
+    """Point SecretRequester at a tmp secrets file, written with content when given."""
+    secrets_file = tmp_path / "secrets" / f"{INSTANCE}.json"
+    if content is not None:
+        secrets_file.parent.mkdir()
+        secrets_file.write_text(json.dumps(content), encoding="utf-8")
+    monkeypatch.setenv("CPA_SECRET_FILEPATH", str(secrets_file))
+    return secrets_file
+
+
+class TestDeployScenarios:
+    """Cross-step scenarios for the deployer: the CLI's real output shapes, the secrets file and the consent hand-off."""
+
+    def test_deploy__consent_then_configurer_after_approval(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Consent stop surfaces the request lines and the hand-off command; configurer later sets the variables."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "vitals-alert"
+        container.mkdir()
+        cwd = make_plugin(container, SDK_MANIFEST)
+        secrets = {PLUGIN: {"WEBHOOK_ID": "wh_01J9QX", "AUTH_TOKEN": "tok_9f2"}}
+        secrets_file = write_secrets(tmp_path, monkeypatch, secrets)
+        log = install_fake_uv(tmp_path, monkeypatch, deploy=(CLI_CONSENT_STDOUT, UV_NOISE, 1))
+
+        result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        request_line = (
+            "  • beta__reader asks for read access to the custom data namespace 'acme__intake' on acme-staging."
+        )
+        assert request_line in result.splitlines()
+        assert result.startswith("Deploy output:\nCommand failed with exit code 1\n")
+        assert UV_NOISE in result
+        assert "Consent needed" in result
+        assert f"uv run canvas deploy {PLUGIN} --no-push --instance {INSTANCE}" in result
+        assert read_argv_log(log) == [DEPLOY_CMD]
+        # SecretRequester never ran: the file it would sync is untouched.
+        assert json.loads(secrets_file.read_text(encoding="utf-8")) == secrets
+
+        # The person approved at their terminal; the agent calls configurer in a later turn.
+        result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        expected = f"Configure output:\n{CLI_CONFIG_OK_STDOUT.strip()}"
+        assert result == expected
+        exp_argv = [DEPLOY_CMD, config_set_cmd("WEBHOOK_ID=wh_01J9QX", "AUTH_TOKEN=tok_9f2")]
+        assert read_argv_log(log) == exp_argv
+
+    def test_deploy__secret_values_pass_as_single_arguments(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Values holding spaces and `=` reach the CLI intact, one argv element per pair, and never come back."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, SDK_MANIFEST)
+        stored = {"WEBHOOK_ID": "wh_01J9QX", "AUTH_TOKEN": "Bearer c2stbGl2ZS05ZjI="}
+        write_secrets(tmp_path, monkeypatch, {PLUGIN: stored})
+        log = install_fake_uv(tmp_path, monkeypatch, deploy=(CLI_DEPLOY_OK_STDOUT, UV_NOISE, 0))
+
+        result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        calls = read_argv_log(log)
+        exp_argv = [DEPLOY_CMD, config_set_cmd("WEBHOOK_ID=wh_01J9QX", "AUTH_TOKEN=Bearer c2stbGl2ZS05ZjI=")]
+        assert calls == exp_argv
+        # The CLI splits each pair on its first `=` (canvas_cli `_parse_pair`).
+        pairs = calls[1][6:-2]
+        parsed = {key: value for key, _, value in (pair.partition("=") for pair in pairs)}
+        assert parsed == stored
+        for value in stored.values():
+            assert value not in result
+        assert "Configuring acme__vitals_alert succeeded." in result
+
+    def test_deploy__secrets_under_unprefixed_name_are_not_sent(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Values kept under the pre-rename plugin name are another plugin's: skip, warn, and leave them in place."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, SDK_MANIFEST)
+        legacy = {"WEBHOOK_ID": "wh_01J9QX", "AUTH_TOKEN": "tok_9f2"}
+        secrets_file = write_secrets(tmp_path, monkeypatch, {"vitals_alert": legacy})
+        log = install_fake_uv(tmp_path, monkeypatch, deploy=(CLI_DEPLOY_OK_STDOUT, "", 0))
+
+        result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        expected = (
+            f"Deploy output:\n{CLI_DEPLOY_OK_STDOUT.strip()}\n\n"
+            "Configure skipped: no variable values found in the secrets file."
+            "\nWarning: secrets not provided (missing or empty): WEBHOOK_ID, AUTH_TOKEN"
+        )
+        assert result == expected
+        assert read_argv_log(log) == [DEPLOY_CMD]
+        exp_file = {"vitals_alert": legacy, PLUGIN: {"WEBHOOK_ID": "", "AUTH_TOKEN": ""}}
+        assert json.loads(secrets_file.read_text(encoding="utf-8")) == exp_file
+
+    def test_deploy__consent_command_survives_a_space_in_cwd(self, tmp_path: Path) -> None:
+        """The hand-off command the person pastes stays one runnable command when the plugin path has a space."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "Canvas Plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        cwd = make_plugin(container, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [CONSENT_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        command_line = next(line for line in result.splitlines() if "--no-push" in line)
+        expected = ["cd", cwd, "&&", "uv", "run", "canvas", "deploy", PLUGIN, "--no-push", "--instance", INSTANCE]
+        assert shlex.split(command_line) == expected
+        assert mock_secrets.mock_calls == []
+
+    def test_deploy__configures_the_manifest_name_not_a_mismatched_folder(self, tmp_path: Path) -> None:
+        """A folder left unrenamed (`vitals_alert/` holding `acme__vitals_alert`) must not send values to the unprefixed name.
+
+        `canvas config set vitals_alert` is unmanaged to the CLI, which writes the values straight to the instance.
+        """
+        tested = CanvasDeployerMcp
+        folder = tmp_path / "vitals_alert"
+        folder.mkdir()
+        (folder / "CANVAS_MANIFEST.json").write_text(json.dumps(MANIFEST), encoding="utf-8")
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [CLI_DEPLOY_OK_STDOUT.strip(), "Configuring acme__vitals_alert succeeded."]
+            mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
+            asyncio.run(tested.deploy(plugin_name="vitals_alert", instance=INSTANCE, cwd=str(tmp_path)))
+
+        config_targets = [
+            c.kwargs["command"][5] for c in mock_cmd.mock_calls if c.kwargs["command"][2:5] == ["canvas", "config", "set"]
+        ]
+        assert all(target == PLUGIN for target in config_targets), config_targets
+        secrets_keys = [c.args[2] for c in mock_secrets.mock_calls]
+        assert all(key == PLUGIN for key in secrets_keys), secrets_keys
+
+    def test_deploy__still_running_hands_off_to_configurer(self, tmp_path: Path) -> None:
+        """A deploy that outlives the CLI's wait is not a failure: say variables are unset and to call configurer later."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+        still_running = (
+            "Command failed with exit code 1\n"
+            "Pushed 3f2a9c1d0b7e to main.\n"
+            "Deploying acme__vitals_alert@3f2a9c1d0b7e to acme-staging…\n"
+            "Deployment 6f1c created.\n"
+            "  in_progress…\n"
+            "Deploy of acme__vitals_alert is still running after 300s (deployment 6f1c)."
+        )
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [still_running]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        prefix = f"Deploy output:\n{still_running}"
+        assert result.startswith(prefix)
+        note = result[len(prefix):]
+        assert "still running" in note
+        assert "configurer" in note
+        assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
+        assert mock_secrets.mock_calls == []
