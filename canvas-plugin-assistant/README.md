@@ -385,7 +385,7 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `constants.py`                | CPA environment variable constants          |
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `mcp_canvas_installer.py`     | MCP server for plugin install with secrets  |
+| `mcp_canvas_deployer.py`     | MCP server for plugin install with secrets  |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |
 | `validate_cpa_environment.py` | Environment variable validation             |
 | `verify_plugin_structure.py`  | Plugin structure verification               |
