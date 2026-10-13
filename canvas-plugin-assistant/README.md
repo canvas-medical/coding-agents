@@ -121,7 +121,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 
 | Command                        | Description                                                 |
 |--------------------------------|-------------------------------------------------------------|
-| `:check-setup`                 | Verify environment tools (uv, unbuffer)                     |
+| `:check-setup`                 | Verify environment tools and Canvas Platform sign-in        |
 | `:new-plugin`                  | Start brainstorming a new plugin specification              |
 | `:create-icon`                 | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance`            | Analyze Canvas instance configuration                       |
@@ -132,49 +132,65 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 | `:wrap-up`                     | Final checklist before calling a plugin "done"              |
 | `:run-evals`                   | Run eval suite to test review command accuracy              |
 
-## Credentials Setup
+## Canvas Platform Sign-in
 
-Add your Canvas instance credentials to `~/.canvas/credentials.ini`:
+`/cpa:new-plugin` and `/cpa:deploy` act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
+
+```bash
+uv run --with 'canvas>=0.245.0' canvas login
+```
+
+- `CANVAS_PLATFORM_TOKEN`: set in CI to deploy without a stored sign-in
+- `CANVAS_PLATFORM_URL`: points the CLI at a different Canvas Platform
+- `/cpa:check-setup` reports the signed-in person, their organizations with each plugin prefix, and the instances available for deploys
+
+A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and the plugin folder is its own git repository. `/cpa:new-plugin` creates plugins that way with `canvas init`. A plugin made before Canvas Platform needs one of:
+
+- Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and give the plugin folder its own git repository
+- Run `canvas init` for a new plugin and move the code into it
+
+### Log streaming
+
+`/cpa:deploy` streams logs with `canvas logs --host <instance>`, which reads `~/.canvas/credentials.ini`. Add a section named after the instance slug:
 
 ```ini
 [plugin-testing]
 client_id = your_client_id
 client_secret = your_client_secret
 root_password = your_admin_password
-
-[customer-instance]
-client_id = ...
-client_secret = ...
-root_password = ...
 ```
 
-- `client_id` / `client_secret`: For Canvas CLI (API access)
+- `client_id` / `client_secret`: For the Canvas CLI log stream
 - `root_password`: For admin portal access (instance analyzer)
+
+`credentials.ini` support ends December 14, 2026.
 
 ### Plugin Secrets
 
-Plugins that declare `secrets` in `CANVAS_MANIFEST.json` need secret values for deployment. CPA reads these values from a per-instance JSON file and
-passes them to the `canvas install` command — secret values are never exposed to Claude Code.
+Plugins that declare `variables` in `CANVAS_MANIFEST.json` need values for each instance. CPA reads these values from a per-instance JSON file and
+passes them to `canvas config set` after each deploy, because `canvas config set` targets instances the plugin is already deployed to. Secret values are never exposed to Claude Code.
 
 **Default location:**
 
 ```
-~/.canvas/plugin-secrets/{instance}.json
+~/.canvas/plugin-secrets/{instance slug}.json
 ```
 
-**File format** (keyed by plugin name):
+**File format** (keyed by the manifest `name`, which carries the organization prefix):
 
 ```json
 {
-  "my_plugin": {
+  "acme__my_plugin": {
     "API_KEY": "sk-...",
     "WEBHOOK_SECRET": "abc..."
   },
-  "other_plugin": {
+  "acme__other_plugin": {
     "TOKEN": "xyz..."
   }
 }
 ```
+
+A file keyed by an unprefixed name needs its key renamed to `<prefix>__<name>`.
 
 On each deployment, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
 
@@ -189,7 +205,11 @@ export CPA_SECRET_FILEPATH=/path/to/my-secrets.json
 When set, this single file is used for all instances (the instance name is ignored for file resolution). This is useful for CI/CD pipelines or shared
 secret stores.
 
-If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The install still proceeds — the warning is informational.
+If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The deploy still proceeds, and the warning is informational.
+
+### Custom Data Consent
+
+When a plugin's `custom_data` reads or writes a namespace that another plugin created on the instance, the deployment waits for the instance organization's consent. The CLI asks for consent at a terminal only, so CPA shows each request (plugin, access, namespace, instances) and gives you the `canvas deploy` command to run in your own terminal. Approval is per plugin, namespace, and instance, and one denial cancels the deployment.
 
 ### Evals Setup
 
@@ -385,7 +405,8 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `constants.py`                | CPA environment variable constants          |
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `mcp_canvas_deployer.py`     | MCP server for plugin install with secrets  |
+| `mcp_canvas_deployer.py`      | MCP server for plugin deploy and variables  |
+| `platform_session.py`         | Canvas Platform sign-in and instance lookup |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |
 | `validate_cpa_environment.py` | Environment variable validation             |
 | `verify_plugin_structure.py`  | Plugin structure verification               |
