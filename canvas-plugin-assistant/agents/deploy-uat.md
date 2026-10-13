@@ -304,11 +304,11 @@ If the offender is a bare local module name (`thresholds`, `models.cache`, `util
 
 ```python
 # BAD
-import my_plugin.services.session
-def make() -> my_plugin.services.session.Session: ...
+import acme__my_plugin.services.session
+def make() -> acme__my_plugin.services.session.Session: ...
 
 # GOOD
-from my_plugin.services.session import Session
+from acme__my_plugin.services.session import Session
 def make() -> Session: ...
 ```
 
@@ -333,9 +333,9 @@ from models.cache import get
 from .handler import MyHandler
 
 # GOOD — full plugin-namespace path (matches the inner snake_case folder name)
-from my_plugin.thresholds import HIGH_BP
-from my_plugin.models.cache import get
-from my_plugin.handler import MyHandler
+from acme__my_plugin.thresholds import HIGH_BP
+from acme__my_plugin.models.cache import get
+from acme__my_plugin.handler import MyHandler
 ```
 
 **Before running `canvas deploy`** for a redeploy, run `canvas validate` to catch import-prefix errors and everything else locally (it runs the real sandbox load):

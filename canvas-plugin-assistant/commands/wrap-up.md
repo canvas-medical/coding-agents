@@ -32,7 +32,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_name}
+uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py
 ```
 
 **If structure validation fails:**
@@ -42,16 +42,15 @@ uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_n
 
 **Common fixes:**
 
-Determine the inner folder name:
+Determine the inner package folder (`<prefix>__<name>`):
 ```bash
-CONTAINER=$(basename "$PWD")
-INNER=$(echo "$CONTAINER" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ```
 
 | Issue | Fix |
 |-------|-----|
-| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json $INNER/` |
-| tests/ inside inner folder | `mv $INNER/tests ./` |
+| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json <prefix>__<name>/` |
+| tests/ inside inner folder | `mv $INNER/tests ./` (run the `INNER=` line above first) |
 | No inner folder | Re-run `canvas init` or restructure manually |
 
 ---
@@ -198,7 +197,7 @@ Check that all test files test code that still exists:
 Check if the plugin uses HTML templates or `render_to_string`:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py" .
 ```
 
@@ -301,7 +300,7 @@ Update the README if issues are found.
 Check CANVAS_MANIFEST.json for applications:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 grep -A 10 '"applications"' "$INNER/CANVAS_MANIFEST.json" 2>/dev/null
 ```
 
@@ -315,7 +314,7 @@ For each application entry, verify:
 
 Check icon files:
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 ```
 
@@ -536,10 +535,10 @@ Pushing is outward-facing and irreversible, so confirm first:
 {
   "questions": [
     {
-      "question": "Committed locally. Push to the remote now?",
+      "question": "Committed locally. Push to Canvas Platform now?",
       "header": "Push?",
       "options": [
-        {"label": "Push now", "description": "Run git push to the upstream branch"},
+        {"label": "Push now (to Canvas Platform)", "description": "Run git push to publish the commit to this plugin's Canvas Platform repository (main there)"},
         {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
       ],
       "multiSelect": false
@@ -548,7 +547,7 @@ Pushing is outward-facing and irreversible, so confirm first:
 }
 ```
 
-Only run `git push` if the user chooses to push.
+`git push` publishes to the plugin's Canvas Platform repository (`main` there), and `/cpa:deploy` already pushes on every deploy. Only run `git push` if the user chooses to push.
 
 ### 14. Wrap-Up Complete
 
