@@ -59,7 +59,7 @@ Use the **reference-reviewer** agent with this brief:
 contract: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
 ledger: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/reference-review.json
 repo: $CPA_PLUGIN_DIR
-base_sha: <plugin_sha of the last ledger entry that has "findings" (a completed review), or empty>
+base_sha: <plugin_sha of the last ledger entry with a "findings" key, even an empty list (a completed review), or empty>
 head_sha: <output of git rev-parse HEAD>
 prior_findings: <findings already in the ledger, with their dispositions>
 ```

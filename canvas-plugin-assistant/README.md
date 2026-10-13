@@ -104,7 +104,7 @@ scanned for secrets) and pushing is confirmed with you first.
 
 **reference-finder** - Find reference plugins for a planned build:
 
-- Searches MSF first, then canvas-plugins, canvas-hyperscribe and metriport-third-party through Omniplug
+- Searches MSF first, then canvas-plugins, canvas-hyperscribe and metriport-third-party through Omniplug (needs the Omniplug MCP server; without it the contract records that no source was reachable)
 - Reads the closest matches and records each pattern as adopt, adapt or reject
 - Produces `existing-plugins-reference.md`, then maps the patterns to the spec
 
