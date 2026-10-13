@@ -91,7 +91,7 @@ pwd
 ```bash
 echo $CPA_PLUGIN_DIR
 # List non-hidden subdirectories
-ls -d */ 2>/dev/null | grep -v '^\.' | sed 's|/$||'
+find . -mindepth 1 -maxdepth 1 -type d -not -name '.*' | sed 's|^\./||'
 ```
 
 **Validation logic:**
@@ -174,10 +174,11 @@ uv run --with 'canvas>=0.245.0' canvas --version
 
 ```bash
 uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
-- **If it passes**: Report the signed-in email, each publishing organization with its plugin prefix, and the instances you can deploy to
-  - **If it lists no organization that lets you push plugin code**: Report it. `/cpa:new-plugin` and `/cpa:deploy` will be refused until an organization admin grants the Plugin developer role
+- **If `whoami` passes**: Report the signed-in email, each publishing organization with its plugin prefix, and the instances you can deploy to
+  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. Existing Canvas Platform plugins can still be deployed to the listed instances
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
   uv run --with 'canvas>=0.245.0' canvas login
@@ -233,7 +234,7 @@ Next step:
 - To work on an existing plugin: Set CPA_PLUGIN_DIR to the plugin directory
 ```
 
-If any checks fail, summarize what needs to be fixed before proceeding and provide clear instructions.
+If any checks fail, including a signed-in person with no publishing organization, summarize what needs to be fixed before proceeding and provide clear instructions. Do not print "Environment ready!" in that case.
 
 ## CPA Workflow
 

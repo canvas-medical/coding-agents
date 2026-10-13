@@ -172,6 +172,30 @@ class TestRun:
         expected = "ERROR: There is no instance Canvas Platform manages that you can deploy plugins to.\n"
         assert capsys.readouterr().out == expected
 
+    def test_run__publishers_prints_slug_and_prefix(self, signed_in, capsys):
+        """Prints one line per organization that can push plugin code, as `<slug> <prefix>__`, for commands to consume."""
+        tested = PlatformSession
+
+        tested.run("publishers")
+
+        assert capsys.readouterr().out == "acme acme__\n"
+        assert signed_in.mock_calls == [call.me()]
+
+    def test_run__publishers_none_exits(self, signed_in, capsys):
+        """Refuses with no publishing organization because creating a plugin needs a prefix to name its package."""
+        tested = PlatformSession
+        signed_in.me.return_value = {
+            "email": "dana@acme.example",
+            "organizations": [ME["organizations"][1]],
+        }
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("publishers")
+
+        assert exc_info.value.code == 1
+        expected = "ERROR: No organization lets you push plugin code. Ask an organization admin for the Plugin developer role.\n"
+        assert capsys.readouterr().out == expected
+
     def test_run__platform_error_exits_with_message(self, signed_in, capsys):
         """Network failures surface the CLI's own message."""
         tested = PlatformSession
@@ -207,7 +231,7 @@ class TestRun:
 class TestMain:
     """Tests for PlatformSession.main method."""
 
-    @pytest.mark.parametrize("show", ["whoami", "instances"])
+    @pytest.mark.parametrize("show", ["whoami", "instances", "publishers"])
     def test_main__parses_show(self, show, monkeypatch):
         """Passes the positional argument to run."""
         tested = PlatformSession

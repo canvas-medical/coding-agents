@@ -79,7 +79,7 @@ class CanvasDeployerMcp:
         """Validate the tool arguments and load the plugin manifest.
 
         Args:
-            plugin_name: The plugin inner folder name, which equals the manifest name for Platform plugins.
+            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
@@ -111,7 +111,7 @@ class CanvasDeployerMcp:
         Values are passed to the CLI and never included in the returned text.
 
         Args:
-            plugin_name: The plugin inner folder name.
+            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
             manifest: Parsed CANVAS_MANIFEST.json.
@@ -146,7 +146,7 @@ class CanvasDeployerMcp:
         custom data consent is handed back to the person with the command to run.
 
         Args:
-            plugin_name: The plugin inner folder name (snake_case).
+            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
@@ -178,7 +178,7 @@ class CanvasDeployerMcp:
         """Set a Canvas plugin's manifest variables on a Canvas Platform instance.
 
         Args:
-            plugin_name: The plugin inner folder name (snake_case).
+            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
@@ -207,7 +207,7 @@ class CanvasDeployerMcp:
             answered here: they are returned for the user to answer in their own terminal.
 
             Args:
-                plugin_name: The plugin inner folder name (snake_case).
+                plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
             """
@@ -223,7 +223,7 @@ class CanvasDeployerMcp:
             returned in the output. Use it after the user approves a pending consent request.
 
             Args:
-                plugin_name: The plugin inner folder name (snake_case).
+                plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
             """
