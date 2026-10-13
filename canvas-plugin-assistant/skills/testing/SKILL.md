@@ -35,7 +35,7 @@ my-plugin-name/                       # Container folder (kebab-case)
 │   │   └── test_routes.py            # mirrors inner/api/routes.py
 │   └── helpers/
 │       └── test_utils.py             # mirrors inner/helpers/utils.py
-└── my_plugin_name/                   # Inner folder (snake_case)
+└── my_plugin_name/                   # Inner package folder
     ├── CANVAS_MANIFEST.json
     ├── README.md
     ├── handlers/
