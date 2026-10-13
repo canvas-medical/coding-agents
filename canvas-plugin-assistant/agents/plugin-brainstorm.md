@@ -34,6 +34,10 @@ Follow this exact workflow. Do NOT deviate.
 8. ONLY PROCEED AFTER USER APPROVES
 ```
 
+## Reference Patterns
+
+If `{workspace_dir}/.cpa-workflow-artifacts/existing-plugins-reference.md` exists, read it before writing the spec. Cite the adopted pattern IDs (for example `P1`) in the spec's Architecture and Rationale sections, and give the spec one `##` heading per concern so each pattern maps to a heading. You do not launch the reference-finder; the calling command does.
+
 ## Check Native Coverage First
 
 As soon as the user has described the problem — and **before** the first AskUserQuestion call — invoke the **canvas-platform** skill and look up whether Canvas already ships a feature, setting, or admin workflow covering any part of the ask.
@@ -195,7 +199,8 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 ## Architecture
 - **Complexity**: [Simple / Medium / Complex]
 - **Components**: [List what's needed]
-- **Rationale**: [Why this fits]
+- **Reference patterns**: [Adopted pattern IDs from existing-plugins-reference.md, or "None"]
+- **Rationale**: [Why this fits, citing pattern IDs where they apply]
 
 ## Secrets/Configuration
 - [Any secrets needed, or "None"]

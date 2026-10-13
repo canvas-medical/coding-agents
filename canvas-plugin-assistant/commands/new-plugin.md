@@ -75,8 +75,25 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    - What should trigger the plugin?
    - What should the plugin create or do?
 5. Map answers to Canvas SDK concepts (events, effects)
-6. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
-7. Wait for user approval before any implementation
+6. Use the **reference-finder** agent to find and read the closest reference plugins:
+
+   ```
+   pass: 1
+   problem: <what the plugin does: domain, task, surface, trigger events, effects, data read and written>
+   output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+   ```
+
+7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. The plugin-brainstorm agent reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern.
+8. Use the **reference-finder** agent again to map the patterns to the spec:
+
+   ```
+   pass: 2
+   problem: <same as pass 1>
+   output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+   plan: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md
+   ```
+
+9. Wait for user approval before any implementation
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)

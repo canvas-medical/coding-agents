@@ -102,6 +102,18 @@ scanned for secrets) and pushing is confirmed with you first.
 - Real-time log monitoring during testing
 - UAT checklist and results documentation
 
+**reference-finder** - Find reference plugins for a planned build:
+
+- Searches MSF first, then canvas-plugins, canvas-hyperscribe and metriport-third-party through Omniplug
+- Reads the closest matches and records each pattern as adopt, adapt or reject
+- Produces `existing-plugins-reference.md`, then maps the patterns to the spec
+
+**reference-reviewer** - Check a build against the reference patterns:
+
+- Reviews the diff since the last reviewed commit against the recorded patterns
+- Runs before `/cpa:deploy`
+- Writes findings to `reference-review.json`
+
 ### Skills
 
 - **canvas-sdk**: Complete Canvas SDK documentation (~50k lines)
@@ -310,7 +322,9 @@ automatically.
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
-│   └── deploy-uat.md          # Deployment and testing
+│   ├── deploy-uat.md          # Deployment and testing
+│   ├── reference-finder.md    # Reference plugin search and pattern contract
+│   └── reference-reviewer.md  # Build review against reference patterns
 └── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
@@ -329,6 +343,8 @@ piling up.
 | File | Purpose | Read by |
 |------|---------|---------|
 | `plugin-spec.md` | Plugin requirements and architecture decisions | `:new-plugin`, deploy-uat, instance-analyze |
+| `existing-plugins-reference.md` | Reference plugins and the patterns the build adopts, adapts or rejects (written by reference-finder) | plugin-brainstorm, reference-reviewer |
+| `reference-review.json` | Pre-deploy review findings and their dispositions (written by reference-reviewer, dispositions set by the builder) | `:deploy` |
 | `wrap-up-report.md` | Wrap-up checklist results | `:new-plugin` (marks the plugin as shipped) |
 | `security-review.md` | Security audit findings and recommendations | You |
 | `db-performance-review.md` | Database query optimization findings | You |
