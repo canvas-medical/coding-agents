@@ -49,9 +49,16 @@ If there is no local clone and no Omniplug tools are available, write the contra
 
 ## Pass 2
 
-1. Read the contract at `output` and the file at `plan`.
-2. Append (or replace) `## Plan mapping`: one bullet per pattern, `P<n> -> ## <heading in the plan file>`. A rejected pattern maps to the heading where the alternative lives.
+1. Read the contract at `output` and the file at `plan`. If the contract is missing or has no `## PATTERNS` section, do pass 1 first (taking the problem from the plan file when the brief has none), then continue.
+2. Append (or replace) `## Plan mapping`: one bullet per pattern, `P<n> -> ## <heading in the plan file>`. A rejected pattern maps to the heading where the alternative lives. Every target must be a `##` heading that exists in the plan file now; a rerun after the plan changes replaces the whole section.
 3. With "No relevant reference.", write `## Plan mapping` containing the single line `No patterns to map (no relevant reference).`
+
+The pass 2 section looks like this:
+
+```markdown
+## Plan mapping
+- P1 -> ## <plan heading>
+```
 
 ## Contract Format
 
@@ -70,14 +77,11 @@ MSF SHA: <40-hex or "n/a (Omniplug only)">
 
 ## PATTERNS
 - **P1: <concern>**: `<ref file>:<line>`, adopt|adapt|reject: <reason>
-
-## Plan mapping
-- P1 -> ## <plan-technical.md heading>
 ```
 
 - `## Chosen references` lists up to 3 plugins read in full; secondary ones carry `(secondary)`.
 - `## Shortlist` lists up to 5 plugins in total.
-- `## Plan mapping` is written in pass 2 only.
+- Pass 1 never writes a `## Plan mapping` heading, not even as a placeholder: callers treat that heading as proof that pass 2 ran.
 - When nothing matches, `## Chosen references` holds `No relevant reference.`, a `## Queries` section lists each query run with its hit count, and `## PATTERNS` holds `None.`
 
 ## Write Rule
