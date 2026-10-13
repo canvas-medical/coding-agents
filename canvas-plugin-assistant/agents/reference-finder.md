@@ -30,10 +30,11 @@ Never infer the output path. If `output` is missing, stop and say so.
 
 - With `msf_dir`: use the Grep, Glob and Read tools on `<msf_dir>/extensions/**/CANVAS_MANIFEST.json` for descriptions, handler types (`protocols`, `applications`, `handlers`, `commands`) and `data_access.read/write`. Then search the code (Grep for event names such as `EventType.` / `Event.` and for effect classes), because manifests leave `data_access.event` empty and `effects` as `[]`.
 - Record the MSF SHA from `git -C <msf_dir> rev-parse HEAD` (Bash), or from the resolved directory name `msf-<sha>`.
-- Without `msf_dir`: use Omniplug.
+- Without `msf_dir`: use Omniplug, where MSF plugins carry the repo name `msf-canvas`.
 
 **Rank 2 (fallback, only when MSF has no match): canvas-plugins, canvas-hyperscribe, metriport-third-party**, through Omniplug: `search_manifests`, `find_plugins_by_event`, `find_plugins_by_effect`, `find_plugins_by_handler`, `describe_plugin`, `get_reference_file`.
 
+- Every Omniplug search (rank 1 without `msf_dir`, and rank 2) also returns customer-installed and proprietary plugins (for example the `gtm-extensions` repo). Keep only hits whose `repo` is `msf-canvas` (MSF), `canvas-plugins`, `canvas-hyperscribe` or `metriport-third-party`, and drop every other hit without reading it.
 - Never call `search_plugin_code`, `get_plugin_file` or `get_tarball_url`: they overflow the message buffer. Read single files with `get_reference_file`.
 - Mark every secondary reference `(secondary)`.
 
