@@ -228,12 +228,13 @@ When user says "approved", "looks good", "let's build it", or similar:
 First choose the publishing organization:
 
 ```bash
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
-- **Not signed in:** STOP. Show the script's message and ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then continue. Do NOT run `canvas login` yourself.
-- **No organization listed:** STOP. An organization admin must grant the user the Plugin developer role.
-- **One organization:** use its slug. **Several:** ask which one publishes this plugin with AskUserQuestion, one option per organization labeled `slug (prefix__)`.
+Each output line is `<slug> <plugin_prefix>__`.
+
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then continue; do NOT run `canvas login` yourself. If no organization can publish, an organization admin must grant the user the Plugin developer role.
+- **One line:** use its slug. **Several lines:** ask which one publishes this plugin with AskUserQuestion, one option per organization labeled `slug (prefix__)`.
 
 Then scaffold:
 
