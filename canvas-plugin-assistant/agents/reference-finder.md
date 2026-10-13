@@ -30,7 +30,7 @@ Never infer the output path. If `output` is missing, stop and say so.
 
 - With `msf_dir`: use the Grep, Glob and Read tools on `<msf_dir>/extensions/**/CANVAS_MANIFEST.json` for descriptions, handler types (`protocols`, `applications`, `handlers`, `commands`) and `data_access.read/write`. Then search the code (Grep for event names such as `EventType.` / `Event.` and for effect classes), because manifests leave `data_access.event` empty and `effects` as `[]`.
 - Record the MSF SHA from `git -C <msf_dir> rev-parse HEAD` (Bash), or from the resolved directory name `msf-<sha>`.
-- Without `msf_dir`: use Omniplug, where MSF plugins carry the repo name `msf-canvas`.
+- Without `msf_dir`, or when `<msf_dir>/extensions` does not exist: use Omniplug, where MSF plugins carry the repo name `msf-canvas`.
 
 **Rank 2 (fallback, only when MSF has no match): canvas-plugins, canvas-hyperscribe, metriport-third-party**, through Omniplug: `search_manifests`, `find_plugins_by_event`, `find_plugins_by_effect`, `find_plugins_by_handler`, `describe_plugin`, `get_reference_file`.
 
@@ -46,7 +46,7 @@ If there is no local clone and no Omniplug tools are available, write the contra
 2. Shortlist up to 5 plugins.
 3. Read the top 3 in full (manifest and handler files).
 4. Write the contract (format below) to `output`, replacing the whole file, including any `## Plan mapping` from an earlier run.
-5. Return a short summary: each chosen reference with a one-line reason, and each pattern as one line `P<n>: <concern>: adopt|adapt|reject`.
+5. Return a short summary: each chosen reference with a one-line reason, whether one of them (or a combination) already meets the need without a new build, and each pattern as one line `P<n>: <concern>: adopt|adapt|reject`.
 
 ## Pass 2
 
@@ -82,7 +82,8 @@ MSF SHA: <40-hex or "n/a (Omniplug only)">
 ```
 
 - `<ref file>` is `<repo>/<plugin>:<path>` for every source: `<repo>` is `msf-canvas` for MSF, `<plugin>` is the manifest `name`, and `<path>` is relative to the plugin's root (the directory holding its `CANVAS_MANIFEST.json`). A reader opens it with `get_reference_file(plugin, path)`, or under `msf_dir` by finding that plugin's manifest in `extensions/`. Never cite the resolved `msf-<sha>` directory, which the daily refresh prunes.
-- `get_reference_file` has no repo argument, and a few plugin names exist in both `msf-canvas` and the proprietary `gtm-extensions` (for example `order_sets` and `patient_panel`). Read a plugin whose name `list_reference_plugins` shows under more than one repo only from `msf_dir`; without `msf_dir`, do not choose it.
+- A file beside the plugin root, such as `tests/` one level up, is cited with a `../` path (`msf-canvas/ai_scribe:../tests/test_x.py`) and is readable only from `msf_dir`.
+- `get_reference_file` has no repo argument, and a few plugin names exist in both `msf-canvas` and the proprietary `gtm-extensions` (`order_sets`, `patient_panel`, `patient_portal_profile` and `prescription_favorites` at the time of writing). Read such a plugin only from `msf_dir`; without `msf_dir`, do not choose it. `list_reference_plugins` is too large to read in one tool result, so check repos with `describe_plugin` instead.
 - `## Chosen references` lists up to 3 plugins read in full; secondary ones carry `(secondary)`.
 - `## Shortlist` lists up to 5 plugins in total.
 - Pass 1 never writes a `## Plan mapping` heading, not even as a placeholder: callers treat that heading as proof that pass 2 ran.

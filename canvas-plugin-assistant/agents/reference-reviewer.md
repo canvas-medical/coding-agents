@@ -17,7 +17,7 @@ For Python tooling and scripts, always execute through `uv run` (for example, `u
 - `contract`: path of `existing-plugins-reference.md`.
 - `ledger`: path of `reference-review.json`.
 - `repo`: plugin repo root.
-- `base_sha`: last reviewed plugin commit, or empty for the first review.
+- `base_sha`: `plugin_sha` of the last review whose deploy went ahead (`"deployed": true`), or empty for the first review.
 - `head_sha`: commit under review.
 - `msf_dir` (optional): absolute path of a local MSF clone.
 - `deviations` (optional): file where the builder records deviations with their reasons (`plugin-spec.md` in CPA, `tradeoffs.md` in Studio).
