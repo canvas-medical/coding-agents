@@ -119,29 +119,18 @@ ls -d */ 2>/dev/null | grep -v '^\.' | sed 's|/$||'
   - **If no subdirectories exist**: Report "CPA_PLUGIN_DIR is empty (ready for new plugin)"
   - **If subdirectories exist**: Report "CPA_PLUGIN_DIR is empty. Existing plugins found: [list]. To work on a plugin, set: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/[plugin-name]"
 
-### 5. Check Git Repository
+### 5. Check for `git`
 
 ```bash
-git rev-parse --is-inside-work-tree
+which git
 ```
 
-- **If returns "true"**: Report "Current directory is in a git repository" and continue
-- **If fails**: Report the issue:
+- **If found**: Report "git is installed" and continue
+- **If not found**: Report the issue:
   ```
-  The current directory must be inside a git repository.
-
-  If this is a new workspace, initialize git:
-
-  git init
-
-  If you need to work in an existing repository, navigate to it first, then restart Claude:
-
-  cd /path/to/your/repo
-  export CPA_RUNNING=1 
-  export CPA_WORKSPACE_DIR=$(pwd)
-  claude
+  git is required. Install it from https://git-scm.com/downloads
   ```
-  Then ask user to initialize git or navigate to the correct directory.
+  Then ask user to install it and re-run `/cpa:check-setup` after.
 
 ### 6. Check for `uv`
 
@@ -173,13 +162,37 @@ which unbuffer
 ### 8. Check for Canvas CLI
 
 ```bash
-uv run canvas --version
+uv run --with 'canvas>=0.245.0' canvas --version
 ```
+
+`canvas` 0.245.0 or later is needed for `canvas deploy`.
 
 - **If works**: Report the Canvas CLI version
 - **If fails**: Note that Canvas CLI will be installed when creating a plugin (it's a dependency)
 
-### 9. Check Claude Model
+### 9. Check Canvas Platform sign-in
+
+```bash
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+```
+
+- **If it passes**: Report the signed-in email, each publishing organization with its plugin prefix, and the instances you can deploy to
+  - **If it lists no organization that lets you push plugin code**: Report it. `/cpa:new-plugin` and `/cpa:deploy` will be refused until an organization admin grants the Plugin developer role
+- **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
+  ```bash
+  uv run --with 'canvas>=0.245.0' canvas login
+  ```
+
+### 10. Check log streaming credentials (optional)
+
+```bash
+ls ~/.canvas/credentials.ini
+```
+
+- **If the file exists**: Report "log streaming available for: [sections of the file]" (the `[section]` names are instance slugs)
+- **If missing**: Report a warning only: `/cpa:deploy` deploys without it but cannot stream logs. `credentials.ini` support ends December 14, 2026.
+
+### 11. Check Claude Model
 
 Identify which Claude model you are currently running (you know this from your system context).
 
@@ -194,7 +207,7 @@ Identify which Claude model you are currently running (you know this from your s
   To switch, use the /model command or update your .claude/settings.json file to set "model": "opus".
   ```
 
-### 10. Report Results
+### 12. Report Results
 
 If all checks pass, report:
 
@@ -205,16 +218,18 @@ If all checks pass, report:
   CPA_RUNNING: 1
   CPA_WORKSPACE_DIR: [value]
   CPA_PLUGIN_DIR: [value or "empty (ready for new plugin)"]
-  Git repository: ✓
+  git: installed
   uv: installed
   unbuffer: installed
   Canvas CLI: [version or "will be installed with plugin"]
+  Canvas Platform: signed in as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
+  Log streaming: [available for sections, or "not configured (optional)"]
   model: [current model] [with recommendation if not opus]
 
 You're ready to start building Canvas plugins.
 
 Next step:
-- To create a new plugin: Ensure CPA_PLUGIN_DIR is empty, then run /cpa:new-plugin
+- To create a new plugin: Ensure CPA_PLUGIN_DIR is empty and you are signed in to Canvas Platform, then run /cpa:new-plugin
 - To work on an existing plugin: Set CPA_PLUGIN_DIR to the plugin directory
 ```
 
