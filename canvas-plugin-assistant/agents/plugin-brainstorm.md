@@ -435,8 +435,8 @@ patient_id = patient["id"]
 ### Step 4: Validate
 
 Run pre-deploy checks — `canvas validate` runs the manifest check plus
-the sandbox handler-load, the same validation `canvas install` runs before
-uploading. Fix anything it reports and re-run until clean:
+the sandbox handler-load, the same checks the instance runs when the plugin
+is deployed. Fix anything it reports and re-run until clean:
 
 ```bash
 uv run canvas validate .
