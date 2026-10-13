@@ -330,6 +330,8 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 
 **Edit the files created by `canvas init` - do NOT create new files unless and until necessary.**
 
+If `.cpa-workflow-artifacts/existing-plugins-reference.md` exists, follow its adopted and adapted patterns as you implement, and note any deviation with its reason in the spec; `/cpa:deploy` reviews the build against those patterns.
+
 1. **Edit the handler** created by `canvas init` (typically `handlers/my_handler.py`)
 2. **Use the canvas-sdk skill** to look up:
    - Exact EventType enum values
@@ -515,7 +517,7 @@ Then use the `/cpa:deploy` command to start the deployment and UAT process.
 
 ## Update Mode
 
-When invoked to **update an existing plugin** (not create a new one), follow this workflow instead of the creation workflow above.
+When invoked to **update an existing plugin** (not create a new one), follow this workflow instead of the creation workflow above. If `.cpa-workflow-artifacts/existing-plugins-reference.md` exists, keep following its patterns here too.
 
 ### Update Step 1: Understand Current Plugin
 
