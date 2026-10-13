@@ -34,7 +34,7 @@ Never infer the output path. If `output` is missing, stop and say so.
 
 **Rank 2 (fallback, only when MSF has no match): canvas-plugins, canvas-hyperscribe, metriport-third-party**, through Omniplug: `search_manifests`, `find_plugins_by_event`, `find_plugins_by_effect`, `find_plugins_by_handler`, `describe_plugin`, `get_reference_file`.
 
-- Every Omniplug search (rank 1 without `msf_dir`, and rank 2) also returns customer-installed and proprietary plugins (for example the `gtm-extensions` repo). Keep only hits whose `repo` is `msf-canvas` (MSF), `canvas-plugins`, `canvas-hyperscribe` or `metriport-third-party`, and drop every other hit without reading it.
+- Every Omniplug search (rank 1 without `msf_dir`, and rank 2) also returns customer-installed and proprietary plugins. Hits name a reference plugin `reference/<name>` and an installed one `<customer>/<name>`; drop every non-`reference/` hit. For each `reference/` hit, call `describe_plugin(customer="reference", plugin=<name>)` and keep it only when its Reference Info `repo` is `msf-canvas` (MSF), `canvas-plugins`, `canvas-hyperscribe` or `metriport-third-party`. Drop every other repo (for example the proprietary `gtm-extensions`) without reading it.
 - Never call `search_plugin_code`, `get_plugin_file` or `get_tarball_url`: they overflow the message buffer. Read single files with `get_reference_file`.
 - Mark every secondary reference `(secondary)`.
 
@@ -45,12 +45,12 @@ If there is no local clone and no Omniplug tools are available, write the contra
 1. Search with at most about 8 narrow queries.
 2. Shortlist up to 5 plugins.
 3. Read the top 3 in full (manifest and handler files).
-4. Write the contract (format below) to `output`.
+4. Write the contract (format below) to `output`, replacing the whole file, including any `## Plan mapping` from an earlier run.
 5. Return a short summary: each chosen reference with a one-line reason, and each pattern as one line `P<n>: <concern>: adopt|adapt|reject`.
 
 ## Pass 2
 
-1. Read the contract at `output` and the file at `plan`. If the contract is missing or has no `## PATTERNS` section, do pass 1 first (taking the problem from the plan file when the brief has none), then continue.
+1. Read the contract at `output` and the file at `plan`. If `plan` does not exist, stop and say so without writing anything. If the contract is missing or has no `## PATTERNS` section, do pass 1 first (taking the problem from the plan file when the brief has none), then continue.
 2. Append (or replace) `## Plan mapping`: one bullet per pattern, `P<n> -> ## <heading in the plan file>`. A rejected pattern maps to the heading where the alternative lives. Every target must be a `##` heading that exists in the plan file now; a rerun after the plan changes replaces the whole section.
 3. With "No relevant reference.", write `## Plan mapping` containing the single line `No patterns to map (no relevant reference).`
 4. Always write the section. A pattern with no fitting `##` heading in the plan maps to `P<n> -> (no heading: <concern>)`, and your summary tells the caller which headings the plan is missing.
@@ -81,7 +81,7 @@ MSF SHA: <40-hex or "n/a (Omniplug only)">
 - **P1: <concern>**: `<ref file>:<line>`, adopt|adapt|reject: <reason>
 ```
 
-- `<ref file>` is a path a later reader can open: for MSF, relative to the clone root (`extensions/<plugin>/...`), never the resolved `msf-<sha>` directory, which the daily refresh prunes; for a plugin read through Omniplug (secondary, or MSF without `msf_dir`), `<repo>/<plugin>:<path>`, with `<plugin>` the Omniplug plugin name and `<path>` relative to that plugin's root, exactly the two arguments `get_reference_file` takes.
+- `<ref file>` is `<repo>/<plugin>:<path>` for every source: `<repo>` is `msf-canvas` for MSF, `<plugin>` is the manifest `name`, and `<path>` is relative to the plugin's root (the directory holding its `CANVAS_MANIFEST.json`). A reader opens it with `get_reference_file(plugin, path)`, or under `msf_dir` by finding that plugin's manifest in `extensions/`. Never cite the resolved `msf-<sha>` directory, which the daily refresh prunes.
 - `get_reference_file` has no repo argument, and a few plugin names exist in both `msf-canvas` and the proprietary `gtm-extensions` (for example `order_sets` and `patient_panel`). Read a plugin whose name `list_reference_plugins` shows under more than one repo only from `msf_dir`; without `msf_dir`, do not choose it.
 - `## Chosen references` lists up to 3 plugins read in full; secondary ones carry `(secondary)`.
 - `## Shortlist` lists up to 5 plugins in total.
