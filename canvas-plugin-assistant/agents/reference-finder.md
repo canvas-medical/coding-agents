@@ -17,7 +17,7 @@ For Python tooling and scripts, always execute through `uv run` (for example, `u
 The caller's brief provides:
 
 - `pass`: `1` or `2`.
-- `problem`: what the plugin does (domain, task, surface, trigger events, effects, data read and written).
+- `problem` (pass 1; pass 2 does not need it): what the plugin does (domain, task, surface, trigger events, effects, data read and written).
 - `output`: absolute path of the contract file. This is the only file you write.
 - `msf_dir` (optional): absolute path of a local MSF clone, for example `/srv/reference-plugins/msf`.
 - `plan` (pass 2 only): path of the plan file, typically `plan-technical.md`.
