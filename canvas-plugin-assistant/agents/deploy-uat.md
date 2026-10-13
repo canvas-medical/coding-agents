@@ -85,7 +85,7 @@ Run these checks before deploying:
 ```bash
 # Validate the manifest, that every handler loads in the sandbox, and that no
 # handler body uses a construct or Custom Data setup the runner rejects — the
-# same checks `canvas deploy` runs before uploading, but local and
+# same checks the instance runs when the plugin is deployed, but local and
 # non-deploying. Fix anything it reports and re-run until clean; a clean
 # validate means the deploy won't fail on those checks.
 uv run canvas validate .
