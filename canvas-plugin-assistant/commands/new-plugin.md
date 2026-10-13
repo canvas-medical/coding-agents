@@ -61,7 +61,7 @@ This command handles three scenarios:
 
 ---
 
-Use the **plugin-brainstorm** agent for the full workflow from spec to deployment, or in **update mode** for modifying existing plugins.
+Use the **plugin-brainstorm** agent for the full workflow from spec to deployment, or in **update mode** for modifying existing plugins. In Phase 1 the command itself asks the questions and runs the reference-finder, and hands plugin-brainstorm only the spec writing (step 7), because a subagent cannot launch the finder.
 
 ### Phase 1: Gather Requirements
 
@@ -83,7 +83,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
    ```
 
-7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. The plugin-brainstorm agent reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern and to return once the spec is written, because approval comes at step 9, after the mapping.
+7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. Launch plugin-brainstorm with the problem, the native-coverage result and the answers from steps 2-5, and tell it they are already answered so it asks nothing. It reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern and to return once the spec is written, because approval comes at step 9, after the mapping.
 8. Use the **reference-finder** agent again to map the patterns to the spec:
 
    ```
@@ -97,7 +97,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
-- Continue refining the existing spec
+- Continue refining the existing spec. Keep the existing `existing-plugins-reference.md` (skip step 6, so its pattern IDs stay stable) and run step 8 after the spec changes.
 
 ### Phase 2: Scaffold Plugin (after user approves spec)
 

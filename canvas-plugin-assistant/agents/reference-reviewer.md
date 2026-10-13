@@ -20,7 +20,7 @@ For Python tooling and scripts, always execute through `uv run` (for example, `u
 - `base_sha`: last reviewed plugin commit, or empty for the first review.
 - `head_sha`: commit under review.
 - `msf_dir` (optional): absolute path of a local MSF clone.
-- `prior_findings`: findings from earlier reviews with their dispositions. Do not repeat one, unless its disposition is empty or `fixed` and the changed code still deviates.
+- `prior_findings`: findings from earlier reviews with their dispositions. Never repeat one marked `declined: <reason>`. Raise one whose disposition is empty or `fixed` again only when the code still deviates.
 
 ## Review
 
@@ -42,6 +42,7 @@ Append one entry to the JSON array in `ledger` (create `[]` if missing):
 ```
 
 - `pattern` is `"new"` for a newly spotted pattern.
+- Finding IDs are unique across the whole ledger: continue from the highest existing `F<n>`, so a disposition always lands on the right finding.
 - The builder later sets `disposition` to `"fixed"` or `"declined: <reason>"`. You never set it.
 - If the review cannot complete, the entry is `{"plugin_sha": "<head_sha>", "status": "review skipped: <reason>"}`.
 
