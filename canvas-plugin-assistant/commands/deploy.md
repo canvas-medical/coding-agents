@@ -120,7 +120,27 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 
 Save the resolved instance slug, the confirmed branch, and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
 
-### Step 3: Start Log Monitoring (BEFORE deploy)
+### Step 3: Reference Review
+
+Run this before log monitoring starts so a blocking finding never leaves a log tail running.
+
+If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md` does not exist, skip to Step 4.
+
+Use the **reference-reviewer** agent with this brief:
+
+```
+contract: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+ledger: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/reference-review.json
+repo: $CPA_PLUGIN_DIR
+base_sha: <plugin_sha of the last ledger entry, or empty>
+head_sha: <output of git rev-parse HEAD>
+prior_findings: <findings already in the ledger>
+```
+
+- If it returns findings, show them and ask the user whether to fix first or deploy anyway. Record the choice as each finding's `disposition` in the ledger (`fixed`, or `declined: <reason>`).
+- If the reviewer fails, record `review skipped: <reason>` in the ledger and continue.
+
+### Step 4: Start Log Monitoring (BEFORE deploy)
 
 `canvas logs` signs in through Canvas Platform, which issues the log token for an instance it manages (canvas-plugins `canvas_cli/apps/logs/logs.py:113-153` and `canvas_cli/apps/platform/routing.py:62-90` at 1.13.0). Read the instance's `logs=` value from the Step 2 line:
 
@@ -133,17 +153,17 @@ Save the resolved instance slug, the confirmed branch, and the plugin name (the 
   Save the `bash_id` to use it later to check logs. This captures deployment errors and runtime behavior, including a handler that fails to load in the sandbox, which leaves the plugin enabled with that handler missing.
 - **`logs=false`:** tell the user they lack the Plugin developer or Deploy manager role on {instance}, so logs are unavailable for this deploy. Continue.
 
-### Step 4: Deploy via Agent
+### Step 5: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
 
 Tell the agent: "Deploy to {instance} as branch {branch}", and, when the repository check found a larger repository, "The plugin is inside the larger repository at {toplevel}, so it deploys as a snapshot".
 
-The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, a snapshot refused, or a custom data consent request or a snapshot confirmation was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 5 only when the agent reports the deploy complete. If the agent reports a stop, stop log monitoring (KillShell) if it is running, relay the agent's report to the user, and end the command.
+The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, a snapshot refused, or a custom data consent request or a snapshot confirmation was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 6 only when the agent reports the deploy complete. If the agent reports a stop, stop log monitoring (KillShell) if it is running, relay the agent's report to the user, and end the command.
 
-### Step 5: Post-Deployment Log Check
+### Step 6: Post-Deployment Log Check
 
-Skip this step when Step 3 started no log stream.
+Skip this step when Step 4 started no log stream.
 
 After the agent returns and the deploy is complete, check the logs **in the parent context** (you own the background process).
 
@@ -155,10 +175,10 @@ After the agent returns and the deploy is complete, check the logs **in the pare
    1. Stop log monitoring (KillShell)
    2. Show the errors to the user
    3. Analyze root cause and fix the code
-   4. Re-deploy (repeat from Step 3)
+   4. Re-deploy (repeat from Step 4)
 6. **If no errors:** leave log monitoring running and continue to UAT
 
-### Step 6: UAT
+### Step 7: UAT
 
 - **Log stream running:** tell the user: "Plugin deployed to {instance}, and no errors detected in logs. Log monitoring is running: go ahead and test in Canvas. Tell me to 'check the logs' when you want to see what happened."
   - When the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries. If the background shell has exited, say the stream has ended and logs are unavailable.
