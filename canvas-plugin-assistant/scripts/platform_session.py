@@ -4,6 +4,7 @@ Reports the Canvas Platform sign-in, the organizations that can publish plugins,
 Usage:
     uv run --with 'canvas>=0.245.0' python platform_session.py whoami
     uv run --with 'canvas>=0.245.0' python platform_session.py instances
+    uv run --with 'canvas>=0.245.0' python platform_session.py publishers
 """
 
 import argparse
@@ -24,7 +25,7 @@ class PlatformSession:
         Print the requested view of the Platform session, or exit 1 when it cannot be shown.
 
         Args:
-            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs.
+            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs, "publishers" for publishing organization slugs and prefixes.
         """
         platform: str = auth.resolve_platform_url()
         if auth.stored_tokens(platform) is None:
@@ -40,6 +41,8 @@ class PlatformSession:
                 cls.print_whoami(
                     platform, client.me(), cls.deployable_instances(client.instances())
                 )
+            elif show == "publishers":
+                cls.print_publishers(cls.publishing_orgs(client.me()))
             else:
                 cls.print_instances(cls.deployable_instances(client.instances()))
         except (PlatformAuthError, PlatformError) as error:
@@ -104,6 +107,20 @@ class PlatformSession:
         print(f"Instances you can deploy to: {', '.join(slugs) or 'none'}")
 
     @classmethod
+    def print_publishers(cls, orgs: list[dict[str, Any]]) -> None:
+        """
+        Print one `<slug> <plugin_prefix>__` line per publishing organization, or exit 1 when there are none.
+
+        Args:
+            orgs (list[dict]): Organizations the person can push plugin code for.
+        """
+        if not orgs:
+            cls.exit_with_error(
+                "No organization lets you push plugin code. Ask an organization admin for the Plugin developer role."
+            )
+        print("\n".join(f"{org['slug']} {org['plugin_prefix']}__" for org in orgs))
+
+    @classmethod
     def print_instances(cls, slugs: list[str]) -> None:
         """
         Print one deployable instance slug per line, or exit 1 when there are none.
@@ -132,7 +149,7 @@ class PlatformSession:
     def main(cls) -> None:
         """Parse arguments and run."""
         parser = argparse.ArgumentParser(description="Show the Canvas Platform session")
-        parser.add_argument("show", choices=["whoami", "instances"])
+        parser.add_argument("show", choices=["whoami", "instances", "publishers"])
         args = parser.parse_args()
 
         cls.run(show=args.show)
