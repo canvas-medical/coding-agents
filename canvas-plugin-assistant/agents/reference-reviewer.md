@@ -24,10 +24,10 @@ For Python tooling and scripts, always execute through `uv run` (for example, `u
 
 ## Review
 
-1. Run `git -C <repo> diff <base_sha> -- .` (the working tree, so uncommitted changes count) and read every file from `git -C <repo> ls-files --others --exclude-standard -- .` (new files git does not track yet). On the first review, read the full tree instead.
+1. Run `git -C <repo> diff <base_sha> -- .` (the working tree, so uncommitted changes count) and read every file from `git -C <repo> ls-files --others --exclude-standard -- .` (new files git does not track yet). On the first review, or when `base_sha` is no longer in the repo's history (after a rebase or squash), review every file from `git -C <repo> ls-files --cached --others --exclude-standard -- .` instead, skipping `.cpa-workflow-artifacts/`.
 2. For each contract pattern, check whether the changed code follows its adopt, adapt or reject decision.
 3. You may flag a new pattern only when it is clear and consistent across the chosen references.
-4. Read reference files from `msf_dir`, or with Omniplug `get_reference_file`. Never call `search_plugin_code`, `get_plugin_file` or `get_tarball_url`.
+4. Read reference files in the form the contract cites them: an `extensions/...` path from `msf_dir`, and `<repo>/<plugin>:<path>` with Omniplug `get_reference_file(plugin, path)`. Never call `search_plugin_code`, `get_plugin_file` or `get_tarball_url`.
 5. With `msf_dir`, read the current MSF SHA (`git -C <msf_dir> rev-parse HEAD`). If it differs from the contract's `MSF SHA` and a cited reference file reads differently from what the contract describes, add the note `reference updated: <file>` (information, not a deviation). Record the current SHA as `msf_sha`, or `n/a` without `msf_dir`.
 
 ## Ledger Write

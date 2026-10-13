@@ -53,6 +53,7 @@ If there is no local clone and no Omniplug tools are available, write the contra
 1. Read the contract at `output` and the file at `plan`. If the contract is missing or has no `## PATTERNS` section, do pass 1 first (taking the problem from the plan file when the brief has none), then continue.
 2. Append (or replace) `## Plan mapping`: one bullet per pattern, `P<n> -> ## <heading in the plan file>`. A rejected pattern maps to the heading where the alternative lives. Every target must be a `##` heading that exists in the plan file now; a rerun after the plan changes replaces the whole section.
 3. With "No relevant reference.", write `## Plan mapping` containing the single line `No patterns to map (no relevant reference).`
+4. Always write the section. A pattern with no fitting `##` heading in the plan maps to `P<n> -> (no heading: <concern>)`, and your summary tells the caller which headings the plan is missing.
 
 The pass 2 section looks like this:
 
@@ -80,7 +81,8 @@ MSF SHA: <40-hex or "n/a (Omniplug only)">
 - **P1: <concern>**: `<ref file>:<line>`, adopt|adapt|reject: <reason>
 ```
 
-- `<ref file>` is a path a later reader can open: for MSF, relative to the clone root (`extensions/<plugin>/...`), never the resolved `msf-<sha>` directory, which the daily refresh prunes; for a secondary source, `<repo>/<plugin>:<path>`, so `get_reference_file` gets both the plugin and the path.
+- `<ref file>` is a path a later reader can open: for MSF, relative to the clone root (`extensions/<plugin>/...`), never the resolved `msf-<sha>` directory, which the daily refresh prunes; for a plugin read through Omniplug (secondary, or MSF without `msf_dir`), `<repo>/<plugin>:<path>`, with `<plugin>` the Omniplug plugin name and `<path>` relative to that plugin's root, exactly the two arguments `get_reference_file` takes.
+- `get_reference_file` has no repo argument, and a few plugin names exist in both `msf-canvas` and the proprietary `gtm-extensions` (for example `order_sets` and `patient_panel`). Read a plugin whose name `list_reference_plugins` shows under more than one repo only from `msf_dir`; without `msf_dir`, do not choose it.
 - `## Chosen references` lists up to 3 plugins read in full; secondary ones carry `(secondary)`.
 - `## Shortlist` lists up to 5 plugins in total.
 - Pass 1 never writes a `## Plan mapping` heading, not even as a placeholder: callers treat that heading as proof that pass 2 ran.
