@@ -27,7 +27,7 @@ Follow this exact workflow. Do NOT deviate.
          ↓
 5. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
          ↓
-6. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md)
+6. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md), citing pattern IDs from existing-plugins-reference.md if it exists
          ↓
 7. SHOW FILE PATH → WAIT FOR APPROVAL
          ↓

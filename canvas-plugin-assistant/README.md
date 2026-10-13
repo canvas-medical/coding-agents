@@ -342,7 +342,7 @@ piling up.
 **Artifacts saved:**
 | File | Purpose | Read by |
 |------|---------|---------|
-| `plugin-spec.md` | Plugin requirements and architecture decisions | `:new-plugin`, deploy-uat, instance-analyze |
+| `plugin-spec.md` | Plugin requirements and architecture decisions | `:new-plugin`, deploy-uat, instance-analyze, reference-finder |
 | `existing-plugins-reference.md` | Reference plugins and the patterns the build adopts, adapts or rejects (written by reference-finder) | plugin-brainstorm, reference-reviewer |
 | `reference-review.json` | Pre-deploy review findings and their dispositions (written by reference-reviewer, dispositions set by the builder) | `:deploy` |
 | `wrap-up-report.md` | Wrap-up checklist results | `:new-plugin` (marks the plugin as shipped) |
