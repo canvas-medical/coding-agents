@@ -36,7 +36,7 @@ Follow this exact workflow. Do NOT deviate.
 
 ## Reference Patterns
 
-If `{workspace_dir}/.cpa-workflow-artifacts/existing-plugins-reference.md` exists, read it before writing the spec. Cite the adopted pattern IDs (for example `P1`) in the spec's Architecture and Rationale sections, and give the spec one `##` heading per concern so each pattern maps to a heading. You do not launch the reference-finder; the calling command does.
+If `{workspace_dir}/.cpa-workflow-artifacts/existing-plugins-reference.md` exists, read it before writing the spec. Cite the adopted pattern IDs (for example `P1`) in the spec's Architecture and Rationale sections, and keep each concern under its own `##` section of the template below (Trigger, Data Requirements, Data Access Strategy, Effects, Architecture, and so on), adding a `##` section for a concern none of them covers, so each pattern maps to a heading. You do not launch the reference-finder; the calling command does.
 
 When `/cpa:new-plugin` asks you to write the spec, stop once it is written and return its path. Workflow steps 7 and 8 (approval) and the implementation after them then belong to the command, which maps the reference patterns onto the spec before it asks the user to approve.
 

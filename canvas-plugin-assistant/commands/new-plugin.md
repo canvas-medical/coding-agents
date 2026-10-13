@@ -75,7 +75,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    - What should trigger the plugin?
    - What should the plugin create or do?
 5. Map answers to Canvas SDK concepts (events, effects)
-6. Use the **reference-finder** agent to find and read the closest reference plugins:
+6. Unless step 3 found the need fully covered natively (then skip steps 6 to 8), use the **reference-finder** agent to find and read the closest reference plugins:
 
    ```
    pass: 1
@@ -83,7 +83,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
    ```
 
-7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. Launch plugin-brainstorm with the problem, the native-coverage result and the answers from steps 2-5, and tell it they are already answered so it asks nothing. It reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern and to return once the spec is written, because approval comes at step 9, after the mapping.
+7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. Launch plugin-brainstorm with the problem, the native-coverage result and the answers from steps 2-5, and tell it they are already answered so it asks nothing. It reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to keep each concern under its own `##` section and to return once the spec is written, because approval comes at step 9, after the mapping.
 8. Use the **reference-finder** agent again to map the patterns to the spec:
 
    ```

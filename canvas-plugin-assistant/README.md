@@ -110,7 +110,7 @@ scanned for secrets) and pushing is confirmed with you first.
 
 **reference-reviewer** - Check a build against the reference patterns:
 
-- Reviews the diff since the last reviewed commit against the recorded patterns
+- Reviews the diff since the last deployed review against the recorded patterns
 - Runs inside `/cpa:deploy`, before the install
 - Writes findings to `reference-review.json`
 
