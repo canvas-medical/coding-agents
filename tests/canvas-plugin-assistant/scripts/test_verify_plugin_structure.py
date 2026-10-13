@@ -299,3 +299,37 @@ class TestMain:
             runpy.run_path(SCRIPT, run_name="__main__")
 
         assert exit_info.value.code == code
+
+
+class TestVerifyStructureScenarios:
+    """verify_structure on containers as the CPA workflow actually leaves them."""
+
+    def test_verify_structure__mid_workflow_container_with_fixture_manifest(self, tmp_path: Path, monkeypatch, capsys) -> None:
+        """Only a package folder one level down counts; dot folders and a fixture manifest under tests/ do not."""
+        package = tmp_path / "acme__vitals_alert"
+        write_manifest(package, "acme__vitals_alert")
+        (package / "__init__.py").write_text("")
+        (package / "README.md").write_text("# vitals alert\n")
+        (package / "handlers").mkdir()
+        (package / "handlers" / "__init__.py").write_text("")
+        (package / "handlers" / "event_handlers.py").write_text("")
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "__init__.py").write_text("")
+        (tmp_path / "tests" / "test_event_handlers.py").write_text("")
+        (tmp_path / "tests" / "fixtures").mkdir()
+        write_manifest(tmp_path / "tests" / "fixtures" / "legacy", "vitals_alert")
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "vitals-alert"\n')
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
+        (tmp_path / ".cpa-workflow-artifacts").mkdir()
+        (tmp_path / ".cpa-workflow-artifacts" / "plugin-spec.md").write_text("# Plugin spec\n")
+        monkeypatch.chdir(tmp_path)
+
+        result = verify_structure()
+
+        assert result is True
+        output = capsys.readouterr().out
+        assert "OK: Inner folder 'acme__vitals_alert' holds CANVAS_MANIFEST.json" in output
+        assert "legacy" not in output
+        assert "ERROR" not in output
+        assert "Structure validation passed." in output

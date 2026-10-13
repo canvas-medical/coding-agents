@@ -251,3 +251,69 @@ class TestMain:
             tested.main()
 
         assert exc_info.value.code == 2
+
+
+CORRUPT_CREDENTIALS = (
+    "/Users/dana/.canvas/platform-credentials.json is not valid JSON "
+    "(Expecting value: line 1 column 1 (char 0)). Move it aside and run `canvas login`."
+)
+
+
+class TestRunScenarios:
+    """Cross-step scenarios for PlatformSession.run against the CLI's real failure and permission shapes."""
+
+    @pytest.mark.parametrize("raising", ["resolve_platform_url", "stored_tokens"])
+    def test_run__corrupt_credentials_file_exits_with_message(self, raising, capsys):
+        """The CLI raises PlatformAuthError while reading a corrupt credentials file; show its fix, not a traceback."""
+        tested = PlatformSession
+
+        with (
+            patch.object(platform_session, "auth") as auth,
+            patch.object(platform_session, "PlatformClient") as client_class,
+        ):
+            auth.resolve_platform_url.return_value = PLATFORM
+            getattr(auth, raising).side_effect = PlatformAuthError(CORRUPT_CREDENTIALS)
+            with pytest.raises(SystemExit) as exc_info:
+                tested.run("whoami")
+
+        assert exc_info.value.code == 1
+        assert capsys.readouterr().out == f"ERROR: {CORRUPT_CREDENTIALS}\n"
+        assert client_class.mock_calls == []
+
+    def test_run__publisher_without_deploy_rights(self, signed_in, capsys):
+        """A Plugin developer can publish but not deploy: whoami still passes the sign-in check, instances refuses."""
+        tested = PlatformSession
+        signed_in.me.return_value = {
+            "email": "github-actions@acme.example",
+            "organizations": [
+                {
+                    "name": "Acme",
+                    "slug": "acme",
+                    "plugin_prefix": "acme",
+                    "capabilities": ["push_plugin_code", "view_org_assets"],
+                },
+            ],
+        }
+        signed_in.instances.return_value = [
+            {
+                "slug": "acme-staging",
+                "managed": True,
+                "capabilities": ["configure_plugin"],
+            },
+        ]
+
+        tested.run("whoami")
+
+        expected = (
+            f"Signed in to {PLATFORM} as github-actions@acme.example\n"
+            "  Acme (acme): plugin prefix acme__\n"
+            "Instances you can deploy to: none\n"
+        )
+        assert capsys.readouterr().out == expected
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("instances")
+
+        assert exc_info.value.code == 1
+        expected = "ERROR: There is no instance Canvas Platform manages that you can deploy plugins to.\n"
+        assert capsys.readouterr().out == expected
