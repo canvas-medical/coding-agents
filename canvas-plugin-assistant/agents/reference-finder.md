@@ -80,6 +80,7 @@ MSF SHA: <40-hex or "n/a (Omniplug only)">
 - **P1: <concern>**: `<ref file>:<line>`, adopt|adapt|reject: <reason>
 ```
 
+- `<ref file>` is a path a later reader can open: for MSF, relative to the clone root (`extensions/<plugin>/...`), never the resolved `msf-<sha>` directory, which the daily refresh prunes; for a secondary source, `<repo>/<plugin>:<path>`, so `get_reference_file` gets both the plugin and the path.
 - `## Chosen references` lists up to 3 plugins read in full; secondary ones carry `(secondary)`.
 - `## Shortlist` lists up to 5 plugins in total.
 - Pass 1 never writes a `## Plan mapping` heading, not even as a placeholder: callers treat that heading as proof that pass 2 ran.
