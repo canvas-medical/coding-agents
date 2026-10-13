@@ -175,7 +175,7 @@ provides-extras = ["dev"]
 dev = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "html2text", specifier = ">=2024.2.26" },
-    { name = "mcp", specifier = ">=1.26.0" },
+    { name = "mcp", specifier = ">=1.26.0,<2" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
 ]

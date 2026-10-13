@@ -67,6 +67,40 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 
 **Only run this phase if CPA_PLUGIN_DIR is NOT set (new plugin creation).**
 
+#### Gate: Choose the publishing organization
+
+Before gathering requirements, confirm the person can publish a plugin:
+
+```bash
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+```
+
+Each output line is `<slug> <plugin_prefix>__`.
+
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`; do NOT run `canvas login` yourself. If no organization can publish, tell the user an organization admin must grant them the Plugin developer role.
+- **One line:** Use its slug as `org_slug`.
+- **Several lines:** Ask which one publishes this plugin and use the chosen slug as `org_slug`:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Which organization will publish this plugin?",
+      "header": "Organization",
+      "options": [
+        {"label": "acme (acme__)", "description": "Plugin prefix acme__"},
+        {"label": "beta-clinic (beta__)", "description": "Plugin prefix beta__"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Build one option per line of script output, labeled `slug (prefix__)`.
+
+#### Requirements steps
+
 1. Invoke the canvas-sdk skill to have SDK documentation available
 2. Ask the user to describe the problem they're trying to solve
 3. Check native coverage with the canvas-platform skill to determine if the ask is fully, partially, or not at all covered by native Canvas functionality
@@ -100,36 +134,9 @@ The name should be:
 - In kebab-case (lowercase with hyphens)
 - 2-4 words maximum
 
-#### Step 2: Choose the publishing organization
+#### Step 2: Use the publishing organization
 
-```bash
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
-```
-
-The output lists the signed-in email, each organization that lets you push plugin code as `Name (slug): plugin prefix prefix__`, and the instances you can deploy to.
-
-- **Not signed in (the script exits with an error):** STOP. Show its message and ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`. Do NOT run `canvas login` yourself.
-- **No organization listed:** STOP. Tell the user an organization admin must grant them the Plugin developer role.
-- **One organization:** Use its slug as `org_slug`.
-- **Several organizations:** Ask which one publishes this plugin and use the chosen slug as `org_slug`:
-
-```json
-{
-  "questions": [
-    {
-      "question": "Which organization will publish this plugin?",
-      "header": "Organization",
-      "options": [
-        {"label": "acme (acme__)", "description": "Acme Health: plugin prefix acme__"},
-        {"label": "beta-clinic (beta__)", "description": "Beta Clinic: plugin prefix beta__"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-Build one option per organization from the script output, labeled `slug (prefix__)`.
+Use the organization slug chosen at the start of Phase 1 as `org_slug`.
 
 #### Step 3: Run canvas init
 
