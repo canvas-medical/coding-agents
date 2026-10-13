@@ -47,7 +47,27 @@ Resolve the deployment target **before** delegating to the agent — the parent 
 
 Save the resolved hostname — you will pass it to the agent and use it for log monitoring.
 
-### Step 3: Start Log Monitoring (BEFORE install)
+### Step 3: Reference Review
+
+Run this before log monitoring starts so a blocking finding never leaves a log tail running.
+
+If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md` does not exist, skip to Step 4.
+
+Use the **reference-reviewer** agent with this brief:
+
+```
+contract: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+ledger: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/reference-review.json
+repo: $CPA_PLUGIN_DIR
+base_sha: <plugin_sha of the last ledger entry, or empty>
+head_sha: <output of git rev-parse HEAD>
+prior_findings: <findings already in the ledger>
+```
+
+- If it returns findings, show them and ask the user whether to fix first or deploy anyway. Record the choice as each finding's `disposition` in the ledger (`fixed`, or `declined: <reason>`).
+- If the reviewer fails, record `review skipped: <reason>` in the ledger and continue.
+
+### Step 4: Start Log Monitoring (BEFORE install)
 
 **Start log monitoring in the parent context** so the background process survives the agent lifecycle.
 
@@ -59,7 +79,7 @@ unbuffer uv run canvas logs --host {hostname}
 
 Save the `bash_id` — you will use it later to check logs. This captures installation errors and runtime behavior.
 
-### Step 4: Deploy via Agent
+### Step 5: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, git commit/push, and install. Pass the resolved hostname so the agent does not need to ask again.
 
@@ -67,7 +87,7 @@ Tell the agent: "Deploy to {hostname}".
 
 The agent will return when the install is complete.
 
-### Step 5: Post-Deployment Log Check
+### Step 6: Post-Deployment Log Check
 
 After the agent returns and the install is complete, check the logs **in the parent context** (you own the background process).
 
@@ -78,10 +98,10 @@ After the agent returns and the install is complete, check the logs **in the par
    1. Stop log monitoring (KillShell)
    2. Show the errors to the user
    3. Analyze root cause and fix the code
-   4. Re-deploy (repeat from step 3)
+   4. Re-deploy (repeat from step 4)
 5. **If no errors:** leave log monitoring running and continue to UAT
 
-### Step 6: UAT
+### Step 7: UAT
 
 Log monitoring is still running in the background (owned by this parent context).
 
