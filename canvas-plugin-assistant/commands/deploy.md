@@ -51,7 +51,7 @@ Save the resolved hostname — you will pass it to the agent and use it for log 
 
 Run this before log monitoring starts so a blocking finding never leaves a log tail running.
 
-Set `ARTIFACTS` to `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts` (where `/cpa:new-plugin` moves the artifacts once the plugin exists), or to `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts` when the contract is only there. If neither holds `existing-plugins-reference.md`, or its `## PATTERNS` section is `None.`, skip to Step 4.
+Set `ARTIFACTS` to `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts`, where `/cpa:new-plugin` moves the artifacts once the plugin exists. If only `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts` holds `existing-plugins-reference.md`, it may belong to another plugin in progress: ask the user whether it is this plugin's, and move that folder into `$CPA_PLUGIN_DIR` only if it is. If `$ARTIFACTS` holds no contract, or its `## PATTERNS` section is `None.`, skip to Step 4.
 
 Use the **reference-reviewer** agent with this brief:
 
@@ -67,11 +67,11 @@ deviations: $ARTIFACTS/plugin-spec.md
 
 The reviewer diffs `base_sha` against the working tree, so uncommitted changes that this deploy is about to ship are reviewed too.
 
-- If it returns no findings, add `"deployed": true` to its ledger entry and continue.
+- If it returns no findings and its ledger entry has a `findings` key (a completed review, not a `review skipped` entry), add `"deployed": true` to the entry and continue. A skipped review is never marked deployed, so its changes stay in the next diff.
 - If it returns findings, show them and ask the user whether to fix first or deploy anyway.
   - **Fix first:** stop the deploy here, leaving the entry without `deployed`. Fix the code, then run `/cpa:deploy` again. Only deployed reviews are a base, so the rerun diffs from the last deployed review and re-raises whatever still deviates.
   - **Deploy anyway:** set each finding's `disposition` to `declined: <reason>`, add `"deployed": true` to the entry, and continue.
-  - Whenever a finding gets a disposition, give the same disposition to every earlier finding in the ledger for the same pattern and build location that has none.
+  - Whenever a finding gets a disposition, give the same disposition to every earlier finding in the ledger for the same pattern and build file that has none.
 - If the reviewer fails without writing a ledger entry, append `{"plugin_sha": "<head_sha>", "status": "review skipped: <reason>"}` to the ledger and continue.
 
 ### Step 4: Start Log Monitoring (BEFORE install)
