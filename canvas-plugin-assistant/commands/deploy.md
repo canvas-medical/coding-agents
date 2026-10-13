@@ -51,15 +51,15 @@ Save the resolved hostname — you will pass it to the agent and use it for log 
 
 Run this before log monitoring starts so a blocking finding never leaves a log tail running.
 
-If `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md` does not exist, skip to Step 4. (`/cpa:new-plugin` moves `.cpa-workflow-artifacts` into the plugin directory once it exists.)
+Set `ARTIFACTS` to `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts` (where `/cpa:new-plugin` moves the artifacts once the plugin exists), or to `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts` when the contract is only there. If neither holds `existing-plugins-reference.md`, skip to Step 4.
 
 Use the **reference-reviewer** agent with this brief:
 
 ```
-contract: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
-ledger: $CPA_PLUGIN_DIR/.cpa-workflow-artifacts/reference-review.json
+contract: $ARTIFACTS/existing-plugins-reference.md
+ledger: $ARTIFACTS/reference-review.json
 repo: $CPA_PLUGIN_DIR
-base_sha: <plugin_sha of the last ledger entry with a "findings" key, even an empty list (a completed review), or empty>
+base_sha: <plugin_sha of the last ledger entry with a "findings" key (even an empty list) whose findings all have a disposition, or empty>
 head_sha: <output of git rev-parse HEAD>
 prior_findings: <findings already in the ledger, with their dispositions>
 ```
@@ -67,8 +67,8 @@ prior_findings: <findings already in the ledger, with their dispositions>
 The reviewer diffs `base_sha` against the working tree, so uncommitted changes that this deploy is about to ship are reviewed too.
 
 - If it returns findings, show them and ask the user whether to fix first or deploy anyway.
-  - **Fix first:** stop the deploy here. Fix the code, set each fixed finding's `disposition` to `fixed`, then run `/cpa:deploy` again.
-  - **Deploy anyway:** set each finding's `disposition` to `declined: <reason>` and continue.
+  - **Fix first:** stop the deploy here. Fix the code, set each fixed finding's `disposition` to `fixed`, then run `/cpa:deploy` again. A review left with an empty disposition is not a base, so the rerun diffs from the review before it and still covers every finding's code.
+  - **Deploy anyway:** set each finding's `disposition` to `declined: <reason>`, and give the same disposition to any earlier finding in the ledger for the same pattern and build location that is still empty. Then continue.
 - If the reviewer fails without writing a ledger entry, append `{"plugin_sha": "<head_sha>", "status": "review skipped: <reason>"}` to the ledger and continue.
 
 ### Step 4: Start Log Monitoring (BEFORE install)
