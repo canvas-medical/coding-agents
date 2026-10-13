@@ -83,7 +83,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
    ```
 
-7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. The plugin-brainstorm agent reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern.
+7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. The plugin-brainstorm agent reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to give the spec one `##` heading per concern and to return once the spec is written, because approval comes at step 9, after the mapping.
 8. Use the **reference-finder** agent again to map the patterns to the spec:
 
    ```
@@ -93,7 +93,7 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    plan: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md
    ```
 
-9. Wait for user approval before any implementation
+9. Wait for user approval before any implementation. If the user's feedback changes the spec's `##` headings, run step 8 again before approval.
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)

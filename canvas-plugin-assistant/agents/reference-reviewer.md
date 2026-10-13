@@ -20,11 +20,11 @@ For Python tooling and scripts, always execute through `uv run` (for example, `u
 - `base_sha`: last reviewed plugin commit, or empty for the first review.
 - `head_sha`: commit under review.
 - `msf_dir` (optional): absolute path of a local MSF clone.
-- `prior_findings`: findings from earlier reviews, passed in so they are not repeated.
+- `prior_findings`: findings from earlier reviews with their dispositions. Do not repeat one, unless its disposition is empty or `fixed` and the changed code still deviates.
 
 ## Review
 
-1. Run `git -C <repo> diff <base_sha>..<head_sha>`, or read the full tree on the first review.
+1. Run `git -C <repo> diff <base_sha>` (the working tree, so uncommitted changes count), or read the full tree on the first review.
 2. For each contract pattern, check whether the changed code follows its adopt, adapt or reject decision.
 3. You may flag a new pattern only when it is clear and consistent across the chosen references.
 4. Read reference files from `msf_dir`, or with Omniplug `get_reference_file`. Never call `search_plugin_code`, `get_plugin_file` or `get_tarball_url`.
