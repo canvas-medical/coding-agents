@@ -69,13 +69,14 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 
 1. Invoke the canvas-sdk skill to have SDK documentation available
 2. Ask the user to describe the problem they're trying to solve
-3. Use AskUserQuestion to gather structured requirements:
+3. Check native coverage with the canvas-platform skill to determine if the ask is fully, partially, or not at all covered by native Canvas functionality
+4. Use AskUserQuestion to gather structured requirements, scoped to what isn't natively covered:
    - Who experiences the problem?
    - What should trigger the plugin?
    - What should the plugin create or do?
-4. Map answers to Canvas SDK concepts (events, effects)
-5. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
-6. Wait for user approval before any implementation
+5. Map answers to Canvas SDK concepts (events, effects)
+6. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
+7. Wait for user approval before any implementation
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
@@ -175,12 +176,13 @@ fi
 ```
 
 The same way, add to `.gitignore`:
+- `.cpa-workflow-artifacts`
 - `.pytest_cache`
 - `.__pycache__`
 - `.coverage`
 - any other files or directories that git should ignored 
 
-**DO NOT add the folder `.cpa-workflow-artifacts` to `.gitignore`: it has to be committed to the repo.**
+`.cpa-workflow-artifacts` stays local: the reports and specs inside it are working notes for the current session, not deliverables, and committing them puts session detail into a customer's plugin repo.
 
 
 **Replace `pyproject.toml` with the minimal version:**
@@ -309,8 +311,7 @@ Check if the plugin has already been through the wrap-up process (i.e., is a com
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
-plugin_name_snake=$(echo "$(basename "$CPA_PLUGIN_DIR")" | tr '-' '_')
-if ls "$plugin_name_snake/.cpa-workflow-artifacts"/wrap-up-report-*.md 1>/dev/null 2>&1; then
+if [ -f ".cpa-workflow-artifacts/wrap-up-report.md" ]; then
   echo "PLUGIN_COMPLETED=true"
 else
   echo "PLUGIN_COMPLETED=false"

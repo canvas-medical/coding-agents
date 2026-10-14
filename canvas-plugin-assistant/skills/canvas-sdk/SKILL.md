@@ -1,6 +1,6 @@
 ---
 name: canvas-sdk
-description: Canvas SDK reference and documentation. Use whenever a question, claim, or piece of code touches Canvas SDK capabilities, API usage, implementation patterns, or testing — including quick conversational questions ("how do I ingest ADTs?", "what's the import for X?", "does Canvas support Y?"). The bundled docs are the source of truth; do not answer Canvas SDK questions from memory.
+description: Canvas SDK reference and documentation. Use whenever a question, claim, or piece of code touches Canvas SDK capabilities, API usage, implementation patterns, or testing — including quick conversational questions ("how do I ingest ADTs?", "what's the import for X?", "how is Y modeled in the SDK?"). For whether Canvas already does something natively, with no plugin at all, that is canvas-platform. The bundled docs are the source of truth; do not answer Canvas SDK questions from memory.
 ---
 
 # Canvas SDK Reference
@@ -14,7 +14,7 @@ This skill provides comprehensive documentation for the Canvas Medical SDK, enab
 Before stating any specific class name, import path, effect/event name, field name, method, or supported value:
 1. Read `coding_agent_context.txt` from this skill's directory (see Usage below) and `grep`/search it for the relevant term.
 2. Base your answer on what the bundled docs actually say.
-3. **Cite the source doc page URL** (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` line that contains the content) so the user can verify it — the same way a high-quality grounded answer always links its source.
+3. **Cite the page as a markdown link: `[Page Title](https://docs.canvasmedical.com/...)`.** The URL is the `----- BEGIN PAGE` line of the block you read. This corpus has no separate index and most pages carry no title line. If the page body opens with a heading that names the page, use it. Otherwise build the link text from the URL's last path segment: de-hyphenate, title-case, and reorder or singularize where that reads more naturally — `/sdk/clients-twilio/` → `[Twilio Client](https://docs.canvasmedical.com/sdk/clients-twilio/)`, `/guides/custom-landing-page/` → `[Custom Landing Page](https://docs.canvasmedical.com/guides/custom-landing-page/)`. The URL is what grounds the citation, so the link text only has to name the page recognizably; keep every slug word (singular or plural) and add none, but you do not have to preserve its order. Never emit a bare `----- BEGIN PAGE` line or a naked URL as the citation.
 
 This applies to a one-line verbal question just as much as to code generation. If a question is even partially about an SDK capability and you have not yet consulted this skill in the current conversation, consult it first, then answer.
 
@@ -28,9 +28,9 @@ Use this skill whenever a question, claim, or piece of code involves — even in
 - Handler types (BaseHandler, SimpleAPI, Application, CronTask)
 - Canvas CLI commands
 - Plugin manifest structure
-- Whether Canvas "supports" some capability, and how it is modeled
+- How a capability is modeled in the SDK (whether Canvas already does it natively is `canvas-platform`)
 
-This includes short conversational questions, not just plugin-building work. Examples that REQUIRE consulting this skill before answering: "how do I ingest ADTs?", "what's the import path for the external event effect?", "what fields does X take?", "does Canvas have a built-in HL7 parser?". Do not answer any of these from memory.
+This includes short conversational questions, not just plugin-building work. Examples that REQUIRE consulting this skill before answering: "how do I ingest ADTs?", "what's the import path for the external event effect?", "what fields does X take?", "how do I parse an incoming HL7 message in a plugin?". Do not answer any of these from memory.
 
 ## Terminology / Aliases
 
@@ -58,6 +58,17 @@ The canonical pattern (full snippet in `coding_agent_context.txt`, under "Auto-r
 When building a custom patient chart summary section (`PatientChartSummaryCustomSectionHandler`), **ask the user whether the section needs real-time updates** before scaffolding. If yes, implement it with a `WebSocketAPI` + `Broadcast` from a `BaseHandler` listening for the relevant Canvas events.
 
 **The WebSocket channel name MUST include the patient id** (e.g. `chart-summary-{plugin_name}-{patient_id}`). Never broadcast on a global channel — it leaks updates across patient charts and causes every connected client to re-render on every event. Full pattern + example in `coding_agent_context.txt`, under "Real-Time Updates for Custom Sections".
+
+### WebSockets must survive blue/green deploys
+
+This applies to **any** plugin WebSocket — custom chart summary sections, real-time note-restriction updates (`NoteRestrictionsUpdatedEffect`), companion-app surfaces, anything built on `WebSocketAPI` + `Broadcast`. Canvas runs blue/green deploys during the working day, so a live socket is closed mid-session and the client reconnects onto a freshly booted process. Build every WebSocket client to survive that gap:
+
+- **Push is a hint, pull is the truth.** `Broadcast` is fire-and-forget and ephemeral — anything sent while the socket was down is gone, and the plugin process keeps no durable state across a restart (module globals reset every deploy). Treat the socket as a "something changed" nudge and re-fetch the authoritative snapshot from your `SimpleAPI` endpoint to learn *what*.
+- **Re-fetch on every (re)connect, not just initial load.** Wire the snapshot fetch to the socket's `open` event so the initial load and every reconnect run identical reconciliation — anything missed during the gap is picked up immediately.
+- **Reconnect with exponential backoff + jitter + a cap, never a fixed delay.** A deploy drops every client at the same instant, so a fixed delay is a thundering herd against the single container that just booted. Also reconnect immediately on the browser `online` event.
+- **Make mutating `POST`s idempotent.** A cutover can drop the response to an in-flight mutation, and the client cannot tell "never applied" from "applied, response lost," so it retries. Re-check current state server-side and no-op if the desired state already holds rather than blindly emitting a second effect.
+
+Full worked client code (backoff/jitter, `online` handling, half-open heartbeat, idempotent mutations) is in the `companion-app-patterns` skill's `companion_app_patterns_context.txt`, under "Surviving deploys & reconnection" — the pattern is identical for any WebSocket surface, not just companion apps.
 
 ## Key Documentation Sections
 
@@ -119,8 +130,14 @@ To use this skill:
 1. **Read `coding_agent_context.txt` from this skill's directory** - it already exists locally
 2. Search the file for specific class names, event types, or effect types
 3. Use the documentation to understand Canvas SDK capabilities
-4. **Cite the source doc page URL** in your answer (the `----- BEGIN PAGE https://docs.canvasmedical.com/...` URL whose section you used), so the answer is verifiable and grounded rather than asserted from memory
+4. **Cite the page as a `[Page Title](url)` markdown link** for the `----- BEGIN PAGE https://docs.canvasmedical.com/...` block whose section you used (link text derived from the URL slug — see the Grounding Rule above), so the answer is verifiable and grounded rather than asserted from memory
 
-The context file contains ~20000 lines of comprehensive SDK documentation including all handlers, events, effects, and data models.
+The context file contains roughly 50000 lines of comprehensive SDK documentation, including all handlers, events, effects, and data models.
 
 **NEVER attempt to curl or download coding_agent_context.txt - it is already bundled here.**
+
+## Related Skills
+
+- **canvas-platform** — what Canvas already does *natively*, with no plugin at all: shipped features, settings, roles, templates, admin workflows, and out-of-the-box UI behavior, sourced from the Canvas Help Center. Worth a check when a request could plausibly be satisfied by configuration instead of code, or when someone asks "can Canvas do X?" without specifying how. This is advisory, not a gate — go straight to the SDK docs for questions that are unambiguously about building.
+- **Omniplug MCP tools** — the state of one specific Canvas instance: which plugins are installed and what each does (`get_customer_plugins`, `describe_plugin`), where their UI lands (`get_plugin_placement`), and which Canvas-managed plugins exist to install (`list_reference_plugins`). `instance-analyze` covers the same ground for local development against an instance directly.
+- The boundary: **`canvas-sdk` = what you can build; `canvas-platform` = what Canvas already does natively; Omniplug = what this instance currently has.**
