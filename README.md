@@ -76,7 +76,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 **Slash Commands** (prefixed with `cpa:` when installed via marketplace):
 | Command | Description |
 |---------|-------------|
-| `:check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
+| `:check-setup` | Verify environment tools (git, uv, unbuffer, canvas CLI) and Canvas Platform sign-in |
 | `:new-plugin` | Start brainstorming a new plugin specification |
 | `:create-icon` | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance` | Analyze Canvas instance configuration |

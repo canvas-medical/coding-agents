@@ -27,8 +27,8 @@ from ...utils.helpers import format_date
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.protocols.handler import MyHandler
-from my_plugin_name.utils.helpers import format_date
+from acme__my_plugin_name.protocols.handler import MyHandler
+from acme__my_plugin_name.utils.helpers import format_date
 ```
 
 The package name must match the inner folder name, which for Canvas Platform plugins carries the organization prefix:
@@ -69,16 +69,16 @@ The package name must match the inner package folder name. See "Imports: Use Abs
 
 ### Imports — no deep attribute access
 
-The sandbox rejects deep getattr chains like `my_plugin.services.session.Session` at the use site. Import the name at the top of the file instead:
+The sandbox rejects deep getattr chains like `acme__my_plugin.services.session.Session` at the use site. Import the name at the top of the file instead:
 
 ```python
 # GOOD
-from my_plugin.services.session import Session
+from acme__my_plugin.services.session import Session
 def make() -> Session: ...
 
 # BAD — sandbox raises "X.Y.Z is an invalid attribute name (not in ALLOWED_MODULES)"
-import my_plugin.services.session
-def make(): return my_plugin.services.session.Session()
+import acme__my_plugin.services.session
+def make(): return acme__my_plugin.services.session.Session()
 ```
 
 ### RestrictedPython features that are banned

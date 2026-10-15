@@ -163,7 +163,7 @@ If cache busting is missing, add it before proceeding with deployment.
    git commit -m "quick deploy {plugin_name}"
    ```
 
-   If the user declines to commit, STOP: `canvas deploy` would deploy nothing new.
+   If the user declines to commit, STOP: `canvas deploy` refuses to deploy while uncommitted changes remain.
 
 5. Deploy. Use the **`deployer`** MCP tool (provided by the `canvas_cmd_line` MCP server) to deploy the plugin and set its variables:
 
@@ -187,7 +187,7 @@ If cache busting is missing, add it before proceeding with deployment.
    6. **User denied:** the deployment is cancelled. Report that, stop log monitoring (KillShell), and stop.
    7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user, stop log monitoring (KillShell), and stop.
 
-7. **If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, wait for the deployment to succeed (check the Platform deployment status or the streamed logs), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 6. If the deployment fails, show the failure and stop.
+7. **If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded (the streamed logs can also show the plugin loading), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 6. If the deployment fails, show the failure and stop.
 
 8. **If the output contains `Uncommitted files`**, the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat sub-steps 1-4 above for the files listed by `git status --porcelain`, then call `deployer` again.
 

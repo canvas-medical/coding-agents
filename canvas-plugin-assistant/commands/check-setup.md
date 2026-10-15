@@ -178,7 +178,7 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 ```
 
 - **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
-  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. Existing Canvas Platform plugins can still be deployed to the listed instances
+  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
   uv run --with 'canvas>=0.245.0' canvas login
@@ -187,9 +187,11 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 ### 10. Check log streaming credentials (optional)
 
 ```bash
-ls ~/.canvas/credentials.ini
+rg '^\[' ~/.canvas/credentials.ini
 uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
 ```
+
+Read only the section headers, as above: the file holds client secrets and passwords.
 
 - **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug from `instances`]". A section that matches no deployable instance slug, such as `localhost`, does not count. Report "log streaming unavailable for: [deployable instances without a section]".
 - **If the file is missing, or no section matches a deployable instance**: Report a warning only: `/cpa:deploy` deploys without it but cannot stream logs. `credentials.ini` support ends December 14, 2026.
