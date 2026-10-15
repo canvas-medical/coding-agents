@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import shlex
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
@@ -21,6 +22,12 @@ class CanvasDeployerMcp:
         "Consent needed: this deployment is waiting on custom data access consent that only a person at a "
         "terminal can answer. Show the requests above to the user and have them run the command below in "
         "their own terminal. Do not retry with --yes."
+    )
+
+    STILL_RUNNING_MARKER: str = "is still running after"
+    STILL_RUNNING_NOTE: str = (
+        "Still running: the deployment is still running on Canvas Platform, so variables were not set. "
+        "Call the configurer tool once the deployment succeeds."
     )
 
     @classmethod
@@ -79,7 +86,7 @@ class CanvasDeployerMcp:
         """Validate the tool arguments and load the plugin manifest.
 
         Args:
-            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
+            plugin_name: The inner package folder name, which holds CANVAS_MANIFEST.json.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
@@ -105,13 +112,13 @@ class CanvasDeployerMcp:
         return manifest_file, manifest
 
     @classmethod
-    async def _configure(cls, plugin_name: str, instance: str, cwd: str, manifest: dict) -> str:
+    async def _configure(cls, instance: str, cwd: str, manifest: dict) -> str:
         """Set the manifest variables on the instance from the secrets file.
 
+        Variables are keyed by the manifest name, which is the name Canvas Platform manages the plugin under.
         Values are passed to the CLI and never included in the returned text.
 
         Args:
-            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
             manifest: Parsed CANVAS_MANIFEST.json.
@@ -119,10 +126,11 @@ class CanvasDeployerMcp:
         Returns:
             str: The configure output, or a note that nothing was set.
         """
+        manifest_name: str = manifest["name"]
         names = cls._parse_variable_names(manifest)
         values: dict[str, str] = {}
         if names:
-            values = SecretRequester.get_secrets(names, instance, plugin_name)
+            values = SecretRequester.get_secrets(names, instance, manifest_name)
 
         provided = [name for name in names if values.get(name)]
         skipped = [name for name in names if not values.get(name)]
@@ -132,7 +140,7 @@ class CanvasDeployerMcp:
         if not provided:
             return f"Configure skipped: no variable values found in the secrets file.{warning}"
 
-        command = ["uv", "run", "canvas", "config", "set", plugin_name]
+        command = ["uv", "run", "canvas", "config", "set", manifest_name]
         command.extend(f"{name}={values[name]}" for name in provided)
         command.extend(["--instance", instance])
         result = await cls._run_canvas_command(command=command, cwd=cwd)
@@ -143,15 +151,16 @@ class CanvasDeployerMcp:
         """Deploy a Canvas plugin to a Canvas Platform instance, then set its variables.
 
         Variables are set only when the deploy succeeds. A deploy that stops on pending
-        custom data consent is handed back to the person with the command to run.
+        custom data consent is handed back to the person with the command to run, and a
+        deploy still running on Canvas Platform is left for the configurer tool.
 
         Args:
-            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
+            plugin_name: The inner package folder name, which is the folder passed to `canvas deploy`. Variables are keyed by the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
         Returns:
-            str: The deploy output followed by the configure output or the consent note.
+            str: The deploy output followed by the configure output, the consent note, or the still-running note.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
@@ -166,19 +175,22 @@ class CanvasDeployerMcp:
         if cls.CONSENT_PENDING_MARKER in result:
             return (
                 f"{output}\n\n{cls.CONSENT_NOTE}\n"
-                f"  cd {cwd} && uv run canvas deploy {plugin_name} --no-push --instance {instance}\n"
+                f"  cd {shlex.quote(cwd)} && uv run canvas deploy {shlex.quote(plugin_name)} "
+                f"--no-push --instance {shlex.quote(instance)}\n"
                 "After it succeeds there, call the configurer tool to set variables."
             )
+        if cls.STILL_RUNNING_MARKER in result:
+            return f"{output}\n\n{cls.STILL_RUNNING_NOTE}"
         if result.startswith("Command failed"):
             return output
-        return f"{output}\n\n{await cls._configure(plugin_name, instance, cwd, manifest)}"
+        return f"{output}\n\n{await cls._configure(instance, cwd, manifest)}"
 
     @classmethod
     async def configure(cls, plugin_name: str, instance: str, cwd: str) -> str:
         """Set a Canvas plugin's manifest variables on a Canvas Platform instance.
 
         Args:
-            plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
+            plugin_name: The inner package folder name, which holds CANVAS_MANIFEST.json. Variables are keyed by the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
 
@@ -189,7 +201,7 @@ class CanvasDeployerMcp:
         if isinstance(checked, str):
             return checked
         _, manifest = checked
-        return await cls._configure(plugin_name, instance, cwd, manifest)
+        return await cls._configure(instance, cwd, manifest)
 
     @classmethod
     def create_server(cls) -> FastMCP:
@@ -202,12 +214,12 @@ class CanvasDeployerMcp:
 
             Runs canvas deploy, then canvas config set for the variables declared in
             CANVAS_MANIFEST.json. The instance is a Canvas Platform instance slug. Values
-            come from ~/.canvas/plugin-secrets/<instance>.json keyed by plugin name and are
+            come from ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are
             never returned in the output. Consent requests for custom data access are never
             answered here: they are returned for the user to answer in their own terminal.
 
             Args:
-                plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
+                plugin_name: The inner package folder name. Variables are keyed by the manifest name.
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
             """
@@ -219,11 +231,11 @@ class CanvasDeployerMcp:
 
             Runs canvas config set for the variables declared in CANVAS_MANIFEST.json. The
             instance is a Canvas Platform instance slug. Values come from
-            ~/.canvas/plugin-secrets/<instance>.json keyed by plugin name and are never
+            ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are never
             returned in the output. Use it after the user approves a pending consent request.
 
             Args:
-                plugin_name: The inner package folder name, `<prefix>__<name>`, which is also the manifest name.
+                plugin_name: The inner package folder name. Variables are keyed by the manifest name.
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
             """
