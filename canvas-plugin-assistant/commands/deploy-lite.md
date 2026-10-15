@@ -151,7 +151,11 @@ If cache busting is missing, add it before proceeding with deployment.
 }
 ```
 
-   Only `git add` the specific untracked files the user approves.
+   Only `git add` the specific untracked files the user approves. `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
+
+   ```bash
+   echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
+   ```
 
 4. Commit (never push; `canvas deploy` pushes the commit to the plugin's Canvas Platform repository):
 
@@ -185,7 +189,9 @@ If cache busting is missing, add it before proceeding with deployment.
 
 7. **If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, wait for the deployment to succeed (check the Platform deployment status or the streamed logs), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 6. If the deployment fails, show the failure and stop.
 
-8. **Otherwise, if the output starts with `Command failed`**, the deploy failed. Show the output and stop.
+8. **If the output contains `Uncommitted files`**, the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat sub-steps 1-4 above for the files listed by `git status --porcelain`, then call `deployer` again.
+
+9. **Otherwise, if the output starts with `Command failed`**, the deploy failed. Show the output and stop.
 
 ### Step 6: Post-Deployment Log Check
 

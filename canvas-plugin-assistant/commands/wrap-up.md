@@ -538,7 +538,7 @@ Pushing is outward-facing and irreversible, so confirm first:
       "question": "Committed locally. Push to Canvas Platform now?",
       "header": "Push?",
       "options": [
-        {"label": "Push now (to Canvas Platform)", "description": "Run git push to publish the commit to this plugin's Canvas Platform repository (main there)"},
+        {"label": "Push now (to Canvas Platform)", "description": "Run canvas deploy --push-only to publish the commit to this plugin's Canvas Platform repository (main there) without deploying it"},
         {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
       ],
       "multiSelect": false
@@ -547,7 +547,13 @@ Pushing is outward-facing and irreversible, so confirm first:
 }
 ```
 
-`git push` publishes to the plugin's Canvas Platform repository (`main` there), and `/cpa:deploy` already pushes on every deploy. Only run `git push` if the user chooses to push.
+Only push if the user chooses to. `/cpa:deploy` already pushes on every deploy. Push with the Canvas CLI, which pushes HEAD to `main` on the plugin's Canvas Platform repository without deploying it (a bare `git push` has no upstream to push to):
+
+```bash
+uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only
+```
+
+It refuses while any untracked file remains. Add each untracked file the user left out in Step 13c to `.git/info/exclude` (`echo "<path>" >> "$(git rev-parse --git-dir)/info/exclude"`), never pass `--yes` (it commits every file), then run it again.
 
 ### 14. Wrap-Up Complete
 
