@@ -32,7 +32,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
 ```
 
 **If structure validation fails:**

@@ -27,16 +27,16 @@ class PlatformSession:
         Args:
             show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs, "publishers" for publishing organization slugs and prefixes.
         """
-        platform: str = auth.resolve_platform_url()
-        if auth.stored_tokens(platform) is None:
-            cls.exit_with_error(
-                f"Not signed in to Canvas Platform at {platform}. "
-                "Run `uv run --with 'canvas>=0.245.0' canvas login` in your terminal "
-                "(it opens a browser), then try again."
-            )
-
-        client = PlatformClient(platform)
         try:
+            platform: str = auth.resolve_platform_url()
+            if auth.stored_tokens(platform) is None:
+                cls.exit_with_error(
+                    f"Not signed in to Canvas Platform at {platform}. "
+                    "Run `uv run --with 'canvas>=0.245.0' canvas login` in your terminal "
+                    "(it opens a browser), then try again."
+                )
+
+            client = PlatformClient(platform)
             if show == "whoami":
                 cls.print_whoami(
                     platform, client.me(), cls.deployable_instances(client.instances())

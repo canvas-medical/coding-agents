@@ -32,7 +32,7 @@ ls -la .claude/settings.local.json
   2. Run: 
   mkdir -p .claude
   export CC_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT}
-  cp $${CC_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
+  cp ${CC_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
   claude
   3. Then run /cpa:check-setup again
 
@@ -177,7 +177,7 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
-- **If `whoami` passes**: Report the signed-in email, each publishing organization with its plugin prefix, and the instances you can deploy to
+- **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
   - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. Existing Canvas Platform plugins can still be deployed to the listed instances
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
@@ -188,10 +188,11 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 
 ```bash
 ls ~/.canvas/credentials.ini
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
 ```
 
-- **If the file exists**: Report "log streaming available for: [sections of the file]" (the `[section]` names are instance slugs)
-- **If missing**: Report a warning only: `/cpa:deploy` deploys without it but cannot stream logs. `credentials.ini` support ends December 14, 2026.
+- **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug from `instances`]". A section that matches no deployable instance slug, such as `localhost`, does not count. Report "log streaming unavailable for: [deployable instances without a section]".
+- **If the file is missing, or no section matches a deployable instance**: Report a warning only: `/cpa:deploy` deploys without it but cannot stream logs. `credentials.ini` support ends December 14, 2026.
 
 ### 11. Check Claude Model
 
@@ -223,8 +224,8 @@ If all checks pass, report:
   uv: installed
   unbuffer: installed
   Canvas CLI: [version or "will be installed with plugin"]
-  Canvas Platform: signed in as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
-  Log streaming: [available for sections, or "not configured (optional)"]
+  Canvas Platform: signed in to [Platform host] as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
+  Log streaming: [available for matching deployable instances, unavailable for the rest, or "not configured (optional)"]
   model: [current model] [with recommendation if not opus]
 
 You're ready to start building Canvas plugins.
