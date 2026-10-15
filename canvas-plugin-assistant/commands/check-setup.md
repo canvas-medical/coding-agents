@@ -187,7 +187,7 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 ### 10. Check log streaming credentials (optional)
 
 ```bash
-rg '^\[' ~/.canvas/credentials.ini
+grep '^\[' ~/.canvas/credentials.ini
 uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
 ```
 

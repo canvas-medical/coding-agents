@@ -244,7 +244,7 @@ echo "{plugin_name_from_spec}" | uv run --with 'canvas>=0.245.0' canvas init --o
 cd {plugin_name}
 ```
 
-Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, remove the scaffolded folder with `trash` and start over once that is fixed.
+Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, move the scaffolded folder aside so the name is free (`cd "$CPA_WORKSPACE_DIR" && mv "{plugin_name}" "{plugin_name}.unprefixed"`), and start over once that is fixed.
 
 `{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform.
 

@@ -145,7 +145,7 @@ git add -u .
 `git add -u .` stages modifications and deletions of tracked files only, scoped to the current directory. Then list untracked files:
 
 ```bash
-git status --porcelain --untracked-files=all . | rg '^\?\?'
+git status --porcelain --untracked-files=all . | grep '^??'
 ```
 
 If there are untracked files, read each one and flag any that look like secrets or local-only scratch (`*.env`, `*secret*`, `*credential*`, `*.key`, `*.pem`, `*token*`, or contents with `api_key`, `password`, `Bearer `, `-----BEGIN`). Ask once which to include, never pre-selecting a flagged file:

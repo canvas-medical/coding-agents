@@ -161,7 +161,7 @@ ls "$plugin_name"/*__*/CANVAS_MANIFEST.json
 - **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal.
 - **Signed in, but no organization lets them push plugin code:** it prints "scaffolded without a publisher prefix". Tell the user an organization admin must grant them the Plugin developer role.
 
-Either way, remove the scaffolded folder (with `trash`) and re-run `/cpa:new-plugin` once that is fixed.
+Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_name" "$plugin_name.unprefixed"`), and re-run `/cpa:new-plugin` once that is fixed.
 
 This creates:
 ```

@@ -131,7 +131,10 @@ class CanvasDeployerMcp:
         if not manifest_file.exists():
             return f"Error: manifest not found: {manifest_file}"
 
-        manifest: dict = json.loads(manifest_file.read_text(encoding="utf-8"))
+        try:
+            manifest: dict = json.loads(manifest_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            return f"Error: manifest is not valid JSON: {manifest_file}: {error}"
         return manifest_file, manifest
 
     @classmethod

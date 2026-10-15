@@ -222,6 +222,22 @@ class TestDeploy:
         expected = f"Error: manifest not found: {tmp_path / PLUGIN / 'CANVAS_MANIFEST.json'}\n\nStatus: invalid_input"
         assert result == expected
 
+    @pytest.mark.parametrize("method", ["deploy", "configure"])
+    def test_deploy__unreadable_manifest_is_invalid_input(self, tmp_path: Path, method: str) -> None:
+        """A manifest that is not valid JSON returns a status line instead of raising, and runs nothing."""
+        tested = CanvasDeployerMcp
+        plugin_dir = tmp_path / PLUGIN
+        plugin_dir.mkdir()
+        (plugin_dir / "CANVAS_MANIFEST.json").write_text('{"name": "acme__vitals_alert",}', encoding="utf-8")
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            result = asyncio.run(getattr(tested, method)(plugin_name=PLUGIN, instance=INSTANCE, cwd=str(tmp_path)))
+
+        manifest_file = plugin_dir / "CANVAS_MANIFEST.json"
+        assert result.startswith(f"Error: manifest is not valid JSON: {manifest_file}: ")
+        assert result.splitlines()[-1] == "Status: invalid_input"
+        assert mock_cmd.mock_calls == []
+
     def test_deploy__runs_canvas_deploy_then_config_set(self, tmp_path: Path) -> None:
         """Deploy first, then set manifest variables from the secrets file, never echoing values."""
         tested = CanvasDeployerMcp
