@@ -150,7 +150,18 @@ cd "$CPA_WORKSPACE_DIR"
 echo "$plugin_name" | uv run --with 'canvas>=0.245.0' canvas init --org "$org_slug"
 ```
 
-**If the output says the plugin was scaffolded "without a publisher prefix":** STOP. The sign-in was not active, so the plugin has no organization prefix and cannot be deployed. Ask the user to run `canvas login` in their own terminal, remove the scaffolded folder (with `trash`), and re-run `/cpa:new-plugin`.
+**Check the organization prefix:**
+
+```bash
+ls "$plugin_name"/*__*/CANVAS_MANIFEST.json
+```
+
+**If it finds no file:** STOP. The plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. `canvas init` does this in two cases:
+
+- **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal.
+- **Signed in, but no organization lets them push plugin code:** it prints "scaffolded without a publisher prefix". Tell the user an organization admin must grant them the Plugin developer role.
+
+Either way, remove the scaffolded folder (with `trash`) and re-run `/cpa:new-plugin` once that is fixed.
 
 This creates:
 ```

@@ -43,7 +43,7 @@ Follow these steps in order:
 
 5. **Determine Save Location**:
    - Check if currently in a Canvas plugin directory (look for CANVAS_MANIFEST.json)
-   - If in plugin directory: save to the inner plugin folder's `assets/` directory (snake_case folder name)
+   - If in plugin directory: save to the inner plugin folder's `assets/` directory (the `<prefix>__<name>` folder that holds `CANVAS_MANIFEST.json`)
    - If not in the plugin directory: save to the current working directory
    - Report the save location to the user
 
