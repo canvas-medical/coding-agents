@@ -200,7 +200,7 @@ class TestDeploy:
         with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
             result = asyncio.run(tested.deploy(**kwargs))
 
-        assert result == expected
+        assert result == f"{expected}\n\nStatus: invalid_input"
         assert mock_cmd.mock_calls == []
 
     def test_deploy__plugin_dir_not_found(self, tmp_path: Path) -> None:
@@ -209,7 +209,7 @@ class TestDeploy:
 
         result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=str(tmp_path)))
 
-        expected = f"Error: plugin directory not found: {tmp_path / PLUGIN}"
+        expected = f"Error: plugin directory not found: {tmp_path / PLUGIN}\n\nStatus: invalid_input"
         assert result == expected
 
     def test_deploy__manifest_not_found(self, tmp_path: Path) -> None:
@@ -219,7 +219,7 @@ class TestDeploy:
 
         result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = f"Error: manifest not found: {tmp_path / PLUGIN / 'CANVAS_MANIFEST.json'}"
+        expected = f"Error: manifest not found: {tmp_path / PLUGIN / 'CANVAS_MANIFEST.json'}\n\nStatus: invalid_input"
         assert result == expected
 
     def test_deploy__runs_canvas_deploy_then_config_set(self, tmp_path: Path) -> None:
@@ -235,7 +235,7 @@ class TestDeploy:
             mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
             result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = "Deploy output:\nDeployed\n\nConfigure output:\nSet 2 variable(s)"
+        expected = "Deploy output:\nDeployed\n\nConfigure output:\nSet 2 variable(s)\n\nStatus: deployed"
         assert result == expected
         assert "sk-1" not in result
 
@@ -267,6 +267,7 @@ class TestDeploy:
             "their own terminal. Do not retry with --yes.\n"
             f"  cd {cwd} && uv run canvas deploy {PLUGIN} --no-push --instance {INSTANCE}\n"
             "After it succeeds there, call the configurer tool to set variables."
+            "\n\nStatus: consent_pending"
         )
         assert result == expected
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
@@ -285,7 +286,7 @@ class TestDeploy:
             mock_cmd.side_effect = [failure]
             result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = f"Deploy output:\n{failure}"
+        expected = f"Deploy output:\n{failure}\n\nStatus: deploy_failed"
         assert result == expected
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
         assert mock_secrets.mock_calls == []
@@ -302,7 +303,10 @@ class TestDeploy:
             mock_cmd.side_effect = ["Deployed"]
             result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = "Deploy output:\nDeployed\n\nConfigure skipped: no variable values found in the secrets file."
+        expected = (
+            "Deploy output:\nDeployed\n\nConfigure skipped: no variable values found in the secrets file."
+            "\n\nStatus: deployed"
+        )
         assert result == expected
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
         assert mock_secrets.mock_calls == []
@@ -323,6 +327,7 @@ class TestDeploy:
         expected = (
             "Deploy output:\nDeployed\n\nConfigure output:\nSet 1 variable(s)"
             "\nWarning: secrets not provided (missing or empty): API_URL"
+            "\n\nStatus: deployed"
         )
         assert result == expected
         assert mock_cmd.mock_calls[1] == call(command=config_set_cmd("API_KEY=sk-1"), cwd=cwd)
@@ -352,7 +357,7 @@ class TestConfigure:
 
         result = asyncio.run(tested.configure(**kwargs))
 
-        assert result == expected
+        assert result == f"{expected}\n\nStatus: invalid_input"
 
     def test_configure__sets_only(self, tmp_path: Path) -> None:
         """Run config set without deploying, for use after the person approves consent."""
@@ -367,7 +372,7 @@ class TestConfigure:
             mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
             result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = "Configure output:\nSet 2 variable(s)"
+        expected = "Configure output:\nSet 2 variable(s)\n\nStatus: configured"
         assert result == expected
         assert "sk-1" not in result
         exp_cmd_calls = [call(command=config_set_cmd("API_KEY=sk-1", "API_URL=https://x"), cwd=cwd)]
@@ -388,9 +393,113 @@ class TestConfigure:
         expected = (
             "Configure skipped: no variable values found in the secrets file."
             "\nWarning: secrets not provided (missing or empty): API_KEY, API_URL"
+            "\n\nStatus: configured"
         )
         assert result == expected
         assert mock_cmd.mock_calls == []
+
+
+STILL_RUNNING_OUTPUT = (
+    "Command failed with exit code 1\n"
+    "Deployment 6f1c created.\n"
+    "Deploy of acme__vitals_alert is still running after 300s (deployment 6f1c)."
+)
+DIRTY_OUTPUT = (
+    "Command failed with exit code 2\n"
+    "Error: Invalid value: You have uncommitted changes, and deploy only pushes committed work."
+)
+DEPLOY_FAILED_OUTPUT = "Command failed with exit code 2\nManifest name is not publisher-prefixed"
+CONFIG_FAILED_OUTPUT = "Command failed with exit code 1\nNo deployed plugin acme__vitals_alert on acme-staging."
+
+
+class TestStatusLine:
+    """Every tool result ends with one `Status:` line, the only thing the deploy prose routes on."""
+
+    @pytest.mark.parametrize(
+        ("manifest", "plugin_name", "outputs", "expected"),
+        [
+            pytest.param(MANIFEST, "", [], "Status: invalid_input", id="invalid_input"),
+            pytest.param(MANIFEST, PLUGIN, [CONSENT_OUTPUT], "Status: consent_pending", id="consent_pending"),
+            pytest.param(MANIFEST, PLUGIN, [STILL_RUNNING_OUTPUT], "Status: still_running", id="still_running"),
+            pytest.param(MANIFEST, PLUGIN, [DIRTY_OUTPUT], "Status: dirty_tree", id="dirty_tree"),
+            pytest.param(MANIFEST, PLUGIN, [DEPLOY_FAILED_OUTPUT], "Status: deploy_failed", id="deploy_failed"),
+            pytest.param(
+                MANIFEST,
+                PLUGIN,
+                ["Deployed", CONFIG_FAILED_OUTPUT],
+                "Status: configure_failed",
+                id="configure_failed",
+            ),
+            pytest.param(MANIFEST, PLUGIN, ["Deployed", "Set 2 variable(s)"], "Status: deployed", id="deployed"),
+            pytest.param({"name": PLUGIN}, PLUGIN, ["Deployed"], "Status: deployed", id="deployed_no_variables"),
+        ],
+    )
+    def test_deploy__status_line(
+        self,
+        tmp_path: Path,
+        manifest: dict,
+        plugin_name: str,
+        outputs: list[str],
+        expected: str,
+    ) -> None:
+        """The deployer's last line names the one outcome, whatever the CLI printed above it."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, manifest)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = outputs
+            mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
+            result = asyncio.run(tested.deploy(plugin_name=plugin_name, instance=INSTANCE, cwd=cwd))
+
+        assert result.splitlines()[-1] == expected
+        assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
+
+    @pytest.mark.parametrize(
+        ("plugin_name", "secrets", "outputs", "expected"),
+        [
+            pytest.param("", {}, [], "Status: invalid_input", id="invalid_input"),
+            pytest.param(
+                PLUGIN,
+                {"API_KEY": "sk-1", "API_URL": "https://x"},
+                [CONFIG_FAILED_OUTPUT],
+                "Status: configure_failed",
+                id="configure_failed",
+            ),
+            pytest.param(
+                PLUGIN,
+                {"API_KEY": "sk-1", "API_URL": "https://x"},
+                ["Set 2 variable(s)"],
+                "Status: configured",
+                id="configured",
+            ),
+            pytest.param(PLUGIN, {}, [], "Status: configured", id="configured_nothing_to_set"),
+        ],
+    )
+    def test_configure__status_line(
+        self,
+        tmp_path: Path,
+        plugin_name: str,
+        secrets: dict[str, str],
+        outputs: list[str],
+        expected: str,
+    ) -> None:
+        """The configurer's last line names the one outcome."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = outputs
+            mock_secrets.side_effect = [secrets]
+            result = asyncio.run(tested.configure(plugin_name=plugin_name, instance=INSTANCE, cwd=cwd))
+
+        assert result.splitlines()[-1] == expected
+        assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
 
 
 class TestCreateServer:
@@ -561,7 +670,7 @@ class TestDeployScenarios:
         # The person approved at their terminal; the agent calls configurer in a later turn.
         result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
 
-        expected = f"Configure output:\n{CLI_CONFIG_OK_STDOUT.strip()}"
+        expected = f"Configure output:\n{CLI_CONFIG_OK_STDOUT.strip()}\n\nStatus: configured"
         assert result == expected
         exp_argv = [DEPLOY_CMD, config_set_cmd("WEBHOOK_ID=wh_01J9QX", "AUTH_TOKEN=tok_9f2")]
         assert read_argv_log(log) == exp_argv
@@ -601,6 +710,7 @@ class TestDeployScenarios:
             f"Deploy output:\n{CLI_DEPLOY_OK_STDOUT.strip()}\n\n"
             "Configure skipped: no variable values found in the secrets file."
             "\nWarning: secrets not provided (missing or empty): WEBHOOK_ID, AUTH_TOKEN"
+            "\n\nStatus: deployed"
         )
         assert result == expected
         assert read_argv_log(log) == [DEPLOY_CMD]
@@ -705,6 +815,7 @@ class TestDeployScenarios:
             "Do not retry with --yes: it commits every file, including ones the user left out, and pushes them "
             "to Canvas Platform. Commit the files the user approves and add the rest to .git/info/exclude, "
             "then call the deployer tool again."
+            "\n\nStatus: dirty_tree"
         )
         assert result == expected
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
