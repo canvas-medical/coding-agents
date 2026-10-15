@@ -195,7 +195,7 @@ The MCP tool runs `canvas deploy`, then reads variable names from `CANVAS_MANIFE
 
 If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-If the deploy fails, show the output and fix the cause (see Troubleshooting), then call `deployer` again.
+Check the output against the cases below in order. Consent output starts with `Command failed with exit code 1` but is not a failure to retry, so check for `Consent needed` first. Never call `deployer` again for consent or for a deployment that is still running: a second call creates a second waiting deployment.
 
 **If the output contains `Consent needed`**, the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -206,6 +206,10 @@ If the deploy fails, show the output and fix the cause (see Troubleshooting), th
 5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below.
 6. **User denied:** the deployment is cancelled. Report that to the parent command and stop.
 7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and report that to the parent command, which stops.
+
+**If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, wait for the deployment to succeed (check the Platform deployment status), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
+
+**Otherwise, if the output starts with `Command failed`**, the deploy failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
 
 After the deploy completes, **return to the parent command**. The parent handles log checking and UAT from here.
 

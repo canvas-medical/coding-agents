@@ -171,7 +171,7 @@ If cache busting is missing, add it before proceeding with deployment.
 
    If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-   If the deploy fails, show the output and stop.
+   Check the output against the cases below in order. Consent output starts with `Command failed with exit code 1` but is not a failure to retry, so check for `Consent needed` first. Never call `deployer` again for consent or for a deployment that is still running: a second call creates a second waiting deployment.
 
 6. **If the output contains `Consent needed`**, the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -182,6 +182,10 @@ If cache busting is missing, add it before proceeding with deployment.
    5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
    6. **User denied:** the deployment is cancelled. Report that, stop log monitoring (KillShell), and stop.
    7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user, stop log monitoring (KillShell), and stop.
+
+7. **If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, wait for the deployment to succeed (check the Platform deployment status or the streamed logs), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 6. If the deployment fails, show the failure and stop.
+
+8. **Otherwise, if the output starts with `Command failed`**, the deploy failed. Show the output and stop.
 
 ### Step 6: Post-Deployment Log Check
 
