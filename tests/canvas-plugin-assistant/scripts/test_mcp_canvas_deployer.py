@@ -7,6 +7,7 @@ import shlex
 from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
+import canvas_cli.apps.platform
 import pytest
 
 from mcp_canvas_deployer import CanvasDeployerMcp
@@ -516,6 +517,32 @@ class TestStatusLine:
 
         assert result.splitlines()[-1] == expected
         assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
+
+
+def canvas_cli_platform_source() -> str:
+    """Return the installed canvas CLI's Canvas Platform source, tests excluded.
+
+    Returns:
+        str: The concatenated text of `canvas_cli/apps/platform/*.py`, without `test_*.py`.
+    """
+    package_dir = Path(canvas_cli.apps.platform.__file__).parent
+    files = sorted(path for path in package_dir.glob("*.py") if not path.name.startswith("test_"))
+    return "\n".join(path.read_text(encoding="utf-8") for path in files)
+
+
+@pytest.mark.parametrize(
+    "marker",
+    [
+        pytest.param(CanvasDeployerMcp.CONSENT_PENDING_MARKER, id="consent_pending"),
+        pytest.param(CanvasDeployerMcp.STILL_RUNNING_MARKER, id="still_running"),
+        pytest.param(CanvasDeployerMcp.UNCOMMITTED_MARKER, id="uncommitted"),
+    ],
+)
+def test_marker_matches_canvas_cli(marker: str) -> None:
+    """Each marker the deployer routes on is text the installed canvas CLI prints, so a CLI rewording fails here."""
+    source = canvas_cli_platform_source()
+
+    assert marker in source, f"canvas CLI no longer prints {marker!r}; update the deployer marker"
 
 
 class TestCreateServer:
