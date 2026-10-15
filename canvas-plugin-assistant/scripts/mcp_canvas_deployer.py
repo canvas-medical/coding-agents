@@ -30,6 +30,14 @@ class CanvasDeployerMcp:
         "Call the configurer tool once the deployment succeeds."
     )
 
+    UNCOMMITTED_MARKER: str = "You have uncommitted changes"
+    UNCOMMITTED_NOTE: str = (
+        "Uncommitted files: canvas deploy refuses any uncommitted or untracked file in the repository. "
+        "Do not retry with --yes: it commits every file, including ones the user left out, and pushes them "
+        "to Canvas Platform. Commit the files the user approves and add the rest to .git/info/exclude, "
+        "then call the deployer tool again."
+    )
+
     @classmethod
     def _parse_variable_names(cls, manifest: dict) -> list[str]:
         """Return the list of variable names declared in a manifest.
@@ -181,6 +189,8 @@ class CanvasDeployerMcp:
             )
         if cls.STILL_RUNNING_MARKER in result:
             return f"{output}\n\n{cls.STILL_RUNNING_NOTE}"
+        if cls.UNCOMMITTED_MARKER in result:
+            return f"{output}\n\n{cls.UNCOMMITTED_NOTE}"
         if result.startswith("Command failed"):
             return output
         return f"{output}\n\n{await cls._configure(instance, cwd, manifest)}"
