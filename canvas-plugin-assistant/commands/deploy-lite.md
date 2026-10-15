@@ -175,7 +175,7 @@ If cache busting is missing, add it before proceeding with deployment.
 
    If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-   Check the output against the cases below in order. Consent output starts with `Command failed with exit code 1` but is not a failure to retry, so check for `Consent needed` first. Never call `deployer` again for consent or for a deployment that is still running: a second call creates a second waiting deployment.
+   The tool output starts with `Deploy output:` followed by the `canvas deploy` output, and, when the deploy succeeded, a `Configure output:` or `Configure skipped:` section. Check it against the cases below in order. Consent output contains `Command failed with exit code 1` but is not a failure to retry, so check for `Consent needed` first. Never call `deployer` again for consent or for a deployment that is still running: a second call creates a second waiting deployment.
 
 6. **If the output contains `Consent needed`**, the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -191,7 +191,9 @@ If cache busting is missing, add it before proceeding with deployment.
 
 8. **If the output contains `Uncommitted files`**, the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat sub-steps 1-4 above for the files listed by `git status --porcelain`, then call `deployer` again.
 
-9. **Otherwise, if the output starts with `Command failed`**, the deploy failed. Show the output and stop.
+9. **Otherwise, if the output starts with `Error:` or the line after `Deploy output:` starts with `Command failed`**, the deploy failed. Show the output, stop log monitoring (KillShell), and stop.
+
+10. **If the `Configure output:` section starts with `Command failed`**, the plugin is deployed but its variables were not set. Show that output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool succeeds, then continue to Step 6.
 
 ### Step 6: Post-Deployment Log Check
 
