@@ -678,3 +678,34 @@ class TestDeployScenarios:
         assert "configurer" in note
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
         assert mock_secrets.mock_calls == []
+
+    def test_deploy__uncommitted_changes_never_points_at_yes(self, tmp_path: Path) -> None:
+        """A dirty tree refusal says to commit or exclude the files, never to retry with --yes, which commits every file."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+        dirty = (
+            "Command failed with exit code 2\n"
+            "Usage: canvas deploy [OPTIONS] PLUGIN_DIR\n"
+            "Try 'canvas deploy --help' for help.\n"
+            "Error: Invalid value: You have uncommitted changes, and deploy only pushes committed work. "
+            "Commit them and run deploy again, pass --yes to commit them, or pass --ref / --no-push to "
+            "deploy a ref that is already pushed."
+        )
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [dirty]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        expected = (
+            f"Deploy output:\n{dirty}\n\n"
+            "Uncommitted files: canvas deploy refuses any uncommitted or untracked file in the repository. "
+            "Do not retry with --yes: it commits every file, including ones the user left out, and pushes them "
+            "to Canvas Platform. Commit the files the user approves and add the rest to .git/info/exclude, "
+            "then call the deployer tool again."
+        )
+        assert result == expected
+        assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
+        assert mock_secrets.mock_calls == []
