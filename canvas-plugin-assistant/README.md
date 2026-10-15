@@ -168,7 +168,7 @@ root_password = your_admin_password
 ### Plugin Secrets
 
 Plugins that declare `variables` in `CANVAS_MANIFEST.json` need values for each instance. CPA reads these values from a per-instance JSON file and
-passes them to `canvas config set` after each deploy, because `canvas config set` targets instances the plugin is already deployed to. Secret values are never exposed to Claude Code.
+passes them to `canvas config set` after each successful deploy. Secret values are never exposed to Claude Code.
 
 **Default location:**
 
@@ -224,7 +224,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ## Workflow
 
 ```
-:check-setup      →  Verify environment tools (uv, unbuffer)
+:check-setup      →  Verify environment tools and Canvas Platform sign-in
 :new-plugin       →  Create plugin from requirements
 :deploy           →  Deploy to Canvas instance for UAT
 :coverage                    →  Check test coverage (aim for 90%)
@@ -234,7 +234,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ```
 
 1. **Check Setup** (`:check-setup`)
-    - Verify uv and unbuffer are installed
+    - Verify git, uv, unbuffer, and the Canvas CLI are installed and you are signed in to Canvas Platform
 
 2. **Describe the Problem** (`:new-plugin`)
     - Tell Claude what the customer needs

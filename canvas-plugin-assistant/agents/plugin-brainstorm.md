@@ -244,7 +244,7 @@ echo "{plugin_name_from_spec}" | uv run --with 'canvas>=0.245.0' canvas init --o
 cd {plugin_name}
 ```
 
-If the output says the plugin was scaffolded "without a publisher prefix", STOP: the sign-in was not active, so the plugin cannot be deployed. Ask the user to sign in and start over.
+Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, remove the scaffolded folder with `trash` and start over once that is fixed.
 
 `{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform.
 
@@ -397,7 +397,7 @@ Canvas plugins MUST use absolute imports with the full package path. Relative im
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.utils.helpers import format_date
+from acme__my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
 from .helpers import format_date

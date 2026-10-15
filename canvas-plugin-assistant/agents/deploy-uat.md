@@ -213,7 +213,7 @@ The tool output starts with `Deploy output:` followed by the `canvas deploy` out
 6. **User denied:** the deployment is cancelled. Report that to the parent command and stop.
 7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and report that to the parent command, which stops.
 
-**If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, wait for the deployment to succeed (check the Platform deployment status), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
+**If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
 
 **If the output contains `Uncommitted files`**, the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat Step 3 for the files listed by `git status --porcelain`, then call `deployer` again.
 

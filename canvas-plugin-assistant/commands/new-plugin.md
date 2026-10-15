@@ -420,7 +420,7 @@ Do NOT use: "Added...", "Adding...", "I added...", or similar.
 This command is **step 2** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements  ← YOU ARE HERE
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
