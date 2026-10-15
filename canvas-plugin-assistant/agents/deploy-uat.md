@@ -201,9 +201,9 @@ The MCP tool runs `canvas deploy`, then reads variable names from `CANVAS_MANIFE
 
 If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-The tool output starts with `Deploy output:` followed by the `canvas deploy` output, and, when the deploy succeeded, a `Configure output:` or `Configure skipped:` section. Check it against the cases below in order. Consent output contains `Command failed with exit code 1` but is not a failure to retry, so check for `Consent needed` first. Never call `deployer` again for consent or for a deployment that is still running: a second call creates a second waiting deployment.
+The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending` or `still_running`: a second call creates a second waiting deployment. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed`.
 
-**If the output contains `Consent needed`**, the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
+**`Status: consent_pending`**: the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
 1. Show the request lines (the `•` lines in the output) verbatim.
 2. Explain: approving gives one plugin access to another plugin's custom data on that instance, and only a person at a terminal can answer.
@@ -213,13 +213,15 @@ The tool output starts with `Deploy output:` followed by the `canvas deploy` out
 6. **User denied:** the deployment is cancelled. Report that to the parent command and stop.
 7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and report that to the parent command, which stops.
 
-**If the output contains `is still running after`**, the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
+**`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
 
-**If the output contains `Uncommitted files`**, the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat Step 3 for the files listed by `git status --porcelain`, then call `deployer` again.
+**`Status: dirty_tree`**: the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat Step 3 for the files listed by `git status --porcelain`, then call `deployer` again.
 
-**Otherwise, if the output starts with `Error:` or the line after `Deploy output:` starts with `Command failed`**, the deploy failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
+**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
 
-**If the `Configure output:` section starts with `Command failed`**, the plugin is deployed but its variables were not set. Show that output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`.
+**`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`, until it ends with `Status: configured`.
+
+**`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest).
 
 After the deploy completes, **return to the parent command**. The parent handles log checking and UAT from here.
 
