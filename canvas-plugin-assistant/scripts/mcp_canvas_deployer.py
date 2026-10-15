@@ -39,6 +39,21 @@ class CanvasDeployerMcp:
     )
 
     @classmethod
+    def _with_status(cls, text: str, status: str) -> str:
+        """End a tool result with its one machine-readable status line.
+
+        The deploy prose routes only on this line, never on the CLI text above it.
+
+        Args:
+            text (str): The tool result.
+            status (str): One of the documented statuses, such as `deployed` or `deploy_failed`.
+
+        Returns:
+            str: The result followed by `Status: <status>`.
+        """
+        return f"{text}\n\nStatus: {status}"
+
+    @classmethod
     def _parse_variable_names(cls, manifest: dict) -> list[str]:
         """Return the list of variable names declared in a manifest.
 
@@ -120,7 +135,7 @@ class CanvasDeployerMcp:
         return manifest_file, manifest
 
     @classmethod
-    async def _configure(cls, instance: str, cwd: str, manifest: dict) -> str:
+    async def _configure(cls, instance: str, cwd: str, manifest: dict) -> tuple[str, bool]:
         """Set the manifest variables on the instance from the secrets file.
 
         Variables are keyed by the manifest name, which is the name Canvas Platform manages the plugin under.
@@ -132,7 +147,7 @@ class CanvasDeployerMcp:
             manifest: Parsed CANVAS_MANIFEST.json.
 
         Returns:
-            str: The configure output, or a note that nothing was set.
+            tuple[str, bool]: The configure output or a note that nothing was set, and whether `canvas config set` failed.
         """
         manifest_name: str = manifest["name"]
         names = cls._parse_variable_names(manifest)
@@ -146,13 +161,13 @@ class CanvasDeployerMcp:
         if skipped:
             warning = f"\nWarning: secrets not provided (missing or empty): {', '.join(skipped)}"
         if not provided:
-            return f"Configure skipped: no variable values found in the secrets file.{warning}"
+            return f"Configure skipped: no variable values found in the secrets file.{warning}", False
 
         command = ["uv", "run", "canvas", "config", "set", manifest_name]
         command.extend(f"{name}={values[name]}" for name in provided)
         command.extend(["--instance", instance])
         result = await cls._run_canvas_command(command=command, cwd=cwd)
-        return f"Configure output:\n{result}{warning}"
+        return f"Configure output:\n{result}{warning}", result.startswith("Command failed")
 
     @classmethod
     async def deploy(cls, plugin_name: str, instance: str, cwd: str) -> str:
@@ -168,11 +183,13 @@ class CanvasDeployerMcp:
             cwd: Working directory (plugin container directory).
 
         Returns:
-            str: The deploy output followed by the configure output, the consent note, or the still-running note.
+            str: The deploy output followed by the configure output, the consent note, or the still-running note,
+                ending with a `Status:` line: `invalid_input`, `consent_pending`, `still_running`, `dirty_tree`,
+                `deploy_failed`, `configure_failed`, or `deployed`.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
-            return checked
+            return cls._with_status(checked, "invalid_input")
         _, manifest = checked
 
         result = await cls._run_canvas_command(
@@ -181,19 +198,21 @@ class CanvasDeployerMcp:
         )
         output = f"Deploy output:\n{result}"
         if cls.CONSENT_PENDING_MARKER in result:
-            return (
+            consent = (
                 f"{output}\n\n{cls.CONSENT_NOTE}\n"
                 f"  cd {shlex.quote(cwd)} && uv run canvas deploy {shlex.quote(plugin_name)} "
                 f"--no-push --instance {shlex.quote(instance)}\n"
                 "After it succeeds there, call the configurer tool to set variables."
             )
+            return cls._with_status(consent, "consent_pending")
         if cls.STILL_RUNNING_MARKER in result:
-            return f"{output}\n\n{cls.STILL_RUNNING_NOTE}"
+            return cls._with_status(f"{output}\n\n{cls.STILL_RUNNING_NOTE}", "still_running")
         if cls.UNCOMMITTED_MARKER in result:
-            return f"{output}\n\n{cls.UNCOMMITTED_NOTE}"
+            return cls._with_status(f"{output}\n\n{cls.UNCOMMITTED_NOTE}", "dirty_tree")
         if result.startswith("Command failed"):
-            return output
-        return f"{output}\n\n{await cls._configure(instance, cwd, manifest)}"
+            return cls._with_status(output, "deploy_failed")
+        configured, failed = await cls._configure(instance, cwd, manifest)
+        return cls._with_status(f"{output}\n\n{configured}", "configure_failed" if failed else "deployed")
 
     @classmethod
     async def configure(cls, plugin_name: str, instance: str, cwd: str) -> str:
@@ -205,13 +224,15 @@ class CanvasDeployerMcp:
             cwd: Working directory (plugin container directory).
 
         Returns:
-            str: The configure output, or an error message.
+            str: The configure output or an error message, ending with a `Status:` line: `invalid_input`,
+                `configure_failed`, or `configured`.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
-            return checked
+            return cls._with_status(checked, "invalid_input")
         _, manifest = checked
-        return await cls._configure(instance, cwd, manifest)
+        configured, failed = await cls._configure(instance, cwd, manifest)
+        return cls._with_status(configured, "configure_failed" if failed else "configured")
 
     @classmethod
     def create_server(cls) -> FastMCP:
@@ -227,6 +248,8 @@ class CanvasDeployerMcp:
             come from ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are
             never returned in the output. Consent requests for custom data access are never
             answered here: they are returned for the user to answer in their own terminal.
+            The output ends with one `Status:` line: invalid_input, consent_pending,
+            still_running, dirty_tree, deploy_failed, configure_failed, or deployed.
 
             Args:
                 plugin_name: The inner package folder name. Variables are keyed by the manifest name.
@@ -243,6 +266,7 @@ class CanvasDeployerMcp:
             instance is a Canvas Platform instance slug. Values come from
             ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are never
             returned in the output. Use it after the user approves a pending consent request.
+            The output ends with one `Status:` line: invalid_input, configure_failed, or configured.
 
             Args:
                 plugin_name: The inner package folder name. Variables are keyed by the manifest name.
