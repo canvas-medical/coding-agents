@@ -157,8 +157,8 @@ Imports within your own plugin must always use the full plugin-namespace prefix:
 
 ```python
 # GOOD — full plugin-namespace path
-from my_plugin.utils.helpers import format_date
-from my_plugin.services.session import Session
+from acme__my_plugin.utils.helpers import format_date
+from acme__my_plugin.services.session import Session
 
 # BAD — bare module names, sandbox rejects with "'X' is not an allowed import"
 import thresholds
