@@ -132,7 +132,7 @@ If cache busting is missing, add it before proceeding with deployment.
    git add -u .
    ```
 
-3. List untracked files (`git status --porcelain --untracked-files=all . | rg '^\?\?'`). If there are any, read each one and flag any that look like secrets or local-only scratch (`*.env`, `*secret*`, `*credential*`, `*.key`, `*.pem`, `*token*`, or contents with `api_key`, `password`, `Bearer `, `-----BEGIN`). Ask once with AskUserQuestion which to include, defaulting to none and never pre-selecting a flagged file:
+3. List untracked files (`git status --porcelain --untracked-files=all . | grep '^??'`). If there are any, read each one and flag any that look like secrets or local-only scratch (`*.env`, `*secret*`, `*credential*`, `*.key`, `*.pem`, `*token*`, or contents with `api_key`, `password`, `Bearer `, `-----BEGIN`). Ask once with AskUserQuestion which to include, defaulting to none and never pre-selecting a flagged file:
 
 ```json
 {
