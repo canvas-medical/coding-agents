@@ -147,7 +147,7 @@ After successful UAT, guide the user to the next step in the workflow.
 This command is **step 3** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:deploy           →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
 /cpa:coverage         →  Check test coverage (aim for 90%)
