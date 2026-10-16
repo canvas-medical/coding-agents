@@ -1,0 +1,14 @@
+{
+  "eval_name": "case_007",
+  "review_command": "security-review",
+  "description": "Error page built with an f-string that interpolates the external API's response body into HTMLResponse",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "api/referrals.py builds the error HTMLResponse with an f-string containing response.text from the external referral API, so nothing is escaped; fix is a template rendered with render_to_string (or sanitize_html)",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

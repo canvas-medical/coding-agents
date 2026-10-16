@@ -400,6 +400,101 @@ class TestCompareFindings:
         exp_call_anthropic_calls = [call("test-key", ANY)]
         assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
 
+    @patch("compare_review_results.call_anthropic")
+    def test_compare_findings__must_not_flag_flagged(self, mock_call_anthropic) -> None:
+        """Test compare_findings fails when a report flags a must_not_flag item."""
+        mock_call_anthropic.side_effect = [
+            {
+                "success": True,
+                "content": '```json\n{"findings": [{"category": "A", "severity": "HIGH", "detected": true, "explanation": "Found"}], "false_positives": [{"description": "constant icon|safe", "flagged": true, "explanation": "Rated HIGH"}], "overall_verdict_matches": true, "explanation": "Extra finding"}\n```'
+            }
+        ]
+
+        tested = compare_findings
+        result = tested(
+            security_report="Found A; icon|safe is HIGH",
+            database_report="",
+            expected={
+                "eval_name": "fp-test",
+                "expected_findings": [
+                    {"category": "A", "severity": "HIGH", "description": "Issue A", "must_detect": True}
+                ],
+                "must_not_flag": [{"description": "constant icon|safe"}],
+            },
+            api_key="test-key"
+        )
+
+        assert result["overall_pass"] is False
+        expected = [{"description": "constant icon|safe", "flagged": True, "explanation": "Rated HIGH"}]
+        assert result["false_positives"] == expected
+
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
+        prompt = mock_call_anthropic.mock_calls[0].args[1]
+        assert "## Must Not Be Flagged" in prompt
+        assert "- constant icon|safe" in prompt
+
+    @patch("compare_review_results.call_anthropic")
+    def test_compare_findings__must_not_flag_clean(self, mock_call_anthropic) -> None:
+        """Test compare_findings passes when no must_not_flag item is flagged."""
+        mock_call_anthropic.side_effect = [
+            {
+                "success": True,
+                "content": '```json\n{"findings": [{"category": "A", "severity": "HIGH", "detected": true, "explanation": "Found"}], "false_positives": [{"description": "constant icon|safe", "flagged": false, "explanation": "Called out as not a finding"}], "overall_verdict_matches": true, "explanation": "OK"}\n```'
+            }
+        ]
+
+        tested = compare_findings
+        result = tested(
+            security_report="Found A",
+            database_report="",
+            expected={
+                "eval_name": "fp-clean",
+                "expected_findings": [
+                    {"category": "A", "severity": "HIGH", "description": "Issue A", "must_detect": True}
+                ],
+                "must_not_flag": [{"description": "constant icon|safe"}],
+            },
+            api_key="test-key"
+        )
+
+        assert result["overall_pass"] is True
+        assert result["false_positives"][0]["flagged"] is False
+
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
+
+    @patch("compare_review_results.call_anthropic")
+    def test_compare_findings__no_must_not_flag(self, mock_call_anthropic) -> None:
+        """Test compare_findings omits the must-not-flag section when the case has none."""
+        mock_call_anthropic.side_effect = [
+            {
+                "success": True,
+                "content": '```json\n{"findings": [{"category": "A", "severity": "HIGH", "detected": true, "explanation": "Found"}], "overall_verdict_matches": true, "explanation": "OK"}\n```'
+            }
+        ]
+
+        tested = compare_findings
+        result = tested(
+            security_report="Found A",
+            database_report="",
+            expected={
+                "eval_name": "no-fp-list",
+                "expected_findings": [
+                    {"category": "A", "severity": "HIGH", "description": "Issue A", "must_detect": True}
+                ],
+            },
+            api_key="test-key"
+        )
+
+        assert result["overall_pass"] is True
+        assert result["false_positives"] == []
+
+        exp_call_anthropic_calls = [call("test-key", ANY)]
+        assert mock_call_anthropic.mock_calls == exp_call_anthropic_calls
+        prompt = mock_call_anthropic.mock_calls[0].args[1]
+        assert "Must Not Be Flagged" not in prompt
+
 
 class TestMain:
     """Tests for the main function."""
