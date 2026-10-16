@@ -1,0 +1,14 @@
+{
+  "eval_name": "case_012",
+  "review_command": "security-review",
+  "description": "A nested {% include %} partial renders patient message content with |safe",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "templates/partials/message_card.html renders {{ body|safe }}, where body is Message.content passed through two levels of {% include %}; stored XSS; fix is |sanitize_html (or plain escaping)",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

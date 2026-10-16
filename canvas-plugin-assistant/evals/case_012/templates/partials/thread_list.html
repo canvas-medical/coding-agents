@@ -1,0 +1,7 @@
+<ul class="threads">
+  {% for item in threads %}
+    <li>
+      {% include "templates/partials/message_card.html" with created=item.created body=item.body %}
+    </li>
+  {% endfor %}
+</ul>

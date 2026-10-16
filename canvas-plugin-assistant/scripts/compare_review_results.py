@@ -85,6 +85,27 @@ def compare_findings(security_report: str, database_report: str, expected: dict,
         for f in expected.get("expected_findings", [])
     )
 
+    must_not_flag = expected.get("must_not_flag", [])
+    must_not_flag_section = ""
+    must_not_flag_format = ""
+    if must_not_flag:
+        must_not_flag_text = "\n".join(f"- {item['description']}" for item in must_not_flag)
+        must_not_flag_section = f"""## Must Not Be Flagged
+
+These are NOT issues. For each one, determine whether any review report reports it as a finding at any severity. Mentioning it as checked and safe does not count as flagging it.
+
+{must_not_flag_text}
+
+"""
+        must_not_flag_format = """
+  "false_positives": [
+    {
+      "description": "description from the must-not-be-flagged list",
+      "flagged": true/false,
+      "explanation": "Brief explanation"
+    }
+  ],"""
+
     # Combine reports
     combined_reports = ""
     if security_report:
@@ -104,7 +125,7 @@ The review(s) should have detected these issues:
 
 {combined_reports}
 
-## Task
+{must_not_flag_section}## Task
 
 For EACH expected finding listed above, determine if ANY of the review reports detected it.
 
@@ -118,7 +139,7 @@ Respond with JSON in this exact format:
       "detected": true/false,
       "explanation": "Brief explanation of why you determined it was or wasn't detected"
     }}
-  ],
+  ],{must_not_flag_format}
   "overall_verdict_matches": true/false,
   "explanation": "Brief overall assessment"
 }}
@@ -154,11 +175,14 @@ The category and severity don't need to match exactly, just the core issue."""
         detected_count = sum(
             1 for f in result.get("findings", []) if f.get("detected", False)
         )
-        overall_pass = detected_count >= len(must_detect_findings)
+        false_positives = result.get("false_positives", [])
+        flagged_count = sum(1 for f in false_positives if f.get("flagged", False))
+        overall_pass = detected_count >= len(must_detect_findings) and flagged_count == 0
 
         return {
             "eval_name": expected.get("eval_name", "unknown"),
             "findings": result.get("findings", []),
+            "false_positives": false_positives,
             "overall_pass": overall_pass,
             "explanation": result.get("explanation", ""),
         }

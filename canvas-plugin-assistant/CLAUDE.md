@@ -195,9 +195,11 @@ which is extremely difficult to unwind.
 
 ## Templates: Render Untrusted Data Safely
 
-**CRITICAL: Never generate `|safe`, `{% autoescape off %}`, or `mark_safe` in plugin templates or HTML responses, and never put secrets in template context.**
+**CRITICAL: Never generate `|safe`, `{% autoescape off %}`, or `mark_safe` in plugin templates or HTML responses, never build HTML from data in Python strings or with JavaScript `innerHTML`, and never put secrets in template context or responses.**
 
-`render_to_string` uses Django's template engine, which escapes every `{{ value }}` by default. That escaping is what stops HTML from a patient, an integration, a note, a message, a questionnaire, FHIR input, or an external API from running as script in the session of the staff member who opens the page. Turning it off turns that data into stored XSS.
+`render_to_string` uses Django's template engine, which escapes every `{{ value }}` by default. That escaping is what stops HTML from a patient, an integration, a note, a message, a questionnaire, FHIR input, or an external API from running as script in the session of the staff member who opens the page. Turning it off turns that data into stored XSS. Escaping also never reaches HTML built outside a template (a Python f-string, a JavaScript `innerHTML` write), and it does not make a value safe inside an `on*=` handler or as an `href`/`src` URL.
+
+Plugin pages have no second line of defense: the plugin iframe gets no `sandbox` attribute unless the plugin asks for `ALLOW_SAME_ORIGIN`, and Canvas's Content Security Policy allows inline scripts and handlers, so injected script runs with the viewing staff member's full Canvas session.
 
 ### What NOT to do
 
@@ -212,9 +214,28 @@ which is extremely difficult to unwind.
 </script>
 ```
 
+```html
+<!-- BAD - autoescape turns ' into &#x27;, and the browser decodes it before running the handler,
+     so a patient named x');alert(1);// runs -->
+<button onclick="pickPatient('{{ r.id }}', '{{ r.name }}')">{{ r.name }}</button>
+
+<!-- BAD - a javascript: URL survives escaping and runs on click -->
+<a href="{{ citation.url }}">Source</a>
+
+<script>
+  // BAD - innerHTML parses the fetched value as markup
+  list.innerHTML += `<li>${message.body}</li>`;
+</script>
+```
+
 ```python
-# BAD - secrets in template context
+# BAD - no template, so nothing is escaped (str(e) often echoes the input that caused it)
+return [HTMLResponse(f"<h1>Error</h1><p>{e}</p>")]
+return [LaunchModalEffect(content=f"<div>{note.narrative}</div>").apply()]
+
+# BAD - secrets in template context or a response the browser reads
 render_to_string("templates/index.html", {"api_key": self.secrets["API_KEY"]})
+return [JSONResponse({"token": self.secrets.get("VENDOR_TOKEN")})]
 ```
 
 ### What to do instead
@@ -230,7 +251,11 @@ render_to_string("templates/index.html", {"api_key": self.secrets["API_KEY"]})
 </script>
 ```
 
-- **Secrets**: keep `self.secrets[...]` server-side. When the page needs an external API, add a `SimpleAPIRoute` that makes the call with the secret and returns only the data the page needs, and have the page `fetch()` that route.
+- **HTML built in Python**: never build HTML with an f-string, `.format()`, `%`, or `+` from data, including `str(e)` in an error page. Put the markup in a template and pass the data in the context to `render_to_string`, for `HTMLResponse`, `LaunchModalEffect(content=...)`, and widget content alike. Django's escape helpers (`django.utils.html`) are not allowed imports.
+- **Writing data in JavaScript**: set server or API data with `textContent` (or `createElement` + `textContent`), never with `innerHTML`, `outerHTML`, `insertAdjacentHTML`, or `document.write` given a template literal or `+`. If the page needs markup, render it server-side in a template, or build it with `createElement`.
+- **Values in `on*=` attributes**: pass data with a `data-` attribute and read it in the script (`button.dataset.name`), or use `{{ value|escapejs }}` inside the handler string.
+- **URLs from data in `href`/`src`**: check in Python that the URL starts with `https://` or `http://` before it reaches the context, and leave the attribute out otherwise.
+- **Secrets**: keep `self.secrets[...]` and `self.secrets.get(...)` values server-side, out of template context, `HTMLResponse`, `JSONResponse`, and modal content. When the page needs an external API, add a `SimpleAPIRoute` that makes the call with the secret and returns only the data the page needs, and have the page `fetch()` that route. A vendor key documented as publishable for browser use (a Stripe `pk_...` key, a Pay Theory public API key) may be rendered in the page.
 
 ## Cache Busting: Version-Stamp HTML and JavaScript Content
 
