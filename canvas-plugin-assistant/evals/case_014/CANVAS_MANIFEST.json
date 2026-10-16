@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-014",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.timeline:TimelineAPI",
+        "description": "Timeline view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.timeline:TimelineApp",
+        "name": "Problem Timeline",
+        "description": "Problem timeline",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [],
+  "readme": "./README.md"
+}

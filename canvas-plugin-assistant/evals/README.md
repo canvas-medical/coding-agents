@@ -47,6 +47,7 @@ evals/
   - `severity`: HIGH, MEDIUM, or LOW
   - `description`: What the finding should describe
   - `must_detect`: If true, test fails if not detected
+- `must_not_flag` (optional): Array of `{"description": "..."}` items that are deliberately safe; the case fails if a report rates any of them as a finding
 - `expected_verdict`: Expected overall result ("PASS", "ISSUES FOUND", or "N/A")
 
 ## Running Evals
