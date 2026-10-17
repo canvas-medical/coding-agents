@@ -67,9 +67,9 @@ Convert the description to kebab-case:
 
 Use the Write tool to save the SVG content:
 - Save to current working directory with generated filename
-- For Canvas plugins, save to the inner plugin directory's `assets/` folder (snake_case folder)
-- Create the `assets/` directory if it doesn't exist: `mkdir -p {plugin_name_snake}/assets`
-- Example: `{plugin_name_snake}/assets/medical-chart-icon.svg`
+- For Canvas plugins, save to the inner plugin directory's `assets/` folder (`{package}`, the inner package folder named `<prefix>__<name>` that holds `CANVAS_MANIFEST.json`)
+- Create the `assets/` directory if it doesn't exist: `mkdir -p {package}/assets`
+- Example: `{package}/assets/medical-chart-icon.svg`
 
 ### 5. Check UV Installation
 
@@ -153,7 +153,7 @@ CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
 - Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
 - The conversion script uses cairosvg via uv for dependency isolation
 - Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
+- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{package}/assets/`)
 - Create the `assets/` directory if it doesn't exist before saving icons
 - Do not show SVG code to user unless there's an error or they specifically request it
 - Canvas Medical plugins should have professional, healthcare-appropriate icon designs
