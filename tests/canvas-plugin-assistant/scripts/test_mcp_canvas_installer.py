@@ -409,3 +409,19 @@ class TestCreateServer:
 
         exp_list_calls = [call("i", "c")]
         assert mock_list.mock_calls == exp_list_calls
+
+
+class TestPluginLauncher:
+    """Tests for the canvas_cmd_line launcher declared in plugin.json."""
+
+    def test_launcher_pins_mcp_v1(self) -> None:
+        """The launcher pins mcp below 2.x, which has no mcp.server.fastmcp module."""
+        plugin_json = Path(__file__).parents[3] / "canvas-plugin-assistant" / ".claude-plugin" / "plugin.json"
+        args = json.loads(plugin_json.read_text(encoding="utf-8"))["mcpServers"]["canvas_cmd_line"]["args"]
+
+        result = args[args.index("--with") + 1]
+        expected = "mcp<2"
+        assert result == expected, (
+            "mcp_canvas_installer.py imports mcp.server.fastmcp, which mcp 2.x renamed to "
+            "mcp.server.mcpserver; drop this pin only after porting the script to MCPServer"
+        )
