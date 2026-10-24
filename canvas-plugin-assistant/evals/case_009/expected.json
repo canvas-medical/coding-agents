@@ -1,0 +1,19 @@
+{
+  "eval_name": "case_009",
+  "review_command": "security-review",
+  "description": "Patient-search picker puts the patient name inside an onclick handler string",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "templates/patient_search.html renders '{{ r.name }}' (patient first/last name) inside onclick=\"pickPatient(...)\"; autoescape's &#x27; is decoded before the handler runs, so a name like x');alert(1);// executes; fix is a data- attribute read in the script, or |escapejs",
+      "must_detect": true
+    }
+  ],
+  "must_not_flag": [
+    {
+      "description": "templates/team.html assigning response.text to innerHTML, where the response is the plugin's own server-rendered patient_search.html partial (its onclick issue is the separate expected finding)"
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

@@ -1,0 +1,29 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-007",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.referrals:ReferralAPI",
+        "description": "Referral view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.referrals:ReferralApp",
+        "name": "Referral",
+        "description": "Referral status view",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [
+    {
+      "name": "REFERRAL_API_TOKEN",
+      "sensitive": true
+    }
+  ],
+  "readme": "./README.md"
+}

@@ -72,8 +72,8 @@ uv run --with requests python "${CLAUDE_PLUGIN_ROOT}/scripts/compare_review_resu
 The script will:
 1. Read the generated review reports
 2. Read the expected findings from expected.json
-3. Use Anthropic API to determine if each expected finding was detected
-4. Return a JSON result with pass/fail for each finding
+3. Use Anthropic API to determine if each expected finding was detected, and whether a report flagged any item the case lists as deliberately safe
+4. Return a JSON result with pass/fail for each finding; a flagged safe item fails the case
 
 #### Step 2d: Return to Base
 
@@ -103,6 +103,17 @@ Create `$WORKSPACE_DIR/.cpa-workflow-artifacts/eval-results-{timestamp}.md`:
 | case_001 | 1 | ? | ? |
 | case_002 | 2 | ? | ? |
 | case_003 | 2 | ? | ? |
+| case_004 | 1 | ? | ? |
+| case_005 | 1 | ? | ? |
+| case_006 | 1 | ? | ? |
+| case_007 | 1 | ? | ? |
+| case_008 | 1 | ? | ? |
+| case_009 | 1 | ? | ? |
+| case_010 | 1 | ? | ? |
+| case_011 | 1 | ? | ? |
+| case_012 | 1 | ? | ? |
+| case_013 | 1 | ? | ? |
+| case_014 | 1 | ? | ? |
 
 ## Detailed Results
 

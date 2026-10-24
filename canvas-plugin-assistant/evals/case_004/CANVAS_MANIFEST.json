@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-004",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.inbox:ConversationAPI",
+        "description": "Conversation view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.inbox:ConversationApp",
+        "name": "Conversation",
+        "description": "Patient conversation view",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [],
+  "readme": "./README.md"
+}

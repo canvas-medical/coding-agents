@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-005",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.trends:TrendsAPI",
+        "description": "Trends view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.trends:TrendsApp",
+        "name": "Trends",
+        "description": "Observation trends chart",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [],
+  "readme": "./README.md"
+}

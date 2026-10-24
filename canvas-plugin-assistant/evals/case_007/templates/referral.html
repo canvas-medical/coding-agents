@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Referral</title>
+  </head>
+  <body>
+    <h2>{{ referral.specialty }}</h2>
+    <dl>
+      <dt>Status</dt>
+      <dd>{{ referral.status }}</dd>
+      <dt>Receiving provider</dt>
+      <dd>{{ referral.provider_name }}</dd>
+      <dt>Notes</dt>
+      <dd>{{ referral.notes|linebreaksbr }}</dd>
+    </dl>
+  </body>
+</html>

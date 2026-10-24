@@ -1,0 +1,24 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-008",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.messages:MessagesAPI",
+        "description": "Messages view endpoints"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.messages:MessagesApp",
+        "name": "Messages",
+        "description": "Patient messages view",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [],
+  "readme": "./README.md"
+}
