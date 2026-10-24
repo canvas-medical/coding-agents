@@ -9,9 +9,9 @@ Deploy the current plugin to a Canvas instance with log monitoring.
 
 ## Arguments
 
-- `$1` (optional): Target instance name from `~/.canvas/credentials.ini`
-  - If provided: verify it exists in credentials, then proceed to pre-deployment checks
-  - If omitted: prompt the user to select an environment
+- `$1` (optional): Canvas Platform instance slug (e.g. `acme-staging`)
+  - If provided: verify it is one of the instances you can deploy to, then proceed to pre-deployment checks
+  - If omitted: use the only deployable instance, or ask the user to choose when there are several
 
 ## Instructions
 
@@ -31,49 +31,96 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --requ
 cd "$CPA_PLUGIN_DIR"
 ```
 
-### Step 2: Determine Target Hostname
+### Step 2: Determine Target Instance
 
-Resolve the deployment target **before** delegating to the agent — the parent needs the hostname to start log monitoring.
+Resolve the deployment target **before** delegating to the agent, because the parent needs the instance to start log monitoring.
 
-1. Verify the current directory contains a valid Canvas plugin (check for CANVAS_MANIFEST.json)
+1. Locate the inner package and read the plugin name:
 
-2. **Handle target instance argument:**
-   - If `$1` is provided:
-     - Check if `[$1]` section exists in `~/.canvas/credentials.ini`
-     - If found: use `$1` as the target hostname
-     - If NOT found: list available instances from credentials.ini and ask the user to choose or correct the name
+   ```bash
+   PACKAGE_DIR=$(dirname */CANVAS_MANIFEST.json)
+   uv run python -c "import json,sys; print(json.load(open(sys.argv[1]))['name'])" "$PACKAGE_DIR/CANVAS_MANIFEST.json"
+   ```
+
+   If there is no `*/CANVAS_MANIFEST.json`, STOP: this directory is not a plugin container. The printed manifest `name` is the plugin name.
+
+2. **Legacy plugin check.** Canvas Platform deploys only plugins named `<prefix>__<package>` that sit directly under their own git repository. The plugin is a legacy plugin when either holds:
+   - the manifest `name` has no `<prefix>__` part (no `__`)
+   - `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel` fails or prints a path other than `$CPA_PLUGIN_DIR`
+
+   For a legacy plugin, show this guidance and STOP (deploy nothing):
+
+   > This plugin cannot be deployed to Canvas Platform as it is. Either:
+   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and run `git init` in the plugin container directory so the package sits directly under the repository root; or
+   > - Create a fresh plugin with `canvas init` and move the code into it.
+
+   To list the prefixes, run `uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
+
+3. **Canvas CLI version.** `uv run canvas --version` must be 0.245.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.245.0'` in the container, then continue.
+
+4. **List the deployable instances.** From `$CPA_PLUGIN_DIR`:
+
+   ```bash
+   uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+   ```
+
+   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+
+5. **Handle the target instance argument:**
+   - If `$1` is provided and listed: use `$1` as the target instance
+   - If `$1` is provided but not listed: use AskUserQuestion with the listed slugs as options so the user can choose or correct the name
    - If `$1` is not provided:
-     - Ask which environment to deploy to
+     - **If exactly one instance is listed:** use it automatically without asking
+     - **If several are listed:** use AskUserQuestion with one option per slug:
 
-Save the resolved hostname — you will pass it to the agent and use it for log monitoring.
+```json
+{
+  "questions": [
+    {
+      "question": "Which Canvas instance should I deploy to?",
+      "header": "Instance",
+      "options": [
+        {"label": "<instance-1>", "description": "Deployable Canvas Platform instance"},
+        {"label": "<instance-2>", "description": "Deployable Canvas Platform instance"},
+        {"label": "...", "description": "One option per listed slug"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
 
-### Step 3: Start Log Monitoring (BEFORE install)
+Save the resolved instance slug and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
+
+### Step 3: Start Log Monitoring (BEFORE deploy)
 
 **Start log monitoring in the parent context** so the background process survives the agent lifecycle.
 
 Start log streaming as a **background task** (`run_in_background: true`):
 
 ```bash
-unbuffer uv run canvas logs --host {hostname}
+unbuffer uv run canvas logs --host {instance}
 ```
 
-Save the `bash_id` — you will use it later to check logs. This captures installation errors and runtime behavior.
+Save the `bash_id` to use it later to check logs. This captures deployment errors and runtime behavior.
+
+Log streaming reads `~/.canvas/credentials.ini` and looks for a section named after the instance slug. If it fails for missing credentials, tell the user logs are unavailable and continue the deploy.
 
 ### Step 4: Deploy via Agent
 
-Use the **deploy-uat** agent to handle version bump, validation, git commit/push, and install. Pass the resolved hostname so the agent does not need to ask again.
+Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
 
-Tell the agent: "Deploy to {hostname}".
+Tell the agent: "Deploy to {instance}".
 
-The agent will return when the install is complete.
+The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, or a custom data consent request was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 5 only when the agent reports the deploy complete. If the agent reports a stop, stop log monitoring (KillShell), relay its report to the user, and end the command.
 
 ### Step 5: Post-Deployment Log Check
 
-After the agent returns and the install is complete, check the logs **in the parent context** (you own the background process).
+After the agent returns and the deploy is complete, check the logs **in the parent context** (you own the background process).
 
 1. Wait 5 seconds for logs to accumulate (`sleep 5`)
 2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
-3. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, install failures)
+3. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
 4. **If errors are found:**
    1. Stop log monitoring (KillShell)
    2. Show the errors to the user
@@ -91,16 +138,16 @@ Log monitoring is still running in the background (owned by this parent context)
 
 After successful UAT, guide the user to the next step in the workflow.
 
-## Credentials
+## Sign-in
 
-Deployment uses credentials from `~/.canvas/credentials.ini`. Instance names are the section headers (e.g., `[plugin-testing]` means the instance name is `plugin-testing`).
+`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). `~/.canvas/credentials.ini` is used only by `canvas logs`. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
 
 ## CPA Workflow
 
 This command is **step 3** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:deploy           →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
 /cpa:coverage         →  Check test coverage (aim for 90%)
@@ -113,6 +160,6 @@ After successful UAT, guide the user to the next step in the workflow.
 
 ## Examples
 
-- `/cpa:deploy` - Interactive deployment (asks which instance)
-- `/cpa:deploy plugin-testing` - Deploy directly to plugin-testing instance
-- `/cpa:deploy xpc` - Deploy directly to xpc instance
+- `/cpa:deploy` - Interactive deployment (uses the only deployable instance, otherwise asks which)
+- `/cpa:deploy acme-staging` - Deploy directly to the acme-staging instance
+- `/cpa:deploy acme-prod` - Deploy directly to the acme-prod instance

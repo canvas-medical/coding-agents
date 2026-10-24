@@ -149,17 +149,9 @@ Once you have answers from AskUserQuestion:
 ## Specification Format
 
 First, get the workspace root directory:
-```python
-import subprocess
-from pathlib import Path
-
+```bash
 # Get workspace root directory using helper script
-workspace_dir = Path(subprocess.run(
-    ["uv", "run", "python", "scripts/get_plugin_dir.py"],
-    capture_output=True,
-    text=True,
-    check=True
-).stdout.strip())
+workspace_dir=$(uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/get_plugin_dir.py")
 ```
 
 Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create the directory if needed):
@@ -204,7 +196,7 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 - [Any unresolved items]
 
 ## Next Steps
-1. Create plugin scaffold: `uv run canvas init [name]`
+1. Create plugin scaffold: `uv run --with 'canvas>=0.245.0' canvas init --org [org-slug]`
 2. Implement the handler
 3. Deploy to test instance
 4. Perform UAT
@@ -233,10 +225,28 @@ When user says "approved", "looks good", "let's build it", or similar:
 
 **⚠️ CRITICAL: You MUST run `canvas init` IMMEDIATELY after approval. Do NOT create any files or directories manually. The scaffold command creates the correct project structure.**
 
+First choose the publishing organization:
+
 ```bash
-echo "{plugin_name_from_spec}" | uv run canvas init
+uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+```
+
+Each output line is `<slug> <plugin_prefix>__`.
+
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then continue; do NOT run `canvas login` yourself. If no organization can publish, an organization admin must grant the user the Plugin developer role.
+- **One line:** use its slug. **Several lines:** ask which one publishes this plugin with AskUserQuestion, one option per organization labeled `slug (prefix__)`.
+
+Then scaffold:
+
+```bash
+cd "$CPA_WORKSPACE_DIR"
+echo "{plugin_name_from_spec}" | uv run --with 'canvas>=0.245.0' canvas init --org "{org_slug}"
 cd {plugin_name}
 ```
+
+Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, move the scaffolded folder aside so the name is free (`cd "$CPA_WORKSPACE_DIR" && mv "{plugin_name}" "{plugin_name}.unprefixed"`), and start over once that is fixed.
+
+`{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform.
 
 **Run this command BEFORE doing anything else.** Do not:
 - Create directories manually
@@ -252,14 +262,14 @@ You will likely need to remove some unused placeholder files (e.g., `handlers/my
 **Before editing any files, verify `canvas init` created the correct structure:**
 
 ```bash
-# Convert plugin name to expected inner folder name (kebab to snake)
-INNER=$(echo "{plugin_name}" | tr '-' '_')
+# The inner package is the folder holding CANVAS_MANIFEST.json
+INNER=$(dirname */CANVAS_MANIFEST.json)
 
 # Quick structure check
 echo "Verifying structure..."
-test -d "$INNER" && echo "OK: Inner folder '$INNER' exists" || echo "ERROR: Inner folder not found"
-test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Manifest in correct place" || echo "ERROR: Manifest missing"
+test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Inner folder '$INNER' holds the manifest" || echo "ERROR: Manifest missing"
 test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
 ```
 
 Expected structure:
@@ -267,7 +277,7 @@ Expected structure:
 {plugin_name}/                    # Container (kebab-case) - you are here
 ├── pyproject.toml
 ├── tests/                        # Container level
-└── {plugin_name_snake}/          # Inner (snake_case)
+└── {package}/                    # Inner package: <prefix>__<name>
     ├── CANVAS_MANIFEST.json
     ├── README.md
     └── handlers/
@@ -314,7 +324,7 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 
 **If the user picks "Yes":**
 - Add a `WebSocketAPI` handler and a broadcaster `BaseHandler` to the spec's component list.
-- **Patient-scope the channel name.** The channel string MUST include the patient id (e.g. `chart-summary-{plugin_name_snake}-{patient_id}`). Never broadcast on a global channel — it leaks PHI across charts and causes spurious re-renders for every connected client.
+- **Patient-scope the channel name.** The channel string MUST include the patient id (e.g. `chart-summary-{package}-{patient_id}`). Never broadcast on a global channel — it leaks PHI across charts and causes spurious re-renders for every connected client.
 - Use the canvas-sdk skill's "Real-Time Updates for Custom Sections" page for the canonical implementation (broadcaster pattern, WebSocket auth, template subscription).
 
 **If the user picks "No":** scaffold a plain `PatientChartSummaryCustomSectionHandler` with no WebSocket plumbing.
@@ -330,7 +340,7 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
    - Data model queries
 3. **Create Application class if needed** (for Application patterns):
    - If the spec requires an Application (Interactive UI, Custom panel, etc.):
-     - Create the `applications/` directory: `mkdir -p {plugin_name_snake}/applications`
+     - Create the `applications/` directory: `mkdir -p {package}/applications`
      - Create the Application class file
      - Implement the `on_open()` method with appropriate effects
 4. **CRITICAL: Generate icon for Applications**:
@@ -338,11 +348,11 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
    - Do NOT skip this step - Applications will not work without icons
    - Invoke the **icon-generation skill**: `Skill(skill="icon-generation")`
    - Generate an appropriate icon based on the plugin name and purpose
-   - Create the assets directory: `mkdir -p {plugin_name_snake}/assets`
-   - Save SVG and PNG (48x48) to `{plugin_name_snake}/assets/`
+   - Create the assets directory: `mkdir -p {package}/assets`
+   - Save SVG and PNG (48x48) to `{package}/assets/`
    - Update `CANVAS_MANIFEST.json` applications entry with `"icon": "assets/{icon-filename}.png"`
    - Example: For a "patient-scheduler" Application, create "assets/patient-scheduler-icon.png"
-   - **Verify the icon files exist before proceeding**: `ls -lh {plugin_name_snake}/assets/*.png`
+   - **Verify the icon files exist before proceeding**: `ls -lh {package}/assets/*.png`
 5. **Update CANVAS_MANIFEST.json** with correct class paths
 6. **Add secrets** to manifest if needed
 7. **Check if client libraries are needed** based on the spec:
@@ -387,7 +397,7 @@ Canvas plugins MUST use absolute imports with the full package path. Relative im
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.utils.helpers import format_date
+from acme__my_plugin_name.utils.helpers import format_date
 
 # BAD - relative imports (will fail in Canvas)
 from .helpers import format_date
@@ -426,8 +436,8 @@ patient_id = patient["id"]
 ### Step 4: Validate
 
 Run pre-deploy checks — `canvas validate` runs the manifest check plus
-the sandbox handler-load, the same validation `canvas install` runs before
-uploading. Fix anything it reports and re-run until clean:
+the sandbox handler-load, the same checks the instance runs when the plugin
+is deployed. Fix anything it reports and re-run until clean:
 
 ```bash
 uv run canvas validate .
