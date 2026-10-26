@@ -874,7 +874,8 @@ class TestPluginLauncher:
         args = json.loads(plugin_json.read_text(encoding="utf-8"))["mcpServers"]["canvas_cmd_line"]["args"]
 
         result = args[args.index("--with") + 1]
-        assert result.startswith("mcp") and "<2" in result, (
+        expected = "mcp<2"
+        assert result == expected, (
             "mcp_canvas_deployer.py imports mcp.server.fastmcp, which mcp 2.x renamed to "
             "mcp.server.mcpserver; drop this pin only after porting the script to MCPServer"
         )
