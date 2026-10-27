@@ -7,6 +7,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
+from mcp_canvas_installer import CanvasInstallerMcp
 from secret_requester import SecretRequester
 
 
@@ -277,6 +278,23 @@ class CanvasDeployerMcp:
                 cwd: Working directory (plugin container directory).
             """
             return await cls.configure(plugin_name, instance, cwd)
+
+        @server.tool()
+        async def installer(plugin_name: str, instance: str, cwd: str) -> str:
+            """Install a legacy Canvas SDK plugin (no organization prefix) with canvas install, for /cpa:deploy-legacy.
+
+            Reads secret names from CANVAS_MANIFEST.json and retrieves their values
+            from ~/.canvas/plugin-secrets/<instance>.json. The secret values are
+            passed to the canvas install command but never returned in the output.
+            canvas install and credentials.ini stop working on December 14, 2026.
+            The output ends with one `Status:` line: invalid_input, install_failed, or installed.
+
+            Args:
+                plugin_name: The plugin inner folder name (snake_case).
+                instance: Target Canvas instance hostname from ~/.canvas/credentials.ini.
+                cwd: Working directory (plugin container directory).
+            """
+            return await CanvasInstallerMcp.install(plugin_name, instance, cwd)
 
         return server
 
