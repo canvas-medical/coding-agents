@@ -184,7 +184,7 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
   uv run --with 'canvas>=0.245.0' canvas login
   ```
 
-### 10. Check log streaming credentials (optional)
+### 10. Check legacy deploy credentials (optional)
 
 ```bash
 grep '^\[' ~/.canvas/credentials.ini
@@ -193,8 +193,11 @@ uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_s
 
 Read only the section headers, as above: the file holds client secrets and passwords.
 
-- **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug from `instances`]". A section that matches no deployable instance slug, such as `localhost`, does not count. Report "log streaming unavailable for: [deployable instances without a section]".
-- **If the file is missing, or no section matches a deployable instance**: Report a warning only: `/cpa:deploy` deploys without it but cannot stream logs. `credentials.ini` support ends December 14, 2026.
+Only `/cpa:deploy-legacy` uses this file, for plugins without an organization prefix: it deploys with `canvas install` and streams logs with `canvas logs`, both signed in with a section named after the instance. `/cpa:deploy` and `/cpa:deploy-lite` do not use it and do not stream logs.
+
+- **If the file exists**: Report "legacy deploys available for: [section names other than `localhost`]".
+- **If the file is missing or has no such section**: Report nothing; this is not a failure.
+- In either case, note that `credentials.ini` support ends December 14, 2026, and `/cpa:deploy-legacy` is removed by then.
 
 ### 11. Check Claude Model
 
@@ -227,7 +230,7 @@ If all checks pass, report:
   unbuffer: installed
   Canvas CLI: [version or "will be installed with plugin"]
   Canvas Platform: signed in to [Platform host] as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
-  Log streaming: [available for matching deployable instances, unavailable for the rest, or "not configured (optional)"]
+  Legacy deploys: [instances with a credentials.ini section, or "not configured (optional)"]; removed by December 14, 2026
   model: [current model] [with recommendation if not opus]
 
 You're ready to start building Canvas plugins.

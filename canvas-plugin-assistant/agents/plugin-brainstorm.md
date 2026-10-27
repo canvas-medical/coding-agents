@@ -492,7 +492,7 @@ After tests are written and passing, tell the user:
 
 > "The plugin is implemented and tested. The next step is to deploy it to a Canvas instance for user acceptance testing.
 >
-> Ready to deploy? I'll guide you through deploying and monitoring logs."
+> Ready to deploy? I'll guide you through deploying and testing it in Canvas."
 
 Then use the `/cpa:deploy` command to start the deployment and UAT process.
 
@@ -643,7 +643,7 @@ After version bump, tell the user:
 
 > "The plugin has been updated and version bumped to {new_version}. The next step is to deploy it for user acceptance testing.
 >
-> Ready to deploy? I'll guide you through deploying and monitoring logs."
+> Ready to deploy? I'll guide you through deploying and testing it in Canvas."
 
 Then use the `/cpa:deploy` command to start the deployment and UAT process.
 

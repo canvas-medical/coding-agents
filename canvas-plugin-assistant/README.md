@@ -88,6 +88,8 @@ scanned for secrets) and pushing is confirmed with you first.
 - Recommends appropriate architecture complexity
 - Produces a `plugin-spec.md` for review before implementation
 
+**deploy-uat-legacy** - Deploy plugins without an organization prefix with `canvas install`, for `:deploy-legacy` until December 14, 2026
+
 **instance-analyzer** - Understand Canvas instance configuration:
 
 - Documents roles, teams, questionnaires, note types, appointment types
@@ -98,8 +100,7 @@ scanned for secrets) and pushing is confirmed with you first.
 **deploy-uat** - Deploy plugins and guide user acceptance testing:
 
 - Pre-deployment validation (manifest, tests)
-- Deploy to dev/staging/production environments
-- Real-time log monitoring during testing
+- Deploy to dev/staging/production environments through Canvas Platform
 - UAT checklist and results documentation
 
 ### Skills
@@ -125,7 +126,9 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 | `:new-plugin`                  | Start brainstorming a new plugin specification              |
 | `:create-icon`                 | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance`            | Analyze Canvas instance configuration                       |
-| `:deploy`                      | Deploy plugin and monitor logs                              |
+| `:deploy`                      | Deploy plugin through Canvas Platform                       |
+| `:deploy-lite`                 | Quick-deploy: no version bump, no tests                     |
+| `:deploy-legacy`               | Deploy a plugin without an org prefix, with log monitoring; removed by December 14, 2026 |
 | `:coverage`                    | Run tests with coverage, offer to improve if below 90%      |
 | `:security-review`             | Comprehensive security audit with report                    |
 | `:database-performance-review` | Database query optimization review with report              |
@@ -149,9 +152,11 @@ A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>`
 - Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and give the plugin folder its own git repository
 - Run `canvas init` for a new plugin and move the code into it
 
-### Log streaming
+Until December 14, 2026, `/cpa:deploy-legacy` deploys such a plugin as it is with `canvas install`.
 
-`/cpa:deploy` streams logs with `canvas logs --host <instance>`, which reads `~/.canvas/credentials.ini`. Add a section named after the instance slug:
+### Legacy deploys and log streaming
+
+`/cpa:deploy` and `/cpa:deploy-lite` do not stream logs: `canvas logs` signs in only with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in. `/cpa:deploy-legacy` deploys with `canvas install` and streams logs with `canvas logs --host <instance>`, both reading a section named after the instance:
 
 ```ini
 [plugin-testing]
@@ -160,10 +165,10 @@ client_secret = your_client_secret
 root_password = your_admin_password
 ```
 
-- `client_id` / `client_secret`: For the Canvas CLI log stream
+- `client_id` / `client_secret`: For `canvas install` and the Canvas CLI log stream
 - `root_password`: For admin portal access (instance analyzer)
 
-`credentials.ini` support ends December 14, 2026.
+`credentials.ini` support ends December 14, 2026, and `/cpa:deploy-legacy` is removed by then.
 
 ### Plugin Secrets
 
@@ -244,7 +249,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 3. **Deploy and Test** (`:deploy`)
     - Deploy to test instance
-    - Perform user acceptance testing with real-time log monitoring
+    - Perform user acceptance testing
 
 4. **Quality Checks** (`:coverage`, `:security-review`, `:database-performance-review`)
     - Verify test coverage meets 90% threshold
@@ -307,6 +312,8 @@ automatically.
 │   ├── create-icon.md         # :create-icon
 │   ├── analyze-instance.md    # :analyze-instance
 │   ├── deploy.md              # :deploy
+│   ├── deploy-lite.md         # :deploy-lite
+│   ├── deploy-legacy.md       # :deploy-legacy (removed by December 14, 2026)
 │   ├── coverage.md            # :coverage
 │   ├── security-review.md     # :security-review
 │   ├── database-performance-review.md # :database-performance-review
@@ -330,7 +337,8 @@ automatically.
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
-│   └── deploy-uat.md          # Deployment and testing
+│   ├── deploy-uat.md          # Deployment and testing
+│   └── deploy-uat-legacy.md   # canvas install deploys for :deploy-legacy
 └── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
