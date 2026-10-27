@@ -1,11 +1,11 @@
 ---
 name: deploy
-description: Deploy the current plugin to a Canvas instance with log monitoring.
+description: Deploy the current plugin to a Canvas Platform instance.
 ---
 
 # Deploy Plugin
 
-Deploy the current plugin to a Canvas instance with log monitoring.
+Deploy the current plugin to a Canvas Platform instance.
 
 ## Arguments
 
@@ -33,7 +33,7 @@ cd "$CPA_PLUGIN_DIR"
 
 ### Step 2: Determine Target Instance
 
-Resolve the deployment target **before** delegating to the agent, because the parent needs the instance to start log monitoring.
+Resolve the deployment target **before** delegating to the agent, so the agent does not need to ask.
 
 1. Locate the inner package and read the plugin name:
 
@@ -52,7 +52,8 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 
    > This plugin cannot be deployed to Canvas Platform as it is. Either:
    > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and run `git init` in the plugin container directory so the package sits directly under the repository root; or
-   > - Create a fresh plugin with `canvas init` and move the code into it.
+   > - Create a fresh plugin with `canvas init` and move the code into it; or
+   > - Deploy it as it is with `/cpa:deploy-legacy`, which uses `canvas install` and `~/.canvas/credentials.ini` and works only until December 14, 2026.
 
    To list the prefixes, run `uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
 
@@ -90,57 +91,28 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 }
 ```
 
-Save the resolved instance slug and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
+Save the resolved instance slug and the plugin name (the inner package folder). You will pass them to the agent.
 
-### Step 3: Start Log Monitoring (BEFORE deploy)
-
-**Start log monitoring in the parent context** so the background process survives the agent lifecycle.
-
-Start log streaming as a **background task** (`run_in_background: true`):
-
-```bash
-unbuffer uv run canvas logs --host {instance}
-```
-
-Save the `bash_id` to use it later to check logs. This captures deployment errors and runtime behavior.
-
-Log streaming reads `~/.canvas/credentials.ini` and looks for a section named after the instance slug. If it fails for missing credentials, tell the user logs are unavailable and continue the deploy.
-
-### Step 4: Deploy via Agent
+### Step 3: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
 
 Tell the agent: "Deploy to {instance}".
 
-The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, or a custom data consent request was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 5 only when the agent reports the deploy complete. If the agent reports a stop, stop log monitoring (KillShell), relay its report to the user, and end the command.
+The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, or a custom data consent request was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 4 only when the agent reports the deploy complete. If the agent reports a stop, relay its report to the user and end the command.
 
-### Step 5: Post-Deployment Log Check
+### Step 4: UAT
 
-After the agent returns and the deploy is complete, check the logs **in the parent context** (you own the background process).
+This command does not read Canvas logs: `canvas logs` signs in with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in, so it cannot confirm that the plugin loaded or ran.
 
-1. Wait 5 seconds for logs to accumulate (`sleep 5`)
-2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
-3. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
-4. **If errors are found:**
-   1. Stop log monitoring (KillShell)
-   2. Show the errors to the user
-   3. Analyze root cause and fix the code
-   4. Re-deploy (repeat from step 3)
-5. **If no errors:** leave log monitoring running and continue to UAT
-
-### Step 6: UAT
-
-Log monitoring is still running in the background (owned by this parent context).
-
-- Tell user: "Plugin deployed successfully — no errors detected in logs. Log monitoring is running — go ahead and test in Canvas. Tell me to 'check the logs' when you want to see what happened."
-- When the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries
-- When testing is complete: use KillShell to stop the background log stream
+- Tell user: "Plugin deployed to {instance}. I can't read Canvas logs for Canvas Platform deploys, so I can't confirm it loaded: go ahead and test in Canvas, and tell me what you see."
+- When the user reports a problem: work from what they describe and the plugin's tests, fix the code, and deploy again with this command.
 
 After successful UAT, guide the user to the next step in the workflow.
 
 ## Sign-in
 
-`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). `~/.canvas/credentials.ini` is used only by `canvas logs`. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
+`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). This command does not use `~/.canvas/credentials.ini`. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
 
 ## CPA Workflow
 
