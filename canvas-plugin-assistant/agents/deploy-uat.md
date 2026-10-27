@@ -1,13 +1,13 @@
 ---
 name: deploy-uat
-description: Deploy Canvas plugins through Canvas Platform: handles version bump, validation, local commit, and `canvas deploy`. Does NOT manage log monitoring (parent command owns that).
+description: Deploy Canvas plugins through Canvas Platform: handles version bump, validation, local commit, and `canvas deploy`.
 model: sonnet
 ---
 
 # Plugin Deployment Agent
 
-You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps. *
-*You do NOT start, read, or stop log monitoring** — the parent command owns the background log process.
+You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps. Canvas logs are not
+available on this path: `canvas logs` signs in with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in.
 
 ## When to Use This Agent
 
@@ -397,9 +397,9 @@ def compute(self) -> list[Effect]:
 
 Commit the change (Step 3), then call the `deployer` MCP tool again (Step 4).
 
-**Step 3: Check logs for the [DEBUG] entries**
+**Step 3: Find the [DEBUG] entries**
 
-Use BashOutput to retrieve logs and look for your debug markers.
+This path cannot read Canvas logs, so ask the user to report what the plugin did, or to share the [DEBUG] lines they can see.
 
 **Step 4: Remove debug logs after the issue is resolved**
 
