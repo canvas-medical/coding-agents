@@ -1602,6 +1602,8 @@
     - Customer Expectations for Data Migration
     - Prerequisites for Migration
     - Resources
+
+## Canvas Platform
 - [Canvas Patient Safety Scale](https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale)
     - Introduction
     - Scale
