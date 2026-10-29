@@ -167,11 +167,15 @@ If there are untracked files, read each one and flag any that look like secrets 
 }
 ```
 
-Only `git add` the specific untracked files the user approves. `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
+Only `git add` the specific untracked files the user approves.
 
-```bash
-echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
-```
+- **Plugin is its own repository:** `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
+
+  ```bash
+  echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
+  ```
+
+- **Plugin is inside a larger repository** (`git rev-parse --show-toplevel` prints a path other than the plugin container): the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:317-324` at 0.262.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
 
 Then commit:
 
@@ -181,7 +185,7 @@ git commit -m "prepare {plugin_name} v{version} for deployment"
 
 If the user declines to commit, STOP and report that nothing was deployed.
 
-**CRITICAL:** Always scope `git add` to the current directory with a trailing `.`. Never use `git add --all`, `git add -A`, or `git add -A .` here. Do not push by hand: `canvas deploy` pushes the commit to the plugin's Canvas Platform repository.
+**CRITICAL:** Always scope `git add` to the current directory with a trailing `.`. Never use `git add --all`, `git add -A`, or `git add -A .` here. Do not push by hand: `canvas deploy` pushes the commit to the plugin's Canvas Platform repository, or for a plugin inside a larger repository pushes a snapshot of the package folder and leaves that repository's remotes alone.
 
 Use concise declarative voice for commit messages:
 
@@ -197,11 +201,11 @@ Use the **`deployer`** MCP tool (provided by the `canvas_cmd_line` MCP server) t
 - `instance`: the target instance slug
 - `cwd`: current working directory (the plugin container directory)
 
-The MCP tool runs `canvas deploy`, then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
+The MCP tool runs `canvas deploy` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
 
 If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending` or `still_running`: a second call creates a second waiting deployment. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed`.
+The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending`, `still_running`, or `snapshot_replaces_platform`: a second call creates a second waiting deployment, or meets the same refusal. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed`.
 
 **`Status: consent_pending`**: the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -216,6 +220,21 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 **`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
 
 **`Status: dirty_tree`**: the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat Step 3 for the files listed by `git status --porcelain`, then call `deployer` again.
+
+**`Status: snapshot_uncommitted`**: the plugin is inside a larger repository, and its package folder has uncommitted or untracked files, or no committed files at all. A snapshot deploys only committed work and never commits for you. Show the listed files and ask whether to commit them (Step 3, for the larger repository) or whether the user commits them; never pass `--yes`. Once they are committed, deleted, or ignored, call `deployer` again. If the user declines, stop and report that nothing was deployed.
+
+**`Status: snapshot_unsupported`**: the package folder holds a submodule, a symbolic link, or a file stored through a filter such as Git LFS or git-crypt, which a snapshot cannot carry. Show the listed paths, tell the user each must become a regular committed file, and stop; nothing was deployed.
+
+**`Status: snapshot_rollback`**: Canvas Platform's `main` was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop; nothing was deployed.
+
+**`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
+
+1. Show the listed files verbatim.
+2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+3. Wait for the user. Never confirm it yourself and never pass `--yes`.
+4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below. If that command stops on consent, it is answered in the same terminal.
+5. **User copied Platform's versions and committed:** call `deployer` again.
+6. **User does not act:** report that nothing was deployed to the parent command, which stops.
 
 **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
 
@@ -284,8 +303,8 @@ For production deployments, always confirm:
 
 ### Authentication Errors
 
-1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
-2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal, then deploy again
+1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
+2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal, then deploy again
 
 ### Manifest Validation Errors
 
@@ -414,7 +433,7 @@ Debug logs should be removed during wrap-up (`/cpa:wrap-up`). They're useful for
 
 ## Integration with Other Agents
 
-- Read `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (where workspace_dir is git repository root) to understand expected behavior
+- Read `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (where workspace_dir is the plugin container directory) to understand expected behavior
 - Read `instance-config-{instance}.md` to know the environment
 - Update spec with any discovered issues or changes
 

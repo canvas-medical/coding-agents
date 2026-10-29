@@ -140,16 +140,20 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 `/cpa:new-plugin` and `/cpa:deploy` act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
 
 ```bash
-uv run --with 'canvas>=0.245.0' canvas login
+uv run --with 'canvas>=0.262.0' canvas login
 ```
 
 - `CANVAS_PLATFORM_TOKEN`: set in CI to deploy without a stored sign-in
 - `CANVAS_PLATFORM_URL`: points the CLI at a different Canvas Platform
 - `/cpa:check-setup` reports the signed-in person, their organizations with each plugin prefix, and the instances available for deploys
 
-A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and the plugin folder is its own git repository. `/cpa:new-plugin` creates plugins that way with `canvas init`. A plugin made before Canvas Platform needs one of:
+A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and it is committed to a git repository. `/cpa:new-plugin` creates plugins with `canvas init`: outside any repository the plugin folder becomes its own repository with Canvas Platform as `origin`, and inside an existing repository, such as a monorepo, it stays a folder of that repository.
 
-- Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and give the plugin folder its own git repository
+A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 0.262.0 or newer), which pushes the package folder as committed at HEAD to the plugin's `main` on Canvas Platform and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes `main` was last deployed from, and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+
+A plugin made before Canvas Platform needs one of:
+
+- Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and commit it to a git repository
 - Run `canvas init` for a new plugin and move the code into it
 
 Until December 14, 2026, `/cpa:deploy-legacy` deploys such a plugin as it is with `canvas install`.

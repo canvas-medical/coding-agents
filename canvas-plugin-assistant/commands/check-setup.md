@@ -162,10 +162,10 @@ which unbuffer
 ### 8. Check for Canvas CLI
 
 ```bash
-uv run --with 'canvas>=0.245.0' canvas --version
+uv run --with 'canvas>=0.262.0' canvas --version
 ```
 
-`canvas` 0.245.0 or later is needed for `canvas deploy`.
+`canvas` 0.262.0 or later is needed for `canvas deploy` (0.262.0 adds `--snapshot`, for a plugin inside a larger repository).
 
 - **If works**: Report the Canvas CLI version
 - **If fails**: Note that Canvas CLI will be installed when creating a plugin (it's a dependency)
@@ -173,22 +173,22 @@ uv run --with 'canvas>=0.245.0' canvas --version
 ### 9. Check Canvas Platform sign-in
 
 ```bash
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
 - **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
   - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
-  uv run --with 'canvas>=0.245.0' canvas login
+  uv run --with 'canvas>=0.262.0' canvas login
   ```
 
 ### 10. Check legacy deploy credentials (optional)
 
 ```bash
 grep '^\[' ~/.canvas/credentials.ini
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
 ```
 
 Read only the section headers, as above: the file holds client secrets and passwords.

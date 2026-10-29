@@ -43,28 +43,29 @@ Resolve the deployment target.
 
    If there is no `*/CANVAS_MANIFEST.json`, STOP: this directory is not a plugin container. The printed manifest `name` is the plugin name.
 
-2. **Legacy plugin check.** Canvas Platform deploys only plugins named `<prefix>__<package>` that sit directly under their own git repository. The plugin is a legacy plugin when either holds:
-   - the manifest `name` has no `<prefix>__` part (no `__`)
-   - `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel` fails or prints a path other than `$CPA_PLUGIN_DIR`
+2. **Repository check.** Canvas Platform deploys plugins named `<prefix>__<package>` that are committed to a git repository. Run `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel`:
+   - **Prints `$CPA_PLUGIN_DIR`:** the plugin is its own repository, the `canvas init` layout. `canvas deploy` commits and pushes that repository.
+   - **Prints another path:** the plugin sits inside a larger repository, such as a monorepo. Tell the user it deploys as a snapshot: the `deployer` tool passes `--snapshot`, which pushes the package folder as committed at HEAD and leaves that repository's remotes and config alone, and refuses uncommitted changes in the package rather than committing them (canvas-plugins `canvas_cli/apps/platform/git.py:300-329` at 0.262.0). Commits for it are made in that repository, scoped to the package folder.
+   - **Fails (not in a git repository):** the plugin is a legacy plugin.
 
-   For a legacy plugin, show this guidance and STOP (deploy nothing):
+   The plugin is also a legacy plugin when the manifest `name` has no `<prefix>__` part (no `__`). For a legacy plugin, show this guidance and STOP (deploy nothing):
 
    > This plugin cannot be deployed to Canvas Platform as it is. Either:
-   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and run `git init` in the plugin container directory so the package sits directly under the repository root; or
+   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and commit it to a git repository: run `git init` in the plugin container directory, or keep it inside an existing repository; or
    > - Create a fresh plugin with `canvas init` and move the code into it; or
    > - Deploy it as it is with `/cpa:deploy-legacy`, which uses `canvas install` and `~/.canvas/credentials.ini` and works only until December 14, 2026.
 
-   To list the prefixes, run `uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
+   To list the prefixes, run `uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
 
-3. **Canvas CLI version.** `uv run canvas --version` must be 0.245.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.245.0'` in the container, then continue.
+3. **Canvas CLI version.** `uv run canvas --version` must be 0.262.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.262.0'` in the container, then continue.
 
 4. **List the deployable instances.** From `$CPA_PLUGIN_DIR`:
 
    ```bash
-   uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+   uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
 5. **Handle the target instance argument:**
    - If `$1` is provided and listed: use `$1` as the target instance
@@ -140,13 +141,17 @@ If cache busting is missing, add it before proceeding with deployment.
 }
 ```
 
-   Only `git add` the specific untracked files the user approves. `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
+   Only `git add` the specific untracked files the user approves.
 
-   ```bash
-   echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
-   ```
+   - **Plugin is its own repository:** `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
 
-4. Commit (never push; `canvas deploy` pushes the commit to the plugin's Canvas Platform repository):
+     ```bash
+     echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
+     ```
+
+   - **Plugin is inside a larger repository:** the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:317-324` at 0.262.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
+
+4. Commit (never push; `canvas deploy` pushes the commit to the plugin's Canvas Platform repository, or a snapshot of the package folder for a plugin inside a larger repository):
 
    ```bash
    git commit -m "quick deploy {plugin_name}"
@@ -160,11 +165,11 @@ If cache busting is missing, add it before proceeding with deployment.
    - `instance`: the resolved instance slug
    - `cwd`: current working directory (the plugin container directory)
 
-   The MCP tool runs `canvas deploy`, then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
+   The MCP tool runs `canvas deploy` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
 
    If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-   The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending` or `still_running`: a second call creates a second waiting deployment. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed` (sub-step 10).
+   The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending`, `still_running`, or `snapshot_replaces_platform`: a second call creates a second waiting deployment, or meets the same refusal. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed` (sub-step 14).
 
 6. **`Status: consent_pending`**: the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -176,15 +181,30 @@ If cache busting is missing, add it before proceeding with deployment.
    6. **User denied:** the deployment is cancelled. Report that and stop.
    7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and stop.
 
-7. **`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded (the streamed logs can also show the plugin loading), then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 5. If the deployment fails, show the failure and stop.
+7. **`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 5. If the deployment fails, show the failure and stop.
 
 8. **`Status: dirty_tree`**: the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat sub-steps 1-4 above for the files listed by `git status --porcelain`, then call `deployer` again.
 
-9. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and stop.
+9. **`Status: snapshot_uncommitted`**: the plugin is inside a larger repository, and its package folder has uncommitted or untracked files, or no committed files at all. A snapshot deploys only committed work and never commits for you. Show the listed files and ask whether to commit them (sub-steps 1-4, for the larger repository) or whether the user commits them; never pass `--yes`. Once they are committed, deleted, or ignored, call `deployer` again. If the user declines, stop.
 
-10. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 5.
+10. **`Status: snapshot_unsupported`**: the package folder holds a submodule, a symbolic link, or a file stored through a filter such as Git LFS or git-crypt, which a snapshot cannot carry. Show the listed paths, tell the user each must become a regular committed file, and stop.
 
-11. **`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest). Continue to Step 5.
+11. **`Status: snapshot_rollback`**: Canvas Platform's `main` was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop.
+
+12. **`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
+
+    1. Show the listed files verbatim.
+    2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+    3. Wait for the user. Never confirm it yourself and never pass `--yes`.
+    4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 5.
+    5. **User copied Platform's versions and committed:** call `deployer` again.
+    6. **User does not act:** nothing was deployed. Tell the user and stop.
+
+13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and stop.
+
+14. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 5.
+
+15. **`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest). Continue to Step 5.
 
 ### Step 5: Report
 
