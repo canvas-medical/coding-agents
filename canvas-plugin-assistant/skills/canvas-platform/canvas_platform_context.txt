@@ -5337,12 +5337,22 @@ Press cmd for Mac or ctrl for PC to select multiple options from either group
   - Click **Save**
 ### Manually adding and removing auth groups
 If you need to update permissions, or override the defaults set based on role, you can change the auth groups for each staff member as well. To do this, navigate to Staff Permissions in your admin menu, select the staff member, and move the group from `available groups` to `chosen groups` or vice versa.
+### Removing access to Settings
+The **Denied access to the admin (overrides all other permissions)** permission keeps a staff member out of Settings and plugin logs without changing anything else they can do in Canvas. Unlike other permissions, it removes access rather than granting it. A staff member who holds it doesn't see **Settings** in the provider menu. Superusers are never blocked.
+No default auth group includes this permission. To use it:
+  1. Reach out to Canvas support to add an auth group that holds the permission on your instance.
+  2. Go to **Practice: Staff Permissions** under **Settings** and select the staff member.
+  3. Move that auth group to **Chosen Groups**.
+  4. Click **Save**.
+To apply it to everyone with a role, add the auth group to that role's default auth groups in **Practice: Roles**. Only staff who hold the role afterward get it automatically, so update existing staff in **Practice: Staff Permissions**.
 ## FAQ & Troubleshooting
 **Q: A staff member can log in, but cannot view patients or navigate expected areas of Canvas. What should I check?**
 A: Confirm the staff member has both the right role and the right auth groups. A role intended for a specific product area may not provide broader Canvas access. If the user should access patients, also confirm they have the correct patient object permissions, such as **All Patients** or the appropriate patient group auth groups.
   - Review their role in **Settings > Practice: Staff**.
   - Review the role's default auth groups in **Settings > Practice: Roles**.
   - Add or remove individual auth groups in **Settings > Practice: Staff Permissions**.
+**Q: A staff member can't open Settings, but they have the right auth groups. Why?**
+A: Check whether one of their auth groups holds the **Denied access to the admin** permission. It overrides every other permission, so remove that auth group in **Settings > Practice: Staff Permissions** to restore access.
 **Q: What happens if a user loses access to a patient they were previously working with?**
 A: If a user loses access to a patient, they will no longer be able to view that patient's chart, profile, or any associated data. Links to the patient will be grayed out, and direct navigation attempts will show a "You do not have permission to view this data" message. Any tasks or items previously assigned to them for that patient will no longer be visible.
 **Q: Can I create custom auth groups beyond the predefined ones?**
@@ -5362,7 +5372,7 @@ A: Yes, write permissions typically include read access. For example, Clinical W
   - [**Staff Management**](https://help.canvasmedical.com/articles/4283873790-add-a-new-staff-member) \- General guidance on adding and managing staff members in Canvas
   - **Security Best Practices** \- Recommended approaches for maintaining EMR security and compliance
 * * *
-**Keywords:** user permissions, auth groups, staff access, patient access, role-based permissions, object permissions, model permissions, security, EMR access control
+**Keywords:** user permissions, auth groups, staff access, patient access, role-based permissions, object permissions, model permissions, security, EMR access control, denied access to the admin, Settings access
 **Categories:** User Management, Security, Administrative Settings, Staff Configuration
 ----- END PAGE https://help.canvasmedical.com/articles/4709841955-user-permissions
 
@@ -10294,15 +10304,16 @@ The Assess Condition command documents a condition at today's visit. It works fo
 Add the **Assess Condition** command to a new or existing note through one of the following
   - Add the **Assess Condition** command directly to a new or existing note
   - Hover over the condition in the Patient Summary and click **Assess**
+  - Click the **+** button on the Conditions section of the Patient Summary to add an empty Assess Condition command, then search for the condition, new or already on the chart
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1791945421583-image.png?Expires=253370764800&Signature=IoFojFAkw6QrvmBRkdid~~I~krhS1wS4hcgyYqTO2HcqBMzRLF4Ny0ebqYwrlWYrUf8rJcrTa2J9U9XDzwhONR7KmSLymJVVwlHxguJvAUEI9Ye1Q4JU0CX2TKtWSuMkWjmKXyXvlMR8JYfWhpt9dLwQN2YQxFD9TmioEXm-UClxB~hnRY8cDKfRNFkHOQoAkbzq0LQxhe8QFgwEPnxQguNdj4LKuhh7OkZws2thW-RaQRck3EakHtuEl--oDwaiZX5Ur3k2jg4OcfYWPagVnfjsEC3HSmGAe3bdECpBubjOnD4flA8zumufgB6BbBSK6m9OskFjAKPLTz-wFcuFzw__&Key-Pair-Id=K3NV4LZ47N8M46)
-If the cursor is not positioned in a note before clicking **Assess** , a Chart Review note will be created to store the command.
+If the cursor is not positioned in a note before clicking **Assess** or **+** , a Chart Review note will be created to store the command.
 Complete the fields within the command
   - **Background** : Carries forward automatically from the condition's current background. Update if necessary.
   - **Status** : Select the current condition status:
     - **Improved**
     - **Unchanged**
     - **Deteriorated**
-  - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015"). Optional. 
+  - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015"). Optional.
     - For a condition already on the chart, this fills in from the condition and can be updated.
   - **Today's Assessment** : Update observations made at the current visit based on condition status
 Click **Record** to update the patient's record.
@@ -10363,7 +10374,7 @@ A: The condition's background steps back to the assessment before the one entere
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
 **Q: Should I use Assess Condition or Diagnose for a new condition?**
-A: Use Assess Condition. It records the new condition and checks the patient's chart first, so a condition that is already charted is reused.
+A: Use Assess Condition. It records the new condition and checks the patient's chart first, so a condition that is already charted is reused. The **+** button on the Conditions section of the Patient Summary adds an Assess Condition command for this. The Diagnose command is planned for retirement in a future release.
 **Q: What happens if I enter an Assess Condition command in error?**
 A: The assessment is removed from the condition's history. If recording that command added the condition to the patient's chart, the condition is removed as well, unless another recorded assessment also uses it. A condition that was already on the chart stays on the Conditions list.
 **Q: I assessed a resolved condition by mistake and it became active. How do I resolve it again?**
@@ -10373,7 +10384,7 @@ A: When the patient has an active condition with the same ICD-10 code, the searc
 ## Related Resources
   - [Diagnosing a New Condition](/articles/9221634314)
   - [Managing Historical Conditions](/articles/3935780129)
-**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background
+**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background, conditions plus button
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions
 

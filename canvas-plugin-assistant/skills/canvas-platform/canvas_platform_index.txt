@@ -404,6 +404,7 @@
         - Default permissions based on role
         - Updating Staff Permissions
         - Manually adding and removing auth groups
+        - Removing access to Settings
     - FAQ & Troubleshooting
     - Related Resources
 - [Patient Groups](https://help.canvasmedical.com/articles/8319995182-patient-groups)
