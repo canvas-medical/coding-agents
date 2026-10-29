@@ -2,9 +2,9 @@
 Reports the Canvas Platform sign-in, the organizations that can publish plugins, and the deployable instances.
 
 Usage:
-    uv run --with 'canvas>=0.245.0' python platform_session.py whoami
-    uv run --with 'canvas>=0.245.0' python platform_session.py instances
-    uv run --with 'canvas>=0.245.0' python platform_session.py publishers
+    uv run --with 'canvas>=0.262.0' python platform_session.py whoami
+    uv run --with 'canvas>=0.262.0' python platform_session.py instances
+    uv run --with 'canvas>=0.262.0' python platform_session.py publishers
 """
 
 import argparse
@@ -32,7 +32,7 @@ class PlatformSession:
             if auth.stored_tokens(platform) is None:
                 cls.exit_with_error(
                     f"Not signed in to Canvas Platform at {platform}. "
-                    "Run `uv run --with 'canvas>=0.245.0' canvas login` in your terminal "
+                    "Run `uv run --with 'canvas>=0.262.0' canvas login` in your terminal "
                     "(it opens a browser), then try again."
                 )
 

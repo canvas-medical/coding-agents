@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import shlex
+import subprocess
 from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
@@ -426,6 +427,38 @@ DIRTY_OUTPUT = (
     "Command failed with exit code 2\n"
     "Error: Invalid value: You have uncommitted changes, and deploy only pushes committed work."
 )
+SNAPSHOT_UNCOMMITTED_OUTPUT = (
+    "Command failed with exit code 2\n"
+    "Error: Invalid value: --snapshot deploys only committed work, and the plugin has uncommitted changes:\n"
+    " M plugins/vitals-alert/acme__vitals_alert/handlers/alert.py\n"
+    "Commit them and run deploy again."
+)
+SNAPSHOT_NOTHING_COMMITTED_OUTPUT = (
+    "Command failed with exit code 2\n"
+    "Error: Invalid value: 'acme__vitals_alert' has no committed files. Commit the plugin and run deploy again."
+)
+SNAPSHOT_UNSUPPORTED_OUTPUT = (
+    "Command failed with exit code 2\n"
+    "Error: Invalid value: --snapshot cannot deploy this plugin as committed:\n"
+    "  plugins/vitals-alert/acme__vitals_alert/static/logo.png is stored through the 'lfs' filter, so what "
+    "git stores for it, such as an LFS pointer or ciphertext, would be deployed instead of the file"
+)
+SNAPSHOT_ROLLBACK_OUTPUT = (
+    "Command failed with exit code 1\n"
+    "Error: main on Canvas Platform was last deployed from 3f9a1c2b7d4e, and HEAD (8b2e0d1a9c5f) lacks its "
+    "changes to these files, so this deploy would roll the plugin back:\n"
+    "  acme__vitals_alert/handlers/alert.py\n"
+    "Update this checkout to include them, such as with `git pull`, and run deploy again."
+)
+SNAPSHOT_REPLACES_OUTPUT = (
+    "Command failed with exit code 1\n"
+    "Error: These files on main were changed on Canvas Platform since the last snapshot, such as by editing "
+    "its catalog listing:\n"
+    "  acme__vitals_alert/README.md\n"
+    "This snapshot would replace them. Copy Canvas Platform's versions into plugins/vitals-alert/"
+    "acme__vitals_alert (`canvas clone acme__vitals_alert` checks them out) and commit them, or run deploy at "
+    "a terminal to confirm replacing them."
+)
 DEPLOY_FAILED_OUTPUT = "Command failed with exit code 2\nManifest name is not publisher-prefixed"
 CONFIG_FAILED_OUTPUT = "Command failed with exit code 1\nNo deployed plugin acme__vitals_alert on acme-staging."
 
@@ -440,6 +473,37 @@ class TestStatusLine:
             pytest.param(MANIFEST, PLUGIN, [CONSENT_OUTPUT], "Status: consent_pending", id="consent_pending"),
             pytest.param(MANIFEST, PLUGIN, [STILL_RUNNING_OUTPUT], "Status: still_running", id="still_running"),
             pytest.param(MANIFEST, PLUGIN, [DIRTY_OUTPUT], "Status: dirty_tree", id="dirty_tree"),
+            pytest.param(
+                MANIFEST,
+                PLUGIN,
+                [SNAPSHOT_UNCOMMITTED_OUTPUT],
+                "Status: snapshot_uncommitted",
+                id="snapshot_uncommitted",
+            ),
+            pytest.param(
+                MANIFEST,
+                PLUGIN,
+                [SNAPSHOT_NOTHING_COMMITTED_OUTPUT],
+                "Status: snapshot_uncommitted",
+                id="snapshot_nothing_committed",
+            ),
+            pytest.param(
+                MANIFEST,
+                PLUGIN,
+                [SNAPSHOT_UNSUPPORTED_OUTPUT],
+                "Status: snapshot_unsupported",
+                id="snapshot_unsupported",
+            ),
+            pytest.param(
+                MANIFEST, PLUGIN, [SNAPSHOT_ROLLBACK_OUTPUT], "Status: snapshot_rollback", id="snapshot_rollback"
+            ),
+            pytest.param(
+                MANIFEST,
+                PLUGIN,
+                [SNAPSHOT_REPLACES_OUTPUT],
+                "Status: snapshot_replaces_platform",
+                id="snapshot_replaces_platform",
+            ),
             pytest.param(MANIFEST, PLUGIN, [DEPLOY_FAILED_OUTPUT], "Status: deploy_failed", id="deploy_failed"),
             pytest.param(
                 MANIFEST,
@@ -520,6 +584,76 @@ class TestStatusLine:
         assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
 
 
+def git_init(directory: Path) -> None:
+    """Make `directory` the root of a new git repository.
+
+    Args:
+        directory (Path): The directory to initialize, created if missing.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["git", "init", "-q", str(directory)], check=True)
+
+
+class TestSnapshot:
+    """A plugin inside a larger repository deploys with --snapshot; a standalone plugin repository does not."""
+
+    @pytest.mark.parametrize(
+        ("layout", "expected_deploy"),
+        [
+            pytest.param("monorepo", [*DEPLOY_CMD[:5], "--snapshot", *DEPLOY_CMD[5:]], id="inside_larger_repo"),
+            pytest.param("standalone", DEPLOY_CMD, id="own_repo"),
+            pytest.param("no_repo", DEPLOY_CMD, id="no_repo"),
+        ],
+    )
+    def test_deploy__snapshot_flag_follows_repo_root(
+        self,
+        tmp_path: Path,
+        layout: str,
+        expected_deploy: list[str],
+    ) -> None:
+        """`--snapshot` is passed exactly when the repository root is not the plugin container."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        if layout == "monorepo":
+            git_init(tmp_path / "monorepo")
+        elif layout == "standalone":
+            git_init(container)
+        cwd = make_plugin(container, {"name": PLUGIN})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        assert mock_cmd.mock_calls == [call(command=expected_deploy, cwd=cwd)]
+        assert result.splitlines()[-1] == "Status: deployed"
+
+    def test_deploy__replaces_platform_hands_off_snapshot_command(self, tmp_path: Path) -> None:
+        """Only a terminal can confirm replacing Platform's changes, so the hand-off command keeps --snapshot."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        git_init(tmp_path / "monorepo")
+        cwd = make_plugin(container, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [SNAPSHOT_REPLACES_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        expected = (
+            f"Deploy output:\n{SNAPSHOT_REPLACES_OUTPUT}\n\n{CanvasDeployerMcp.SNAPSHOT_REPLACES_NOTE}\n"
+            f"  cd {shlex.quote(cwd)} && uv run canvas deploy {PLUGIN} --snapshot --instance {INSTANCE}\n"
+            "After it succeeds there, call the configurer tool to set variables.\n\n"
+            "Status: snapshot_replaces_platform"
+        )
+        assert result == expected
+        assert len(mock_cmd.mock_calls) == 1
+        assert mock_secrets.mock_calls == []
+
+
 def canvas_cli_platform_source() -> str:
     """Return the installed canvas CLI's Canvas Platform source, tests excluded.
 
@@ -537,6 +671,11 @@ def canvas_cli_platform_source() -> str:
         pytest.param(CanvasDeployerMcp.CONSENT_PENDING_MARKER, id="consent_pending"),
         pytest.param(CanvasDeployerMcp.STILL_RUNNING_MARKER, id="still_running"),
         pytest.param(CanvasDeployerMcp.UNCOMMITTED_MARKER, id="uncommitted"),
+        pytest.param(CanvasDeployerMcp.SNAPSHOT_UNCOMMITTED_MARKERS[0], id="snapshot_uncommitted"),
+        pytest.param(CanvasDeployerMcp.SNAPSHOT_UNCOMMITTED_MARKERS[1], id="snapshot_nothing_committed"),
+        pytest.param(CanvasDeployerMcp.SNAPSHOT_UNSUPPORTED_MARKER, id="snapshot_unsupported"),
+        pytest.param(CanvasDeployerMcp.SNAPSHOT_ROLLBACK_MARKER, id="snapshot_rollback"),
+        pytest.param(CanvasDeployerMcp.SNAPSHOT_REPLACES_MARKER, id="snapshot_replaces_platform"),
     ],
 )
 def test_marker_matches_canvas_cli(marker: str) -> None:

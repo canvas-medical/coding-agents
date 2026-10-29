@@ -538,7 +538,7 @@ Pushing is outward-facing and irreversible, so confirm first:
       "question": "Committed locally. Push to Canvas Platform now?",
       "header": "Push?",
       "options": [
-        {"label": "Push now (to Canvas Platform)", "description": "Run canvas deploy --push-only to publish the commit to this plugin's Canvas Platform repository (main there) without deploying it"},
+        {"label": "Push now (to Canvas Platform)", "description": "Run canvas deploy --push-only (with --snapshot inside a larger repository) to publish the commit to this plugin's Canvas Platform repository (main there) without deploying it"},
         {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
       ],
       "multiSelect": false
@@ -547,13 +547,23 @@ Pushing is outward-facing and irreversible, so confirm first:
 }
 ```
 
-Only push if the user chooses to. `/cpa:deploy` already pushes on every deploy. Push with the Canvas CLI, which pushes HEAD to `main` on the plugin's Canvas Platform repository without deploying it (a bare `git push` has no upstream to push to):
+Only push if the user chooses to. `/cpa:deploy` already pushes on every deploy. Push with the Canvas CLI, which pushes to `main` on the plugin's Canvas Platform repository without deploying it (a bare `git push` has no upstream to push to). Check where the plugin sits with `git rev-parse --show-toplevel`:
 
-```bash
-uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only
-```
+- **Prints `$CPA_PLUGIN_DIR` (the plugin is its own repository):** push HEAD:
 
-It refuses while any untracked file remains. Add each untracked file the user left out in Step 13c to `.git/info/exclude` (`echo "<path>" >> "$(git rev-parse --git-dir)/info/exclude"`), never pass `--yes` (it commits every file), then run it again.
+  ```bash
+  uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only
+  ```
+
+  It refuses while any untracked file remains. Add each untracked file the user left out in Step 13c to `.git/info/exclude` (`echo "<path>" >> "$(git rev-parse --git-dir)/info/exclude"`), never pass `--yes` (it commits every file), then run it again.
+
+- **Prints another path (the plugin is inside a larger repository):** push a snapshot of the package folder as committed at HEAD, which leaves that repository's remotes and config alone (canvas-plugins `canvas_cli/apps/platform/commands.py:472-495` at 0.262.0):
+
+  ```bash
+  uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only --snapshot
+  ```
+
+  It refuses any uncommitted or untracked file inside the package folder rather than committing it (`git.py:317-324`). For each untracked file in the package the user left out in Step 13c, ask whether to delete it or ignore it in that repository's `.gitignore`, then run it again. It also refuses a package holding a submodule, a symbolic link, or a Git LFS or git-crypt file (`git.py:333-372`), and a checkout whose HEAD lacks changes `main` was last deployed from (`git.py:536-546`, update the checkout with `git pull`). When files changed on Canvas Platform would be replaced (`git.py:547-567`), it refuses outside a terminal: show the listed files and ask the user to run the same command in their own terminal to confirm, or to copy Canvas Platform's versions in (`canvas clone <name>`) and commit them. Never pass `--yes`.
 
 ### 14. Wrap-Up Complete
 

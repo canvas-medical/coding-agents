@@ -196,7 +196,7 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 - [Any unresolved items]
 
 ## Next Steps
-1. Create plugin scaffold: `uv run --with 'canvas>=0.245.0' canvas init --org [org-slug]`
+1. Create plugin scaffold: `uv run --with 'canvas>=0.262.0' canvas init --org [org-slug]`
 2. Implement the handler
 3. Deploy to test instance
 4. Perform UAT
@@ -228,25 +228,27 @@ When user says "approved", "looks good", "let's build it", or similar:
 First choose the publishing organization:
 
 ```bash
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
 Each output line is `<slug> <plugin_prefix>__`.
 
-- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then continue; do NOT run `canvas login` yourself. If no organization can publish, an organization admin must grant the user the Plugin developer role.
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser), then continue; do NOT run `canvas login` yourself. If no organization can publish, an organization admin must grant the user the Plugin developer role.
 - **One line:** use its slug. **Several lines:** ask which one publishes this plugin with AskUserQuestion, one option per organization labeled `slug (prefix__)`.
 
 Then scaffold:
 
 ```bash
 cd "$CPA_WORKSPACE_DIR"
-echo "{plugin_name_from_spec}" | uv run --with 'canvas>=0.245.0' canvas init --org "{org_slug}"
+git rev-parse --is-inside-work-tree 2>/dev/null && in_existing_repo=yes || in_existing_repo=no
+echo "in_existing_repo=$in_existing_repo"
+echo "{plugin_name_from_spec}" | uv run --with 'canvas>=0.262.0' canvas init --org "{org_slug}"
 cd {plugin_name}
 ```
 
-Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, move the scaffolded folder aside so the name is free (`cd "$CPA_WORKSPACE_DIR" && mv "{plugin_name}" "{plugin_name}.unprefixed"`), and start over once that is fixed.
+Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, move the scaffolded folder aside so the name is free (`cd "$CPA_WORKSPACE_DIR" && mv "{plugin_name}" "{plugin_name}.unprefixed"`), and start over once that is fixed.
 
-`{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform.
+`{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:743-748` at 0.262.0), even inside an existing repository. When `in_existing_repo=yes`, the plugin belongs in place in that repository, so remove the fresh, commit-less nested repository with `trash "$CPA_WORKSPACE_DIR/{plugin_name}/.git"`. `git rev-parse --show-toplevel` then prints the existing repository's root, and deploys publish the plugin from there as a snapshot (`canvas deploy --snapshot`) once its files are committed.
 
 **Run this command BEFORE doing anything else.** Do not:
 - Create directories manually
