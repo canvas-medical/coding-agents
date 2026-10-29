@@ -72,12 +72,12 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 Before gathering requirements, confirm the person can publish a plugin:
 
 ```bash
-uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
 Each output line is `<slug> <plugin_prefix>__`.
 
-- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`; do NOT run `canvas login` yourself. If no organization can publish, tell the user an organization admin must grant them the Plugin developer role.
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`; do NOT run `canvas login` yourself. If no organization can publish, tell the user an organization admin must grant them the Plugin developer role.
 - **One line:** Use its slug as `org_slug`.
 - **Several lines:** Ask which one publishes this plugin and use the chosen slug as `org_slug`:
 
@@ -145,10 +145,22 @@ Use the organization slug chosen at the start of Phase 1 as `org_slug`.
 plugin_name="[generated-plugin-name]"
 org_slug="[chosen-organization-slug]"
 
-# Run canvas init from workspace directory
+# Is the workspace already inside a git repository, such as a monorepo? Check before init creates one.
 cd "$CPA_WORKSPACE_DIR"
-echo "$plugin_name" | uv run --with 'canvas>=0.245.0' canvas init --org "$org_slug"
+git rev-parse --is-inside-work-tree 2>/dev/null && in_existing_repo=yes || in_existing_repo=no
+echo "in_existing_repo=$in_existing_repo"
+
+# Run canvas init from workspace directory
+echo "$plugin_name" | uv run --with 'canvas>=0.262.0' canvas init --org "$org_slug"
 ```
+
+**Inside an existing repository (`in_existing_repo=yes`):** the plugin stays in place in that repository, with no repository or Platform `origin` of its own. `canvas init` always runs `git init` in the new container and points `origin` at Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:743-748` at 0.262.0), so once the prefix check below passes, remove that fresh, commit-less nested repository:
+
+```bash
+trash "$CPA_WORKSPACE_DIR/$plugin_name/.git"
+```
+
+The plugin is still registered on Canvas Platform. `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` publish it from the existing repository as a snapshot with `canvas deploy --snapshot`, once its files are committed there.
 
 **Check the organization prefix:**
 
@@ -158,7 +170,7 @@ ls "$plugin_name"/*__*/CANVAS_MANIFEST.json
 
 **If it finds no file:** STOP. The plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. `canvas init` does this in two cases:
 
-- **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal.
+- **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal.
 - **Signed in, but no organization lets them push plugin code:** it prints "scaffolded without a publisher prefix". Tell the user an organization admin must grant them the Plugin developer role.
 
 Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_name" "$plugin_name.unprefixed"`), and re-run `/cpa:new-plugin` once that is fixed.
@@ -166,7 +178,7 @@ Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_n
 This creates:
 ```
 $CPA_WORKSPACE_DIR/
-└── {plugin_name}/                    # Kebab-case container directory, its own git repo
+└── {plugin_name}/                    # Kebab-case container directory, its own git repo unless the workspace is inside one
     ├── pyproject.toml
     ├── tests/
     └── {package}/                    # Inner package: {prefix}__{name_snake}
@@ -175,15 +187,18 @@ $CPA_WORKSPACE_DIR/
         └── handlers/
 ```
 
-`{package}` is the inner package folder, `<prefix>__<name>` with the name in snake_case. The command also registers the plugin on Canvas Platform and runs `git init` in the container with `origin` pointing at Canvas Platform.
+`{package}` is the inner package folder, `<prefix>__<name>` with the name in snake_case. The command also registers the plugin on Canvas Platform. In a workspace outside any repository, the container is its own git repository with `origin` pointing at Canvas Platform; inside an existing repository, it is a folder of that repository.
 
 #### Step 4: Verify Project Structure
 
 ```bash
 cd "$CPA_WORKSPACE_DIR/$plugin_name"
 uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
-test "$(git rev-parse --show-toplevel)" = "$CPA_WORKSPACE_DIR/$plugin_name" && echo "OK: container is its own git repository" || echo "ERROR: container is not the git repository root"
+git rev-parse --show-toplevel
 ```
+
+- **`in_existing_repo=no`:** the printed path must be `$CPA_WORKSPACE_DIR/$plugin_name`, the container as its own git repository.
+- **`in_existing_repo=yes`:** the printed path must be the existing repository's root, not the container. If it prints the container, the nested `.git` is still there: remove it as in Step 3.
 
 Expected structure:
 ```
@@ -236,7 +251,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "django>=4.2.0",
-    "canvas[test-utils]>=0.245.0",
+    "canvas[test-utils]>=0.262.0",
 ]
 
 [dependency-groups]

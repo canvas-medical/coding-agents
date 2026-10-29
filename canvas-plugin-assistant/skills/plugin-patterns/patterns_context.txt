@@ -8,7 +8,7 @@ This document provides practical patterns and best practices for building Canvas
 
 ### Container vs Inner Folder Pattern
 
-When you run `canvas init` with a plugin name while signed in to Canvas Platform, it creates two levels. The container is its own git repository whose `origin` is Canvas Platform:
+When you run `canvas init` with a plugin name while signed in to Canvas Platform, it creates two levels. The container is its own git repository whose `origin` is Canvas Platform, or, inside an existing repository such as a monorepo, a folder of that repository that deploys with `canvas deploy --snapshot`:
 
 ```
 example-plugin-name/              # Container folder (kebab-case)

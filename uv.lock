@@ -307,7 +307,7 @@ provides-extras = ["dev"]
 [package.metadata.requires-dev]
 dev = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
-    { name = "canvas", specifier = ">=0.245.0" },
+    { name = "canvas", specifier = ">=0.262.0" },
     { name = "html2text", specifier = ">=2024.2.26" },
     { name = "mcp", specifier = ">=1.30.0,<2" },
     { name = "pytest", specifier = ">=9.0.2" },

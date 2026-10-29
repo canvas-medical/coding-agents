@@ -44,28 +44,29 @@ Resolve the deployment target **before** delegating to the agent, so the agent d
 
    If there is no `*/CANVAS_MANIFEST.json`, STOP: this directory is not a plugin container. The printed manifest `name` is the plugin name.
 
-2. **Legacy plugin check.** Canvas Platform deploys only plugins named `<prefix>__<package>` that sit directly under their own git repository. The plugin is a legacy plugin when either holds:
-   - the manifest `name` has no `<prefix>__` part (no `__`)
-   - `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel` fails or prints a path other than `$CPA_PLUGIN_DIR`
+2. **Repository check.** Canvas Platform deploys plugins named `<prefix>__<package>` that are committed to a git repository. Run `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel`:
+   - **Prints `$CPA_PLUGIN_DIR`:** the plugin is its own repository, the `canvas init` layout. `canvas deploy` commits and pushes that repository.
+   - **Prints another path:** the plugin sits inside a larger repository, such as a monorepo. Tell the user it deploys as a snapshot: the `deployer` tool passes `--snapshot`, which pushes the package folder as committed at HEAD and leaves that repository's remotes and config alone, and refuses uncommitted changes in the package rather than committing them (canvas-plugins `canvas_cli/apps/platform/git.py:300-329` at 0.262.0). Commits for it are made in that repository, scoped to the package folder.
+   - **Fails (not in a git repository):** the plugin is a legacy plugin.
 
-   For a legacy plugin, show this guidance and STOP (deploy nothing):
+   The plugin is also a legacy plugin when the manifest `name` has no `<prefix>__` part (no `__`). For a legacy plugin, show this guidance and STOP (deploy nothing):
 
    > This plugin cannot be deployed to Canvas Platform as it is. Either:
-   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and run `git init` in the plugin container directory so the package sits directly under the repository root; or
+   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and commit it to a git repository: run `git init` in the plugin container directory, or keep it inside an existing repository; or
    > - Create a fresh plugin with `canvas init` and move the code into it; or
    > - Deploy it as it is with `/cpa:deploy-legacy`, which uses `canvas install` and `~/.canvas/credentials.ini` and works only until December 14, 2026.
 
-   To list the prefixes, run `uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
+   To list the prefixes, run `uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
 
-3. **Canvas CLI version.** `uv run canvas --version` must be 0.245.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.245.0'` in the container, then continue.
+3. **Canvas CLI version.** `uv run canvas --version` must be 0.262.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.262.0'` in the container, then continue.
 
 4. **List the deployable instances.** From `$CPA_PLUGIN_DIR`:
 
    ```bash
-   uv run --with 'canvas>=0.245.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+   uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.245.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
 5. **Handle the target instance argument:**
    - If `$1` is provided and listed: use `$1` as the target instance
@@ -97,9 +98,9 @@ Save the resolved instance slug and the plugin name (the inner package folder). 
 
 Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
 
-Tell the agent: "Deploy to {instance}".
+Tell the agent: "Deploy to {instance}", and, when the repository check found a larger repository, "The plugin is inside the larger repository at {toplevel}, so it deploys as a snapshot".
 
-The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, or a custom data consent request was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 4 only when the agent reports the deploy complete. If the agent reports a stop, relay its report to the user and end the command.
+The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, a snapshot refused, or a custom data consent request or a snapshot confirmation was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 4 only when the agent reports the deploy complete. If the agent reports a stop, relay its report to the user and end the command.
 
 ### Step 4: UAT
 

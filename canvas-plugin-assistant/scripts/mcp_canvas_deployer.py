@@ -39,6 +39,68 @@ class CanvasDeployerMcp:
         "then call the deployer tool again."
     )
 
+    # A plugin inside a larger repository deploys with --snapshot, whose refusals
+    # are in canvas_cli/apps/platform/git.py (snapshot_source, _guard_platform_history).
+    SNAPSHOT_UNCOMMITTED_MARKERS: tuple[str, ...] = (
+        "--snapshot deploys only committed work",
+        "has no committed files",
+    )
+    SNAPSHOT_UNCOMMITTED_NOTE: str = (
+        "Uncommitted snapshot: --snapshot deploys only the package as committed, and the CLI never commits in "
+        "the larger repository. Show the user the files above and ask whether to commit them there. Do not "
+        "retry with --yes, then call the deployer tool again once the package is committed."
+    )
+
+    SNAPSHOT_UNSUPPORTED_MARKER: str = "--snapshot cannot deploy this plugin as committed"
+    SNAPSHOT_UNSUPPORTED_NOTE: str = (
+        "Unsupported snapshot entries: a submodule, symbolic link, or file stored through a filter (Git LFS, "
+        "git-crypt) cannot reach an instance as its content. The user must replace each path above with a "
+        "regular committed file before deploying."
+    )
+
+    SNAPSHOT_ROLLBACK_MARKER: str = "would roll the plugin back"
+    SNAPSHOT_ROLLBACK_NOTE: str = (
+        "Rollback refused: Canvas Platform was last deployed from a commit whose changes this checkout lacks. "
+        "The user must update the checkout to include them, such as with git pull, then deploy again."
+    )
+
+    SNAPSHOT_REPLACES_MARKER: str = "This snapshot would replace them"
+    SNAPSHOT_REPLACES_NOTE: str = (
+        "Platform changes would be replaced: files above were changed on Canvas Platform, and only a person at "
+        "a terminal can confirm replacing them. Show the files to the user and have them run the command below "
+        "in their own terminal, or copy Canvas Platform's versions into the package and commit them. Do not "
+        "call the deployer tool again for this."
+    )
+
+    @classmethod
+    async def _in_larger_repo(cls, plugin_dir: Path, cwd: str) -> bool:
+        """Whether the plugin sits inside a git repository rooted somewhere other than `cwd`.
+
+        `canvas deploy` refuses such a package unless it is passed `--snapshot`
+        (canvas_cli/apps/platform/commands.py `_require_package_at_repo_root`).
+
+        Args:
+            plugin_dir (Path): The package folder.
+            cwd (str): The plugin container directory, where a standalone plugin's repository is rooted.
+
+        Returns:
+            bool: True when `git rev-parse --show-toplevel` names a directory other than `cwd`.
+        """
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "-C",
+            str(plugin_dir),
+            "rev-parse",
+            "--show-toplevel",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        stdout_bytes, _ = await process.communicate()
+        toplevel: str = stdout_bytes.decode("utf-8", errors="replace").strip()
+        if process.returncode != 0 or not toplevel:
+            return False
+        return Path(toplevel).resolve() != Path(cwd).resolve()
+
     @classmethod
     def _with_status(cls, text: str, status: str) -> str:
         """End a tool result with its one machine-readable status line.
@@ -179,7 +241,8 @@ class CanvasDeployerMcp:
 
         Variables are set only when the deploy succeeds. A deploy that stops on pending
         custom data consent is handed back to the person with the command to run, and a
-        deploy still running on Canvas Platform is left for the configurer tool.
+        deploy still running on Canvas Platform is left for the configurer tool. A plugin
+        inside a larger repository, such as a monorepo, deploys with `--snapshot`.
 
         Args:
             plugin_name: The inner package folder name, which is the folder passed to `canvas deploy`. Variables are keyed by the manifest name.
@@ -187,17 +250,20 @@ class CanvasDeployerMcp:
             cwd: Working directory (plugin container directory).
 
         Returns:
-            str: The deploy output followed by the configure output, the consent note, or the still-running note,
-                ending with a `Status:` line: `invalid_input`, `consent_pending`, `still_running`, `dirty_tree`,
-                `deploy_failed`, `configure_failed`, or `deployed`.
+            str: The deploy output followed by the configure output or a note for the status, ending with a
+                `Status:` line: `invalid_input`, `consent_pending`, `still_running`, `dirty_tree`,
+                `snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`,
+                `snapshot_replaces_platform`, `deploy_failed`, `configure_failed`, or `deployed`.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
             return cls._with_status(checked, "invalid_input")
-        _, manifest = checked
+        manifest_file, manifest = checked
 
+        snapshot: bool = await cls._in_larger_repo(manifest_file.parent, cwd)
+        snapshot_flag: list[str] = ["--snapshot"] if snapshot else []
         result = await cls._run_canvas_command(
-            command=["uv", "run", "canvas", "deploy", plugin_name, "--instance", instance],
+            command=["uv", "run", "canvas", "deploy", plugin_name, *snapshot_flag, "--instance", instance],
             cwd=cwd,
         )
         output = f"Deploy output:\n{result}"
@@ -211,6 +277,20 @@ class CanvasDeployerMcp:
             return cls._with_status(consent, "consent_pending")
         if cls.STILL_RUNNING_MARKER in result:
             return cls._with_status(f"{output}\n\n{cls.STILL_RUNNING_NOTE}", "still_running")
+        if any(marker in result for marker in cls.SNAPSHOT_UNCOMMITTED_MARKERS):
+            return cls._with_status(f"{output}\n\n{cls.SNAPSHOT_UNCOMMITTED_NOTE}", "snapshot_uncommitted")
+        if cls.SNAPSHOT_UNSUPPORTED_MARKER in result:
+            return cls._with_status(f"{output}\n\n{cls.SNAPSHOT_UNSUPPORTED_NOTE}", "snapshot_unsupported")
+        if cls.SNAPSHOT_ROLLBACK_MARKER in result:
+            return cls._with_status(f"{output}\n\n{cls.SNAPSHOT_ROLLBACK_NOTE}", "snapshot_rollback")
+        if cls.SNAPSHOT_REPLACES_MARKER in result:
+            replaces = (
+                f"{output}\n\n{cls.SNAPSHOT_REPLACES_NOTE}\n"
+                f"  cd {shlex.quote(cwd)} && uv run canvas deploy {shlex.quote(plugin_name)} "
+                f"--snapshot --instance {shlex.quote(instance)}\n"
+                "After it succeeds there, call the configurer tool to set variables."
+            )
+            return cls._with_status(replaces, "snapshot_replaces_platform")
         if cls.UNCOMMITTED_MARKER in result:
             return cls._with_status(f"{output}\n\n{cls.UNCOMMITTED_NOTE}", "dirty_tree")
         if result.startswith("Command failed"):
@@ -252,8 +332,11 @@ class CanvasDeployerMcp:
             come from ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are
             never returned in the output. Consent requests for custom data access are never
             answered here: they are returned for the user to answer in their own terminal.
+            A plugin inside a larger repository, such as a monorepo, deploys with --snapshot.
             The output ends with one `Status:` line: invalid_input, consent_pending,
-            still_running, dirty_tree, deploy_failed, configure_failed, or deployed.
+            still_running, dirty_tree, snapshot_uncommitted, snapshot_unsupported,
+            snapshot_rollback, snapshot_replaces_platform, deploy_failed, configure_failed,
+            or deployed.
 
             Args:
                 plugin_name: The inner package folder name. Variables are keyed by the manifest name.
