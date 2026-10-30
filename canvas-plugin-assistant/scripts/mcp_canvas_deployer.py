@@ -84,7 +84,8 @@ class CanvasDeployerMcp:
             cwd (str): The plugin container directory, where a standalone plugin's repository is rooted.
 
         Returns:
-            bool: True when `git rev-parse --show-toplevel` names a directory other than `cwd`.
+            bool: True when `git rev-parse --show-toplevel` names a directory other than `cwd`, compared
+                by file identity so a symlinked or differently cased `cwd` still matches its own root.
         """
         process = await asyncio.create_subprocess_exec(
             "git",
@@ -99,7 +100,7 @@ class CanvasDeployerMcp:
         toplevel: str = stdout_bytes.decode("utf-8", errors="replace").strip()
         if process.returncode != 0 or not toplevel:
             return False
-        return Path(toplevel).resolve() != Path(cwd).resolve()
+        return not Path(toplevel).samefile(cwd)
 
     @classmethod
     def _with_status(cls, text: str, status: str) -> str:

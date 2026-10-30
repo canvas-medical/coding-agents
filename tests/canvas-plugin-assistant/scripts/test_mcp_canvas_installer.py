@@ -354,5 +354,5 @@ def test_legacy_deploy_removed_by_credentials_ini_end() -> None:
     assert date.today() < end_of_credentials_ini, (
         "canvas install and ~/.canvas/credentials.ini stopped working on 2026-12-14. Delete "
         "commands/deploy-legacy.md, agents/deploy-uat-legacy.md, scripts/mcp_canvas_installer.py, the installer "
-        "tool in scripts/mcp_canvas_deployer.py, this test file, and every /cpa:deploy-legacy reference"
+        "tool in scripts/mcp_canvas_deployer.py, this test file, .github/workflows/legacy-deploy-tripwire.yml, and every /cpa:deploy-legacy reference"
     )
