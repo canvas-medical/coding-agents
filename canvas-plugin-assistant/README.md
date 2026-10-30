@@ -140,7 +140,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 `/cpa:new-plugin` and `/cpa:deploy` act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
 
 ```bash
-uv run --with 'canvas>=0.262.0' canvas login
+uv run --with 'canvas>=0.263.0' canvas login
 ```
 
 - `CANVAS_PLATFORM_TOKEN`: set in CI to deploy without a stored sign-in
@@ -149,7 +149,7 @@ uv run --with 'canvas>=0.262.0' canvas login
 
 A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and it is committed to a git repository. `/cpa:new-plugin` creates plugins with `canvas init`: outside any repository the plugin folder becomes its own repository with Canvas Platform as `origin`, and inside an existing repository, such as a monorepo, it stays a folder of that repository.
 
-A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 0.262.0 or newer), which pushes the package folder as committed at HEAD to the plugin's `main` on Canvas Platform and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes `main` was last deployed from, and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 0.263.0 or newer), which pushes the package folder as committed at HEAD to the plugin's `main` on Canvas Platform and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes `main` was last deployed from, and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
 
 A plugin made before Canvas Platform needs one of:
 
@@ -160,7 +160,7 @@ Until December 14, 2026, `/cpa:deploy-legacy` deploys such a plugin as it is wit
 
 ### Legacy deploys and log streaming
 
-`/cpa:deploy` and `/cpa:deploy-lite` do not stream logs: `canvas logs` signs in only with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in. `/cpa:deploy-legacy` deploys with `canvas install` and streams logs with `canvas logs --host <instance>`, both reading a section named after the instance:
+`canvas logs` signs in only with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in. `/cpa:deploy` and `/cpa:deploy-lite` stream logs with `canvas logs --host <instance>` when the file has a section named after the instance, and otherwise deploy without logs and ask you to test in Canvas. `/cpa:deploy-legacy` deploys with `canvas install` and streams logs, both reading that section:
 
 ```ini
 [plugin-testing]

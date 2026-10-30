@@ -72,12 +72,12 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
 Before gathering requirements, confirm the person can publish a plugin:
 
 ```bash
-uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
 Each output line is `<slug> <plugin_prefix>__`.
 
-- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`; do NOT run `canvas login` yourself. If no organization can publish, tell the user an organization admin must grant them the Plugin developer role.
+- **Non-zero exit:** STOP and show the output. If signed out, ask the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser), then re-run `/cpa:new-plugin`; do NOT run `canvas login` yourself. If no organization can publish, tell the user an organization admin must grant them the Plugin developer role.
 - **One line:** Use its slug as `org_slug`.
 - **Several lines:** Ask which one publishes this plugin and use the chosen slug as `org_slug`:
 
@@ -151,16 +151,8 @@ git rev-parse --is-inside-work-tree 2>/dev/null && in_existing_repo=yes || in_ex
 echo "in_existing_repo=$in_existing_repo"
 
 # Run canvas init from workspace directory
-echo "$plugin_name" | uv run --with 'canvas>=0.262.0' canvas init --org "$org_slug"
+echo "$plugin_name" | uv run --with 'canvas>=0.263.0' canvas init --org "$org_slug"
 ```
-
-**Inside an existing repository (`in_existing_repo=yes`):** the plugin stays in place in that repository, with no repository or Platform `origin` of its own. `canvas init` always runs `git init` in the new container and points `origin` at Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:743-748` at 0.262.0), so once the prefix check below passes, remove that fresh, commit-less nested repository:
-
-```bash
-trash "$CPA_WORKSPACE_DIR/$plugin_name/.git"
-```
-
-The plugin is still registered on Canvas Platform. `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` publish it from the existing repository as a snapshot with `canvas deploy --snapshot`, once its files are committed there.
 
 **Check the organization prefix:**
 
@@ -170,10 +162,30 @@ ls "$plugin_name"/*__*/CANVAS_MANIFEST.json
 
 **If it finds no file:** STOP. The plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. `canvas init` does this in two cases:
 
-- **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal.
+- **Signed out:** it scaffolds silently. Ask the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal.
 - **Signed in, but no organization lets them push plugin code:** it prints "scaffolded without a publisher prefix". Tell the user an organization admin must grant them the Plugin developer role.
 
 Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_name" "$plugin_name.unprefixed"`), and re-run `/cpa:new-plugin` once that is fixed.
+
+**Inside an existing repository (`in_existing_repo=yes`), once the prefix check passes:** the plugin stays in place in that repository, with no repository or Platform `origin` of its own. `canvas init` runs `git init` in the new container even inside a work tree and points `origin` at Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:743-748` and `git.py:96-98` at 0.262.0), so remove that nested repository. Run this as one block; it deletes only a commit-less repository rooted at the container:
+
+```bash
+plugin_name="[generated-plugin-name]"
+dir="$CPA_WORKSPACE_DIR/$plugin_name"
+if [ -z "$plugin_name" ] || [ ! -d "$dir/.git" ]; then
+  echo "Nothing removed: no nested repository at $dir/.git"
+elif ! [ "$dir" -ef "$(git -C "$dir" rev-parse --show-toplevel)" ]; then
+  echo "Nothing removed: $dir is not the root of its own repository"
+elif [ "$(git -C "$dir" rev-list --all --count)" != "0" ]; then
+  echo "Nothing removed: the repository at $dir has commits"
+else
+  trash "$dir/.git" && echo "Removed the nested repository at $dir/.git"
+fi
+```
+
+If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand.
+
+The plugin is still registered on Canvas Platform. `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` publish it from the existing repository as a snapshot with `canvas deploy --snapshot`, once its files are committed there.
 
 This creates:
 ```
@@ -251,7 +263,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "django>=4.2.0",
-    "canvas[test-utils]>=0.262.0",
+    "canvas[test-utils]>=0.263.0",
 ]
 
 [dependency-groups]

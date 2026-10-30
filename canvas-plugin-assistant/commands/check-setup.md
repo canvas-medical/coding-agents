@@ -162,7 +162,7 @@ which unbuffer
 ### 8. Check for Canvas CLI
 
 ```bash
-uv run --with 'canvas>=0.262.0' canvas --version
+uv run --with 'canvas>=0.263.0' canvas --version
 ```
 
 `canvas` 0.262.0 or later is needed for `canvas deploy` (0.262.0 adds `--snapshot`, for a plugin inside a larger repository).
@@ -173,30 +173,30 @@ uv run --with 'canvas>=0.262.0' canvas --version
 ### 9. Check Canvas Platform sign-in
 
 ```bash
-uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
-uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
 ```
 
 - **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
   - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
 - **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
   ```bash
-  uv run --with 'canvas>=0.262.0' canvas login
+  uv run --with 'canvas>=0.263.0' canvas login
   ```
 
-### 10. Check legacy deploy credentials (optional)
+### 10. Check log streaming and legacy deploy credentials (optional)
 
 ```bash
 grep '^\[' ~/.canvas/credentials.ini
-uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
 ```
 
 Read only the section headers, as above: the file holds client secrets and passwords.
 
-Only `/cpa:deploy-legacy` uses this file, for plugins without an organization prefix: it deploys with `canvas install` and streams logs with `canvas logs`, both signed in with a section named after the instance. `/cpa:deploy` and `/cpa:deploy-lite` do not use it and do not stream logs.
+`canvas logs` signs in with a section named after the instance. `/cpa:deploy` and `/cpa:deploy-lite` stream logs only for an instance with a section, and deploy without logs otherwise. `/cpa:deploy-legacy`, for plugins without an organization prefix, also deploys with `canvas install` signed in with that section.
 
-- **If the file exists**: Report "legacy deploys available for: [section names other than `localhost`]".
-- **If the file is missing or has no such section**: Report nothing; this is not a failure.
+- **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug from `instances`]" and "legacy deploys available for: [section names other than `localhost`]".
+- **If the file is missing or has no such section**: Report a note only: deploys work without it, but cannot stream logs. This is not a failure.
 - In either case, note that `credentials.ini` support ends December 14, 2026, and `/cpa:deploy-legacy` is removed by then.
 
 ### 11. Check Claude Model
@@ -230,6 +230,7 @@ If all checks pass, report:
   unbuffer: installed
   Canvas CLI: [version or "will be installed with plugin"]
   Canvas Platform: signed in to [Platform host] as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
+  Log streaming: [deployable instances with a credentials.ini section, or "not configured (optional)"]
   Legacy deploys: [instances with a credentials.ini section, or "not configured (optional)"]; removed by December 14, 2026
   model: [current model] [with recommendation if not opus]
 

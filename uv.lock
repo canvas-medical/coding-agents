@@ -133,7 +133,7 @@ wheels = [
 
 [[package]]
 name = "canvas"
-version = "0.262.0"
+version = "0.264.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -172,9 +172,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/84/59/6d2aadcfa8e2160b83debbd2daf2aff6f1e012948cdb91d603047498ae67/canvas-0.262.0.tar.gz", hash = "sha256:6981bec3e8ff9923b4f52ce4ee5efc1ce6c7c48ea5bd130c72858b4798f17e92", size = 2564111, upload-time = "2026-10-29T14:34:27.667Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/4a/adf5e8449292301e8bc8baa94c63c91b294d0612ecb872ecddd2da455562/canvas-0.264.0.tar.gz", hash = "sha256:c590d5dffa6d97265b2cc0f5372b037f2241642a55d525bd0c6d172b0fa2f1be", size = 2566343, upload-time = "2026-10-30T11:40:49.014Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/fa/c817d7b588a4eb8d551d4a68d1e694b2b19c78b576a6b8f62d183f210bc1/canvas-0.262.0-py3-none-any.whl", hash = "sha256:ecea4f131b7f6f2e4821a210b451da46906c9ef9b70a77cfe0edc0e3bc6d21cd", size = 2937630, upload-time = "2026-10-29T14:34:25.669Z" },
+    { url = "https://files.pythonhosted.org/packages/62/c7/4865ed296f89b3ebdf5ba62f6dd9c26c13d4423e6849efb5eda1d1d0eb03/canvas-0.264.0-py3-none-any.whl", hash = "sha256:896fcca033f48f16531f256a499c818d6ff64b9c70866ced8518f3c693eea348", size = 2942225, upload-time = "2026-10-30T11:40:47.016Z" },
 ]
 
 [[package]]
@@ -307,7 +307,7 @@ provides-extras = ["dev"]
 [package.metadata.requires-dev]
 dev = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
-    { name = "canvas", specifier = ">=0.262.0" },
+    { name = "canvas", specifier = ">=0.263.0" },
     { name = "html2text", specifier = ">=2024.2.26" },
     { name = "mcp", specifier = ">=1.26.0,<2" },
     { name = "pytest", specifier = ">=9.0.2" },

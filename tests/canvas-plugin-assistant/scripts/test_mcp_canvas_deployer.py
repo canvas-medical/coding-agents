@@ -628,6 +628,33 @@ class TestSnapshot:
         assert mock_cmd.mock_calls == [call(command=expected_deploy, cwd=cwd)]
         assert result.splitlines()[-1] == "Status: deployed"
 
+    @pytest.mark.parametrize("spelling", ["symlink", "wrong_case"])
+    def test_deploy__own_repo_under_another_spelling_of_cwd_skips_snapshot(
+        self,
+        tmp_path: Path,
+        spelling: str,
+    ) -> None:
+        """A `cwd` naming the standalone repository's root by another path is still that root."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "vitals-alert"
+        git_init(container)
+        make_plugin(container, {"name": PLUGIN})
+        if spelling == "symlink":
+            cwd_path = tmp_path / "link"
+            cwd_path.symlink_to(container, target_is_directory=True)
+        else:
+            cwd_path = tmp_path / "VITALS-ALERT"
+            if not cwd_path.exists():
+                pytest.skip("case-sensitive filesystem")
+        cwd = str(cwd_path)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd))
+
+        assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
+        assert result.splitlines()[-1] == "Status: deployed"
+
     def test_deploy__replaces_platform_hands_off_snapshot_command(self, tmp_path: Path) -> None:
         """Only a terminal can confirm replacing Platform's changes, so the hand-off command keeps --snapshot."""
         tested = CanvasDeployerMcp
