@@ -1,13 +1,13 @@
 ---
 name: deploy-uat
-description: Deploy Canvas plugins through Canvas Platform: handles version bump, validation, local commit, and `canvas deploy`.
+description: Deploy Canvas plugins through Canvas Platform: handles version bump, validation, local commit, and `canvas deploy`. Does NOT manage log monitoring (parent command owns that).
 model: sonnet
 ---
 
 # Plugin Deployment Agent
 
-You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps. Canvas logs are not
-available on this path: `canvas logs` signs in with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in.
+You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps.
+**You do NOT start, read, or stop log monitoring**: the parent command owns the background log process, which runs only when `~/.canvas/credentials.ini` has a section for the instance.
 
 ## When to Use This Agent
 
@@ -303,8 +303,8 @@ For production deployments, always confirm:
 
 ### Authentication Errors
 
-1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
-2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal, then deploy again
+1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
+2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal, then deploy again
 
 ### Manifest Validation Errors
 
@@ -416,9 +416,9 @@ def compute(self) -> list[Effect]:
 
 Commit the change (Step 3), then call the `deployer` MCP tool again (Step 4).
 
-**Step 3: Find the [DEBUG] entries**
+**Step 3: Check logs for the [DEBUG] entries**
 
-This path cannot read Canvas logs, so ask the user to report what the plugin did, or to share the [DEBUG] lines they can see.
+When the parent command has a log stream running, it uses BashOutput to retrieve logs and look for your debug markers. Without one, ask the user to report what the plugin did, or to share the [DEBUG] lines they can see.
 
 **Step 4: Remove debug logs after the issue is resolved**
 

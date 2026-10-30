@@ -1,11 +1,11 @@
 ---
 name: deploy-lite
-description: Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits and deploys.
+description: Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs where credentials.ini allows it.
 ---
 
 # Deploy Lite
 
-Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits and deploys.
+Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs when `~/.canvas/credentials.ini` has a section for the instance.
 
 ## Arguments
 
@@ -55,17 +55,17 @@ Resolve the deployment target.
    > - Create a fresh plugin with `canvas init` and move the code into it; or
    > - Deploy it as it is with `/cpa:deploy-legacy`, which uses `canvas install` and `~/.canvas/credentials.ini` and works only until December 14, 2026.
 
-   To list the prefixes, run `uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
+   To list the prefixes, run `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
 
-3. **Canvas CLI version.** `uv run canvas --version` must be 0.262.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.262.0'` in the container, then continue.
+3. **Canvas CLI version.** `uv run canvas --version` must be 0.263.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.263.0'` in the container, then continue.
 
 4. **List the deployable instances.** From `$CPA_PLUGIN_DIR`:
 
    ```bash
-   uv run --with 'canvas>=0.262.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+   uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.262.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
 5. **Handle the target instance argument:**
    - If `$1` is provided and listed: use `$1` as the target instance
@@ -91,9 +91,27 @@ Resolve the deployment target.
 }
 ```
 
-Save the resolved instance slug and the plugin name (the inner package folder) for the deploy.
+Save the resolved instance slug and the plugin name (the inner package folder) for the deploy and log monitoring.
 
-### Step 3: Verify Cache Busting
+### Step 3: Start Log Monitoring (BEFORE deploy)
+
+`canvas logs` signs in with the client credentials in the `~/.canvas/credentials.ini` section named after the instance slug, not with the Canvas Platform sign-in (canvas-plugins `canvas_cli/apps/logs/logs.py:339` and `canvas_cli/apps/auth/utils.py:55-58` at 0.262.0). Check for that section, reading only section headers, since the file holds client secrets:
+
+```bash
+grep -qx "\[{instance}\]" ~/.canvas/credentials.ini 2>/dev/null && echo "logs=available" || echo "logs=unavailable"
+```
+
+- **`logs=available`:** start log streaming as a **background task** (`run_in_background: true`), and save the `bash_id`:
+
+  ```bash
+  unbuffer uv run canvas logs --host {instance}
+  ```
+
+- **`logs=unavailable`:** there is no log stream for this deploy. Continue.
+
+Whenever this command stops before Step 6, stop log monitoring (KillShell) if it is running.
+
+### Step 4: Verify Cache Busting
 
 If the plugin serves HTML content (has templates/ directory or uses `render_to_string`), verify that:
 
@@ -104,7 +122,7 @@ If the plugin serves HTML content (has templates/ directory or uses `render_to_s
 
 If cache busting is missing, add it before proceeding with deployment.
 
-### Step 4: Commit and Deploy
+### Step 5: Commit and Deploy
 
 `canvas deploy` deploys only committed work, so commit first. No version bump and no tests.
 
@@ -177,11 +195,11 @@ If cache busting is missing, add it before proceeding with deployment.
    2. Explain: approving gives one plugin access to another plugin's custom data on that instance, and only a person at a terminal can answer.
    3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --no-push --instance <instance>`) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
    4. Wait for the user. Never answer the request yourself, never pass `--yes`, never call the Platform consent API, and never claim the deploy succeeded.
-   5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 5.
+   5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
    6. **User denied:** the deployment is cancelled. Report that and stop.
    7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and stop.
 
-7. **`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 5. If the deployment fails, show the failure and stop.
+7. **`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue to Step 6. If the deployment fails, show the failure and stop.
 
 8. **`Status: dirty_tree`**: the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat sub-steps 1-4 above for the files listed by `git status --porcelain`, then call `deployer` again.
 
@@ -196,23 +214,33 @@ If cache busting is missing, add it before proceeding with deployment.
     1. Show the listed files verbatim.
     2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
     3. Wait for the user. Never confirm it yourself and never pass `--yes`.
-    4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 5.
+    4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
     5. **User copied Platform's versions and committed:** call `deployer` again.
     6. **User does not act:** nothing was deployed. Tell the user and stop.
 
 13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and stop.
 
-14. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 5.
+14. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 6.
 
-15. **`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest). Continue to Step 5.
+15. **`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest). Continue to Step 6.
 
-### Step 5: Report
+### Step 6: Post-Deployment Log Check
 
-Tell the user the deployment completed, and that this command does not read Canvas logs: `canvas logs` signs in with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in, so it cannot confirm that the plugin loaded. Do NOT attempt to fix anything. Stop.
+After the deploy completes, report the result. Do NOT attempt to fix any errors.
+
+- **No log stream (Step 3 started none):** tell the user the deployment completed, and that Canvas logs are unavailable for this deploy, so it cannot confirm that the plugin loaded: logs stream only with a `~/.canvas/credentials.ini` section for the instance. Ask them to test in Canvas. Stop.
+- **Log stream started:**
+  1. Wait 5 seconds for logs to accumulate (`sleep 5`)
+  2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
+  3. **If the background shell is no longer running:** the stream did not start or has dropped. Show its output, tell the user the deployment completed but Canvas logs are unavailable, ask them to test in Canvas, and stop.
+  4. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
+  5. Stop log monitoring (KillShell): always stop regardless of outcome
+  6. **If errors are found:** show the errors to the user. Do NOT offer to fix them or re-deploy. Just report the errors and stop.
+  7. **If no errors:** tell the user the deployment completed and no errors were detected in logs. Stop.
 
 ## Sign-in
 
-`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). This command does not use `~/.canvas/credentials.ini`. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
+`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). `~/.canvas/credentials.ini` is used only by `canvas logs`, and only when it has a section named after the instance; `credentials.ini` support ends December 14, 2026. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
 
 ## Examples
 

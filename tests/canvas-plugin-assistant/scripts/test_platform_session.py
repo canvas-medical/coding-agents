@@ -107,7 +107,7 @@ class TestRun:
         assert exc_info.value.code == 1
         expected = (
             f"ERROR: Not signed in to Canvas Platform at {PLATFORM}. "
-            "Run `uv run --with 'canvas>=0.262.0' canvas login` in your terminal "
+            "Run `uv run --with 'canvas>=0.263.0' canvas login` in your terminal "
             "(it opens a browser), then try again.\n"
         )
         assert capsys.readouterr().out == expected

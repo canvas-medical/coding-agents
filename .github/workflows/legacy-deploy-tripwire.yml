@@ -1,0 +1,29 @@
+name: Legacy Deploy Tripwire
+
+# /cpa:deploy-legacy runs canvas install with ~/.canvas/credentials.ini, both of which stop
+# working on 2026-12-14. This test fails from that date and names every legacy file to delete,
+# so it runs daily and on every pull request rather than waiting for someone to run the suite.
+on:
+  schedule:
+    # Daily at 06:00 UTC.
+    - cron: '0 6 * * *'
+  pull_request:
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-deploy-tripwire:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+
+      - name: Fail once the legacy deploy path is past its end date
+        run: uv run pytest tests/canvas-plugin-assistant/scripts/test_mcp_canvas_installer.py::test_legacy_deploy_removed_by_credentials_ini_end

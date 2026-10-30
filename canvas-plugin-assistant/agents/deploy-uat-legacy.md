@@ -167,20 +167,20 @@ to the canvas install command. Secret values are never exposed to Claude Code.
 Route on the `Status:` line that ends the tool result:
 
 - `Status: installed`: the install succeeded. If the result includes a warning about missing secrets, show the warning to the user; the warning is informational.
-- `Status: install_failed`: show the output to the user and stop; return to the parent command with the failure.
+- `Status: install_failed`: show the output to the user. If the plugin is already on the instance (it appears in `uv run canvas list --host {hostname}`), retry once with a disable, install, enable cycle:
+
+  ```bash
+  uv run canvas disable {plugin_name} --host {hostname}
+  ```
+
+  Then call the `installer` MCP tool again. On `Status: installed`, run:
+
+  ```bash
+  uv run canvas enable {plugin_name} --host {hostname}
+  ```
+
+  Stop and return to the parent command with the failure when the plugin is not on the instance, or when the retry also ends in `Status: install_failed`.
 - `Status: invalid_input`: the plugin folder, manifest, or an argument is wrong. Show the output, fix the input, and call the tool again.
-
-If updating an existing plugin, you may need to disable first and re-enable after:
-
-```bash
-uv run canvas disable {plugin_name} --host {hostname}
-```
-
-Then call the `installer` MCP tool again, followed by:
-
-```bash
-uv run canvas enable {plugin_name} --host {hostname}
-```
 
 After install completes, **return to the parent command**. The parent handles log checking and UAT from here.
 
