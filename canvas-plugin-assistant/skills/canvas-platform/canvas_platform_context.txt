@@ -899,12 +899,9 @@ Explore the following resources:
   - [📄 Claim Management](/articles/9992348572) \- Process insurance claims
 ## **Stay Up To Date:**
   - 🚀 [Release Notes](https://docs.canvasmedical.com/product-updates/release-notes/) \- Latest product updates
-  - 🗺 [Roadmap](https://docs.canvasmedical.com/product-updates/roadmap/) \- What we have planned next
   - 📈 [Beta Programs](https://docs.canvasmedical.com/product-updates/commands-api/https://docs.canvasmedical.com/product-updates/commands-api/) \- Participate in beta testing
   - 📆 [Important Dates](https://docs.canvasmedical.com/product-updates/important-dates/) \- Key dates to remember
 ## **For Developers:**
-[**Join the Community**](https://github.com/canvas-medical/canvas-plugins/discussions)
-  - 👥 [Discussions](https://github.com/canvas-medical/canvas-plugins/discussions) \- Share and learn from other developers building on Canvas
 [**Documentation**](https://docs.canvasmedical.com/)
   - 💻 [The Canvas SDK](https://docs.canvasmedical.com/sdk/) \- Develop with Canvas tools
   - 🔥 [FHIR API](https://docs.canvasmedical.com/api/) \- Comprehensive read/write access
