@@ -27,12 +27,18 @@ Follow this exact workflow. Do NOT deviate.
          ↓
 5. ASK FOLLOW-UP IF NEEDED (1 more AskUserQuestion max)
          ↓
-6. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md)
+6. WRITE SPEC FILE ({workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md), citing pattern IDs from existing-plugins-reference.md if it exists
          ↓
 7. SHOW FILE PATH → WAIT FOR APPROVAL
          ↓
 8. ONLY PROCEED AFTER USER APPROVES
 ```
+
+## Reference Patterns
+
+If `{workspace_dir}/.cpa-workflow-artifacts/existing-plugins-reference.md` exists, read it before writing the spec. Cite the adopted pattern IDs (for example `P1`) in the spec's Architecture and Rationale sections, and keep each concern under its own `##` section of the template below (Trigger, Data Requirements, Data Access Strategy, Effects, Architecture, and so on), adding a `##` section for a concern none of them covers, so each pattern maps to a heading. You do not launch the reference-finder; the calling command does.
+
+When `/cpa:new-plugin` asks you to write the spec, stop once it is written and return its path. Workflow steps 7 and 8 (approval) and the implementation after them then belong to the command, which maps the reference patterns onto the spec before it asks the user to approve.
 
 ## Check Native Coverage First
 
@@ -195,7 +201,8 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 ## Architecture
 - **Complexity**: [Simple / Medium / Complex]
 - **Components**: [List what's needed]
-- **Rationale**: [Why this fits]
+- **Reference patterns**: [Adopted pattern IDs from existing-plugins-reference.md, or "None"]
+- **Rationale**: [Why this fits, citing pattern IDs where they apply]
 
 ## Secrets/Configuration
 - [Any secrets needed, or "None"]
@@ -322,6 +329,8 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 ### Step 3: Implement
 
 **Edit the files created by `canvas init` - do NOT create new files unless and until necessary.**
+
+If `.cpa-workflow-artifacts/existing-plugins-reference.md` exists, follow its adopted and adapted patterns as you implement, and note any deviation with its reason in the spec; `/cpa:deploy` reviews the build against those patterns.
 
 1. **Edit the handler** created by `canvas init` (typically `handlers/my_handler.py`)
 2. **Use the canvas-sdk skill** to look up:
@@ -508,7 +517,7 @@ Then use the `/cpa:deploy` command to start the deployment and UAT process.
 
 ## Update Mode
 
-When invoked to **update an existing plugin** (not create a new one), follow this workflow instead of the creation workflow above.
+When invoked to **update an existing plugin** (not create a new one), follow this workflow instead of the creation workflow above. If `.cpa-workflow-artifacts/existing-plugins-reference.md` exists, keep following its patterns here too.
 
 ### Update Step 1: Understand Current Plugin
 
