@@ -11,7 +11,9 @@ dev = []
 
 [dependency-groups]
 dev = [
-    "mcp>=1.26.0",
+    # mcp_canvas_installer imports mcp.server.fastmcp (the v1 FastMCP API); mcp 2.x
+    # renamed it to MCPServer, so the tests that import the module pin mcp<2.
+    "mcp>=1.26.0,<2",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     # Imported by test_generate_platform_context.py; the generator itself declares
