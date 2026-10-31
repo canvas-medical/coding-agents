@@ -3646,7 +3646,7 @@ This process begins with an open note of the patient chart.
 If a prescription does not send successfully, the next step depends on whether the prescription is controlled or non-controlled, where the error appears, and whether the issue is caused by missing data, authentication, or pharmacy transmission.
 This FAQ covers the most common prescription errors in Canvas Medical and how to resolve them.
 ## Before you begin
-If a prescription shows an **Error** badge, hover over the error badge next to the triple dot menu on the command to view more detail before troubleshooting.
+If a prescription shows an **Error** badge, hover over the error badge next to the triple dot menu to see any detail that Canvas exposes. The UI may show only a generic **Error** badge even when Canvas has received a more specific rejection reason. If the reason is not visible, contact Canvas Support with the prescription, pharmacy, prescribing provider, and whether the prescription is controlled or non-controlled.
 ## Frequently Asked Questions
 ### Why did my prescription fail to send?
 Prescription errors usually fall into one of these categories:
@@ -3685,19 +3685,25 @@ Common causes include:
   7. Remove line breaks or unusual characters from the **SIG** and **Notes to pharmacist** fields
   8. Send the prescription again
 ### What does a 500 error mean?
-A 500 error usually indicates a transmission or pharmacy-side problem.
+A 500 error can have several causes. For non-controlled prescriptions, it may indicate a transmission or pharmacy-side problem. For controlled prescriptions, a generic 500 can also result from staff-profile validation or incomplete controlled-substance service-level setup.
 **How to fix it**
   1. Confirm the selected pharmacy is still in business
   2. Search for the pharmacy online to verify it is still open
   3. If the pharmacy has closed, create a new **Prescribe** command and send the medication to a different pharmacy
+### Why did a controlled prescription fail with a generic 500 after opening the DrFirst signing window?
+A narrow controlled-substance pattern is a generic 500 that occurs after the DrFirst signing window opens, particularly when the problem affects one prescriber or supervising-provider setup rather than multiple pharmacies. Inspect the supervising provider's staff profile. If a **Last Name** field contains extra identifiers such as an NPI or DEA number, the downstream validation can fail because the value is longer than 35 characters. The visible **Schedule IV - select EPCS prescriber** text is the standard controlled-substance label, not the error itself, and the prescriber may still be correctly enrolled for EPCS.
+Correct the supervising provider's name fields so they contain only the actual name values, then create or resend the prescription as appropriate. This is a narrow staff-profile validation pattern and is not a general explanation for every 500 error.
 ### What does a 900 error mean?
-A 900 error means the pharmacy or prescription network did not accept the medication.
+A 900 error means the pharmacy or prescription network rejected the medication or message. The cause can be pharmacy-specific, network-related, or related to the prescription or prescriber setup; it is not a single diagnosis.
 Common reasons include:
   - temporary downtime at the pharmacy
   - the pharmacy does not dispense the prescribed medication
   - the patient's insurance is not accepted by the pharmacy
   - the prescribing provider's ePrescribing enrollment is incomplete, inactive, or not yet recognized by the pharmacy network
-If you receive this error, hover over the **Error** badge to review the full error text. If the message says the prescriber is not known to the pharmacy network, or that the message type is not supported by the sender, confirm the prescribing provider's ePrescribing enrollment is complete and active.
+If you receive this error, hover over the **Error** badge to review any error text that Canvas exposes. The badge may show only a generic **Error** , even when Canvas has received the underlying pharmacy rejection reason. If the message says the prescriber is not known to the pharmacy network, or that the message type is not supported by the sender, confirm the prescribing provider's ePrescribing enrollment is complete and active.
+### What if a controlled prescription is rejected because the pharmacy does not dispense its controlled-substance class?
+First verify the rejection reason and transmission status. For example, a rejection stating **900 - Transaction rejected: Pharmacy does not dispense class I or class II controlled substances** means that repeated sends to that pharmacy will not resolve the problem. This can occur when the medication is a Schedule II controlled substance, such as lisdexamfetamine, and the selected pharmacy does not dispense that class.
+Create a new **Prescribe** or **Refill** command and select a pharmacy that dispenses the medication's controlled-substance class. Do not recommend a replacement or cancellation until the transmission status is verified. If the rejected command did not reach a pharmacy, there may be nothing to cancel. If only a generic **Error** badge is visible, provide the prescription, pharmacy, and controlled-substance context to Canvas Support so they can investigate the rejection reason.
 If the provider was recently enrolled or updated, allow time for the pharmacy network to recognize the change. If the error continues, contact Canvas Support with:
   - the exact error text
   - the prescribing provider
@@ -3707,6 +3713,9 @@ If the provider was recently enrolled or updated, allow time for the pharmacy ne
 ### What if the prescription is stuck in Pending?
 For controlled substances, **Pending** usually means the prescription was sent from Canvas to the DrFirst signing workflow, but the signing process was not completed.
 This commonly happens if the signing window was closed before the provider finished entering the passphrase and one-time password.
+### Why does clicking SEND appear to fail even though a controlled prescription shows Delivered?
+In a narrow pattern, Canvas may display a backend error such as `Http404: No Prescription matches the given query` when SEND is clicked even though the controlled-substance prescription was already transmitted successfully and shows **Delivered**. Verify the transmission status before advising a replacement prescription. When delivery is confirmed, use the command's three-dot menu and select **Send** rather than creating a duplicate.
+This is different from an unsigned DrFirst prescription that remains in **Received** or **Pending** ; those prescriptions did not complete transmission and require the new-command guidance below.
 **How to fix it**
 If the DrFirst signing process was not completed, the original prescription cannot be resent. Create a new command instead:
   - use **Adjust Prescription** for a current medication
@@ -3754,6 +3763,9 @@ If the DrFirst signing window does not appear, confirm that:
   - the provider's DrFirst access is active
   - the correct prescribing workflow is being used
 If enrollment or token setup is incomplete, the provider may not be able to finish the prescription.
+### What if the EPCS grant is approved but a controlled prescription still fails?
+EPCS grant activation does not by itself complete Canvas-side controlled-substance setup. After the provider activates the DrFirst EPCS grant, the practice should notify Canvas Support, preferably by replying to the existing provider-enrollment request, so Support can configure the required controlled-substance Surescripts service level.
+If a controlled prescription shows a generic **Error** after the grant was approved, have Support verify this service-level configuration rather than attributing the failure to note signing based only on timing. A rejected controlled prescription may not be resendable; if the medication is still needed, the prescriber should create a new prescription. Allow up to 24 hours for pharmacy-directory propagation after setup. Persistent failures after that window require investigation.
 ### Why did my refill error from the patient summary?
 Refills will error if they are being refilled from a free text medication statement.
 You can determine this by hovering over the medication in the patient summary and checking whether it is a free text medication entry.
@@ -6595,6 +6607,56 @@ A: If you can't verify enough information for DrFirst to confirm your identity, 
 ----- END PAGE https://help.canvasmedical.com/articles/5514693639-resetting-your-epcs-passphrase
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5540123924-users-and-roles
+Your roles decide what you can see and do in Canvas Platform. Each person can hold several roles and only an Organization admin on your team can manage users and assign roles from the **Users** page in Canvas Platform.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395131198-03-users-roles.png?Expires=253370764800&Signature=Vxv7ukj-mamFFXFUBSClAF2jyNxeAzq4mDC5nDQ8uRFdKY1M1rGLuwurXMQkc9gSuAFpMiQmIOcQhWTX2VZhX~ORuZKPcwBdA4XEhnbDaxk4n3O7M0VRgEcPtI3Du2rkAKXQ7aVC976dCmz5yVnF1zWjmkB~bU9MNg7cTMGqWmRBrQqpQinBLgw~1iFD-OSyTmNaY~3grElbdBZXeONyjSGr7kP4Jx9xIrlLApBFdZ8r1DGtRTggT2LyrZCsyiD0DbSfyWkzIuWBS5Df~sRtooh-u0JzyY1JDxsOA3vpQhbnWoUaAhdKs-c7hOijbAC1mtFB24E2rxuBMNMlgmtD0w__&Key-Pair-Id=K3NV4LZ47N8M46)
+# How to Invite Someone
+  1. **Open Users.** Click your name at the bottom of the sidebar, then **Users**.
+  2. **Start the invitation.** Click **Invite user**.
+  3. **Enter their details.** Add their **Email** , **First name** and **Last name**.
+  4. **Choose their roles.** Pick one or more roles. See The Roles below for what each one allows.
+  5. **Send it.** They get an email. If their address is on a domain your organization signs in to through single sign-on, they sign in there. Anyone else chooses a password from the link.
+They show as **Invited** on the Users page until they sign in for the first time.
+💡 If an Organization admin has turned on **Managed by your identity provider** (under **Organization → Provisioning**), inviting is off: add people in your identity provider instead. People your provider added are also removed there, and they lose access to Canvas Platform the next time your provider sends its changes.
+# How to Change Someone's Roles
+  1. **Open Users.** Click your name at the bottom of the sidebar, then **Users**.
+  2. **Edit their roles.** Click **Edit roles** beside the person.
+  3. **Check or clear roles.** A person with no roles stays in your organization but can't do anything until you give them one.
+  4. **Save.** Click **Save roles**. Every change is recorded in your organization's audit log.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395145523-04-edit-roles.png?Expires=253370764800&Signature=NdVwo3E9NzN2EhJDtwMf2ko5N25X5rSRjYbMsnqgxFVzQNGPTqoigT3d-6uvy74oLKAxdNneuLOp~-ogT1HZFJN3DsfVSKFTukYEAFrVVTN53qdTrzqfdEXgyBj1-TFf~ZYbRvVhABCNEX17Xh9~qfnyCLyrU4OsBjZaewHkqop4dLVRUvsgQoHRXzJSicI1KsPUaoha-qtpd-IObrQ2XTJOLmIVjSl3GbJ1HA-6pTCCz6vJsSydhcrRNsSlWrWdG4CL0hlsaEAfgIasMdk9pk9FLbIj0FUs5VYQrqLCfbqnxwe98TQ70gVIYhZJ6clIJXA-PWd5rneptfjzXutzsw__&Key-Pair-Id=K3NV4LZ47N8M46)
+# How to Remove Someone
+Click **Remove** beside the person on the Users page. You can't remove yourself, so your organization always keeps at least one admin.
+# How Roles Work
+  - **Roles are cumulative.** Users receive the combined permissions of all their assigned roles.
+  - **Read-only access is separate.** All other roles include access to view your organization's plugins and configuration. The Read-only role cannot be combined with other roles.
+  - **Studio roles require setup.** Studio user, Studio admin, and Onboarding admin roles are available only after Canvas has configured Studio for your organization. When assigning one of these roles, you must link the user to an existing staff member in your Canvas EMR.
+  - **Service accounts have limited roles.** Service accounts used for automation can only be assigned the Plugin developer or Deploy manager role.
+# The Roles
+Role| Who it's for| What it lets you do  
+---|---|---  
+**Read-only**|  Anyone who needs to see the organization's work and change nothing| See plugins, configuration and instances. Compare instances and read promotions.  
+**Plugin developer**|  The engineers who write the organization's plugins| Everything Read-only can, plus push plugin code and manage service accounts  
+**Deploy manager**|  Whoever decides what runs on each of the organization's instances| Everything Read-only can, plus install, upgrade, configure and remove plugins, promote configuration between instances, approve plugin access, and manage service accounts  
+**Organization admin**|  Whoever runs the organization itself on Canvas Platform| Everything Read-only can, plus organization settings, single sign-on, people and roles, inference keys, and service accounts  
+**Publisher**|  Whoever offers the organization's plugins to other organizations| List the organization's plugins in the Plugin Catalog and make them available to other organizations  
+**Billing admin**|  Finance staff, who handle the bill without touching plugins or people| See usage, spend and invoices, and manage the payment method  
+**Studio admin**|  Whoever oversees the organization's Studio and runs its onboarding| Build in Studio, see every Studio project, change Studio settings, and run onboarding  
+**Studio user**|  Clinical and operations staff who build in Studio without writing plugin code| Build in Studio  
+**Onboarding admin**|  The implementation lead, who runs onboarding without building in Studio| Run onboarding  
+💡 Deploying and approving belong to Deploy manager, not Organization admin. If an Organization admin also deploys plugins, give them both roles.
+# FAQ
+**Why can't I give someone Read-only and another role?**  
+Every role already lets a person see your organization's plugins and configuration, so Read-only alongside another role adds nothing. Choose Read-only on its own, or leave it out.
+**Why can't I give someone a Studio role?**  
+Canvas hasn't set up Studio for your organization yet. Contact your Canvas team.
+**Who can change my roles?**  
+An Organization admin on your team. If your organization doesn't have one yet, contact your Canvas team.
+**Someone never got their invitation. What should I check?**  
+Check that the email address is spelled correctly on the Users page. If their address is on a domain your organization signs in to through single sign-on, they don't need the email: they can sign in through your identity provider, and their Home page shows the invitation. Their roles apply once they click **Accept**.
+Next: [What Is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
+----- END PAGE https://help.canvasmedical.com/articles/5540123924-users-and-roles
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5542576212-canvas-support-resources
 Canvas Support offers users a variety of ways to get help, troubleshoot issues, and learn how to use the Canvas platform effectively. Whether through in-app tools, the Help Center, or direct contact with our support team, we aim to provide clear and responsive assistance.
 Our dedicated support team is here to assist you **Monday through Friday, 8am–8pm ET**. We're committed to addressing most inquiries within one business day, ensuring you get the help you need as quickly as possible.
@@ -6995,9 +7057,66 @@ To learn more about the functionalities of Canvas Remote, explore the following 
 ----- END PAGE https://help.canvasmedical.com/articles/5778885172-canvas-remote-on-ios
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform
+Canvas Platform is where your team manages everything around your Canvas instances: your instances, plugins, Studio, onboarding, AI usage and billing. It has its own sign-in at [**platform.canvasmedical.com**](http://platform.canvasmedical.com), separate from your Canvas EMR.
+# How to Sign In
+  1. **Open your invitation.** An Organization admin on your team, or your Canvas team, invites you by email. Follow the link to set your password.
+  2. **Sign in.** Go to [platform.canvasmedical.com](http://platform.canvasmedical.com), enter your email and click **Continue**. If your organization has set up single sign-on click **Sign in with single sign-on**.
+  3. **Add a second sign-in step** such as an authenticator app or a passkey.
+💡 Setting up single sign-on for your organization? See [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform).
+# Finding Your Way Around
+## The Sidebar
+Canvas Platform sections are gated based on User roles, so your sidebar may look different from another member of your team.
+![1793392241679-01-home-sidebar.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793392241679-01-home-sidebar.png?Expires=253370764800&Signature=Jh0~ALaXRKeb3jOYtMCeqXko-rC3UdtpH9FQMRBGKqTX9mf3niAMW4KF950T6Dk-3ApdXlqoj4D1leJiSe319uFSUWS4CnnVGNfXEcu06-ull0iejEgSAyvE827NeAkagYv5HqOrI9RVLDH6rrt0fwEkhzxAFwgINr6AwnF7beNMaauR-TfxvgmRFdQJbAhxVBQVkEooiNI36uv9s6-u28dooeVhcwZY63piQnvnUB8fa0G7Ps8c4CV4lwKQordpn~1g-F2OCKnIOSUnJQ-aCM6TsieuEzqi~M~B-LfXlRN4eKL0NHuKrBM~MboJTRbzR0Gn-2NgkkMO61d61mMDAw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Section| What it's for| Who sees it  
+---|---|---  
+**Home**|  Your organization and its instances at a glance| Everyone  
+**Canvas Instances**|  Every instance you run, comparing instances, and promoting configuration between them| Any of: Read-only, Plugin developer, Deploy manager, Organization admin.Only Deploy managers can promote  
+**Plugin Catalog**|  Browsing and installing plugins| Everyone  
+**Onboarding**|  Your implementation with Canvas| Studio and Onboarding users, only while your implementation is active  
+**Studio**|  Building plugins with Canvas's AI assistant| Studio user, Studio admin  
+**Platform Analytics**|  Issues Canvas finds in your plugins, plugin performance, and Ask your data| Issues: everyone.Performance: anyone who can see instances  
+**Inference**|  Keys and usage for Inference Gateway| Everyone.Only Organization admin can create keys.  
+**Usage & Billing**| Spend, invoices and payment method| Billing admin  
+## The Account Menu
+Click your name at the bottom of the sidebar to open the account menu.
+![1793392213478-02-account-menu.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793392213478-02-account-menu.png?Expires=253370764800&Signature=Eyxu8-ddund7HDZh5-9k8TI-TGlydI2Bin1jr0uzMlKH1yA8y6TV1sDQa3wjSUMVRu-NtTcDVDQyR789n7T244dC7tTsBGJDYpt6jx-Xd2LXPo04FIVqx9d6~FituE~lAXw2VZpl8~Y6rXrwXmBB1mZwgLAVzZomjxZteTP7TLq94LSomi0Ur4LJDbbhGSOjaf7tc4bjjvnppWwvEOF7HB57~McPQlGBqb3dz7DooJQ6Fh2cJ8Uo~sYfG67oV-zwOUlI1RN3zTQGSuCJZ8OwGaNPGBCxkxs9q22Zi4C-17oUhjS2rHPi26HVew75qo0dp88dV21PHmwZFXZzf2o7Bw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Item| What it's for| Who sees it  
+---|---|---  
+**Organization**|  Organization settings, single sign-on, and publishers| Organization admin  
+**Users**|  Inviting people and changing their roles| Organization admin  
+**Credentials**|  Service accounts your automation signs in as| Plugin developer, Deploy manager, Organization admin  
+**Plugin approvals**|  Approving a plugin's access to another plugin's data| Deploy manager  
+**Sign-in security**|  Your password and second sign-in step| Anyone who signs in with a password  
+# Key Terms
+Term| What it means  
+---|---  
+**Organization**|  Your company in Canvas Platform. People, roles, instances and billing all belong to it.  
+**Instance**|  One Canvas EMR environment, such as your development or production instance.  
+**Role**|  What a person can see and do. A person can hold several roles.  
+**Plugin**|  Code that adds to or changes how Canvas works, built in Studio, by your developers, or by a partner.  
+**Publisher**|  An organization that offers its plugins to other organizations through the Plugin Catalog.  
+# Getting Help
+  - **Ask Navigator.** The Navigator panel on the right answers questions about your organization, instances and plugins.
+  - **Read the docs.** **Documentation** at the bottom of the sidebar opens the Canvas developer docs, for the Canvas SDK and the Canvas CLI.
+  - **Contact your Canvas team.** Message us in your organization's shared Slack channel, or submit a ticket with the [Canvas Platform support form](https://canvas-medical.portal.usepylon.com/forms/platform-support).
+# FAQ
+**Is my Canvas Platform sign-in the same as my Canvas EMR sign-in?**  
+No. Canvas Platform has its own sign-in. If your organization sets up single sign-on for Canvas Platform, you can sign in through your identity provider. If your organization turns on **Single sign-on only** , that's the only way in for users at your organization's domains.
+**Why don't I see a section a coworker sees?**  
+Sections appear only for roles that can use them. Ask an Organization admin on your team to change your roles.
+**Who can give me access?**  
+An Organization admin on your team. If your organization doesn't have one yet, contact your Canvas team.
+**Where did Studio and Onboarding go?**  
+They moved into Canvas Platform. See [Studio and Onboarding are moving to Canvas Platform](https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform).
+Next: [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
+----- END PAGE https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5877696655-patient-coverages
 Managing patient insurance coverages is essential for ensuring accurate billing, claim processing, and eligibility verification. This guide provides detailed instructions for adding, updating, and managing insurance coverages, attaching insurance card images, configuring insurer settings, handling subscribers and guarantors.
 # User's Guide
+## Managing Coverage from the Patient Profile
 ## Adding New Coverage
 ### Accessing the Coverage Modal
   - Open the **Patient Profile**
@@ -7036,7 +7155,7 @@ There are two options for uploading insurance card images: either upload an imag
 ![screenshot-202504220649.jpg](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1745327344780-screenshot-202504220649.jpg?Expires=253370764800&Signature=lAtt6YmKde2PsTYVLwz07wKqQRDMXnRboIoLDRjWOk7qgN7lx1OinSIsaqwtowkMKP4yw1A2WTg~xN-cgfoQ7UsS-99cEOwp-WfaXNMOYrwcLeiwC6bPrdrXyssKt5blBEKdJMNytytsoYPBPHFV0iXpTDPHyU0Jfnd8F4nF6TmCKni0BsVu9eVdoGfC2rvBR7AxgzMAKUm40-p4WE9tcXDBl7ALt3TutP8e5STGKqsRjU6JHvIOMPrBE4xn2Zqi3Ewb~~z6Aj0CxFWebNSex6QuK2YqX8ZT49NVtSFO7O39WUkKWmoe269-rXsUW1MEu56LAJi6isC0dIXT3P530Q__&Key-Pair-Id=K3NV4LZ47N8M46)
 Missing address or phone data may cause lab order or prescription errors.
 ## Adding a Subscriber
-Subscribers carry the insurance plan for the patient. Subscribers can either be the patient or another individual.
+Subscribers carry the insurance plan for the patient. Subscribers can either be the patient or another individual. Every coverage subscriber must be linked to a patient record; subscriber details cannot be stored on a coverage without a subscriber chart.
 ### Patient is the subscriber
   - When subscriber is the direct patient, select `The patient is the subscriber`
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734383352302-1728336217493-Screenshot2024-10-07at5.23.27PM.png-ff3b00c5-6b5f-439c-87dd-26411994f696?Expires=253370764800&Signature=OC4Vu3kZ4Slps-8m9EbuCh4uo0WgHRaX2gWMIkkdTDDpuMDKWgeYZsuejvWtZ9eRijaMeYfZvj5Y1~aSlnYGbMJSNiUhwbvTrJArNaa605qcD2-ZFOPslVOQ-eybDW7hFo8hd~CTfo7ZymBNa2Wo5D7TUBRnmaWKqBY8qGutYln1Zzrnz26veUqjOIT-c4hZglpwI-CEAVy7BbVZHtfXzNtmsNDHrGJgXYURs06~WgBXp00AssW78Bb1xYavy~HhBK5-Nc40zwNzNB6Knfqb2jLe35p1~ZOUJfrOzSlc8rJdkL2AhcL8ZgSa6TFbfs0FLaEkrxErby95-ltIVMjtkw__&Key-Pair-Id=K3NV4LZ47N8M46)
@@ -7045,10 +7164,10 @@ Subscribers carry the insurance plan for the patient. Subscribers can either be 
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734383316364-1728336257081-Screenshot2024-10-07at5.24.07PM.png-3e3b3a09-de4f-4373-af2d-868af4e55e7a?Expires=253370764800&Signature=gDMf4A8AXZ9RGy4BFP~5N2-7r3cRdc7Te85cjN8GHw6DO4~ZXfelopv~OVPuewgolcZP422HE6dZ68SPnbXEFDTQaT0sdKqq8QiJoR4YOsamM~ptmkPlh7RlYs7itmHaVrb7aOQrzJKTwMEFEoJaLmI8nvivTc6RnlgOQa0XNK-HiTDqukz2Ns6JvFripVWuWD5XtFt5WIxYDNpLxBHnb~HfoGmZQ5-Qla3-nBvWwurK0S0AJ8e86aVvYHELz-BeAKN8AuAiWtzUShlGfz6Hq-d4qxslS6kA3EDA35eJDRb8jJEaN6uTBnYRBo~jnujOpm4R4WFPfgN6GK4SWV5VLw__&Key-Pair-Id=K3NV4LZ47N8M46)
   - If the subscriber is an existing patient, search for the subscriber in the dropdown.
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734383581449-1728332617329-Screenshot2024-10-07at4.22.14PM.png-e0c26436-5157-42bc-b33f-985517eedc6e?Expires=253370764800&Signature=IUOFu5vs4AkWtoAqC~bcx9vZx0O4q1LkLcR7PtIALzOSdH4mHTkuQhHgRA3pn~RnG8Jkp9JLEMnTemX9WX3KuA8BxRBhatwlB8b9Hzii0NglKL2~QZQPNC-D5mPhVj~rN71c2simNCIIeDFceNUywHdMHS~rNndp1yYyru~9nkJ9ZJvFK9C9HAityYTo3XweE4Po6fd1HmrfQvn8y~psiNt4F0sdcaOYOB9o-A04pBbRxvjgx01SCUwnuT668-KevVcYuTTF4btAyHzqakaPzENinH7tjrpR~4OyFAz5MkeZfVkFgXkL1NcB3E6IgHDBcfv2rydBiJ6gJYMuFNpSig__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - If the subscriber is not part of the practice, enter their name and select **Add [Name]** and select the patient's relationship to the subscriber.
+  - If the subscriber is not part of the practice, enter their name and select **Add [Name]** and select the patient's relationship to the subscriber. This creates the subscriber record that must be linked to the coverage.
 ![2024-12-16_16-18-17.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1734383908847-2024-12-16_16-18-17.png?Expires=253370764800&Signature=q2SwgrEajw2PXtPNu0QkZQsNzJKeyQTKWqxbxk1S7-mzIPpduPqm8w~gWGsrZPKATmI8SJaWxbYKwSxcUreAbLFIDbxRcuUxC0EwnOZ5AEuBecKm8Iwz~nll4ITox3pQjnxn-lXYnqTRB7MpLa4051T-rGj~l3p9U1t1t22rJPxpPNMN9-61KT-Ris4N3-HOlYxqybwf0AmZDqMtIV1RBttedPsCbTTJPeiGXV92dunE2ql5AGDbzajtI1te1uXjp6QvmSNrRO2bI0nu36SAgo~d9OaiivnUiXP0roFxm7mrJHCjbuXleN9iCYOoTaLxZkiLSrIEDf6bA5oXZAgeOA__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - Complete the **Add New Subscriber** modal, filling in required fields such as name, date of birth, phone number, and address. 
-If the subscriber is not a patient of the organization, uncheck **Is active patient** to create them an inactive chart.
+  - Complete the **Add New Subscriber** modal, filling in required fields such as name, date of birth, phone number, and address.
+A coverage cannot have a chartless subscriber. If the subscriber is not a patient of the organization, uncheck **Is active patient** to create an inactive chart and link it to the coverage. This inactive chart is the available workaround for a non-patient subscriber.
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1728334127069-Screenshot2024-10-07at4.29.48PM.png?Expires=253370764800&Signature=HZnUj5bGNhI4Lrxmi2jCyVjuSwb6Baqwrubob2cAD670ulwU7Iioy5aX2gqdMjjMwwnZFffvn~G3bzTdUtDmwdJvwG4bXpJd0p3zeJ9LvlGdfVxwN5-axlmJF5CXqfSpy5pSn1~BYGkBBdeeMC6c6uRk4lBAPHPJkgeD4boVjdAZv6naUVV~QvhJhckroItfdH7mRLmFit4StWtmtIvhsVIJkH~dPlxgEjwJZ7ulWbbQ0--gnjdoWr8CaoO58ssLgqK7Hq6hp4LsoRHSM~vj2ChkDUM-sCFyBFz~u-G2EO~U45l2gpyCl1TQnfChNSDFoPZRjcSO9w1Yn6yrxAASEw__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Adding Coverage Comments
 Coverage-specific notes can be added for quick reference:
@@ -7078,7 +7197,7 @@ To end a coverage period
   - Open the triple dot menu next to the desired coverage and select **View/Update**.
   - Clear the end date by clicking the calendar icon and selecting **Clear** or add a future expiration date if the date is known.
   - Select **Done** to reactivate the coverage, which will move back to the active coverages view.
-### Removing Coverage
+### Removing Coverage from the Patient Profile
 Coverage can only be removed if it hasn't been linked to a claim.
   - Click the triple dot on the coverage being removed
   - Select remove from the dropdown
@@ -7086,31 +7205,36 @@ Coverage can only be removed if it hasn't been linked to a claim.
   - Confirm removal by selecting Remove
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749668461828-image.png?Expires=253370764800&Signature=oS4PgBHjzROFSHKKYbclafOmoSzvqpzE8NyIlRhrwh6hr~riTMrwetxGUABxxnHzAIhtEcMCn~EiBm~Kh~Q38oZMomxoDGrCXqGS1ynwu5ku8voJqutALOPpx6XD-2aOP5ss56qPN-cZFvkdSe3bYwRs85wvOoUngykuVxA54HMn0SscjLAHRe9-azrw6UENURQkJbE4Vz3TSfRZtriyEou0Y1zxNuTHmEMAFlny~UZT8UAB6zOkkP0bjIvuYPQmlQ5Wh19zBgH0eaVyWJZuzH-kc5DOwm86YE1MgwL3AJmQVs26qWXveicBc05J95aj~2OJW3Fiu9jRCIE-2Y2IMg__&Key-Pair-Id=K3NV4LZ47N8M46)
 Removing a coverage will PERMANENTLY delete the coverage. Once it is removed, it cannot be restored.
-## Changing Insurance Coverage on Claims
-Sometimes, a coverage entry is incorrect and has already been associated with a claim. In such cases, the coverage needs to be updated.
-  - Navigate to the patient's profile and locate the current insurance coverage in the **Coverages** section.
-  - Remove or expire the old coverage:
-    - **Expire** : Add an end date to indicate when the coverage ended.
-    - **Remove** : Delete the old coverage entirely from the patient's record. A removed coverage cannot be restored
-  - Add the new insurance coverage, ensuring the start date reflects the policy's effective date.
-  - Open the relevant claim.
-  - Click **Show available coverages** under the current coverages on the claim to expose the new coverage
+### Removing Coverage from Claims
+When coverage needs to be removed from an existing claim:
+  - Navigate to the patient's claim
+  - Click the triple dot on the coverage that needs to be removed
+  - Click **Remove coverage** from the dropdown menu
+![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1760036057961-image.png?Expires=253370764800&Signature=rwZzgsSS-DPArG4nWjG1VVbyghNGTHr5r5hfAGeM0RGzoqawAbFCm~fIKonH1xrPhsVzNqrdNmT8qrOzWckdiR8nHpw92hPDOYjk3hOTuRsz~ZVh5A~Sa9fUsfPXJLswpZ2B2f8MUrJHdeQEZIGYH0QLNJcUiN~oSksTKGL~9OlRWT30zCAcqI2Ku4Ixi2ZXVqWh2KI669~g2UnGxhHVPgxqrz7DqJ0q4QzNhd7AGQkJQ4HofqRWzKUmEAbvTtTrQf6~IhRZ3-vZFY2AjVZus-eGS5bfIRdmMevGx9wNjK~DSxNor66lTQZNj9cyQZbZAOugWxqdceF9~EcnuVOR3g__&Key-Pair-Id=K3NV4LZ47N8M46)
+  - A new section **Show available coverages** will display under the remaining coverage. If you click it, the removed coverage will show in the dropdown
+![2025-10-09_14-55-52 \(2\).gif](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1760036383664-2025-10-09_14-55-52%25282%2529.gif?Expires=253370764800&Signature=C1AEDGc2KaPUn7K1LaQxut3vPxO65Vvxxz6CG~-6DJDVDvy4LsziAv5FHd4xX4iqd4Sf2mdOyI6fwDXkK0sMV0dJjfx8wPDwGmM74TcrqO7s~Krh9-03WKKE~BUu~dgsS5GZjUefMMhMl--m6pWXqZM6lP2i~PN8SuWAfaTnnNj6~z90JPlQQeikoCjeVmniOZ3mAOIobZ0i3DIYf-sdPZw3xJih~PfCI83gaQr2LYvNB~uU~wxR21rfF4-5t3Kq9jXpVE1QPF5VpJrEEmu1lImGvin3HY-D8adCyK-yZMgOIWGTdu~7O7X3J7QdGau6ifHFAo9-anjMzy5ZvufEag__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Adding Coverage to Claims
+When a coverage needs to be added to an existing claim:
+  - Open the relevant patient claim
+  - Click **Show available coverages** under the current coverage(s) to reveal additional coverages that have not been applied to the claim.
 ![2025-04-22_11-04-53.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1745334304935-2025-04-22_11-04-53.png?Expires=253370764800&Signature=lZStIoIjf6RwVdzFwImc4hQ4sM7JPY5Xgyj8ClwT8hsc-vIVCM3zmEeSFFjcgiTgSxNmdXKQjeOw5DtrQpKXHtb1h3tjA1wKOxeHgME9J5n-jjBEliFvJq5d1ONFl25D76msAUKDuvXdw2rIiPEpqIVda8MHg27IJlkZdBZZDXPc-sjpukLGrlCyHdxkq0e40o54XX2v1GGSU15JhR-fEaBYVgNf2YoVYg5yofQFGAiwqdZJbmfIsznwCSoPsk6slQCpQYk0AQw0LA8AyrbYqmPsyE3yRN4vpbtyw50FH~AKzjStZvVXFUQ0BS5gvX-sFcJaiDR5IchuRV~Ad4Bosg__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - Click the triple dot of the new insurance and click **Add coverage to claim**
-  - The coverage list will not reflect all 3 coverages
+  - Click the triple dot on the coverage being added to the claim and click **Add coverage to claim**
+  - The coverage list will update to include the added coverage
 ![2025-04-22_11-06-54.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1745334528043-2025-04-22_11-06-54.png?Expires=253370764800&Signature=ZoQ6xc9SDiqQ8SPMpsSkeqnRr5YPDX-GYjEIPYu6NEUvw6QZ52g9KMIZ7ifOJtFvEc0Y85bDVPLt2CSYz7UHP2PxorVfZXSrLjMbHehPESqAfbPbGoBCdjF9hweEcYOEYtjjPtwprdgj62uYgTECml3mOF~YcGCTeGVRhAqOHN~cYIAQdERpTF3QYgU2hXAYEGWyVdH8jpnLNFn8UzrxnIYnZVc3Bs6Tf9uDvDrWpQySUDx-veDKeygm8oSRQAfJSfPJelE3HvOon6iQT5hlXGwkEPHwFgGv8K7BEZlOhXcvnc79krHXABCPCYyb0bEWb~gtMIrOHgawogb4S7CmvA__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - Click the triple dot menu on the coverage that should not be on the claim and click remove coverage.
+### Making a Claim Self Pay
+  - 
 ### Changing Current Insurance
 If a coverage is labeled as **Current** (highlighted in yellow), it cannot be removed from a claim. An alert, **You cannot remove the current coverage,** will display when attempting to remove it. To proceed, another coverage must be marked as current before the initial coverage can be removed.
 ![2025-04-22_10-15-45.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1745334882738-2025-04-22_10-15-45.png?Expires=253370764800&Signature=E9lp94UmUsJ4UqTqLEhRgmUivWTCB3f22vtzAtYwfW5I3GY0ZhCIllxqifQYpYVZBQI9tIC55HLt1ntj3EF~DETq4NsC9vBYot3jAV5CnB2HlJGM1KtCMW7aj407kXLkRuiLmhhH7FEwO4Fke9VjbAMvkHtCl0C7dIhiqNBqARVmT7o71UuxbGr6ECO27p3Q1f~QU4tN2eQLS7OfOHmRXxNnxng1aGGuYgLnk2daGOLs9qAWU28X16NT75Czy~0QTK5sPLx5UvlyRagz3~4XC~GkZ4aGGj9ex3xkJMqtrz-e6BdOmpy5PX~1zqQsaYjSboSHtYwMDXuo-Zzl92qcYQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   - Click the triple dot of coverage that should now be current
   - Select **Set as current**
-  - The selected coverage will be updated to current (highlighted yellow) 
+  - The selected coverage will be updated to current (highlighted yellow)
   - The previous selected coverage will no longer be current and can be removed from the claim
 ### Other Coverages
 Beneath the medical coverages on the patient profile, there is a section for Other Coverages. Here any non-medical insurances the patient may need can be added (prescription coverage, auto insurance, etc.).
   - Click **+Add under the Other Coverages** heading
   - Follow the same step used for adding, updating or removing medical coverages
+  - Other coverages remain on file for reference and are not included on medical claims. Use this section for prescription-only (RX) coverage when it should not be submitted as medical coverage; do not add it as a numbered Primary or Secondary medical coverage.
 ### Coverage Eligibility
 Canvas integrates with **ClaimMD** to provide real-time eligibility verification, ensuring that patient insurance coverage is active before services are rendered.
 **When Eligibility is Checked?**
@@ -7129,6 +7253,9 @@ For detailed information:
   - Select **Review Eligibility** from the triple-dot menu.
   - A modal will display eligibility details, including copay and coinsurance amounts (which can be edited if necessary).
   - Review all relevant data to ensure billing accuracy.
+#### Troubleshooting subscriber and payer-response mismatches
+Canvas submits the patient's name and date of birth together with the ID on the coverage. When someone else is the subscriber, compare the payer response with the coverage setup, including the subscriber and member identity, member ID, relationship, and whether the payer returned the patient as a dependent. If the payer does not return the patient as a matching dependent, rechecking demographics alone will not resolve the mismatch.
+Change the coverage to `The patient is the subscriber` and use the patient's own member ID only after the payer confirms that the patient is its subscriber/member under that ID. Then select **Verify Eligibility** again. Do not use another person's ID while representing the patient as that person's dependent if the payer does not list the patient as a dependent under that ID; this will not resolve the mismatch and may put claims at risk of denial. Otherwise, confirm the correct subscriber arrangement with the payer or support rather than assuming this correction applies.
 ### Patient Eligibility Defaults
 By default, eligibility checks are processed using the organization's information. However, some insurers require the use of a specific provider's details.
   - Admins can configure this behavior in **Settings > Quality & Revenue: Insurers** by enabling **Use provider for eligibility**.
@@ -7138,6 +7265,16 @@ By default, eligibility checks are processed using the organization's informatio
   - **Payer does not support electronic eligibility:** Manual verification required outside of Canvas.
   - **Provider not enrolled:** Ensure Tax ID and NPI are registered with the payer.
   - **Invalid policy number format:** Remove dashes or suffixes like "-01" from policy numbers.
+### Identifying billing-primary coverage in reporting
+FHIR Coverage data alone cannot identify the coverage that is truly primary for billing. A record shown in the UI's **Other coverages** section can still appear in FHIR with `status = "active"`, `order = 1`, and an open-ended period.
+Use the reporting database's `api_coverage` data instead. Filter rows to `stack = 'IN_USE'`; among those rows, `coverage_rank = 1` identifies the billing-primary coverage. Rows with `stack = 'OTHER'` correspond to **Other coverages** and are excluded from billing logic even if their FHIR resource appears active and retains `order = 1`.
+### Custom portals and subscriber mapping
+Standard EHR coverage instructions may not describe how an organization-specific portal plugin captures or maps subscriber information. If a custom insurance form collects a different subscriber but the resulting coverage identifies the member as the subscriber, inspect that plugin's mapping rather than assuming the standard EHR behavior.
+In one verified custom-plugin arrangement, the policyholder's name and date of birth were retained only in the insurance-card document title, not in the coverage record. That plugin could be changed to create an inactive chart for the non-patient subscriber and link it to the coverage. This is a custom-plugin example, not a general behavior of built-in or custom portals; Canvas does not automatically make such plugin changes.
+### Limits of coverage-change attribution
+`COVERAGE_CREATED` and `COVERAGE_UPDATED` events do not identify whether a coverage change was made by staff or a patient. In the reviewed setup, the coverage record also did not provide a created-by or modified-by value. Do not treat an event payload or the originator of an available card-image snapshot as a consistent identifier of the coverage editor.
+For a custom patient insurance form that handles portal submissions, the form handler can use the authenticated patient or proxy identity available through its patient-form `SessionCredentials` and write an app-managed marker for patient-originated changes. This can distinguish marked changes made through that custom workflow from other changes only when the workflow reliably writes the marker. It is not a native event attribution field and cannot identify which staff member made an unmarked change. No implementation schema or code is defined here.
+A security-audit review of one test instance found staff end-date operations but not the tested new coverage records or portal-form edits. That result is specific to that instance and does not establish how audit records behave in every organization.
 # Configuration & Set Up
 ## Managing Insurers
 Canvas pulls an initial list of insurers from **ClaimMD** , but organizations can manually manage insurers to align with their specific needs.
@@ -7175,7 +7312,7 @@ Some insurers process their submissions through alternate payers or accept ERAs 
     - Locate the **Use for Submission** field
     - Select the payer from the dropdown menu (e.g., Medicare B for Medicare claims)
   - To enable remittances from other payers:
-    - Locate the **Accept remittances from** field 
+    - Locate the **Accept remittances from** field
     - Select the payer(s) the coverage can accept remittances from in the dropdown
   - Save your changes
 ### Image Upload Settings
@@ -10929,6 +11066,8 @@ The Candid integration focuses on claim submission, claim status updates, adjudi
   - **Adjudication sync:** Canvas retrieves insurance payment data from Candid and updates the claim to reflect its finalized state.
   - **Patient payment reporting:** When a patient payment is collected in Canvas, that information is sent to Candid via API.
   - **Patient payment sync:** Payments recorded in Candid can be pulled back into Canvas during sync.
+## Setup Candid
+  1. 
 ## Moving Claims to the Submission Queue
 ### Moving an individual claim
   1. Navigate to the claim.
@@ -10945,7 +11084,8 @@ The Candid integration focuses on claim submission, claim status updates, adjudi
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1772648368057-image.png?Expires=253370764800&Signature=e1wsmDZB2tBVrVNVdqoJ8EhL8m5DLoAHgRRIdtY8msnGUprUG~sUmjeJ~hAQX98mk7oh4OAZzhLACCHuf1OXG2Wo72jqchgirq1okQ9rfco0bC1XW~KbmvQ-m~6Df-thMkz2zKNmOzMtLangkx1KiERuzAOQFa6u3D1Y1aoiMNzuEUBBaGKRizopz3FydlbL03ywYATsja-tfL6umGA9Ce19jd3tw7FEqpd9~t1oqAaFYPYi25Smvbct6aO-Gao-X1EUlQt-V1e7StbNqfm8dpHUUvQFhAKmWPDJmsd7osOcHnCG2g4Mw9vvDxfY7rXXtmwdFUQ3~nIUGpxwwZTwbg__&Key-Pair-Id=K3NV4LZ47N8M46)
 > **Accidentally moved a claim?** You have 60 seconds to undo it. An option to revert the move will appear immediately after moving a claim or batch of claims. Once that window closes, the claim will need to be worked from whichever queue it landed in.
 ## What Happens After a Claim Reaches the Submission Queue
-60 seconds after a claim lands in the Submission Queue, Canvas sends it to Candid via API.
+When the v2/API integration is enabled, Canvas sends a claim to Candid about 60 seconds after it enters the Submission Queue. This applies when the claim enters Submission; enabling v2 does not backfill claims that were already in the Submission Queue. Reconcile those pre-existing claims against Candid before resubmitting, and resubmit only claims Candid is actually missing. Do not blindly resend every older claim, because some may already have been sent through the previous workflow and could be duplicated.
+Claims in **Clinician review** are not ready to bill because their visit note has not been locked. Lock the note first, then allow the claim to move through **Coding** to **Submission** before Candid can receive it.
   - **On success:** The claim moves to the filed queue, a comment is added to the claim activity, and a Candid status banner appears.
   - **On failure:** The claim moves back to the coding review workflow with an error comment explaining what went wrong. Make the necessary changes and move the claim back to the Submission Queue when ready.
 The goal is for your Submission Queue to be at zero at the end of every day — giving your team a clear picture of what Candid is working on and what still needs attention.
@@ -10957,6 +11097,7 @@ If a filed claim is returned to the Submission Queue after adjustments and Candi
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1772649888884-image.png?Expires=253370764800&Signature=hqzPOcjP2mUp6jDXme8KGp7eClO2FO3YT~tJZOo~gsFHGQEeew-RQSwPTJ4iQtFk3LQDyV~gIJHYbgGL-5o1q5dazLAaOEBk3ZvvSkPeZDAC71R~xGlTavthWZQ-f~sdVihwKTQjLsfoald5kQlHhqd690nPe6doW0D8B2yJZoF75vzIf638CuokIAPza1K-Mxb5ypB8mT0vJs-c5VC-wVoM4wpY2BmwVYuel0eSyDcIGClzyC9RUbtHd0tPkynnh3b4L5efIcZ7WyrENd~p7~wO5OTpmahvHvtcmzvNmK5Kf36iaPUkngjfBMGS--O~NNp6FKIEf1gUT70cG-bbsQ__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Adjudication Sync
 Canvas checks for new insurance payment data from Candid on a nightly schedule. When new ERA (Electronic Remittance Advice) data is found:
+Candid sync work can overlap with other scheduled plugin jobs. In one verified configuration, a custom scheduled task ran about 45 minutes late because Canvas ran scheduled plugin jobs for the same minute sequentially. This is an example of possible delay, not a universal sync duration or schedule. If a custom `CronTask` selects a time-based batch, use its scheduled target timestamp, `self.target` (an ISO 8601 value), rather than `datetime.now()`. This can preserve the intended batch interval when execution is delayed, but it does not make the task run on time. If an integration schedule conflicts with time-sensitive work, contact Canvas Support to ask whether the schedule can be reviewed or adjusted; availability and results may vary by installation.
   - Insurance payments are posted to the claim with the appropriate CARC codes.
   - If the remaining balance is the patient's responsibility, it transfers to the patient.
   - The claim moves to the appropriate queue based on remaining balances.
@@ -10995,6 +11136,8 @@ Problem| What to Do
 ---|---  
 Claim stuck in Filed Awaiting Response with no adjudication data| Open the Candid Activity panel and click **Sync Now** to check for updates.  
 Submission failed| Check the claim activity for the error message. Common causes include missing patient demographics, provider data, or address details. Fix the issue and move the claim back to the Submission Queue.  
+Payer-ID / clearinghouse mismatch| Inspect the affected claim's activity or error details. Claims with this verified failure pattern may move out of Submission and can be re-worked from the **Rejected** or **Needs-Review** queues. There is no simple report or filter verified for finding all claims that failed for this specific mismatch, so do not expect an automated mismatch-specific report.  
+"Supervising provider: NPI is required, but was missing"| This exact error was caused by a resolved, incident-specific Canvas/Candid plugin-runner regression affecting claims without a supervising-provider record; it did not establish a new requirement for every claim. If the claim has no supervising provider that should be set, do not invent or add provider data just to bypass the error. Contact Canvas Support to check the instance's current release and integration status. After Support confirms remediation, verify whether Candid received the claim, then retry it from the appropriate review queue to avoid duplicate submissions.  
 Patient payment not reported to Candid| Look for a task labeled **Candid Integration**. It will contain the error details.  
 Need to change a filed claim| Make the changes directly with Candid when possible. Update the claim in Canvas to keep records aligned, but avoid duplicate submission if Candid already has the claim on file.  
 If you encounter an issue not listed here, contact Canvas Support for assistance.
@@ -12435,6 +12578,33 @@ A: Review the request details to confirm whether the requests are duplicates. If
 **Categories:** Clinical Documentation & Commands, Medications, ePrescribing
 **Roles:** Providers, Clinical Staff
 ----- END PAGE https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform
+Canvas Platform has its own sign-in, separate from your Canvas EMR, so an Organization admin on your team connects single sign-on once for everyone. Your team can keep signing in with their email and a password until you turn on Single sign-on only.
+## Before you start
+  - You need Organization admin access on Canvas Platform, which your Canvas team grants to the person setting up single sign-on.
+  - You need access to your company's DNS settings and to the admin console of your identity provider.
+## Sign in to Canvas Platform
+  1. Open Studio from your Canvas instance from the hamburger menu. You'll see a notice that Studio has moved to Canvas Platform, so click **Go to Canvas Platform**.
+  2. Your email is already filled in. Choose a password and click **Set password and sign in**.
+  3. Add a second sign-in step under **Sign-in security** with an authenticator app on your phone or a passkey. Save the backup codes somewhere safe, since they get you back in if you ever lose your phone.
+## Connect single sign-on
+  1. Open the account menu at the bottom left and choose **Organization**.
+  2. Under **Domains** , claim your company's email domain. Platform shows a TXT record to publish at `_canvas-platform-verification.yourdomain.com`. Once the record is live in your DNS, click **Check now** and the domain should read Verified.
+  3. Under **Identity provider** , pick your provider and follow the setup steps shown on the page. Use `https://platform.canvasmedical.com/oidc/callback` as the redirect URI. Platform checks the connection before it saves, so a typo gets caught right away.
+  4. Sign out, then sign back in and choose **Sign in with single sign-on** to confirm it works.
+  5. Once that works, set your sign-in rules under **Passwords** as described below.
+## Set your sign-in rules
+The **Passwords** section on the Organization page has two settings.
+  - **Single sign-on only** sends everyone with an address at your verified domains through your provider, so removing someone in your provider also removes their access to Canvas Platform. Platform won't let you turn this on until your domain is verified and one single sign-on sign-in has worked.
+  - **Require a second factor** makes a passkey or authenticator app part of every password sign-in. While it's off, people can add one under Sign-in security, and a password alone still signs in.
+Single sign-on only covers addresses at your verified domains. Anyone on your team with an email outside those domains, such as a contractor, still signs in with a password, so turn on Require a second factor if you want those sign-ins protected too.
+## After single sign-on is on
+Your existing team members keep their access and roles. Someone new who signs in through single sign-on gets a Canvas Platform account with no roles, so an Organization admin grants them access from the Users page.
+## Questions
+Feel free to message us in your organization's shared Canvas Slack channel or submit a ticket to our team using [this form](https://canvas-medical.portal.usepylon.com/forms/platform-support). For more on the move itself, see [Studio and Onboarding are moving to Canvas Platform](https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform).
+----- END PAGE https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/9810137130-bamboo-health-integration

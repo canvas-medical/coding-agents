@@ -44,15 +44,6 @@
         - When your organization moves
         - Signing in for the first time
     - FAQ
-- [Inference Gateway](https://help.canvasmedical.com/articles/5617793432-inference-gateway)
-    - What Inference Gateway does
-    - Pricing
-    - Before you start
-    - Create a key
-    - Connect your code
-    - Budgets, limits and alerts
-    - Studio and Inference Gateway
-    - FAQ
 
 ## Getting Started
 
@@ -709,6 +700,7 @@
         - Unlocking/Amending Notes
         - Deleting Notes
 - [Coverages](https://help.canvasmedical.com/articles/5877696655-patient-coverages)
+    - Managing Coverage from the Patient Profile
     - Adding New Coverage
         - Accessing the Coverage Modal
     - Attaching Insurance Card Images
@@ -724,13 +716,18 @@
         - Updating Coverage
         - Expiring Coverage
         - Reactivating Expired Coverage
-        - Removing Coverage
-    - Changing Insurance Coverage on Claims
+        - Removing Coverage from the Patient Profile
+        - Removing Coverage from Claims
+        - Adding Coverage to Claims
+        - Making a Claim Self Pay
         - Changing Current Insurance
         - Other Coverages
         - Coverage Eligibility
         - Patient Eligibility Defaults
         - Common Eligibility Errors
+        - Identifying billing-primary coverage in reporting
+        - Custom portals and subscriber mapping
+        - Limits of coverage-change attribution
     - Managing Insurers
         - Adding a New Insurer
         - Modifying or Inactivating an Insurer
@@ -1033,13 +1030,17 @@
         - Does the patient need a full address to send a prescription?
         - What does Error Code 100 mean when sending a controlled substance?
         - What does a 500 error mean?
+        - Why did a controlled prescription fail with a generic 500 after opening the DrFirst signing window?
         - What does a 900 error mean?
+        - What if a controlled prescription is rejected because the pharmacy does not dispense its controlled-substance class?
         - What if the prescription is stuck in Pending?
+        - Why does clicking SEND appear to fail even though a controlled prescription shows Delivered?
         - Why did I get an authentication failed or access denied message?
         - What does “Name does not match prescriber information” mean?
         - What does “Staff for specified staff_key is missing an address” mean?
         - Can special characters cause prescription errors?
         - Why won’t a controlled-substance prescription open the DrFirst signing window?
+        - What if the EPCS grant is approved but a controlled prescription still fails?
         - Why did my refill error from the patient summary?
         - What does Error status mean on a prescription?
         - What if the pharmacy information is wrong?
@@ -1605,6 +1606,32 @@
     - Resources
 
 ## Canvas Platform
+
+### Get started
+- [What Is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
+    - The Sidebar
+    - The Account Menu
+
+### Users and access
+- [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
+    - Before you start
+    - Sign in to Canvas Platform
+    - Connect single sign-on
+    - Set your sign-in rules
+    - After single sign-on is on
+    - Questions
+- [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+
+### AI usage and billing
+- [Inference Gateway](https://help.canvasmedical.com/articles/5617793432-inference-gateway)
+    - What Inference Gateway does
+    - Pricing
+    - Before you start
+    - Create a key
+    - Connect your code
+    - Budgets, limits and alerts
+    - Studio and Inference Gateway
+    - FAQ
 - [Canvas Patient Safety Scale](https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale)
     - Introduction
     - Scale
@@ -1722,6 +1749,7 @@
 - [Processing Claims with Candid](https://help.canvasmedical.com/articles/8260430747-processing-claims-in-canvas-for-candid)
     - Before Candid is Enabled
     - What's Included in This Integration
+    - Setup Candid
     - Moving Claims to the Submission Queue
         - Moving an individual claim
         - Batch moving claims
