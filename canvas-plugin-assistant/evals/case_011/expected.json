@@ -1,0 +1,19 @@
+{
+  "eval_name": "case_011",
+  "review_command": "security-review",
+  "description": "A secret read with self.secrets.get() is returned in a JSONResponse for browser JavaScript, next to a Stripe publishable key that belongs in the browser",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "api/checkout.py returns self.secrets.get(\"ELIGIBILITY_API_SECRET\") in the /checkout/config JSONResponse, and the page sends it as a bearer token from the browser, exposing it to every user who opens the page; fix is a SimpleAPI route that calls the eligibility API server-side",
+      "must_detect": true
+    }
+  ],
+  "must_not_flag": [
+    {
+      "description": "STRIPE_PUBLISHABLE_KEY (a Stripe pk_ publishable key, declared non-sensitive) returned to the browser for Stripe.js"
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

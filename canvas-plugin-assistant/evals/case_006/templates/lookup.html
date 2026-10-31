@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Formulary Lookup</title>
+  </head>
+  <body>
+    <input id="drug" type="search" placeholder="Drug name">
+    <ul id="results"></ul>
+    <script>
+      const API_BASE = "{{ api_base }}";
+      const API_KEY = "{{ api_key }}";
+
+      document.getElementById("drug").addEventListener("change", async (event) => {
+        const response = await fetch(
+          `${API_BASE}/coverage?drug=${encodeURIComponent(event.target.value)}`,
+          { headers: { "X-API-Key": API_KEY } },
+        );
+        const results = document.getElementById("results");
+        results.replaceChildren();
+        for (const item of (await response.json()).items) {
+          const li = document.createElement("li");
+          li.textContent = `${item.name}: ${item.tier}`;
+          results.appendChild(li);
+        }
+      });
+    </script>
+  </body>
+</html>

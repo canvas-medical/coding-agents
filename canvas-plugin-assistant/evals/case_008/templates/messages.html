@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Messages</title>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    {{ patient_id|json_script:"patient-id" }}
+    <script>
+      const patientId = JSON.parse(document.getElementById("patient-id").textContent);
+
+      async function load() {
+        const response = await fetch(
+          `/plugin-io/api/eval_case_008/messages/data?patient=${encodeURIComponent(patientId)}`,
+        );
+        const list = document.getElementById("messages");
+        list.replaceChildren();
+        for (const m of (await response.json()).messages) {
+          list.innerHTML += `<li><time>${new Date(m.created).toLocaleString()}</time> ${m.body}</li>`;
+        }
+      }
+
+      load();
+    </script>
+  </body>
+</html>

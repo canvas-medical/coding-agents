@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Copay Checkout</title>
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body>
+    <p>Copay due: <span id="copay"></span></p>
+    <div id="card-element"></div>
+    <button id="pay" type="button">Pay</button>
+    {{ patient_id|json_script:"patient-id" }}
+    <script>
+      const patientId = JSON.parse(document.getElementById("patient-id").textContent);
+
+      async function start() {
+        const config = await (await fetch("/plugin-io/api/eval_case_011/checkout/config")).json();
+
+        const stripe = Stripe(config.stripe_publishable_key);
+        const card = stripe.elements().create("card");
+        card.mount("#card-element");
+
+        const eligibility = await fetch(
+          `${config.eligibility_api}/patients/${encodeURIComponent(patientId)}/copay`,
+          { headers: { Authorization: `Bearer ${config.eligibility_secret}` } },
+        );
+        document.getElementById("copay").textContent = (await eligibility.json()).amount;
+      }
+
+      start();
+    </script>
+  </body>
+</html>

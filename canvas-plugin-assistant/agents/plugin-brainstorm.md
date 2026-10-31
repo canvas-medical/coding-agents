@@ -381,6 +381,10 @@ content = render_to_string("templates/index.html", {
 
 4. **For `LaunchModalEffect(url=...)`**, append `?v={_CACHE_BUST}` to the URL so the browser fetches the latest version.
 
+**CRITICAL: Keep template autoescaping on and secrets out of the browser.**
+
+Never use `|safe`, `{% autoescape off %}`, or `mark_safe`. Render untrusted HTML (message bodies) with `{{ value|sanitize_html }}`, pass data to JavaScript with `{{ data|json_script:"element-id" }}`, and never put `self.secrets[...]` or `self.secrets.get(...)` values in template context or a response: call external APIs from a `SimpleAPIRoute`. Never build HTML from data in a Python f-string (put it in a template), set data in JavaScript with `textContent` rather than `innerHTML`, pass handler data through `data-` attributes rather than `{{ }}` inside `onclick=`, and check the scheme of any data URL before it goes in `href`/`src`. See "Templates: Render Untrusted Data Safely" in the CPA `CLAUDE.md`.
+
 **CRITICAL: Use absolute imports only.**
 
 Canvas plugins MUST use absolute imports with the full package path. Relative imports will fail in the Canvas runtime.
