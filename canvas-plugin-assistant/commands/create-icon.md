@@ -43,19 +43,20 @@ Follow these steps in order:
 
 5. **Determine Save Location**:
    - Check if currently in a Canvas plugin directory (look for CANVAS_MANIFEST.json)
-   - If in plugin directory: save to the inner plugin folder's `assets/` directory (snake_case folder name)
+   - If in plugin directory: save to the inner plugin folder's `assets/` directory (the `<prefix>__<name>` folder that holds `CANVAS_MANIFEST.json`)
    - If not in the plugin directory: save to the current working directory
    - Report the save location to the user
 
 6. **Create Assets Directory (if needed)**:
    - If saving to a Canvas plugin directory, ensure the `assets/` directory exists
-   - Use: `mkdir -p {plugin_name_snake}/assets`
+   - `{package}` is the inner package folder (`<prefix>__<name>`, the folder that holds `CANVAS_MANIFEST.json`)
+   - Use: `mkdir -p {package}/assets`
    - Skip this step if not in a plugin directory
 
 7. **Save SVG File**:
    - Use Write tool to save the SVG content
    - Save with the generated filename
-   - For plugins: `{plugin_name_snake}/assets/icon-name.svg`
+   - For plugins: `{package}/assets/icon-name.svg`
    - For non-plugins: `icon-name.svg`
 
 8. **Check UV Installation**:
@@ -124,7 +125,7 @@ CANVAS_MANIFEST.json updated with icon reference: "assets/icon-name.png"
 - Use ${CLAUDE_PLUGIN_ROOT} environment variable for script path portability
 - The conversion script uses cairosvg via uv for dependency isolation
 - Filenames are auto-generated from the description (kebab-case)
-- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{plugin_name_snake}/assets/`)
+- For Canvas plugins, icons must be in the inner plugin directory's `assets/` folder (e.g., `{package}/assets/`)
 - Create the `assets/` directory if it doesn't exist before saving icons
 - Both files save to the appropriate directory based on context
 - Do not show SVG code to the user unless there's an error, or they request it

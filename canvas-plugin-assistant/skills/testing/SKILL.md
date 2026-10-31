@@ -35,7 +35,7 @@ my-plugin-name/                       # Container folder (kebab-case)
 │   │   └── test_routes.py            # mirrors inner/api/routes.py
 │   └── helpers/
 │       └── test_utils.py             # mirrors inner/helpers/utils.py
-└── my_plugin_name/                   # Inner folder (snake_case)
+└── my_plugin_name/                   # Inner package folder
     ├── CANVAS_MANIFEST.json
     ├── README.md
     ├── handlers/
@@ -145,6 +145,6 @@ Reference the `testing_context.txt` file in this skill directory for:
 
 > "Tests are passing with X% coverage. The next step is to deploy the plugin to a Canvas instance for user acceptance testing. Ready to deploy?"
 
-3. Use the `/cpa:deploy` command to guide deployment and log monitoring
+3. Use the `/cpa:deploy` command to guide deployment and user acceptance testing
 
 **Always drive toward the next step.** The workflow is: Implement → Test → Deploy → UAT

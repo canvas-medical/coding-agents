@@ -32,7 +32,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_name}
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
 ```
 
 **If structure validation fails:**
@@ -42,16 +42,15 @@ uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_n
 
 **Common fixes:**
 
-Determine the inner folder name:
+Determine the inner package folder (`<prefix>__<name>`):
 ```bash
-CONTAINER=$(basename "$PWD")
-INNER=$(echo "$CONTAINER" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ```
 
 | Issue | Fix |
 |-------|-----|
-| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json $INNER/` |
-| tests/ inside inner folder | `mv $INNER/tests ./` |
+| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json <prefix>__<name>/` |
+| tests/ inside inner folder | `mv $INNER/tests ./` (run the `INNER=` line above first) |
 | No inner folder | Re-run `canvas init` or restructure manually |
 
 ---
@@ -198,7 +197,7 @@ Check that all test files test code that still exists:
 Check if the plugin uses HTML templates or `render_to_string`:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py" .
 ```
 
@@ -301,7 +300,7 @@ Update the README if issues are found.
 Check CANVAS_MANIFEST.json for applications:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 grep -A 10 '"applications"' "$INNER/CANVAS_MANIFEST.json" 2>/dev/null
 ```
 
@@ -315,7 +314,7 @@ For each application entry, verify:
 
 Check icon files:
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 ```
 
@@ -536,10 +535,10 @@ Pushing is outward-facing and irreversible, so confirm first:
 {
   "questions": [
     {
-      "question": "Committed locally. Push to the remote now?",
+      "question": "Committed locally. Push to Canvas Platform now?",
       "header": "Push?",
       "options": [
-        {"label": "Push now", "description": "Run git push to the upstream branch"},
+        {"label": "Push now (to Canvas Platform)", "description": "Run canvas deploy --push-only (with --snapshot inside a larger repository) to publish the commit to this plugin's Canvas Platform repository (main there) without deploying it"},
         {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
       ],
       "multiSelect": false
@@ -548,7 +547,23 @@ Pushing is outward-facing and irreversible, so confirm first:
 }
 ```
 
-Only run `git push` if the user chooses to push.
+Only push if the user chooses to. `/cpa:deploy` already pushes on every deploy. Push with the Canvas CLI, which pushes to `main` on the plugin's Canvas Platform repository without deploying it (a bare `git push` has no upstream to push to). Check where the plugin sits with `git rev-parse --show-toplevel`:
+
+- **Prints `$CPA_PLUGIN_DIR` (the plugin is its own repository):** push HEAD:
+
+  ```bash
+  uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only
+  ```
+
+  It refuses while any untracked file remains. Add each untracked file the user left out in Step 13c to `.git/info/exclude` (`echo "<path>" >> "$(git rev-parse --git-dir)/info/exclude"`), never pass `--yes` (it commits every file), then run it again.
+
+- **Prints another path (the plugin is inside a larger repository):** push a snapshot of the package folder as committed at HEAD, which leaves that repository's remotes and config alone (canvas-plugins `canvas_cli/apps/platform/commands.py:472-495` at 0.262.0):
+
+  ```bash
+  uv run canvas deploy "$(dirname */CANVAS_MANIFEST.json)" --push-only --snapshot
+  ```
+
+  It refuses any uncommitted or untracked file inside the package folder rather than committing it (`git.py:317-324`). For each untracked file in the package the user left out in Step 13c, ask whether to delete it or ignore it in that repository's `.gitignore`, then run it again. It also refuses a package holding a submodule, a symbolic link, or a Git LFS or git-crypt file (`git.py:333-372`), and a checkout whose HEAD lacks changes `main` was last deployed from (`git.py:536-546`, update the checkout with `git pull`). When files changed on Canvas Platform would be replaced (`git.py:547-567`), it refuses outside a terminal: show the listed files and ask the user to run the same command in their own terminal to confirm, or to copy Canvas Platform's versions in (`canvas clone <name>`) and commit them. Never pass `--yes`.
 
 ### 14. Wrap-Up Complete
 
@@ -559,7 +574,7 @@ Only run `git push` if the user chooses to push.
 This command is the **final step** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)

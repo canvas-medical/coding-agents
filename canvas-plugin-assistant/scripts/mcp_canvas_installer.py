@@ -1,20 +1,34 @@
-"""MCP server for Canvas SDK plugin installation with secret management."""
+"""The `installer` tool behind /cpa:deploy-legacy: canvas install with secret management, until December 14, 2026."""
 
 import asyncio
 import json
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
-
 from secret_requester import SecretRequester
 
 
 class CanvasInstallerMcp:
-    """MCP server providing tools to install and list Canvas SDK plugins.
+    """Installs legacy Canvas SDK plugins (no organization prefix) with `canvas install`.
 
     Secret values are gathered from ~/.canvas/plugin-secrets/<instance>.json
     and injected into the canvas install command without exposing them to Claude Code.
+    The `installer` tool is registered on the `canvas_cmd_line` server in mcp_canvas_deployer.py.
     """
+
+    @classmethod
+    def _with_status(cls, text: str, status: str) -> str:
+        """End a tool result with its one machine-readable status line.
+
+        The legacy deploy prose routes only on this line, never on the CLI text above it.
+
+        Args:
+            text (str): The tool result.
+            status (str): One of `invalid_input`, `install_failed`, or `installed`.
+
+        Returns:
+            str: The result followed by `Status: <status>`.
+        """
+        return f"{text}\n\nStatus: {status}"
 
     @classmethod
     def _parse_variable_names(cls, manifest: dict) -> list[str]:
@@ -22,9 +36,15 @@ class CanvasInstallerMcp:
 
         Reads the modern `variables: [{name, sensitive?, default?}, ...]`
         schema. Falls back to the legacy `secrets: [name, ...]` array
-        for unmigrated plugins, but emits no values for it — always use
+        for unmigrated plugins, but emits no values for it: always use
         `variables` (`canvas validate` warns on a legacy `secrets`-only
         manifest).
+
+        Args:
+            manifest (dict): The parsed CANVAS_MANIFEST.json.
+
+        Returns:
+            list[str]: The declared variable names.
         """
         variables = manifest.get("variables")
         if isinstance(variables, list) and variables:
@@ -46,7 +66,16 @@ class CanvasInstallerMcp:
 
     @classmethod
     async def _run_canvas_command(cls, command: list[str], cwd: str) -> str:
-        """Run a canvas CLI command and return its output."""
+        """Run a canvas CLI command and return its output.
+
+        Args:
+            command (list[str]): The command and its arguments.
+            cwd (str): The directory to run it in.
+
+        Returns:
+            str: The combined output, prefixed with `Command failed with exit code N` on failure,
+                or `Invalid cwd: <path>` when the directory does not exist.
+        """
         cwd_path = Path(cwd)
         if not cwd_path.exists() or not cwd_path.is_dir():
             return f"Invalid cwd: {cwd_path}"
@@ -72,100 +101,48 @@ class CanvasInstallerMcp:
         """Install a Canvas SDK plugin on a Canvas instance with its secrets.
 
         Args:
-            plugin_name: The plugin inner folder name (snake_case).
-            instance: Target Canvas instance hostname from ~/.canvas/credentials.ini.
-            cwd: Working directory (plugin container directory).
+            plugin_name (str): The plugin inner folder name (snake_case).
+            instance (str): Target Canvas instance hostname from ~/.canvas/credentials.ini.
+            cwd (str): Working directory (plugin container directory).
+
+        Returns:
+            str: The install output or an error message, ending with a `Status:` line: `invalid_input`,
+                `install_failed`, or `installed`.
         """
         if not plugin_name:
-            return "Error: missing plugin_name"
+            return cls._with_status("Error: missing plugin_name", "invalid_input")
         if not instance:
-            return "Error: missing instance"
+            return cls._with_status("Error: missing instance", "invalid_input")
         if not cwd:
-            return "Error: missing cwd"
+            return cls._with_status("Error: missing cwd", "invalid_input")
 
         plugin_dir = Path(cwd) / plugin_name
         if not plugin_dir.exists():
-            return f"Error: plugin directory not found: {plugin_dir}"
+            return cls._with_status(f"Error: plugin directory not found: {plugin_dir}", "invalid_input")
 
         manifest_file = plugin_dir / "CANVAS_MANIFEST.json"
         if not manifest_file.exists():
-            return f"Error: manifest not found: {manifest_file}"
+            return cls._with_status(f"Error: manifest not found: {manifest_file}", "invalid_input")
 
         manifest: dict = json.loads(manifest_file.read_text(encoding="utf-8"))
-        secret_names = cls._parse_variable_names(manifest)
+        secret_names: list[str] = cls._parse_variable_names(manifest)
 
         values: dict[str, str] = {}
         if secret_names:
             values = SecretRequester.get_secrets(secret_names, instance, plugin_name)
 
-        command = ["uv", "run", "canvas", "install", plugin_name, "--host", instance]
-        provided: list[str] = []
+        command: list[str] = ["uv", "run", "canvas", "install", plugin_name, "--host", instance]
         skipped: list[str] = []
         for name in secret_names:
             value = values.get(name) or ""
             if value:
                 command.extend(["--secret", f"{name}={value}"])
-                provided.append(name)
             else:
                 skipped.append(name)
 
-        result = await cls._run_canvas_command(command=command, cwd=cwd)
-        warning = ""
+        result: str = await cls._run_canvas_command(command=command, cwd=cwd)
+        warning: str = ""
         if skipped:
             warning = f"\nWarning: secrets not provided (missing or empty): {', '.join(skipped)}"
-        return f"Install output:\n{result}{warning}"
-
-    @classmethod
-    async def list_plugins(cls, instance: str, cwd: str) -> str:
-        """List installed Canvas SDK plugins on a Canvas instance.
-
-        Args:
-            instance: Target Canvas instance hostname.
-            cwd: Working directory.
-        """
-        if not instance:
-            return "Error: missing instance"
-        if not cwd:
-            return "Error: missing cwd"
-
-        result = await cls._run_canvas_command(
-            command=["uv", "run", "canvas", "list", "--host", instance],
-            cwd=cwd,
-        )
-        return f"Installed plugins:\n{result}"
-
-    @classmethod
-    def create_server(cls) -> FastMCP:
-        """Create and configure the FastMCP server with canvas tools."""
-        server = FastMCP("canvas_cmd_line")
-
-        @server.tool()
-        async def installer(plugin_name: str, instance: str, cwd: str) -> str:
-            """Install a Canvas SDK plugin on a Canvas instance with its secrets.
-
-            Reads secret names from CANVAS_MANIFEST.json and retrieves their values
-            from ~/.canvas/plugin-secrets/<instance>.json. The secret values are
-            passed to the canvas install command but never returned in the output.
-
-            Args:
-                plugin_name: The plugin inner folder name (snake_case).
-                instance: Target Canvas instance hostname from ~/.canvas/credentials.ini.
-                cwd: Working directory (plugin container directory).
-            """
-            return await cls.install(plugin_name, instance, cwd)
-
-        @server.tool()
-        async def lister(instance: str, cwd: str) -> str:
-            """List installed Canvas SDK plugins on a Canvas instance.
-
-            Args:
-                instance: Target Canvas instance hostname.
-                cwd: Working directory.
-            """
-            return await cls.list_plugins(instance, cwd)
-
-        return server
-
-
-if __name__ == "__main__":
-    CanvasInstallerMcp.create_server().run()
+        failed: bool = result.startswith(("Command failed with exit code", "Invalid cwd:"))
+        return cls._with_status(f"Install output:\n{result}{warning}", "install_failed" if failed else "installed")

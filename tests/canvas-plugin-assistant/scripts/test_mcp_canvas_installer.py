@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from datetime import date
 from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
@@ -147,7 +148,7 @@ class TestInstall:
 
         result = asyncio.run(tested.install(plugin_name="", instance="host", cwd="/tmp"))
 
-        expected = "Error: missing plugin_name"
+        expected = "Error: missing plugin_name\n\nStatus: invalid_input"
         assert result == expected
 
     def test_install__missing_instance(self) -> None:
@@ -156,7 +157,7 @@ class TestInstall:
 
         result = asyncio.run(tested.install(plugin_name="plug", instance="", cwd="/tmp"))
 
-        expected = "Error: missing instance"
+        expected = "Error: missing instance\n\nStatus: invalid_input"
         assert result == expected
 
     def test_install__missing_cwd(self) -> None:
@@ -165,7 +166,7 @@ class TestInstall:
 
         result = asyncio.run(tested.install(plugin_name="plug", instance="host", cwd=""))
 
-        expected = "Error: missing cwd"
+        expected = "Error: missing cwd\n\nStatus: invalid_input"
         assert result == expected
 
     def test_install__plugin_dir_not_found(self, tmp_path: Path) -> None:
@@ -200,7 +201,7 @@ class TestInstall:
             mock_cmd.side_effect = ["Installed OK"]
             result = asyncio.run(tested.install(plugin_name="my_plugin", instance="host", cwd=str(tmp_path)))
 
-        expected = "Install output:\nInstalled OK"
+        expected = "Install output:\nInstalled OK\n\nStatus: installed"
         assert result == expected
 
         exp_cmd_calls = [
@@ -227,7 +228,7 @@ class TestInstall:
             mock_secrets.side_effect = [{"API_KEY": "sk-1", "TOKEN": "tk-2"}]
             result = asyncio.run(tested.install(plugin_name="my_plugin", instance="host", cwd=str(tmp_path)))
 
-        expected = "Install output:\nInstalled OK"
+        expected = "Install output:\nInstalled OK\n\nStatus: installed"
         assert result == expected
 
         exp_cmd_calls = [
@@ -260,7 +261,7 @@ class TestInstall:
             mock_secrets.side_effect = [{"API_KEY": "sk-1"}]
             result = asyncio.run(tested.install(plugin_name="my_plugin", instance="host", cwd=str(tmp_path)))
 
-        expected = "Install output:\nInstalled OK\nWarning: secrets not provided (missing or empty): MISSING_KEY"
+        expected = "Install output:\nInstalled OK\nWarning: secrets not provided (missing or empty): MISSING_KEY\n\nStatus: installed"
         assert result == expected
 
         exp_cmd_calls = [
@@ -293,7 +294,7 @@ class TestInstall:
             mock_secrets.side_effect = [{}]
             result = asyncio.run(tested.install(plugin_name="my_plugin", instance="host", cwd=str(tmp_path)))
 
-        expected = "Install output:\nOK\nWarning: secrets not provided (missing or empty): KEY"
+        expected = "Install output:\nOK\nWarning: secrets not provided (missing or empty): KEY\n\nStatus: installed"
         assert result == expected
 
         exp_cmd_calls = [
@@ -308,120 +309,50 @@ class TestInstall:
         assert mock_secrets.mock_calls == exp_secrets_calls
 
 
-class TestListPlugins:
-    """Tests for CanvasInstallerMcp.list_plugins."""
+class TestStatusLine:
+    """Every installer result ends with one `Status:` line, the only thing the legacy deploy prose routes on."""
 
-    def test_list_plugins__missing_instance(self) -> None:
-        """Return error when instance is empty."""
+    @pytest.mark.parametrize(
+        ("plugin_name", "outputs", "expected"),
+        [
+            pytest.param("", [], "Status: invalid_input", id="invalid_input"),
+            pytest.param("missing_plug", [], "Status: invalid_input", id="invalid_input_no_plugin_dir"),
+            pytest.param(
+                "my_plugin",
+                ["Command failed with exit code 1\nError: plugin failed to install"],
+                "Status: install_failed",
+                id="install_failed",
+            ),
+            pytest.param("my_plugin", ["Invalid cwd: /nowhere"], "Status: install_failed", id="install_failed_cwd"),
+            pytest.param("my_plugin", ["Installed OK"], "Status: installed", id="installed"),
+        ],
+    )
+    def test_install__status_line(
+        self,
+        tmp_path: Path,
+        plugin_name: str,
+        outputs: list[str],
+        expected: str,
+    ) -> None:
+        """The installer's last line names the one outcome, whatever the CLI printed above it."""
         tested = CanvasInstallerMcp
-
-        result = asyncio.run(tested.list_plugins(instance="", cwd="/tmp"))
-
-        expected = "Error: missing instance"
-        assert result == expected
-
-    def test_list_plugins__missing_cwd(self) -> None:
-        """Return error when cwd is empty."""
-        tested = CanvasInstallerMcp
-
-        result = asyncio.run(tested.list_plugins(instance="host", cwd=""))
-
-        expected = "Error: missing cwd"
-        assert result == expected
-
-    def test_list_plugins__success(self) -> None:
-        """Return formatted list of plugins."""
-        tested = CanvasInstallerMcp
+        plugin_dir = tmp_path / "my_plugin"
+        plugin_dir.mkdir()
+        (plugin_dir / "CANVAS_MANIFEST.json").write_text(json.dumps({"name": "my_plugin"}), encoding="utf-8")
 
         with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
-            mock_cmd.side_effect = ["plugin_a\nplugin_b"]
-            result = asyncio.run(tested.list_plugins(instance="host", cwd="/tmp"))
+            mock_cmd.side_effect = outputs
+            result = asyncio.run(tested.install(plugin_name=plugin_name, instance="host", cwd=str(tmp_path)))
 
-        expected = "Installed plugins:\nplugin_a\nplugin_b"
-        assert result == expected
-
-        exp_cmd_calls = [
-            call(command=["uv", "run", "canvas", "list", "--host", "host"], cwd="/tmp")
-        ]
-        assert mock_cmd.mock_calls == exp_cmd_calls
+        assert result.splitlines()[-1] == expected
 
 
-class TestCreateServer:
-    """Tests for CanvasInstallerMcp.create_server."""
+def test_legacy_deploy_removed_by_credentials_ini_end() -> None:
+    """The legacy deploy path exists only until canvas install and credentials.ini stop working."""
+    end_of_credentials_ini = date(2026, 12, 14)
 
-    def test_create_server__returns_server(self) -> None:
-        """Return a FastMCP server with correct name."""
-        tested = CanvasInstallerMcp
-
-        result = tested.create_server()
-
-        expected = "canvas_cmd_line"
-        assert result.name == expected
-
-    def test_create_server__has_installer_tool(self) -> None:
-        """Server has the installer tool registered."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        tool_names = [tool.name for tool in server._tool_manager.list_tools()]
-
-        expected = True
-        assert ("installer" in tool_names) is expected
-
-    def test_create_server__has_lister_tool(self) -> None:
-        """Server has the lister tool registered."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        tool_names = [tool.name for tool in server._tool_manager.list_tools()]
-
-        expected = True
-        assert ("lister" in tool_names) is expected
-
-    def test_create_server__installer_delegates(self) -> None:
-        """The installer tool delegates to cls.install."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        with patch.object(tested, "install", new_callable=AsyncMock) as mock_install:
-            mock_install.side_effect = ["mocked"]
-            tool = server._tool_manager._tools["installer"]
-            result = asyncio.run(tool.fn(plugin_name="p", instance="i", cwd="c"))
-
-        expected = "mocked"
-        assert result == expected
-
-        exp_install_calls = [call("p", "i", "c")]
-        assert mock_install.mock_calls == exp_install_calls
-
-    def test_create_server__lister_delegates(self) -> None:
-        """The lister tool delegates to cls.list_plugins."""
-        tested = CanvasInstallerMcp
-        server = tested.create_server()
-
-        with patch.object(tested, "list_plugins", new_callable=AsyncMock) as mock_list:
-            mock_list.side_effect = ["mocked"]
-            tool = server._tool_manager._tools["lister"]
-            result = asyncio.run(tool.fn(instance="i", cwd="c"))
-
-        expected = "mocked"
-        assert result == expected
-
-        exp_list_calls = [call("i", "c")]
-        assert mock_list.mock_calls == exp_list_calls
-
-
-class TestPluginLauncher:
-    """Tests for the canvas_cmd_line launcher declared in plugin.json."""
-
-    def test_launcher_pins_mcp_v1(self) -> None:
-        """The launcher pins mcp below 2.x, which has no mcp.server.fastmcp module."""
-        plugin_json = Path(__file__).parents[3] / "canvas-plugin-assistant" / ".claude-plugin" / "plugin.json"
-        args = json.loads(plugin_json.read_text(encoding="utf-8"))["mcpServers"]["canvas_cmd_line"]["args"]
-
-        result = args[args.index("--with") + 1]
-        expected = "mcp<2"
-        assert result == expected, (
-            "mcp_canvas_installer.py imports mcp.server.fastmcp, which mcp 2.x renamed to "
-            "mcp.server.mcpserver; drop this pin only after porting the script to MCPServer"
-        )
+    assert date.today() < end_of_credentials_ini, (
+        "canvas install and ~/.canvas/credentials.ini stopped working on 2026-12-14. Delete "
+        "commands/deploy-legacy.md, agents/deploy-uat-legacy.md, scripts/mcp_canvas_installer.py, the installer "
+        "tool in scripts/mcp_canvas_deployer.py, this test file, .github/workflows/legacy-deploy-tripwire.yml, and every /cpa:deploy-legacy reference"
+    )

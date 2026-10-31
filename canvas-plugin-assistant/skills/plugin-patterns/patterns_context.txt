@@ -8,7 +8,7 @@ This document provides practical patterns and best practices for building Canvas
 
 ### Container vs Inner Folder Pattern
 
-When you run `canvas init` with a plugin name, it creates two levels:
+When you run `canvas init` with a plugin name while signed in to Canvas Platform, it creates two levels. The container is its own git repository whose `origin` is Canvas Platform, or, inside an existing repository such as a monorepo, a folder of that repository that deploys with `canvas deploy --snapshot`:
 
 ```
 example-plugin-name/              # Container folder (kebab-case)
@@ -18,7 +18,7 @@ example-plugin-name/              # Container folder (kebab-case)
 │   ├── conftest.py
 │   └── handlers/
 │       └── test_handler.py       # Mirrors inner/handlers/handler.py
-└── example_plugin_name/          # Inner folder (snake_case, same name converted)
+└── acme__example_plugin_name/    # Inner package folder: <prefix>__<name>
     ├── CANVAS_MANIFEST.json      # MUST be inside inner folder
     ├── README.md                 # Plugin documentation
     ├── screenshots/              # Images referenced from README.md
@@ -31,22 +31,22 @@ example-plugin-name/              # Container folder (kebab-case)
 ### Key Rules
 
 1. **Container folder** is kebab-case: `my-cool-plugin`
-2. **Inner folder** is snake_case: `my_cool_plugin` (same name, different format)
+2. **Inner folder** is the package, named `<prefix>__<name>` in snake_case: `acme__my_cool_plugin` (the prefix is the publishing organization)
 3. **CANVAS_MANIFEST.json** MUST be inside the inner folder, never at container level
 4. **tests/** MUST be at container level, parallel to inner folder
 5. **pyproject.toml** is at container level (for local dev/test only)
 6. **README.md** is inside the inner folder
 7. **`screenshots/`** is inside the inner folder, sibling to `README.md` — this is the canonical home for README images so relative paths like `![](screenshots/main.png)` render on GitHub and Notion without any rewriting. Screenshots are a requirement for open-source publishing; keeping them here keeps the plugin self-contained.
 
-### Name Conversion
+### Package Name
 
-The inner folder name is derived from the container name by replacing hyphens with underscores:
+The inner folder name is the manifest `name`: the organization prefix, two underscores, then the plugin name in snake_case. `canvas init` creates it, and `canvas deploy` accepts only names of this form.
 
-| Plugin Name (container) | Inner Folder |
+| Plugin Name (container) | Inner Folder (`{package}`) |
 |------------------------|--------------|
-| `my-plugin` | `my_plugin` |
-| `vitals-alert` | `vitals_alert` |
-| `patient-chart-customizations` | `patient_chart_customizations` |
+| `my-plugin` | `acme__my_plugin` |
+| `vitals-alert` | `acme__vitals_alert` |
+| `patient-chart-customizations` | `acme__patient_chart_customizations` |
 
 ### Common Structure Mistakes
 
@@ -54,8 +54,8 @@ The inner folder name is derived from the container name by replacing hyphens wi
 |---------|---------|-----|
 | `CANVAS_MANIFEST.json` at container level | Canvas CLI won't find it | Move inside inner folder |
 | `tests/` inside inner folder | Import paths break | Move to container level |
-| No inner folder (flat structure) | Plugin won't install | Re-run `canvas init` |
-| Inner folder has kebab-case | Python imports fail | Rename to snake_case |
+| No inner folder (flat structure) | Plugin won't deploy | Re-run `canvas init` |
+| Inner folder has kebab-case or no `<prefix>__` part | Python imports fail, `canvas deploy` refuses it | Rename to `<prefix>__<name>` in snake_case |
 | Two levels of nesting inside inner | Over-complicated structure | Flatten to single inner folder |
 
 ### Verification Commands
@@ -63,8 +63,8 @@ The inner folder name is derived from the container name by replacing hyphens wi
 After `canvas init`, verify the structure:
 
 ```bash
-# Get inner folder name (convert kebab to snake)
-INNER=$(basename "$PWD" | tr '-' '_')
+# Get the inner package folder (the one holding CANVAS_MANIFEST.json)
+INNER=$(dirname */CANVAS_MANIFEST.json)
 
 # CANVAS_MANIFEST.json should be inside inner folder
 test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Manifest in correct location" || echo "ERROR: Manifest missing from $INNER/"
@@ -282,10 +282,10 @@ For interactive UI applications.
 **CRITICAL: Applications REQUIRE an icon (48x48 PNG).**
 - Generate the icon IMMEDIATELY after creating the Application class
 - Invoke the icon-generation skill: `Skill(skill="icon-generation")`
-- Create assets directory: `mkdir -p {plugin_name_snake}/assets`
-- Save icon files to `{plugin_name_snake}/assets/`
+- Create assets directory: `mkdir -p {package}/assets`
+- Save icon files to `{package}/assets/`
 - Update CANVAS_MANIFEST.json applications entry: `"icon": "assets/{filename}.png"`
-- Verify icon exists: `ls -lh {plugin_name_snake}/assets/*.png`
+- Verify icon exists: `ls -lh {package}/assets/*.png`
 
 ```python
 # applications/my_app.py
@@ -498,9 +498,9 @@ from .handler import MyHandler
 from ...utils.helpers import format_date
 ```
 
-The package name in the import must match the inner folder name (snake_case):
-- Inner folder: `vitals_alert/`
-- Import: `from vitals_alert.handlers.handler import ...`
+The package name in the import must match the inner folder name, which carries the organization prefix:
+- Inner folder: `acme__vitals_alert/`
+- Import: `from acme__vitals_alert.handlers.handler import ...`
 
 ### 2. Let Exceptions Propagate
 **Do NOT wrap handler code in try-except blocks.** Exceptions must bubble up so they appear in Canvas logs with full tracebacks for debugging.
@@ -683,7 +683,7 @@ def test_bp_alert_triggers_on_high_bp():
 
 ```bash
 # Deploy to test instance
-uv run canvas install my_plugin --host plugin-testing
+uv run canvas deploy {package} --instance plugin-testing
 
 # Monitor logs (use unbuffered for real-time output)
 unbuffer uv run canvas logs --host plugin-testing
@@ -717,7 +717,7 @@ Secrets required:
 
 ## Installation
 ```bash
-uv run canvas install [plugin_name] --host [target]
+uv run canvas deploy {package} --instance [instance]
 ```
 
 ## Testing
@@ -754,7 +754,7 @@ uv run canvas install [plugin_name] --host [target]
 ## Architectural Patterns (High-Level)
 
 The number of handlers in a plugin is the best proxy for complexity.
-Always start with `echo "plugin_name" | uv run canvas init` and adapt from there.
+Always start with `echo "plugin_name" | uv run canvas init --org [org-slug]` and adapt from there.
 
 ### Single Handler Plugins (1 handler)
 
