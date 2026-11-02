@@ -82,8 +82,8 @@ An agent runs with its plugin's Custom Data namespace and declared access, as a 
 ## What an agent may write
 
 - Effect tools **draft**: commands are originated, never committed, and a clinician reviews, commits, or signs them. Don't design a spec where the agent signs, commits, or sends on its own.
-- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route when the requester approves or denies. Only the requester decides, within an hour.
-- The agent acts for its requester: tools they lack the permission for are hidden, every effect is checked against their permissions and patient groups, and a run on a patient they cannot see is refused. A run with no staff requester (a Canvas Bot, API-key, or webhook trigger) acts with the plugin's own trust, and cannot propose.
+- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply, with everything one call stages decided as a single proposal; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route when the requester approves or denies. Only the requester decides, within an hour.
+- The agent acts for its requester: tools they lack the permission for are hidden, every effect is checked against their permissions and patient groups, and a run on a patient they cannot see is refused. A run no user started (a Canvas Bot, API-key, or webhook trigger) acts with the plugin's own trust, but cannot propose, commit a command, or add a lab report; a run a patient started may change only that patient's own records.
 - `edit_staged_command` and `delete_staged_command` change only staged drafts in the run's own note, and only kinds the agent's grant can stage.
 
 ## Manifest
