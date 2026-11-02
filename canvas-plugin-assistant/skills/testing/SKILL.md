@@ -107,6 +107,16 @@ omit = ["tests/*", "*/tests/*"]
 omit = ["tests/*", "*/tests/*"]
 ```
 
+### 6. Agents: Fake the Gateway, Not the SDK
+
+For an `AgentPlugin` and its tools, rule 3 applies only to the model. Run the agent with `canvas_sdk.test_utils.agents` (`FakeGateway`, `reply`, `text`, `tool_use`, `prepare_agent`, `run_agent`) against the SDK's factories under `@pytest.mark.django_db`, rather than mocking `ToolRegistry`, `standard_tools`, or the data models: the tool grant, the patient scoping, and the effects the platform would drop are what these tests check, and mocks hide them.
+
+- Pass the manifest's real `tools.allowed` to `prepare_agent`.
+- Test each custom tool directly, including that another patient's id is refused.
+- Assert on `run.effects`, `run.dropped`, and `run.tool_calls`.
+
+See the **agent-patterns** skill.
+
 ## Quick Commands
 
 ```bash

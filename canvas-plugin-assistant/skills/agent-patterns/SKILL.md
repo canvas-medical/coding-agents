@@ -1,0 +1,129 @@
+---
+name: agent-patterns
+description: When and how to build a Canvas plugin as an agent with the Agent Runner Framework (`canvas_sdk.agents`) - choosing an agent over a handler that calls an LLM, the inference gateway key, standard tools before custom tools, rules for custom tools, the manifest's `agents` entry (tool grants, approval, run time, progress), what an agent may write, testing with a fake gateway, and the agent items of a security review. Use whenever a spec involves an LLM, AI, a chat, Claude, or a model reasoning over the chart, and when building, reviewing, or testing any plugin that declares `components.agents`.
+---
+
+# Agent Runner Framework Patterns
+
+The Agent Runner Framework (ARF) runs LLM-driven agents as Canvas plugins. An agent reads the chart through tools, reasons over what it finds, and returns effects the platform applies: draft commands, protocol cards, tasks, messages. It runs on a background worker, so a run can take seconds or minutes.
+
+This skill is the judgment layer: when to build an agent, and the rules that make one safe. The API reference is in the **canvas-sdk** skill's `coding_agent_context.txt`; search it for `BEGIN PAGE https://docs.canvasmedical.com/sdk/agents` (overview, quick start, lifecycle, managing state, tools and the full `standard_tools` catalog, prompts, testing, auditing).
+
+## Check the SDK first
+
+The framework is in preview. Before proposing an agent, confirm the plugin's environment ships it:
+
+```bash
+uv run python -c "import canvas_sdk.agents"
+```
+
+If that fails, or the target instance runs a Canvas release without the framework, build the handler pattern in the next section instead and tell the user why.
+
+## Agent, or a handler that calls a model?
+
+| The spec... | Build |
+|---|---|
+| Needs one model call over input the plugin already has (extract fields from a document, classify a message, summarize a fixed text) | A handler with `canvas_sdk.clients.llms` (`LlmAnthropic` and friends), see the **plugin-patterns** skill |
+| Lets the model decide what to read or do next: a chart chat, reconciling outside records, reviewing a visit against earlier follow-up, triaging a queue | An agent |
+| Needs the model to write to the chart | An agent: its tool grant bounds what it can write and the platform checks every effect against the requesting clinician's permissions |
+| Must answer inside a request, in under a second or two | Neither as an LLM call in the request. An agent run is asynchronous: return `202` and let the UI poll or listen for the result |
+
+An agent reaches Anthropic only through Canvas's inference gateway. Never add an `llms/` directory, an OpenAI or Gemini key, or a provider abstraction to an agent plugin, and never import `anthropic` directly (the sandbox refuses it). The one credential is the plugin's gateway key:
+
+```json
+"variables": [{"name": "INFERENCE_GATEWAY_KEY", "sensitive": true}]
+```
+
+The platform builds the `LLMGateway` passed to `run()` from that key; `gateway.client()` is an Anthropic client pointed at the gateway. Gateway keys are issued per organization in Canvas Platform; the user's Canvas team issues one for the plugin, and it is set at install with `canvas install <plugin> --secret INFERENCE_GATEWAY_KEY=<key>`.
+
+## Shape of an agent plugin
+
+- **The agent**: an `AgentPlugin` subclass with `load_state`, `run`, and `save_state`. `run()` usually builds the messages and calls `self.run_tool_loop(gateway, system=..., messages=..., max_turns=...)`, which calls the model with the agent's granted tools until it ends its turn. Always use `self.tools`, never the imported registry: the platform replaces it with the granted tools before `run()`.
+- **The trigger**: agents do not subscribe to events. A handler emits `RunAgentEffect(agent_id="<module>:<Class>", scope=..., patient_id=..., note_id=..., trigger_payload={...})` from `compute()`:
+  - event-triggered: a `BaseHandler` or `CronTask`;
+  - user-initiated (a chat): a `SimpleAPI` POST emits the effect and returns `202`; the UI polls the plugin's own history endpoint, or listens on the run's progress channel (below).
+- **Scope** decides which runs wait for each other: `PATIENT`, `PATIENT_AND_STAFF` (a chat with one clinician about one patient), `NOTE`, `STAFF`, `CLAIM`, `KEY` (with `scope_id`), or `AGENT`. Under `KEY` or `AGENT`, key any per-patient state by `self.subject.patient_id`, or one patient's state loads into another's run.
+- **The subject**: the platform checks the patient and note the trigger names and sets `self.subject`; `self.requester` is the staff member whose action started the run. Read the patient from `self.subject`, never from `trigger_payload`.
+- **State**: stateless, a per-clinician conversation snapshot in Custom Data (`window_messages` keeps it inside the model's budget), or state kept in the chart itself (the reference advisor's protocol cards). See the Managing State page.
+
+## Tools: standard first
+
+`canvas_sdk.agents.standard_tools` already covers most of what specs ask for, each patient-scoped and permission-checked. Grant by `@category` in the manifest:
+
+- `@clinical_reads`: medications, conditions, labs, vitals, allergies, immunizations, notes and note content, goals, imaging, referrals, history, prescriptions and pharmacy fills and requests, open orders awaiting results (`find_open_loops`), documents, demographics
+- `@document_reads`: `read_document` answers a question from a consult report, outside record, or imaging report's file
+- `@config_reads`: note types, practice locations, labs and lab tests, and `find_clinical_codes` (ICD-10, FDB, allergen, SNOMED, CVX, CPT from Canvas's ontology services)
+- `@clinical_writes`: draft commands on the open note (`originate_plan`, `originate_prescribe_medication`, `originate_lab_order`, `originate_diagnose_condition`, history, allergy, medication statement, immunization statement, vitals, and more), `originate_review_note`, and `edit_staged_command` / `delete_staged_command` for drafts
+- `@clinical_alerts`, `@task_reads`, `@task_writes`, `@message_reads`, `@message_writes`, `@claims_reads`, `@claims_writes`
+
+Check the catalog (Tools page) before writing a tool. When a spec needs a variant, such as importing outside records, wrap the standard tool's builder so its duplicate, coding, and controlled-substance checks still run, rather than building the command from scratch.
+
+### Rules for a custom tool
+
+Register custom tools on the plugin's own `ToolRegistry` (`filter_search_tool` for reads, `originate_command_tool` or `add_effect_tool` for writes, `@tools.tool` otherwise):
+
+- Take the patient and note from `ctx` (`require_patient_id(ctx)`, `ctx["note_id"]`), never from the model's arguments.
+- Treat every id the model passes as untrusted, since the model reads patient-written text: confirm the row belongs to `ctx["patient_id"]` before reading or staging anything.
+- Declare `effect_types` for every effect the tool stages. The platform drops any effect no granted tool declares.
+- Declare `required_permissions` with the permission the chart checks for the same action (such as `"api.change_task"`), so the tool is hidden from requesters who lack it.
+- Give a `progress_label` naming the work ("Reading lab results"), never its arguments.
+- Raise `max_result_chars` (up to 200,000) only for a result that cannot be paged; every result is resent on each later model call.
+- Return a small confirmation dict from a write tool, and raise on bad input: the loop sends the error back to the model so it can correct itself.
+- On an originate tool, mark a field `editable=True` only when the tool's `pre_build` neither checks nor derives it; codes and chart ids stay non-editable.
+
+## What an agent may write
+
+- Effect tools **draft**: commands are originated, never committed, and a clinician reviews, commits, or signs them. Don't design a spec where the agent signs, commits, or sends on its own.
+- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route when the requester approves or denies. Only the requester decides, within an hour.
+- The agent acts for its requester: tools they lack the permission for are hidden, every effect is checked against their permissions and patient groups, and a run on a patient they cannot see is refused. A run with no staff requester (a Canvas Bot, API-key, or webhook trigger) acts with the plugin's own trust, and cannot propose.
+- `edit_staged_command` and `delete_staged_command` change only staged drafts in the run's own note, and only kinds the agent's grant can stage.
+
+## Manifest
+
+```jsonc
+{
+  "components": {
+    "handlers": [{"class": "my_plugin.handlers.trigger:ChatTrigger", "description": "..."}],
+    "agents": [
+      {
+        "class": "my_plugin.agents.chat:ChatAgent",
+        "description": "Chart chat",
+        "tools": {
+          "allowed": ["@clinical_reads", "@clinical_writes", "@task_writes"],
+          "denied": ["originate_prescribe_medication"],
+          "approve": ["@task_writes"]
+        },
+        "progress": "activity",
+        "run_seconds": 600
+      }
+    ]
+  },
+  "variables": [{"name": "INFERENCE_GATEWAY_KEY", "sensitive": true}]
+}
+```
+
+- `tools.allowed` is the agent's whole grant: names and `@category` groups, minus `denied`. With no `allowed`, the agent gets no tools and can return no effects. Grant the least the spec needs.
+- `run_seconds`: 600 by default, at most 1800. A run asking for more than the default is an extended run, and the runner admits only a few at a time, so ask only for what the work measurably needs. The run also stops at `max_model_calls` (40 by default, a class attribute).
+- `progress`: what a person waiting sees on the run's channel `/plugin-io/ws/<plugin_name>/agent-run-<run_id>/`. `status` (default) sends heartbeats, `activity` adds each tool's label as it starts and finishes, `reply` adds the reply text as it is written. Only the requester can listen, and tool arguments and results are never sent.
+
+## Testing
+
+`canvas_sdk.test_utils.agents` runs an agent as the platform does, with no real model calls:
+
+- `FakeGateway(reply(tool_use("find_conditions")), reply(text("Done.")))` scripts the model's replies and records each request.
+- `prepare_agent(AgentClass, allowed=..., denied=..., approve=..., subject=RunSubject(patient_id=...), requester=RunRequester(staff_id=..., permissions=...))` applies the manifest grant and subject.
+- `run_agent(agent, gateway)` returns `run.effects`, `run.dropped`, the model calls, and the tool calls.
+
+Use the manifest's real grant in tests, and test each custom tool directly, including the refusal of another patient's id. Use the **testing** skill for the general setup.
+
+## Security and compliance
+
+When reviewing an agent plugin, check:
+
+- **Untrusted input**: document, message, and lab text reaches the model as data. No tool may let the model change the patient, the note, or another scope through its arguments.
+- **Grant**: `tools.allowed` is no wider than the spec; a write grant is justified; commits go through `tools.approve`.
+- **Triggers**: a `RunAgentEffect` names a patient the trigger's own context vouches for, not one read from an unauthenticated request body.
+- **Custom tools**: they follow the rules above, with tests that another patient's id is refused.
+- **The UI**: a chat route authenticates the staff member, and the plugin never broadcasts to an `agent-run-` channel itself (the platform refuses it).
+- **PHI leaving Canvas**: an agent's model calls go through the inference gateway. Any other LLM or AI vendor receiving patient data needs a security and compliance review and a BAA first.
+- **Chart writes from model output**: an agent whose output lands in the chart or is shown to a clinician as a suggestion falls under Canvas's decision support certification. Flag it for security and compliance review early, while the design can still change.

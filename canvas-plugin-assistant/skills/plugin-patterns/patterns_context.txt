@@ -842,6 +842,22 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 
 ---
 
+### Agent Plugins (Agent Runner Framework)
+
+**When:** The model decides what to read or do next, such as a chart chat, reconciling outside records, or reviewing a visit against earlier follow-up, or the model writes to the chart. One model call over input the plugin already has stays an LLM-Integrated handler.
+
+**Architecture decisions:**
+- An `AgentPlugin` subclass, run by a trigger handler that emits `RunAgentEffect` (an event handler, a CronTask, or a SimpleAPI POST that returns 202)
+- `canvas_sdk.agents.standard_tools` before custom tools; the manifest's `agents` entry grants tools by `@category`
+- No `llms/` directory and no provider keys: one `INFERENCE_GATEWAY_KEY` variable (sensitive), used through `gateway.client()`
+- Writes are drafts; commits go through `tools.approve`
+
+**Typical secrets:** 1 (`INFERENCE_GATEWAY_KEY`)
+
+Read the **agent-patterns** skill before designing one.
+
+---
+
 ### Extreme Complexity (10+ handlers)
 
 **Real-world example:** Hyperscribe (12 handlers, 1 application, 123 files, 26 secrets)
