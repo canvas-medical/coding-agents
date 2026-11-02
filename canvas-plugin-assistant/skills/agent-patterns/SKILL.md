@@ -7,7 +7,7 @@ description: When and how to build a Canvas plugin as an agent with the Agent Ru
 
 The Agent Runner Framework (ARF) runs LLM-driven agents as Canvas plugins. An agent reads the chart through tools, reasons over what it finds, and returns effects the platform applies: draft commands, protocol cards, tasks, messages. It runs on a background worker, so a run can take seconds or minutes.
 
-This skill is the judgment layer: when to build an agent, and the rules that make one safe. The API reference is in the **canvas-sdk** skill's `coding_agent_context.txt`; search it for `BEGIN PAGE https://docs.canvasmedical.com/sdk/agents` (overview, quick start, lifecycle, managing state, tools and the full `standard_tools` catalog, prompts, testing, auditing).
+This skill is the judgment layer: when to build an agent, and the rules that make one safe. The API reference is in the **canvas-sdk** skill's `coding_agent_context.txt`; search it for `BEGIN PAGE https://docs.canvasmedical.com/sdk/agents` (overview, quick start, lifecycle, managing state, tools and the full `standard_tools` catalog, prompts, testing, auditing). If the bundle has no such pages, read them at https://docs.canvasmedical.com/sdk/agents/ instead.
 
 ## Check the SDK first
 
@@ -56,7 +56,7 @@ The platform builds the `LLMGateway` passed to `run()` from that key; `gateway.c
 - `@clinical_writes`: draft commands on the open note (`originate_plan`, `originate_prescribe_medication`, `originate_lab_order`, `originate_diagnose_condition`, history, allergy, medication statement, immunization statement, vitals, and more), `originate_review_note`, and `edit_staged_command` / `delete_staged_command` for drafts
 - `@clinical_alerts`, `@task_reads`, `@task_writes`, `@message_reads`, `@message_writes`, `@claims_reads`, `@claims_writes`
 
-Check the catalog (Tools page) before writing a tool. When a spec needs a variant, such as importing outside records, wrap the standard tool's builder so its duplicate, coding, and controlled-substance checks still run, rather than building the command from scratch.
+Check the catalog (Tools page) before writing a tool. When a spec needs a command a standard tool already drafts, such as importing outside records as history, grant that standard tool rather than building the command in a custom tool: its duplicate, coding, and controlled-substance checks run inside it, and a plugin cannot import its builder to reuse them.
 
 ### Rules for a custom tool
 
@@ -82,7 +82,7 @@ An agent runs with its plugin's Custom Data namespace and declared access, as a 
 ## What an agent may write
 
 - Effect tools **draft**: commands are originated, never committed, and a clinician reviews, commits, or signs them. Don't design a spec where the agent signs, commits, or sends on its own.
-- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply, with everything one call stages decided as a single proposal; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route when the requester approves or denies. Only the requester decides, within an hour.
+- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply, with everything one call stages decided as a single proposal, and any granted tool that stages the same effect type proposes too; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route, an application, or an action button when the requester approves or denies. Only the requester decides, within an hour; a decision an agent returns is refused.
 - The agent acts for its requester: tools they lack the permission for are hidden, every effect is checked against their permissions and patient groups, and a run on a patient they cannot see is refused. A run no user started (a Canvas Bot, API-key, or webhook trigger) acts with the plugin's own trust, but cannot propose, commit a command, or add a lab report; a run a patient started may change only that patient's own records.
 - `edit_staged_command` and `delete_staged_command` change only staged drafts in the run's own note, and only kinds the agent's grant can stage.
 
