@@ -17,7 +17,7 @@ Use this skill when you need:
 - Common anti-patterns to avoid
 - Implementation of:
   - AWS S3
-  - LLM (Anthropic Claude, OpenAI ChatGPT, Google Gemini)
+  - LLM (Anthropic Claude, OpenAI ChatGPT, Google Gemini) for one model call in a handler; for an agent that reasons over the chart, use the **agent-patterns** skill
   - Twilio
   - SendGrid
   - Extend.ai
