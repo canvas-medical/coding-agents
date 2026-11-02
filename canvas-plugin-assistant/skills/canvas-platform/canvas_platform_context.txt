@@ -670,7 +670,7 @@ Lab results can be reviewed through the Schedule View or the patient's chart
      - **Send via Patient App** : Is only available when the [**Canvas Patient Portal**](https://canvas-medical.help.usepylon.com/articles/7348270931-managing-the-patient-portal#configuration-set-up-34) is enabled and the patient has a verified contact in their profile.
      - **Linked Items** : Lab orders will display here if they are linked to the results. Any relevant items can also be linked here manually.
      - **Internal Comment** : Notes visible only to internal staff. (Character limit: 2048).
-  6. Click **Sign** to complete the review.
+  6. Click **RECORD** to complete the review.
      - Once the review is complete, a **Chart Review** note will be created in the patient's chart. The note will contain the **Lab Review Command** containing the information the reviewer added in the modal.
 ### Reviewing Results from the Panel
   1. Use the **search bar** in the Schedule View to locate and open the patient's chart.
@@ -692,7 +692,7 @@ Lab results can be reviewed through the Schedule View or the patient's chart
        - **Send via patient app** : The contents of the **Patient Message** field will send to the patient's portal for them to review.
      - **Linked Items** : The PDF of the reviewed item will automatically link here. You can attach related components of the patient's chart for reference.
      - **Internal Comments** : Content is only displayed internally for staff visibility. It will not display on any documents shared externally.
-  5. Click **Sign** to finalize the review process.
+  5. Click **RECORD** to finalize the review process.
 ### Reviewing Results from Lab Review Command
   1. Within a new or existing note, add the **Lab Review** command
   2. Complete command fields
@@ -701,7 +701,7 @@ Lab results can be reviewed through the Schedule View or the patient's chart
        - **Send via Patient App** : Is only available when the [**Canvas Patient Portal**](https://canvas-medical.help.usepylon.com/articles/7348270931-managing-the-patient-portal#configuration-set-up-34) is enabled and the patient has a verified contact in their profile.
      - **Linked Items** : Lab orders will display here if they are linked to the results. Any relevant items can also be linked here manually.
      - **Internal Comment** : Notes visible only to internal staff. (Character limit: 2048).
-  3. Click **Sign** to complete the review
+  3. Click **RECORD** to complete the review
 ## Editing a Lab Report
 Lab reports can be updated through the patient chart or Schedule View.
   1. Navigate to the patient chart or Schedule View and locate the **Lab icon**
@@ -739,7 +739,7 @@ Results can be assigned to a team or individual after the results have been proc
 ### Assigning Lab Results to a Team
   1. Click the **Lab** icon in the patient or user panel to open the result cards
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749686356268-image.png?Expires=253370764800&Signature=fdf7v4Y0zLavO7WiNvDr2bgm2teILAQBGy39CYVF7f0xllsNooB28udnRYHQpyGRWD0COiNtRsEbmM1tmW0Gcd3Bm2oWamXKSsCm5wK3WEiDjGiIJY62He06v1JLczy3T7rZpGA0TACe-6BuUlxYHZKeDqTmkAfHwuP216JBZ1DxiTC5Yxk82zO2sEGQpE-ZprknzCdw9XahMTWfHDt6iU4k8P0IZLiK5-eDaUoJngKo~RmpywRyFnvfMgJ8ltZwyddKchcnTLQ8JcEwk46Mz7Y1K0-PhuEiz0JCCPgfGomWVuZo4KcVe35C~Pil4sAabCltYMHIi4O3-kSw~GLf8A__&Key-Pair-Id=K3NV4LZ47N8M46)
-  2. Click the team link**** on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
+  2. Click the team link on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749687248147-image.png?Expires=253370764800&Signature=RMbgfe9YBmxeJi4D~jpxOcpMs8B4r8KvbZuCFp3eQImElbxDLkbZwbB7KfauiRwzgej1Ir-H3~AP4cCJYlBV0se6HATjkSe02JKcC4ey36t7oayMwwTxklJ2jKQiKvJtYMefCfCJk3XAOY9B1wpU-dVTunsI81b7VZgZmCqMqllKZBY0c0SzuS9SoHC8jGFVWBYAC3rdlDAN~PE6RXeZsg8j7ev1wGOv5D3HRD1A0eeuTfUCC-5pDpSoOsuyVF0rg-2PI6cxR77piQZ286Uv1pNNzW-r76cFJLTTyowfCMBOo9wl1yfCJVXVuampcWe3r8uIx0VO4AXClhpMHTfUWQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select the team name from the dropdown
   4. Lab will show under the user's labs in their panel
@@ -751,6 +751,8 @@ Results can be assigned to a team or individual after the results have been proc
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749687670725-image.png?Expires=253370764800&Signature=fJXws-iGV-OHxxwkqV5e8LiE5crlIHMspiGM6-DreThpj4uGvDe81WR5OVK9m-4U180tZvzDMpo9dq0X8Xlz4C6zs1kk1Ak~kI2rRcNwc7lHHWo6lP8KX3O6GvrXlhzmzaDmMnw4lm7NClBtekymQZh3yCtaPgNIcphqE~~8mX0n5FLaQbyI3~T3p93iTWXCrf92bIr8dLeEPsG55FLJ9bSteil0KIC5nB1QQLW3S3S7SLE59J5NySaENUg~IDV7Zl68xg2EMdNzpwh7CwD3gAIMY1d2qciZrV8ZVX3MddsNLQCTCeq7Lw5~3shQxan2B6kDx63l-kXaVbMFO-Wp1A__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select name of new assignee
   4. Lab will show under the user's **labs** in their panel
+## Reassigning, Sending for Signature, and History
+Use **REASSIGN** , **SEND FOR SIGNATURE** , **Add comment** , and **view history** to hand off a lab report, get it signed, and see everything that happened to it. See [Sending Documents for Signature](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature).
 # FAQ & Troubleshooting
 **Q: When is manual linking necessary?**  
 A: Manual linking is required when patient identifiers do not match or when results are manually uploaded.
@@ -765,6 +767,8 @@ A: The order can be linked to the result to close the loop and make sure orders 
 Learn how to upload and assign clinical documents from the Canvas Data Integration system.
 • [**Understanding Commands**](https://canvas-medical.help.usepylon.com/articles/4129367510-commands-introduction)  
 Explanation of how commands influence workflows and documentation
+• [**Sending Documents for Signature**](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature)  
+Hand off a document, send it for signature, and read its history.
 **Keywords & Metadata**
   - **Keywords** : Lab results, lab report management, Canvas Medical, Data Integration, linking lab orders, patient chart, lab review process, manual linking, Health Gorilla, lab report editing.
   - **Categories** : Laboratory Management, Data Integration, Patient Records, Workflow Optimization.
@@ -1053,7 +1057,7 @@ Uncategorized documents can be reviewed from two areas in the application:
      - **Patient Message** : Information for the patient (2048-character limit).
      - **Patient Communication** : Method of delivering the message.
      - **Internal Comment** : Staff-only notes (2048-character limit).
-  7. Click **Sign** to finalize the review.
+  7. Click **RECORD** to finalize the review.
 ### From the Patient Chart
   1. Use the **search bar** in the Schedule View to locate and open the patient's chart.
   2. Click the **Medical Documents** icon located in the top-right panel.
@@ -1073,7 +1077,7 @@ Uncategorized documents can be reviewed from two areas in the application:
        - **Already reviewed with patient** : The patient has already been made aware of what the provider reviewed.
      - **Linked Items** : The PDF of the reviewed item will automatically link here. You can attach related components of the patient's chart for reference.
      - **Internal Comments** : Content is only displayed internally for staff visibility. It will not display on any documents shared externally.
-  5. Click **Sign** to finalize the review process.
+  5. Click **RECORD** to finalize the review process.
 ## Reviewing Internal Comments for the Uncategorized Document Review
 Internal comments for the **Uncategorized Document Review** are only visible on the command itself. Follow these steps to be routed directly to the command.
   1. Navigate to the patient chart
@@ -1086,7 +1090,7 @@ Results can be assigned to a team or individual after the document has been proc
 ### Assigning Uncategorized Clinical Document to a Team
   1. Click the **Uncategorized Reports** icon in the patient or user panel to open the result cards
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749687854090-image.png?Expires=253370764800&Signature=fwaisthroB0Rem~M9xbRFsCcxt0-cCgzVqq96MgC9hewHFcoZz3NpfkXe69ebav9U~plIPyRGE1~Jz6GHW28pXkK~Lt7DFWLneliDB70ASdo4G1ZetxBA3rgJW0C6tnsUVhjTq~4Uf2Yqlv-UiBjmMD5L2lU19yt2qLUU9UhVrI~G4zvXCl8Pcg-6N6efJq2rHCUs92xYsZQhMtTlQORYSWydjt-~vTd~59f7rpLb1a0UyuCTEwPm762676k3FjhVrpxw7jKhjtX7Pdb5-efukPxND3tys8K1X5bC~pEJ5Ev9pt4QubVNyjxSvtU~cYEQTZyMedyStaZP1V6AVF5ZA__&Key-Pair-Id=K3NV4LZ47N8M46)
-  2. Click the team link**** on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
+  2. Click the team link on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749688210804-image.png?Expires=253370764800&Signature=XqIZWRX3nnSjwuwXJXQaDY3LFnQdhTkLqdS2wVE-udCK6o0LBEtCA4mdxTKUesoa6AA-dt4qSbFbCjdhS53vJQaxPrWi9v5D6Pw7MwVzEP~6f0efztwBaBEjWF6-ylOm0hIt41GrL-zSnZ9ApaH03WZklqsLt-jz9dWkbpVp3LffwWntf9dCRh7hbloopcsNVq5YviEMpo7OVbZAjJQ17gwQclGTJm2jUIOPfH0nzPN2GP8uxfHW-VZ-3EXRwCaJTAXwcGgMgE1XJK5bj2mMyWE4qN15OdRQfnBUh-OqFtfGPj4dcCJvLS188CLJtEjhFFJwPjlcV3B613MZv3kZ7w__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select the team name from the dropdown
   4. The document will show under the user's **Uncategorized Reports** in their panel
@@ -1098,37 +1102,15 @@ Results can be assigned to a team or individual after the document has been proc
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749688345956-image.png?Expires=253370764800&Signature=KcZteLfls5MAP1-6o2K5x9qcmkyXuyKIIf0z6P6DWkIe~HTc1g3JPwCSG63UOVELtn02WXSXyby2f-Zh5rHZxfiPz~4u7-7sKeT~SWGjYPKjfDaJewxzaFEEtBkmQp1PFcTuFNAQJk5TRZxzN30b75ormQPSSihJsNJIuG9KQTCNQqQcy1-x8c3ZoM78vKOu3LsQO7YRxtbuFt1Go-wa8YE4JO30SOCd~5is9C94zWV7WASp0RfqTNtPFaGMcEd2udsnLYYUI8Q0LvRzYF-v63ysrEtOsbgd7Zsmlq79s0pd8KekV-vWLy8cFTXjSYhcv7d9JcgzAYqI0D3dXza6eg__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select name of new assignee
   4. The uncategorized clinical document will show under the user's **Uncategorized Reports** in their panel
-## Delegating an Uncategorized Document Review
-Delegation lets the current reviewer hand an uncategorized clinical document's review off to another staff member or team — with optional instructions and consent to apply your signature — and route it back to its owner when finished. Every hand-off is recorded so you can see the document's full delegation history.
-The Delegate button appears in the review modal only for an uncategorized clinical document that still needs review and is awaiting action. It sits next to the SIGN button. (It won't appear on already-reviewed documents or on other review types such as lab, imaging, or referral reviews.)
-### To delegate a review
-  1. Open the uncategorized document's review — from the Schedule view badge or from the patient chart's Medical Documents icon (see Reviewing Uncategorized Reports above).
-  2. In the review modal, click Delegate.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785293486469-Screenshot2026-07-28at10.50.41PM.png?Expires=253370764800&Signature=PG4lBIvEFs0vO0b~V~k-xBnSdYSOqZBH0PfXeMj4XbtTqpjRVkuTgyPxqafwxqxNx~MXCjMfidWAKt3GrsB7oSIHe~-oyolkk-1A4GClK5EqznmYiSb7GWCaUC17hW2uFn4vdx6J74-aVig8l3-yR7kj~dyROpa3~exkM6vEnd33L7y1kQ75eRkE4A7pAv-RCsNHXil404wrh0Xss4nLWAZpFLbCi5aNRDJ32LWM2WMmltS9DrOoG0tw0OhAB053KX~DXmTKPfn23OFgiWHLsXrUJy4ZqtIKAppvzJNK-GSjwxs84~-gW1eqKQrYkPMz3OHxXrEZ9275~eyEtzurQg__&Key-Pair-Id=K3NV4LZ47N8M46)
-  3. In the Delegate document window, use Delegate to → Select staff or team to choose the recipient (an individual staff member or a team).
-     1. (Optional) Under Instructions, add a note for the recipient (Add instructions for the recipient).
-     2. (Optional) Check Allow the recipient to apply my signature to this document if the recipient may sign on your behalf. When they open the document in the editor, your signature becomes available to apply alongside their own, and it's stamped as your name with no "signed on behalf of" note. Leave it unchecked if they should complete or review the document but not sign for you. This consent covers only this delegation: it's cleared if the document is routed back to you or if its reviewer is changed directly.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785293526654-Screenshot2026-07-28at10.52.01PM.png?Expires=253370764800&Signature=ZcpfVFzHXG1FvG3lmVY5NuPW4ZWeJV0DwSkrY7JS61J6O8kDOI0bWOVJolof3ie0OazJRVJRN77A15YMXvgoImXcNExLkChBRq4gdoC3i~~VTU5ZEgxyY4ttoMZavZEP8E3NYU0-oLwm-9yQNpTXoG-IFW-~Bs2ajJjkJou8NguuM70sN-oybJKOL-6ADhNemzSMzRIMuY4YeBSaB-emCLDNeSnQ3tedAMiieBNXzDeq8bedgKLoyNBVEdh~EeArHgofXYVBBefMC~3UVdn03RehI926OCxAmk0pPihzAyR8AXci8-hIRbrIQvToqP490rgx90dhA4PoN7Z~2ig4Vw__&Key-Pair-Id=K3NV4LZ47N8M46)
-  4. Submit. The document moves into the recipient's review queue. 
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785293626167-Screenshot2026-07-28at10.53.40PM.png?Expires=253370764800&Signature=hJ0h2Rr1JsOz3cHD6sbgpCfQz7FKQg5ZyJQOnXltfeyECNXA26WG4wQJEwDrx5-PxXjq00ZlMqG1pqIGi0cL~SCfqMTNx4Cl9tSfxqu2CZEmIJjjkT7oKAEDsYubGC4A6Adwk4NvNNuya45OjPIELs9iMEeWN~Fde4i59kBBKYrtoTjkHu1tT8jJFhcGwvqvHlLogBetAZCaqxlUfU7xV1sLlXE3TNJBFtXaxqWxTLNJBHIvoavETxQ8dWlIm2fhm3nA8-l7XYwYconTyavUy0H7FQYe3nv~7oyrFZvd4bHJtFkDwOWYmXE~AjOIgY7oolcjbLkVmhttI9EAvGTqwQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-### To route a delegated document back to its owner
-  1. Open the review of a document that was delegated to you.
-  2. Click Delegate, then use Route back to to return it to the original owner.
-     1. (Optional) Add instructions, then submit. The document returns to the owner's queue.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785293744243-Screenshot2026-07-28at10.55.33PM.png?Expires=253370764800&Signature=WQTk98Xa-uAkvMFjr31vppAcHVgv~pTQsq3XzVSdn7IhaixpS9ohvebHej2nQ2TvoKStc7eGl~V2jpo9VoSoQe65uO8Slsok2NWhLjI6EWIfCzSEvmWOEVHZdxRejDD4z~F2uiicZKyh2X-GMJcljF8BPyUlaa~lpyYpuWyDc1cF4sOu-mIUUwv40iwU3oo119yVT6ndYFGc4W5YLrKWFSUwxD1Ij8tf1pAxQUXhJImVS8EviFV6Uf9cGIw4xIX3~jKZ-ftFS5VJ6BiH8ToGHAgEAZ4YKUsMwH8ia~RzjpW95cRJmSrJmBwkPXgTZJNE41cSmp7DoKBSEZHiv7Gmgg__&Key-Pair-Id=K3NV4LZ47N8M46)
-### To view a document's delegation history
-You can open the delegation history two ways:
-  - From the document card — click View details on the document card. This works in both the patient chart and the panel (worklist).
-![Screenshot 2026-07-28 at 10.59.46 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785294086984-Screenshot2026-07-28at10.59.46PM.png?Expires=253370764800&Signature=tjA1ZFEwGk8lX4CaY9pYf9CisAtIyxEx-9~JTqR70--U83DyM-Zji0Hrl8aX0MjTYws7Wa0aN69X1Nz3jzAzKMqzqqqRxtZkWQtLGJmKEL~xe4Y0EgBYD1PGKG9TH9enLDDktYxQQ3Y7q6vHg3ZxZWF8hnXL0VYSHFKj7ubOFzurewFaeFjYrd1D~Wm-Lnv7~LbjTz4Ww479vs7coCLGJ4WGExE9zLYZoJNnSo2xruvDynVpL5ylNpfpm71NFKCdm2lqgjyseU9eHhn0pAv2X1GBXMIycj9MBcX31ivyow76ILGszB3xIUzMjYWGuao4vx0NglgyHMUhF833dQwkGQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - From the review modal — open the ⋮ (kebab) menu and select View delegation details.
-![Screenshot 2026-07-28 at 10.57.06 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785294099891-Screenshot2026-07-28at10.57.06PM.png?Expires=253370764800&Signature=qw1bR7kWRLJRYzq3B1m0yfe7xlD4fhv-awc2R6x231Ke0X4EWWu6SBux3EQ9~O2TljT67fhrfYme9geOILt7ImcfgIgW0vY4dyJrcDkVH~953qW2jzAK7R3OmzFQXmsEJfzo5CTx5se7fNNVfS4yLyxVfNfUwwf00CNMh6S-jHEa4CGRIanoFpj5nvWkd~cQyDzAGvE3-CPTisiC06Z6QUe7z9KPzYqyTtenMZisXcHRcPlL9CtbPu4dcBRX82KTKbXDV-zre5nlIqnaNMBy3misUZbHhghmm5h70Qb4dADk4RT3XJm4Kk9ufTFLz2wouUkUSqMJBpSCNO4Ec4J0LQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-Either opens the Delegation details panel, which shows each hand-off in order — e.g., "Delegated by [name]" and "Returned by [name]" — or "No delegation history." if the document has never been delegated. 
-![Screenshot 2026-07-28 at 10.57.50 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1785293881074-Screenshot2026-07-28at10.57.50PM.png?Expires=253370764800&Signature=TdpvUHmNX5paqGiWkhMLoj5NTxXpP3Jn7aJLh5FZDFzJ2hKwQiiC7nkv0zCXAS-TpPeAWAt5E9JyZ3d5lmJoQdebNlcpf7B2W0DcJy2LRLgunXEexC78kOUkPt2GT1qzMcZaKbtAvm8yv~cVjiL4jJZsAF1SgAVheTNsK0d-OvPHeJehUXo8rH7HuGKQQ-Trdb0M-K~hqKpA121cWDxul~LXhbH0pl6G-rGY~UtN41rEO-AuAc2r6yyj5guoi9Uzb-9RRt1PATgpnU0Cp7KfU1MNQuOWVYe73DEBTMREr-FH45jebrqyxH~qaCJVEVfZMH~3WDwI6dJeF3Kxvvul7w__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Reassigning, Sending for Signature, and History
+Use **REASSIGN** , **SEND FOR SIGNATURE** , **Add comment** , and **view history** to hand off a document, get it signed, and see everything that happened to it. See [Sending Documents for Signature](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature).
 # Related Resources
 • [**Processing Documents via Data Integration**](https://canvas-medical.help.usepylon.com/articles/7371085164-data-integration)  
 Learn how to upload and assign clinical documents from the Canvas Data Integration system.
 • [**Understanding Commands**](https://canvas-medical.help.usepylon.com/articles/4129367510-commands-introduction)  
 Explanation of how commands influence workflows and documentation
+• [**Sending Documents for Signature**](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature)  
+Hand off a document, send it for signature, and read its history.
 * * *
 **Keywords & Categories**
 • **Keywords** : Uncategorized reports, document upload, Canvas Medical, Data Integration, patient chart, clinical documentation, chart review, review command  
@@ -7077,7 +7059,7 @@ Section| What it's for| Who sees it
 **Studio**|  Building plugins with Canvas's AI assistant| Studio user, Studio admin  
 **Platform Analytics**|  Issues Canvas finds in your plugins, plugin performance, and Ask your data| Issues: everyone.Performance: anyone who can see instances  
 **Inference**|  Keys and usage for Inference Gateway| Everyone.Only Organization admin can create keys.  
-**Usage & Billing**| Spend, invoices and payment method| Billing admin  
+**Usage & Billing**| Token and plugin spend, and your billing settings| Billing admin  
 ## The Account Menu
 Click your name at the bottom of the sidebar to open the account menu.
 ![1793392213478-02-account-menu.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793392213478-02-account-menu.png?Expires=253370764800&Signature=Eyxu8-ddund7HDZh5-9k8TI-TGlydI2Bin1jr0uzMlKH1yA8y6TV1sDQa3wjSUMVRu-NtTcDVDQyR789n7T244dC7tTsBGJDYpt6jx-Xd2LXPo04FIVqx9d6~FituE~lAXw2VZpl8~Y6rXrwXmBB1mZwgLAVzZomjxZteTP7TLq94LSomi0Ur4LJDbbhGSOjaf7tc4bjjvnppWwvEOF7HB57~McPQlGBqb3dz7DooJQ6Fh2cJ8Uo~sYfG67oV-zwOUlI1RN3zTQGSuCJZ8OwGaNPGBCxkxs9q22Zi4C-17oUhjS2rHPi26HVew75qo0dp88dV21PHmwZFXZzf2o7Bw__&Key-Pair-Id=K3NV4LZ47N8M46)
@@ -7104,7 +7086,7 @@ Term| What it means
 **Is my Canvas Platform sign-in the same as my Canvas EMR sign-in?**  
 No. Canvas Platform has its own sign-in. If your organization sets up single sign-on for Canvas Platform, you can sign in through your identity provider. If your organization turns on **Single sign-on only** , that's the only way in for users at your organization's domains.
 **Why don't I see a section a coworker sees?**  
-Sections appear only for roles that can use them. Ask an Organization admin on your team to change your roles.
+Sections appear only for roles that can use them. Ask an Organization admin on your team to change your roles. See [Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles).
 **Who can give me access?**  
 An Organization admin on your team. If your organization doesn't have one yet, contact your Canvas team.
 **Where did Studio and Onboarding go?**  
@@ -10149,16 +10131,16 @@ Imaging documents can be added and managed in two primary ways:
   1. In the **Data Integration** section, locate the **Link to Patient** field.
   2. Search for the patient by name or date of birth.
   3. Select the patient and choose **Imaging Report** from the **Document Type** dropdown menu.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730221833153-Screenshot2024-10-29at1.10.07PM.png?Expires=253370764800&Signature=ln2rdHYpmPV~F6b-j~GiDO3wezBasqCq23ReUS0uqbefDYhdqIPHDh4QGUsJSyYZib0G-1lu4kqmQk7yBGE7t8ggaEQFLNHkEB3MynBkTCtRbl-hZWaYeVNi72i2WXLvQuvD71LbzqlIcPwHitbB8-gKlY22QoSU5Ntcw0zI4fmAfbvViligV6RDjSu9LCSdAHroeDz-cCUQNr-UCJHVDVUQU0zXjvQ9W7Gjdt8lDFnRY6dyFH3v7nHy1JEksDvUGNJrGNS9xGa2VDBDTdimDBcGgURJ1D6fvZqzos2HCCgLOJKtRXF6ENGmT3ry4ScuauFxUzjWvtPzqgy5Fl3PJQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 1.10.07 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730221833153-Screenshot2024-10-29at1.10.07PM.png?Expires=253370764800&Signature=ln2rdHYpmPV~F6b-j~GiDO3wezBasqCq23ReUS0uqbefDYhdqIPHDh4QGUsJSyYZib0G-1lu4kqmQk7yBGE7t8ggaEQFLNHkEB3MynBkTCtRbl-hZWaYeVNi72i2WXLvQuvD71LbzqlIcPwHitbB8-gKlY22QoSU5Ntcw0zI4fmAfbvViligV6RDjSu9LCSdAHroeDz-cCUQNr-UCJHVDVUQU0zXjvQ9W7Gjdt8lDFnRY6dyFH3v7nHy1JEksDvUGNJrGNS9xGa2VDBDTdimDBcGgURJ1D6fvZqzos2HCCgLOJKtRXF6ENGmT3ry4ScuauFxUzjWvtPzqgy5Fl3PJQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   4. Assign a **Reviewer**
      - If a care team lead is assigned, their name is prefilled in this field
      - If no care team lead is assigned or a different reviewer is needed, choose the name of the team or individual that needs to review the results.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730221918308-Screenshot2024-10-29at1.11.29PM.png?Expires=253370764800&Signature=C1cKlg00YmDpU5~Xpn4SmhpNPykaio-GJE-3eJcjhtesgKNacfs8o0gPjuFU6nxGoBA2BfXVozYkJKZF2q08E9z0NJEe93II2Nn3DIZITYDBle6ZQV1v21ESlSRFO3LYqePJrQP077rR55we3z6aE0k8pSHQpQ-JTyOlsyiCDENijASNmR5gTf8mZi2kk~og1eXfc9doUaY3PM7aVpnp9JJL7q9xOlf4DqWg86MG1Was6Ru9IR9EA8WozamcS2qNzgSl~IppEOBP-wzH0o8WRs9mub4i1cu-GHz8Y84VV5PigUeh~P-3g9DuJxMTOLshQgQx6Nl6sbLHHAYI5vUSoA__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 1.11.29 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730221918308-Screenshot2024-10-29at1.11.29PM.png?Expires=253370764800&Signature=C1cKlg00YmDpU5~Xpn4SmhpNPykaio-GJE-3eJcjhtesgKNacfs8o0gPjuFU6nxGoBA2BfXVozYkJKZF2q08E9z0NJEe93II2Nn3DIZITYDBle6ZQV1v21ESlSRFO3LYqePJrQP077rR55we3z6aE0k8pSHQpQ-JTyOlsyiCDENijASNmR5gTf8mZi2kk~og1eXfc9doUaY3PM7aVpnp9JJL7q9xOlf4DqWg86MG1Was6Ru9IR9EA8WozamcS2qNzgSl~IppEOBP-wzH0o8WRs9mub4i1cu-GHz8Y84VV5PigUeh~P-3g9DuJxMTOLshQgQx6Nl6sbLHHAYI5vUSoA__&Key-Pair-Id=K3NV4LZ47N8M46)
   5. Complete the remaining fields. Required fields are marked with a red asterisks
   6. Click **Ready for Clinical Review** to complete the linking process.
 ![2024-11-06_14-54-41.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730922901665-2024-11-06_14-54-41.png?Expires=253370764800&Signature=AyFMfG9kZpzsqlEtWP~3L2-OPs~uRldokoOCyhPB6wRz9-BDMDwjeTD9tww-zcdPMHBqgRA69V5WC3V018UppCPBQIm5YSNLn8gGzBVEMqRlGCxuaV3gDqwHtl5sjR-ygM9BSVge0Iu8ef34lBX-BUlfpSHPq55ylssH5XXKwygmCuoV3MmpsAFH-sS~ZXws9E0BLl3YuA~3Gg-AYBOvBFCAbpnwGDUJdRFv3IyOy-xZN3r0VF-qy0YksF2hxcxZjfyOqSvQx98oMcg17yZr-gdZUE2IKiSo0riUBe4hGEt42oQRLAlAINotx5YNjL5ARmzOED1HCwJVl0VKWpmiDA__&Key-Pair-Id=K3NV4LZ47N8M46)
   7. Click the patient's name to go directly to the patient's chart
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730242205045-Screenshot2024-10-29at1.22.23PM.png?Expires=253370764800&Signature=dlsovKse3rj3HWoes~D4K3HDWbZgAwPsXozOLDgKsMZBjXsW8Ba2dt0nrD0lC1QhKKaoBCQmZKW9w3zjumFp2gpie7bnfB-AY8e7XOJd9AY8gfW66ICep44i-ginkAZB8egTLTLE7Spylctv8F3TNL0b6R7NZ1zM9Lqf84iHU-RspivRwqtfDgYVjkO4Dq3V-4x5fGy5zwsF-wq8nNABvhyjG3HlMtNOSOB7AMYx7XJTyCC6IpTXIOkLCrSMs6KwlYNO5-PreSJclOdL6vqnYaAX~h344QiU-7JdQnBDUWvnyRUKM~cOP167mbs4iPbCVdXYsRI3rTexDC4di2Bhlw__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 1.22.23 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730242205045-Screenshot2024-10-29at1.22.23PM.png?Expires=253370764800&Signature=dlsovKse3rj3HWoes~D4K3HDWbZgAwPsXozOLDgKsMZBjXsW8Ba2dt0nrD0lC1QhKKaoBCQmZKW9w3zjumFp2gpie7bnfB-AY8e7XOJd9AY8gfW66ICep44i-ginkAZB8egTLTLE7Spylctv8F3TNL0b6R7NZ1zM9Lqf84iHU-RspivRwqtfDgYVjkO4Dq3V-4x5fGy5zwsF-wq8nNABvhyjG3HlMtNOSOB7AMYx7XJTyCC6IpTXIOkLCrSMs6KwlYNO5-PreSJclOdL6vqnYaAX~h344QiU-7JdQnBDUWvnyRUKM~cOP167mbs4iPbCVdXYsRI3rTexDC4di2Bhlw__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Reviewing Imaging Results
 Once linked, imaging results can be reviewed using one of three methods:
 ### Review from Patient Chart
@@ -10180,14 +10162,14 @@ Once linked, imaging results can be reviewed using one of three methods:
       - **Already reviewed with patient** : The patient has already been made aware of what the provider reviewed.
     - **Linked Items** : The PDF of the reviewed item will automatically link here. You can attach related components of the patient's chart for reference.
     - **Internal Comments** : Content is only displayed internally for staff visibility. It will not display on any documents shared externally.
-  5. Click **Sign** to finalize the review process.
+  5. Click **RECORD** to finalize the review process.
 ### Reviewing from Imaging Review Command
   1. Insert the **Imaging Review Command** in a new or existing note.
   2. Select the appropriate report from the dropdown.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730234794259-Screenshot2024-10-29at4.46.12PM.png?Expires=253370764800&Signature=tycusKXGnvtV6xBp5xnl6V998OJJYni3zaaXMFiCmg-GVuZ6S4dMXxoS95-yRUYgyXa85UP2xkZAWbZ9yb3owWEaicaZWOC~fR17EAC7gAAGDEpJHrGV1CnXqDRy3Ay1od-S7UImqjFJzDWtxN38mvGrbcn5q0a2gVL086GP9mhWxjmKITgUnrLF5GhtzmU0UxIceWXRAffLIA6pEDkRsVF5E3k0Oi4A41GCtxwB~p4fDWloD5fjKGGO3ZJ1MfozqP2VnMvY9acvFL4cqE0drvLR7Ag~N8JXFb3rVzD0JQsscgD~5USfXFdPMfaa90QNLZXeEtPjOBXoYQYVAIo~TQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 4.46.12 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730234794259-Screenshot2024-10-29at4.46.12PM.png?Expires=253370764800&Signature=tycusKXGnvtV6xBp5xnl6V998OJJYni3zaaXMFiCmg-GVuZ6S4dMXxoS95-yRUYgyXa85UP2xkZAWbZ9yb3owWEaicaZWOC~fR17EAC7gAAGDEpJHrGV1CnXqDRy3Ay1od-S7UImqjFJzDWtxN38mvGrbcn5q0a2gVL086GP9mhWxjmKITgUnrLF5GhtzmU0UxIceWXRAffLIA6pEDkRsVF5E3k0Oi4A41GCtxwB~p4fDWloD5fjKGGO3ZJ1MfozqP2VnMvY9acvFL4cqE0drvLR7Ag~N8JXFb3rVzD0JQsscgD~5USfXFdPMfaa90QNLZXeEtPjOBXoYQYVAIo~TQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. To view the imaging report, click the **PDF** button on the card to open it in a new tab.
 ![2024-11-06_16-07-39.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730927810748-2024-11-06_16-07-39.png?Expires=253370764800&Signature=J1RopbYhj8lMrkpCzFf1lyHAJpIt~wk~mH1aRdmB~yjBfzcNyL2AJCWtBYyUmliwUnpFPL~JwNSjcrCNc2DArYb1xAHTy-tGEQ87vGnht30fHg-J-eZMQeQTeQGkT2bn5mX3A5XuNL9Wg5dxknCn5iK1pgPWxuU9wfoo5GntQDd0gWPhB1GnPZlB1XzRGhz~n7C6JfFN7xfcsNRpGcZ9kE2WqngXemDkoGXV83yiQh5UQoGl1hhczzGXoIIIgaXixu6yFS3pkJP2wz2eVnDB33khfKnYc0Z1uffZ0h1jJZfEvmVVaUTdb~Pz1TSwiz9oHb26tdG4gCxljP3zF~Btww__&Key-Pair-Id=K3NV4LZ47N8M46)
-  4. Complete the necessary fields in the review modal and **Sign**.
+  4. Complete the necessary fields in the review modal and click **RECORD**.
 ### Reviewing from User Panel
   1. Navigate to the **User Panel** in the **Schedule View**.
   2. The imaging icon will display a red badge indicating pending reviews.
@@ -10214,14 +10196,14 @@ Reports can be edited from both the Patient Chart and the Schedule View.
   2. Locate the imaging report card and select **Edit**.
 ![2024-12-31_12-28-35.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1735666164433-2024-12-31_12-28-35.png?Expires=253370764800&Signature=dbdjvYIbF8VfhStFexOnq~-7648vc6Uj~rruwN3m0-lHNsWIvu0u314W~t~FbqGEQLQ1VRsn1j7lgRv2JWcfkFXk1InRomtuHmNj4Dzh5F724XjW0sPE1tab4PH~eSfWgSJxKWffFD9wZegciFLZAJPGM2sszYf9vAsFF~0j8Bj3XHQDWZMapJUkUNxIpxH-OnlFQMEfKGXxkWnqsI~GjXQu7QeuEbvhY-q0kb-gn2bmbqqUZxJiUWJHpSbNVRecrsl010Saw0uHhH~OJ~Ak6gimUls1Gkll9PmVmRvEGF30-5gaABoFwLZG1Myd8zXgHVUKixg402UgXbH1jJdOiQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Make the necessary updates and **Save** the changes.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730236592982-Screenshot2024-10-29at5.16.08PM.png?Expires=253370764800&Signature=DUS0auNsLtt~I2p7NN-~ZtEAAHTOvD1brTo0O8998AQMA1MtfiJsioq~ZSRlGYdit43kNlpxL2TFb~T4XjTKVuWJzZk0HcRVLnLfLEEbM8kHBWbpj3XJGsRfmA2A253Euw4sT4ufVPOmpioZr5FGlX3QpciZNr4ZUQpvDoiWeqtVM8zTWvbooBleWOvxMMHO3pKhYzVPLfrhYF46GdA4zVmSibrCTLK9WkPqaUEUqWxAZcgb5YQ3xybl5G4NzvxKW0gkivRIywZ3VAUuSkCOcZJBEsjathIcD5BR6B8PCqeqzMEcE~x69tPDanG3dNKdvxL50Ig-il-RCesUGqBgbA__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 5.16.08 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730236592982-Screenshot2024-10-29at5.16.08PM.png?Expires=253370764800&Signature=DUS0auNsLtt~I2p7NN-~ZtEAAHTOvD1brTo0O8998AQMA1MtfiJsioq~ZSRlGYdit43kNlpxL2TFb~T4XjTKVuWJzZk0HcRVLnLfLEEbM8kHBWbpj3XJGsRfmA2A253Euw4sT4ufVPOmpioZr5FGlX3QpciZNr4ZUQpvDoiWeqtVM8zTWvbooBleWOvxMMHO3pKhYzVPLfrhYF46GdA4zVmSibrCTLK9WkPqaUEUqWxAZcgb5YQ3xybl5G4NzvxKW0gkivRIywZ3VAUuSkCOcZJBEsjathIcD5BR6B8PCqeqzMEcE~x69tPDanG3dNKdvxL50Ig-il-RCesUGqBgbA__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Removing Imaging Report
   1. Locate the imaging report card in either the **Patient Chart** or **User Panel**.
   2. Expand the report card and click the dropdown arrow next to **Edit**.
   3. Select **Remove** to open a confirmation prompt.
 ![2024-11-06_17-06-56.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730930871439-2024-11-06_17-06-56.png?Expires=253370764800&Signature=QeG0LXVHa4CVEK6N3XyKLJULNZ0XbOXVyUujHgQ-e~naUBO7SWGMXa8~3PAhV1hFklMrBP-wswx-pgGV2zFnARANpT8sbn~2uGsAmHDq926aDgdEKo7oXo5Wt3UJu4AuYMVvOh8b1bAnNytJ5t6~YKmLcfFrvd6TOjBdTNWUU5R6sLRm13kVAdPI9WZfGk0xg4VBW5XhzJajVrlj-xw6o5VkoSF7Jcb2nBzDI3Uh8d32W-JlFqNZxbplP4Twry5y-esS0h56gfp-fwVjcjjfH2kMlU3mPzHP58PRwYs6Z4WHZGtwiclq8OzffGJO3Co3M4FLKo~aUeEM00LWgzCKYw__&Key-Pair-Id=K3NV4LZ47N8M46)
   4. Confirm the action, and the imaging report will be permanently unlinked from the patient's chart.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730237699231-Screenshot2024-10-29at5.34.40PM.png?Expires=253370764800&Signature=rraNs7lcTawplwxkTP22T2865h4i-6BoDrdHv8AosbQwMuMXbCpoydQq7S1bItrdDQBwTXwdsvGUoZ9tQdta96ZL5LjEtLdQT5xY6GPB7sDbOlrl~1vxbyl3ByaY2ZvVlRYE5wLKZrKuYlQYqGNsA9gqvXlk2-upXDPqrYjM-tyzQ2pGMVKhIxvRv~D~owOJflmLgruirROGX6wyRO8IMYCzauiXGAe~4xfGlt18f7x-~M~wcJcRSGTVmXNYYo1e7PblOX9FaBfnSKa-CERDwz-nt0AUyJ3n8l0fSA0CoXh7XREPSge6RczCI5A-U1HAwn2tklDFMZpLX1vNMyMhoA__&Key-Pair-Id=K3NV4LZ47N8M46)
+![Screenshot 2024-10-29 at 5.34.40 PM.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730237699231-Screenshot2024-10-29at5.34.40PM.png?Expires=253370764800&Signature=rraNs7lcTawplwxkTP22T2865h4i-6BoDrdHv8AosbQwMuMXbCpoydQq7S1bItrdDQBwTXwdsvGUoZ9tQdta96ZL5LjEtLdQT5xY6GPB7sDbOlrl~1vxbyl3ByaY2ZvVlRYE5wLKZrKuYlQYqGNsA9gqvXlk2-upXDPqrYjM-tyzQ2pGMVKhIxvRv~D~owOJflmLgruirROGX6wyRO8IMYCzauiXGAe~4xfGlt18f7x-~M~wcJcRSGTVmXNYYo1e7PblOX9FaBfnSKa-CERDwz-nt0AUyJ3n8l0fSA0CoXh7XREPSge6RczCI5A-U1HAwn2tklDFMZpLX1vNMyMhoA__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Linking Imaging Order to Results
   1. If an imaging order was not linked in **Data Integration** , select **Link Orders** on the imaging report card.
 ![2024-11-06_17-14-30.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730931580481-2024-11-06_17-14-30.png?Expires=253370764800&Signature=Wy7vWLP5BBhyJCBMfqf6KyYzRp6yqHrCCkF3V2q~T7N6cl0kOLApu-hfcVf0gdc7EtCgx7NMB4lzJ0IZIPQzrTUAofQPYhmwZareXbKe6odL5GE4BwdISRJrij4qPAdXAwS7iPuabkV6qyrvTDFtrRbUc6ZI6ZTvA0QESROyEVJfHuHY9FANvPsXvT2NpIscBAodZWkmotPPmozu~iBv77qpDBoIEwzRtG0qbCG744wd9vg~--P7pfOgVRnpLFB8~q3cbS4-gaQKTl9svmMCmQgWDgdqnTxk1tTCB~9pvdwMzjDBfj5Ixq9AlpKe7eF57vzY0C8ON1Z4QPCdpcKVLw__&Key-Pair-Id=K3NV4LZ47N8M46)
@@ -10239,12 +10221,12 @@ Internal review notes for the image results are only visible on the command itse
   3. On the imaging report card, click **Reviewed on [DATE] at [TIME]**
   4. A new tab will open that takes the user directly to the associated **Imaging Review** command.
 ![2025-05-22_12-22-15.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1747931131086-2025-05-22_12-22-15.png?Expires=253370764800&Signature=ueC25qkl-UQ7dsndYszBq~L~hKosLsa7bQC0VcOS369shpRnCieapvYTVzC87z3jg4DqVPewyvetHUZTaxtyGzKkPRVsertkumovQBYcCLZI5EeICM-TSTOitsEnk3GC0INTpkL2oONcewz389ES53t4E5oKsXWdPjMJLywSvWhxr~L04G5eRDggmIS6Qlbbm4rg3HpJ4ut4YQGHZHZ40GoZJ9BqlVyBAQPzG4qMHTs883DWJj6KlO~y7yRCJGEpDz7DWnyg1IfzCd0AMTlPwsWwucw1I6twnZw5qgGh9k3lVKn9q5qOO78KxW9eGsgCpCljc9R1jjHtqT0hDepffg__&Key-Pair-Id=K3NV4LZ47N8M46)
-## Assigning Processed Imaging Results to 
+## Assigning Processed Imaging Results to
 Results can be assigned to a team or individual after the results have been processed through Data Integration
 ### Assigning Imaging Results to a Team
   1. Click the **Imaging** icon in the patient or user panel to open the result cards
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749671473094-image.png?Expires=253370764800&Signature=uegbvvsuhbvfwElplaHjeS0WZGdoKtcKg~wfQt9xf9X40E81vK3HGaauaRYEwKISUpKofrBMEhSyTouHtoob2s9LTFMNf4vgVIagRkGy9QcFCXH09Ssi7kSUFITcpMTPA9meOCnDfYIgLzRTT5nGVlaOwb8GjA3bFX-U6dTg2gV16HvLQKp2tZbDUCCCuIA5Moqr8GoyzvuNIluRouI5axqDDmG16SXTyLyhtq7beG5rXoak4ZmWFuikZJDh5hbMGtFkHs6gLFZEJxzbTk4K0bI3NFJyJU1EKS-Yma~GV1QBLGphKe4qvcKLhkz07sgp1vfkhzjulCBUxLJ62ck8kg__&Key-Pair-Id=K3NV4LZ47N8M46)
-  2. Click the team link**** on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
+  2. Click the team link on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749671883648-image.png?Expires=253370764800&Signature=UJf9LyjbpQ4Nct-4fq9sSMhSffNXkPk-KxtdUtyhJSY4V6kWVxc4OUu8m8XaPbfR5LFgbRXy3OPzwhQz5CbwLgpizKMU0vAp94XcxlvzE6j-U-cUibUngXerrCIAjLjoLn7Mkmxh4vCejib~ncKmY2OmQwz6Qr8FjCFZ0yW9WD6z3hYeVXZuLLxzPYh8s2zd3h0iTLxviIrLYlkT0mrZ-nfYoJUEEKAhiDnlm96kXnr2lD03eFqxyMR1SEWAgNrVAOqnz4Uib-u9kYt-uZZ7WUs1ykTfr-o1n~~skUC5d38rEOQQ0DNH1bU-VAUghDShg6oA34Y-dyTgoalvSisIlQ__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select the team name from the dropdown
 ### **Assigning Imaging Results to an Individual User**
@@ -10254,6 +10236,8 @@ Results can be assigned to a team or individual after the results have been proc
      - A user will already be assigned since it is required to process in Data Integration
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749671964063-image.png?Expires=253370764800&Signature=cs3TiZEAkNjjwkMRWlKlLom~ap-37Y5XnR9KDgUYevsAuMjUE9DO2P9yOZ0FXyR39~yY5f9NA8OZ1wvGyTmicihMepJGFUPU9NvoF0tY2lnOOMRVVOBZ~-OztGGTZ2TqDEwM2HBJEVhqj7oNV3GgDmzkDxgdWlOIiytaHBs7hZ5nn3h-Y6wy4MFKC9Nc2Odv0~eNn1BNAa-0PqCYtRvSMvROZsxxPwK36u0uRAnespVOtJK69Nf2cW~ZW-ICx7irV1k4CqcwQLOj3XLQjlWgFzt0P69b2ECKNFTbQcruFWnkjZx8ZuBuqJNDKcxSkx8NDeV6y1p0ZnCchwQFHJV7ew__&Key-Pair-Id=K3NV4LZ47N8M46)
   3. Select name of new assignee
+## Reassigning, Sending for Signature, and History
+Use **REASSIGN** , **SEND FOR SIGNATURE** , **Add comment** , and **view history** to hand off an imaging report, get it signed, and see everything that happened to it. See [Sending Documents for Signature](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature).
 # FAQ & Troubleshooting
 **Q: Can imaging reports be uploaded manually?**  
 A: Yes, reports can be uploaded directly through Data Integration and linked to a patient's chart.
@@ -10272,6 +10256,8 @@ Internal comments for the **Uncategorized Document Review** are only visible on 
 Learn how to upload and assign clinical documents from the Canvas Data Integration system.
 • [**Understanding Commands**](https://canvas-medical.help.usepylon.com/articles/4129367510-commands-introduction)  
 Explanation of how commands influence workflows and documentation
+• [**Sending Documents for Signature**](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature)  
+Hand off a document, send it for signature, and read its history.
 **Keywords & Metadata**
 • **Keywords** : Imaging reports, Data Integration, Canvas Medical, document upload, imaging order linking, patient chart, fax inbox, clinical review  
 • **Categories** : Imaging Management, Data Integration, Patient Records, Workflow Optimization
@@ -10394,6 +10380,166 @@ A. The disabled label will still be available as a filter option and will remain
 **Keywords:** labels, tasks, claims, appointments, organization, workflow, priority, revenue queues, task association
 **Categories:** Task Management, Claims Processing, Workflow Configuration, Settings
 ----- END PAGE https://help.canvasmedical.com/articles/7708474806-task-claim-labels
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/7724253029-sending-documents-for-signature
+A care manager prepares a form in Canvas, such as a home health order or a referral, and marks where the provider signs. The provider reviews the finished form and signs it with their own saved signature in one click. The signed form then comes back to the care manager to send out and record.
+# What it does
+  - It works on all four review types: Lab, Imaging, Consult/Referral, and Uncategorized documents.
+  - The provider signs only with their own signature. Their saved signature and today's date land in the marked spots, on the page itself, so the signature shows when the form is printed, downloaded, or faxed.
+  - Every step is recorded. Each send, reassign, comment, signature, and recording shows in the document's history with who did it and when.
+# The flow at a glance
+  1. **Prepare** : the care manager fills in the form and marks a signature spot and a date spot.
+  2. **Send** : the form goes to a provider, either from Data Integration or from **SEND FOR SIGNATURE** in Review.
+  3. **Sign or decline** : the provider clicks **SIGN FORM** , or **REASSIGN** with a comment if something is wrong.
+  4. **Finish** : the signed form returns to the care manager, who sends it out and clicks **RECORD**.
+# Before You Start
+## Providers need a saved signature
+**SIGN FORM** uses the signature saved on the provider's staff profile. A provider without one sees "Add your signature to your profile before signing a form." and nothing is signed. Providers can't add their own signature. An administrator adds it:
+  1. In Canvas, open **Settings** and go to **Staff**.
+  2. Open the provider's staff record.
+  3. In **Signature** , upload an image of the provider's signature.
+  4. Click **Save**.
+## Permissions
+  - **REASSIGN** , **SEND FOR SIGNATURE** , **SIGN FORM** , and **RECORD** need the **Clinical write** auth group.
+  - These buttons show only to whoever holds the document: its assignee, or its team when it has no assignee. The document must still need review.
+  - **SIGN FORM** shows only to staff whose role has the Provider role type. Everyone else who holds the form sees **SEND FOR SIGNATURE**.
+To check or change a staff member's auth groups, see [User Permissions](https://help.canvasmedical.com/articles/4709841955-user-permissions).
+## Which button you see
+You are| In the Review footer, you see  
+---|---  
+A provider holding a form with a signature spot| **SIGN FORM** , **REASSIGN** , **RECORD**  
+Anyone else holding a form with a signature spot (care managers, MAs, administrative staff)| **SEND FOR SIGNATURE** , **REASSIGN** , **RECORD**  
+Holding a form with no signature spot yet| **REASSIGN** , **RECORD**  
+  - **Provider** means a staff member whose role has the Provider role type in Canvas.
+  - **Holding** means the form is assigned to you, or it has no assignee and is with one of your teams.
+  - Someone who opens a form they don't hold sees neither signing button.
+  - A signature spot counts once it's saved. A date spot alone doesn't count.
+# Preparing a Form in Data Integration
+Use this when the form arrives by fax or upload and you already know which provider signs it.
+  1. In Canvas, open **Data Integration** and select the document.
+  2. Click **Annotate & Modify**, then **Confirm**.
+  3. In the viewer, open the **Fill and Sign** tab (under the ... menu when the window is narrow). Fill in any fields the form needs.
+  4. On the **Fill and Sign** tab, click **Mark where to sign**. The panel on the left shows a **Signature** spot and a **Date** spot.
+  5. Drag each spot onto the form, or click it to drop it in view and then drag it into place. Drag the corners to resize it.
+![The Mark where to sign panel, with the date and signature spots placed on the form's signature lines](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F614fa203-5d1f-4db1-9dac-022fd6b08cbb-img-002-000.png?Expires=253370764800&Signature=t7VYvZLRffaKCLv253cXfxMxhgkQNL6LE-gIwgCoWTZFvaDZIn8qfZ6ij-EYGFK8Nj9scm5~Md5DAnr8DI576NKHqEfVVd5Kd7k1FR3NlwB6LqMWk2GLJVS-6u2Lf-YZdXjKzd5SEsvLd7eCQWl41nZ-tWwfhkf9IO~DN1JnDNebzR9HLVuWd~jeDyyEpsJtWa3R-0sZh9PjAF6S500b6ul5-0aTkUbSpsc5S6YRnKEkI67dy6wJTjFNPZjvRozcGAXkZw5ACe6c~TuCeVBjIEn7Vfft1NJV6qyR29IQfjDye2DQkt01Q1-20BGVtir6m7RgE1UU60WYaE~2hMLuAw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  6. Click the save icon in the viewer.
+  7. Choose the patient and the document type.
+  8. In **Select a reviewer** , choose the provider who signs.
+![Filing the form with the provider as reviewer](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ffe97402a-3355-4ecd-9ba9-cef936d712e8-img-003-001.png?Expires=253370764800&Signature=C07wJOcztMl5GRPKT4nqN0MDRPojZqavpN6XoFoeEzyaD1pzKLkDUGr6HyBe7wYg5T~QDX8mPIwR1nxot4JHgdEnTGsyxF84IQ7ub1HjntqXDZqR3tXBT~C2Xmi9Z7xltQ5EyoxBASzj~KuD-s1XNbhI2YMMhfng0oKxgye1-c6Z0JZt6fAoanRtwCbrSSgdhd7vVAFU~KNpjzNZ9BxevGrASoMfEsqPbW37n3Tad2WKaq9uKznHjC~Gmq9akZH6t3BCT37oNbkL3ujTZcZH3TFr2uZp~jVGLq2aZYkn44Pfr-hux7s5py65Qgekz8nnEc9JWmCx-9rf9GtJ7ivomQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+  9. Fill in the rest of the form, and add a comment for the provider if you like.
+  10. Click **Ready For Clinical Review**.
+The form goes straight to the provider's queue, with **SIGN FORM** ready for them. When they sign, it comes back to you, the person who filed it.
+A form filed this way shows "Assigned to" the provider on its card, without the "Signature requested" line. That line shows only after **SEND FOR SIGNATURE**.
+# Preparing a Form from Review and Sending It
+Use this for a form that's already filed and assigned to you or your team.
+  1. Open the form's Review: from the **Medical documents** panel in the patient's chart, or from your documents queue.
+  2. The footer shows only **REASSIGN** and **RECORD** while the form has no signature spot.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F4e6aa748-0afb-442a-8b0b-3c1b0356329d-img-003-002.png?Expires=253370764800&Signature=TNTezS76MSDNvlR6rqiKoFwDWpkGhEPINrD5zKbLRzrXqSlK36jl~RkG0JtL6dl6Czjj--3y0unKWduS9b3FA-LIuc9qk4gyxpHCpfgXnluxGTdgGmgr58xh5JfH69BUTjXcK~BnOsb93-rchTZn9fshlI4sa4lr1fn823xVNawGn2m~ZWdZFkfM~rOcLdO5dzuxO-m1r8CvlYxfnx70pO41LCinHPcYnVWZBEwUJi5U~B0oR0hUgb5fvMPu4DQKRJGQYG2PX9zuHt3iYMrCF72bT-bGuBi~1OytQ1WLyECWvdIxHY-jt8JbIcN9Wx8Vz~XHinOkNTABXUNTo9sSIw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Click **Annotate** at the top right, then **Confirm**.
+  4. Open the **Fill and Sign** tab and click **Mark where to sign**. Place the **Signature** spot and **Date** spot, and fill in any fields.
+  5. Click the save icon in the viewer. **SEND FOR SIGNATURE** appears in the footer beside **REASSIGN** and **RECORD**.
+![After saving with a signature spot, SEND FOR SIGNATURE appears beside REASSIGN and RECORD](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe7a122c3-85c0-4a29-abe3-73e80c807035-img-003-003.png?Expires=253370764800&Signature=QNxW3B9YT~GrX7qBV9bug60L6av1WWLPdXu2YtQmUCrtyNCIUCDYotbBHDBktuGUrfFYvmzA77j~ymGx49btvhKciauZ0NivnHFE6ndSLNDTwCtdvPY33qi2H5GMFVPoeeLBYnX5heWlQU2Ed4TWbBp7uHhAl8zEldmbw2wO1VwC7j1hajKb8vqLp33CVnYkZMDZxH2HZzKvaqt47O7975rEBT2sMjhc4gA05QoroAkOlde4gxJZe98NJ53a-tXgixL4KEMSfVzB-LTutX4hHcwMWRVOBqcmxWVEC3PH5rvW453fFxN307nN3CwhIWFjoEwiTe1bhu-z1~hGzIxuIA__&Key-Pair-Id=K3NV4LZ47N8M46)
+  6. Click **SEND FOR SIGNATURE**.
+  7. In **Provider** , choose who signs. The list shows active staff with the Provider role type who can see this patient.
+![Choosing the provider](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fcef47e3e-08b3-4cad-a890-4441c8b3f628-img-004-004.png?Expires=253370764800&Signature=Xm6YWbuNjZ4xzN~m6YA1d3~hlNrgP8jnevyHobdLjp62XSiSh9YrKV3ryLmyeUyMtgpRlBnObwmNDpKVuZHi68tI-L3Tk4Yg1CxxiCdssq6Sn~e2yevss0Dkf-lLvMa5ednGlMpOTYvc0I5gUV4W3fnWo7EFbhmFynfKAePTgkvZJxgl5WLGES6OXD3hmN2XTPkhRKjlBLh3rQTBnnYOwGyoh-ghu14hFt9VnNiwqyk6m4O2ZndAeif9wcmO45Yeipp9uHP3dfNi2sRkNVPNKybXjWia3qvdKxKP8Pn-ofuCx2BMGDI5oFDQewPTr0iey5--5i2tfr4O9Bol-AT3JQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+  8. Add a comment if you like, and click **Send**.
+The form moves to the provider and keeps its team. The card reads "Signature requested", and the history shows "sent for signature" with your comment.
+![The card while the provider has the form](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5969836e-bc64-46e9-a4d1-1d328d3376f3-img-004-005.png?Expires=253370764800&Signature=frAyAmysLxAO04zOh8zBJU7HPDHEwtLjfGSpfXhQeqCwQR13XgWhUf-J3H6ddipR5T1PYc75sssG8vBTBItheFE-UJw8fPhnStFSBzUmB~HwB8WlDMYdBu21FG9vaZmkbWyPR0TBGxG8TKM30SpiS0a83gyqL3tRrBsfA1B32vJTafV6YCfr73Tp-kicGdiYXJTFVa9iTPYqUbqumlkZyFUB224F4~nBc2C6iOjwNezipABqCGVd8MJmNb3DRoP016sWZf7H2CJOOgQDW7y9A5r705cDlr0njQVoEqmKjk2jpNYQ6VC~2fXlASWMW0pIA~MdAM1fheLPcIRBxj6zAg__&Key-Pair-Id=K3NV4LZ47N8M46)
+# Signing a Form (Providers)
+Forms waiting for you are in your documents queue and on the patient's chart.
+  - **From the schedule** : click the documents icon in the top bar to open your queue, then click the form's title.
+  - **From the chart** : open the **Medical documents** panel (the documents icon at the top right of the chart), open the form's card, and click **Review**.
+A form sent with **SEND FOR SIGNATURE** shows "Signature requested" in the queue. A form filed from Data Integration doesn't.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa4a5b271-2dc4-4f3e-97dc-a89b3e116013-img-004-006.png?Expires=253370764800&Signature=MIU72x1F6MDq7EZO2zHf-od~nPV-OeneyeGg0kspFqG5P2~~UZcc8LrXbzShPmvQFU7Iv3oN5tZea0QbLXqDQEpfqcXQCbXL63KPrDKb6HQfdcApMJK9ff4HVAjr26oDPxXS678jHHgHwT7SowQjYdqPkMNmm2puRGqje1Bq37uwpE-68j-rdO9nDd9Fk7wQs5ikXKHZlfRMpq9GztI5Z7NZBBmyf3OwU7WVlklA6jlBVU6lTF7bid6DFRVIO~g5WRox2DBbSb8ih4O1BGKW2kb5V491eGEo31xEwlguJqL5BbJSjRbI5yAJjPaU0WgEVl681z9RawIut7BVixoC9g__&Key-Pair-Id=K3NV4LZ47N8M46)
+  1. Read the form. The dashed boxes show where your signature and the date go.
+  2. Click **SIGN FORM**.
+  3. Check the **Sign this form?** message. It names who the form goes back to.
+![The confirmation before signing](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ffb1d64e4-d326-4e8b-8df2-6ee9c14bf81e-img-005-007.png?Expires=253370764800&Signature=KygvKk31xKssySJ3cPVA1ZcdNdI8nzvdUYw60aVZb~Oi9UvN8wLNhNzUYLSx5UlbDWcWJQhsBHmJ-LEq9TJrqvstvaLRj0XbIx5~nwHBw51vH2~3xYfUG8VIvCpPDfdRqVzw8JO98JAHLyNlvbp5E16txcHvjC7kDFtQ49jykO~avWV-7Zap7WfH5ToaRwe4JZAeMTwaL5A05aYlbzvo4Nv165srISHBp5Ang9YgOiIZMl7cWD3ki71bcQekrESo5WDVv0KhwrUP4AGXEjCvzF2IiGQVfMPzcBFvuax39JPlRyLbqYySijII4a7p6S86U1Lgk1vS6LsJ7TpNU5syAg__&Key-Pair-Id=K3NV4LZ47N8M46)
+  4. Click **Sign form**. Click **Cancel** instead to leave it unsigned.
+Your saved signature goes into each signature spot and today's date (MM/DD/YYYY) into each date spot. The form leaves your queue and goes back, keeping its team, to:
+  - whoever last sent it to you with **SEND FOR SIGNATURE** , or
+  - the person who filed it, when it came straight from Data Integration.
+If neither of them can still see the patient, the form stays with you, and the message reads "It stays assigned to you." To see how staff are restricted to specific patients, see [Restricting Staff to Specific Patients](https://help.canvasmedical.com/articles/8412752412-restricting-staff-to-specific-patients).
+![The signed form](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F229516ee-8c25-4b7a-b0c7-3b6a6f42050a-img-005-008.png?Expires=253370764800&Signature=RrDnLl-fbEvejgETpY-TCRCWTUOR73Eb1zYid3By13h41sC8ScA4V7xMFdNhldFo4tgQ~jtjDjsEMMp8Ji3~xMU9dR7Bp4gN3hUSM80egj-lnHLSvaFVQvn1BLiNghpWuYT0jkstVMn8BXZIiuMnTS8GbU5-J1RvFZaFVgau2S1J7vF5qCcrgekjR49ZwUPO9VRyg6R3iK8A2ZW5Wg6IHBeKOFYSR2reVQBmPCFiO-mUjyLpBdWHfv06n6qsHL3h40haqk7C70ZtUZ~o~oeE60kRKdS3ohEURQdpq8fkZKgpSNo-nY9A7wZwBJHsunuOc7gA3ogi8Q9Y3WHLyg9vCQ__&Key-Pair-Id=K3NV4LZ47N8M46)![The card after signing](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5dab2113-9888-49ce-99ac-f939ab2be87b-img-005-009.png?Expires=253370764800&Signature=PHunjwrNRIpocNLlqXmFFZ3kY08mlLi6xD25yWq4-u5W6NNa3Cqq73dWxh9Do1FEif9ZXC4D7kATMXZ6reXAyVJdxifydXEpPJm5yMepEHfMAmct45xBoipGiisj9rAlScTurUfG8-g3EUlfIWEgyaePrMrVfxRIzczW9XLRYttmMezhV5HdGOTrjWwjjuBf0vhvz44cIHLStCGnx2Wf9akixAz4oC-guTR6tbiB1COrOG8LXwApJDndlEQmhRFopFI9S7p7csXi28AGVJHUJn5KM1k4yxLvJfb1I0MHNaRxnMlRSgMLJJgci3iPQohF0D1WkltFWw7xyhgfXJZuFA__&Key-Pair-Id=K3NV4LZ47N8M46)
+# Declining or Sending to Someone Else
+If something on the form is wrong, or a different provider should sign, don't sign it. Reassign it with a comment instead.
+  1. In Review, click **REASSIGN**.
+  2. In **Assign to** , choose a person, and in **Team** , choose a team, or both.
+![The Reassign window](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F8d433312-157b-43a0-ac7d-61624b5e62ef-img-006-010.png?Expires=253370764800&Signature=FDCjCemtgVg-Zd~ff0xfv7Z7SbKqEBcGsgkId3qU4SpOTfGl~GDWfkB-6VEGfTydp63LCqI1MkNGTycjAPXuILMTsAFScPpiIUzp5AJn9M1psSRCfKUBzg~6VSe6d-5dGWTIluIIJtJ8nNTsgP3wKQGxRpk3UF-z~rkMZ91kJg8PBWeKaoduHk5Z7QmZ88zIs43-A7G45DfMvvOpSSd8yL9C2VqByrNbSU5Egarlk1sA7kyICAkOLZfqsB~14rQ~n9UHZkASs9uhy7jT1mmd79WLz85m~2nnZEBxTs--fouH6cOkw3qJPYRNxr1424wtr-3xRcwkFGNpLHyR0LlEng__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. In **Comment** , say what's needed, for example "Referral reason is blank. Please complete it and send it back for signature."
+  4. Click **Reassign**.
+Nothing is signed and the spots stay on the form, so the care manager can fix it and send it again. Anyone holding a form can reassign it to anyone who can see the patient. See [Restricting Staff to Specific Patients](https://help.canvasmedical.com/articles/8412752412-restricting-staff-to-specific-patients).
+The assignee and team dropdowns on the card still work for a quick reassign without a comment.
+# Changing a Form After It's Signed
+Editing a signed form removes the signature, so the form has to be signed again.
+  1. Open the signed form's Review. "Signed by" the provider shows in green under **Annotate**.
+  2. Click **Annotate**. The **Edit a signed form?** message names who signed and when.
+![The warning before a signature is removed](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F9f4834e5-198e-4070-97c4-28f5d3aef795-img-006-011.png?Expires=253370764800&Signature=RMkbzBjA~TO6FAEO5Ul2km4tWt24fz~pGQ~9lLjanWY-qE3MTGR7LRTfXMHCQhAFPbZLETrHvZxHrfArIX~4r3nERAFOV-V-m9iy~iOqZBUHp8st4JejewTx4gPuJC63wRp6RPeYXW-LcYr~UZlKvY2HoifPIDj3btOddNZXBX69zOf8Miv2BpSxxZI6F-bNoKnWeP-pLcfakySbih7Lgs5vQMfiNqiAE0aMbyDL5OicveV7tU0sqvle9LDJ43Bc28LcHHWX3u0ghEnZyx1ctx8YcHhJC5MuEs1m7zu0TeW4V236duDOaHZXSCQWaScNo4MS0yG282LabH4MopmaPg__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Click **Remove signature and edit**. Click **Cancel** to keep the signature.
+The form goes back to the version from just before signing, with the empty spots, and **Annotate** opens. Make your changes, save, and use **SEND FOR SIGNATURE** to send it to the provider again. The history shows "signature removed" with your name.
+Once a form's review is recorded, its signature can't be removed. To change it, enter the review in error first.
+# Finishing: Sending Out and Recording
+  1. Send the signed form where it needs to go, such as faxing it to the agency.
+  2. Open the form's Review and type a note in **Internal comment** , for example "Faxed signed referral."
+![An internal comment, then RECORD](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5296f897-7eed-48f8-9dc5-dc9e55890706-img-007-012.png?Expires=253370764800&Signature=kxhbhe08gjlCo8szXE4YEVEcYTXBsBL7ADyx1X~z6ni6u4h3loxw0eB~4wM4uNJ6FiiN4yBZvbVfIFRsp2dX1dPgbfmjz1DxIjwncjuAakRsD~PdslNZq8z7tUogJgg0nCvHzvTAkKVjjZ2JFvmtmT7-1aFbXjqmFnnOab7voqH1Wv3soIcQfSEyKHsVj6viLbi9Nx85UjxyGGCgE3oWAutmtw6lLQIr2jie1zKnGUEn~xiDNGxo18Sst3yTwEssJV1NwflCp9dpEu1vMe61SnBMIGlMzCPiGmLakwAlAA1ZxJvEtAsMcIXPGnirO-hnV7PMCad-Zi20w6uUXG~ZzA__&Key-Pair-Id=K3NV4LZ47N8M46)
+  3. Click **RECORD**.
+The form leaves the queue. The history shows "recorded", whose signature the form carries, and the internal comment.
+# Comments and History
+## Add comment
+Anyone can add a comment from the form's card, in the patient's chart or in the documents queue. Click **Add comment** , type it, and click **Add comment**. The comment goes into the history and doesn't change who the form is assigned to.
+![Adding a comment from the card](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F7b342f15-1373-40e3-8dd5-1da81cbbd9ca-img-007-013.png?Expires=253370764800&Signature=o-lDXMx0BURUSAHgrZQrNMFhyg6Tz7L1-tqYM8VyiYAf4lnrISF1joSqOx77IV9HxXH4Jk1L3ylZOOclN1tPkxirO3Wqg-bV4ka9TBrHxMv51Cd6qD673UMxmUT9qiDqLvd9vZT4w4qc9leLmU3UbJtX9ZG3aRzEO61SGIG9h09QLEvc9g3nLA9CD0LBmWGfe7yTz83W6QBLz6dCWIgGjeIC-fVu~m7BIvLFZ6~bjPYOhBAWT7hTVySmc8e4dNjfyw1AKAvPe0oWdF8vYMG4DcX3lSlLIpbIvl8f6XTYXkY2d3Ho2cCEB66KU0M6sYlzP1gDhjrooLXTEY9vy46TDg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## View history
+Click **view history** on the card to see everything that happened to the form, newest first, grouped by day.
+![A form's history, from filing through signing, a removed signature, signing again, and recording](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe420e679-64f7-450c-8d78-d7ee15e71bd6-img-007-014.png?Expires=253370764800&Signature=jKaATz35AATaIqnO94UrqlhFzXtqKM5m4wUHfz8u~iPZzp-N8~0Oo4iGRUIjt4PzOByh8sOQJmAmiN5DKkYAJnWZ-kjly-ZJAJ8Zgj8Yq7pIv8MhWbAUeUkPIE563uexZdEb9VPPh0dGHNCbt5hCEScluCI2enDr~C-MfAR4HrESf~0Eu6PvWFqg2Aamg-cFpzNmy6-bLqlqgymiWihIt07QoT7s2Cho6QBNfjgwA1nOydbJ4Cibx7q6~1JIxwutwokJNQPj0-k~cebBc0NDn-jVBwudMKwR1khtK1MqesHQrxL5bUURakWUi-KJqo3RugiRvwRzQqORh~Mpm4hlMQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+Entry| When it's added  
+---|---  
+created| The form is filed.  
+reassigned| Someone reassigns it, or it goes back to the sender after signing. Shows the comment when there is one.  
+sent for signature| Someone uses **SEND FOR SIGNATURE**. Shows the provider and the comment.  
+comment| Someone uses **Add comment**.  
+signed| The provider clicks **SIGN FORM**.  
+signature removed| Someone clicks **Remove signature and edit**.  
+recorded| Someone clicks **RECORD**. Shows whose signature and the internal comment.  
+entered in error| The review is entered in error. The internal comment is then hidden.  
+# Troubleshooting
+You see| What it means and what to do  
+---|---  
+No **SEND FOR SIGNATURE** button| The form has no saved signature spot, you don't hold the form, or you're a provider and see **SIGN FORM** instead. Open **Annotate** , place a **Signature** spot, and save. A spot placed but not saved doesn't count.  
+No **SIGN FORM** button for a provider| The form isn't assigned to them, or it has no saved signature spot. Check who the card says it's assigned to.  
+"Add your signature to your profile before signing a form."| The provider has no saved signature. An administrator adds one in **Settings** , **Staff** , on the provider's record. Then sign again.  
+"Mark a signature spot before sending for signature."| The saved form has no **Signature** spot. Add one in **Annotate** , save, and send again.  
+"This document has no signature spot to sign."| The spots are already filled, so the form is already signed, or they were removed. Refresh the page to see its current state.  
+"You are not the current holder of this document."| The form was reassigned while you had it open. Refresh to see who has it now.  
+"<name> cannot access this patient's chart."| That person can't see this patient. Choose someone who can.  
+"This form's review is recorded. Enter the review in error before editing it."| Recorded forms keep their signature. Enter the review in error first, then remove the signature and edit.  
+A provider is missing from the **Provider** list| The list shows only active staff with the Provider role type who can see this patient. Check the staff member's role in **Settings** , and see [Restricting Staff to Specific Patients](https://help.canvasmedical.com/articles/8412752412-restricting-staff-to-specific-patients) if they should see this patient.  
+No **Mark where to sign** button| It's on the **Fill and Sign** tab in **Annotate**. Open that tab, under the ... menu when the window is narrow.  
+The signature spot won't drag onto the form| Click the spot in the panel instead. It drops into the middle of the visible page, and you can drag it into place from there.  
+"Signature requested" isn't on the card| The form was sent straight from Data Integration, which shows "Assigned to" the provider instead. It's still ready for them to sign.  
+# Frequently Asked Questions
+**Q: Can a provider sign with someone else's signature?**  
+A: No. **SIGN FORM** only uses the signature saved on the signing provider's own profile, and the **Fill and Sign** signature list shows only "Your signature".
+**Q: Does the signature show when the form is faxed or printed?**  
+A: Yes. The signature and date are written onto the page itself, so they show in every print, download, and fax.
+**Q: Can more than one provider sign the same form?**  
+A: No. Signing fills every signature spot on the form with the signing provider's signature, and the form is then signed. Removing that signature to add a second one also removes the first.
+**Q: Who does the signed form go back to?**  
+A: Whoever last used **SEND FOR SIGNATURE** on it, even if it changed hands since. If it was filed straight to the provider from Data Integration, it goes back to the person who filed it. The team stays the same.
+**Q: Can an MA or care manager sign a form?**  
+A: No. **SIGN FORM** is only for staff with the Provider role type. Everyone else sends the form for signature.
+**Q: What happens to a form that was out for signature when someone reassigns it?**  
+A: The request to sign ends. The new holder can send it for signature again.
+# Related Resources
+• [**Processing Documents via Data Integration**](https://canvas-medical.help.usepylon.com/articles/7371085164-data-integration)  
+Learn how to upload and assign clinical documents from the Canvas Data Integration system.
+• [**Uncategorized Document Review**](https://help.canvasmedical.com/articles/2240101532-Uncategorized-Document-Review)  
+Review uncategorized documents, including reassigning and history.
+• [**User Permissions**](https://help.canvasmedical.com/articles/4709841955-user-permissions)  
+Check or change what a staff member can do.
+• [**Restricting Staff to Specific Patients**](https://help.canvasmedical.com/articles/8412752412-restricting-staff-to-specific-patients)  
+Control which patients a staff member can see.
+----- END PAGE https://help.canvasmedical.com/articles/7724253029-sending-documents-for-signature
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7808408736-managing-canvas-staff-activity-report-recipients
@@ -10746,7 +10892,7 @@ Consult reports can be reviewed from two main locations in Canvas:
     - **Patient Message** : A message that will be visible to the patient. (Limit: 2048 characters)
     - **Patient Communication** : Method of message delivery.
     - **Internal Comment** : Private notes visible only to internal staff. (Limit: 2048 characters)
-  - Click **Sign** to finalize the review.
+  - Click **RECORD** to finalize the review.
 ### From the Patient Chart
   1. Use the **search bar** in the Schedule View to locate and open the patient's chart.
   2. Click the **Consult Reports** icon located in the top-right panel.
@@ -10759,16 +10905,16 @@ Consult reports can be reviewed from two main locations in Canvas:
      - **Patient message** : Information to relay to the patient
      - **Patient communication** : Method to share message with the patient
        - **Delegate call, can leave message** : The caller can leave a message if the patient does not answer
-         - A task will be created for the team with the responsibility **Communicate Diagnostic Results to a Patient** to call the patient and share the provider's message. 
-       - **Delegate call, need patient to answer** : The caller must speak to the patient directly and cannot leave a message. 
-         - A task will be created for the team with the responsibility **Communicate Diagnostic Results to a Patient** to call the patient and share the provider's message. 
+         - A task will be created for the team with the responsibility **Communicate Diagnostic Results to a Patient** to call the patient and share the provider's message.
+       - **Delegate call, need patient to answer** : The caller must speak to the patient directly and cannot leave a message.
+         - A task will be created for the team with the responsibility **Communicate Diagnostic Results to a Patient** to call the patient and share the provider's message.
        - **Already left message** : A message has already been left for the patient based on what the provider reviewed.
        - **Already reviewed with patient** : The patient has already been made aware of what the provider reviewed.
        - **Send via patient app** : The contents of the **Patient Message** field will send to the patient's portal for them to review.
-     - **Linked Items** : The PDF of the reviewed item will automatically link here. You can attach related components of the patient's chart for reference. 
+     - **Linked Items** : The PDF of the reviewed item will automatically link here. You can attach related components of the patient's chart for reference.
      - **Internal Comments** : Content is only displayed internally for staff visibility. It will not display on any documents shared externally.
-  5. Click **Sign** to finalize the review process.
-## Reviewing Internal Comments for the Consult Report Review 
+  5. Click **RECORD** to finalize the review process.
+## Reviewing Internal Comments for the Consult Report Review
 Internal review notes for the Consult Report results are only visible on the command itself. Follow these steps to be routed directly to the command.
   - Navigate to the patient chart
   - Click the **Consult Reports** icon in the patient panel
@@ -10780,7 +10926,7 @@ Results can be assigned to a team or individual after the results have been proc
 ### Assigning a Consult Report to a Team
   - Click the **Consult Report** icon in the patient or user panel to open the result cards
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749689248984-image.png?Expires=253370764800&Signature=uZc9t5~qiJBwm1FOCRtJ09UPo-RdPKGXQjLSs47rPfYdLi6o3ZXHO8YvJjqWsk7q37i~9uLaBO8L33UzMxov-bTwKarZeZ2~Q8fgav5PcKjA71hTqF~QKMOev898fGDqgS9AmbAHFh8yfUbqU~FzdrAwfxYqVAMcmLnkL28gvi~qAtqxBMEPGdc0tyUfhn3VK~WFVLe9ue3cItNarbhJGEUty4VSPKSoKcioFp0Wa6TzOWTUU7OU5bLNv-l~NGfpCWb9LTjQeaL8WR~Jgtn4T930Qio-loBF2cHojH4mzSIqKlk6BKhkSblj1vYbf1-NzbL4wYMLO8mdZqswWOuHkQ__&Key-Pair-Id=K3NV4LZ47N8M46)
-  - Click the team link**** on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
+  - Click the team link on the card to open the dropdown. It will either say **No Team Assigned** or state the name of the team currently assigned
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749689304529-image.png?Expires=253370764800&Signature=eU8irDgDxh4OLUdehcttL~gdoEWM8K5KGAHVwLngPjBTowswoA5nMOH7dDg3JPnoTJjtErlsfhQf4Ts3WMN7Uwqv8dgz19nfBRw8x2GH9CsfjXEjnHPNUzh2PHW8HPn0TErtRlKMPBguJcxOw5MODWiw9vmwhGcHvILzlWBb5-Ki2QdnX9-FvBirmFvw6xDqY8SJffprOosiTAK2deNX72rg4Pf77s0UDg2WSEgD-MaWahc1qp3urHT~LjPjc9B6NCWGvYE2V29Vu9jY~GFOZ11s0q3PORoP5ozlMCma1EzI684rPzKycUimrwRE3SYW-U-cXm5Qiqa5mwcb6S~0YA__&Key-Pair-Id=K3NV4LZ47N8M46)
   - Select the team name from the dropdown
   - Lab will show under the user's labs in their panel
@@ -10792,6 +10938,8 @@ Results can be assigned to a team or individual after the results have been proc
 ![image.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749689296804-image.png?Expires=253370764800&Signature=KChB2JEB6koFxzEeVOSEQcYtlKK4uqeCY2NLir1c7EjDieNEg9Nq4THTSR2ZOVHb52~R7PYYvvLUGffQaZELEoilMJx2iXS6ruU8tUICpHwZSPjs0fPtVEBQ9ei7GA8kLuzLwWZGlZPeQmXBZCZ9UVTHX7p1m2zMz2X9QAYIK~uGz5gx4xpJSdcGXT~ZXtnE5QYx1w9mfDEhPsz092bKD1871xYPFQbtTHqJsgd2SO7xFkc3ZCchzsFkP0j0W4H2uqDZhLvBADWU9~Pp7BrRmK5G20DxjrQEm1P9OPstJASDTLr9p9beM4szy0oFA12j9E7PKSFHg~JouWtRDLAuJA__&Key-Pair-Id=K3NV4LZ47N8M46)
   - Select name of new assignee
   - Consult reports will show under the user's **Consult Reports** in their panel
+## Reassigning, Sending for Signature, and History
+Use **REASSIGN** , **SEND FOR SIGNATURE** , **Add comment** , and **view history** to hand off a consult report, get it signed, and see everything that happened to it. See [Sending Documents for Signature](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature).
 # FAQ & Troubleshooting
 **Q: When reviewing a report, how can I quickly view the patient chart?**  
 A: Click the patient's name at the top of the review module to open their chart directly.
@@ -10804,6 +10952,8 @@ A: No. The **document title** is the visible label when reviewing the report, wh
 Learn how to upload and assign clinical documents from the Canvas Data Integration system.
 • [**Understanding Commands**](https://canvas-medical.help.usepylon.com/articles/4129367510-commands-introduction)  
 Explanation of how commands influence workflows and documentation
+• [**Sending Documents for Signature**](https://help.canvasmedical.com/articles/7724253029-Sending-Documents-for-Signature)  
+Hand off a document, send it for signature, and read its history.
 **Keywords & Metadata**
 • **Keywords** : Consult reports, Referral Review, Canvas Medical, document upload, patient chart, Data Integration, document type, review workflows  
 • **Categories** : Referral Management, Clinical Documentation, Data Integration, Patient Records

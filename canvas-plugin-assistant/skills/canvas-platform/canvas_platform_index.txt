@@ -1000,10 +1000,7 @@
     - Assigning Processed Uncategorized Clinical Document to a New User or Team
         - Assigning Uncategorized Clinical Document to a Team
         - Assigning Uncategorized Clinical Document to an Individual User
-    - Delegating an Uncategorized Document Review
-        - To delegate a review
-        - To route a delegated document back to its owner
-        - To view a document's delegation history
+    - Reassigning, Sending for Signature, and History
 - [Command | Educational Material](https://help.canvasmedical.com/articles/4966226408-educational-material-command)
     - Step by Step
         - Enable Educational Material Feature
@@ -1061,6 +1058,12 @@
     - Print or fax the order
     - Manage your DME formulary
     - Related articles
+- [Sending Documents for Signature](https://help.canvasmedical.com/articles/7724253029-sending-documents-for-signature)
+    - Providers need a saved signature
+    - Permissions
+    - Which button you see
+    - Add comment
+    - View history
 
 ### Messaging & Communication
 - [Patient Message Inbox](https://help.canvasmedical.com/articles/6255444430-patient-message-inbox)
@@ -1151,6 +1154,7 @@
     - Assigning Processed Imaging Results to
         - Assigning Imaging Results to a Team
         - Assigning Imaging Results to an Individual User
+    - Reassigning, Sending for Signature, and History
 - [Processing Lab Reports and Reviewing Lab Results](https://help.canvasmedical.com/articles/1652834476-processing-lab-reports)
     - Linking of Lab Results from Health Gorilla to Patient
         - Automatic Linking
@@ -1169,6 +1173,7 @@
     - Assigning Processed Lab Results to a New User or Team
         - Assigning Lab Results to a Team
         - Assigning Lab Results to an Individual User
+    - Reassigning, Sending for Signature, and History
 - [Patient Summary | Medication Review](https://help.canvasmedical.com/articles/6953253025-patient-summary-medication-review)
     - FAQ
     - Tips & Tricks
@@ -1317,6 +1322,7 @@
     - Assigning a Processed Consult Report to a New User or Team
         - Assigning a Consult Report to a Team
         - Assigning a Consult Report to an Individual User
+    - Reassigning, Sending for Signature, and History
 - [PDF Annotations](https://help.canvasmedical.com/articles/2451966298-pdf-annotations-user-guide)
     - Introduction
     - User's Guide
@@ -1608,7 +1614,7 @@
 ## Canvas Platform
 
 ### Get started
-- [What Is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
+- [What is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
     - The Sidebar
     - The Account Menu
 
