@@ -71,6 +71,14 @@ Register custom tools on the plugin's own `ToolRegistry` (`filter_search_tool` f
 - Return a small confirmation dict from a write tool, and raise on bad input: the loop sends the error back to the model so it can correct itself.
 - On an originate tool, mark a field `editable=True` only when the tool's `pre_build` neither checks nor derives it; codes and chart ids stay non-editable.
 
+### Custom Data in tools
+
+An agent runs with its plugin's Custom Data namespace and declared access, as a handler does, so a tool can read the plugin's own tables. Use `filter_search_tool` with `queryset_factory=lambda args, pid: MyModel.objects.filter(patient__id=pid)` and `model=MyModel` (which also makes the rows citable).
+
+- **Reads are scoped only by the query.** Filter by the run's patient (`pid`, through the model's `PatientProxy` foreign key), never a patient from the model's arguments, and check any row id the model passes. A table spanning many patients (a work queue) must also keep to patients the requester can see, which the platform does not check row by row. Stored text from patients or outside systems is untrusted input.
+- **Writes bypass every agent control.** Saving a `CustomModel` in a tool is a direct database write, not an effect: the tool grant, the requester's permission check, and `tools.approve` (a tool that stages no effect returns its own result, so a listed tool still writes at once) all miss it. No transaction wraps the run, so a failed or timed-out run keeps a row a tool saved, and a run retried after a gateway outage runs its tools again.
+- **So write in `save_state`**, which runs only after `run()` returns in time. A tool that must write mid-run keeps to the plugin's own bookkeeping and is idempotent; anything a person should approve, or that changes the chart, is an effect.
+
 ## What an agent may write
 
 - Effect tools **draft**: commands are originated, never committed, and a clinician reviews, commits, or signs them. Don't design a spec where the agent signs, commits, or sends on its own.
