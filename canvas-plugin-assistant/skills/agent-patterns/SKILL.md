@@ -55,6 +55,7 @@ The platform builds the `LLMGateway` passed to `run()` from that key; `gateway.c
 - `@config_reads`: note types, practice locations, labs and lab tests, and `find_clinical_codes` (ICD-10, FDB, allergen, SNOMED, CVX, CPT from Canvas's ontology services)
 - `@clinical_writes`: draft commands on the open note (`originate_plan`, `originate_prescribe_medication`, `originate_lab_order`, `originate_diagnose_condition`, history, allergy, medication statement, immunization statement, vitals, and more), `originate_review_note`, and `edit_staged_command` / `delete_staged_command` for drafts
 - `@clinical_alerts`, `@task_reads`, `@task_writes`, `@message_reads`, `@message_writes`, `@claims_reads`, `@claims_writes`
+- `@intake_reads` and `@intake_writes`: for a run about an incoming document (`RunAgentEffect(scope=DOCUMENT, document_id=...)`, usually from a `DOCUMENT_RECEIVED` handler), read the document, match its patient in code (a patient is suggested only when exactly one matches), and suggest the patient, document type, report values, and reviewer on the review form for a person to confirm. This is the path for fax and document parsing; don't build a patient match or a parser of your own
 
 Check the catalog (Tools page) before writing a tool. When a spec needs a command a standard tool already drafts, such as importing outside records as history, grant that standard tool rather than building the command in a custom tool: its duplicate, coding, and controlled-substance checks run inside it, and a plugin cannot import its builder to reuse them.
 
