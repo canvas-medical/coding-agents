@@ -1183,6 +1183,75 @@ Not directly, but some billable note types may be configured to require signatur
 ----- END PAGE https://help.canvasmedical.com/articles/2348566112-understanding-note-states-in-canvas
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2380085275-canvas-platform-for-msos
+If your organization is an MSO (management services organization), you manage each of your practices from Canvas Platform. Each practice stays its own organization, with its own instances, members, single sign-on and audit log, and your MSO's people open every one of them.
+# Who Reaches What
+Who| What they see  
+---|---  
+People with a role at the MSO| The MSO and every practice, with the same roles in each  
+People at the MSO with no role yet| The MSO only  
+A practice's own members| Their practice only, never the MSO or another practice  
+# How to Switch Between the MSO and a Practice
+  1. **Open the organization menu.** Click your organization's name at the top of the sidebar.
+  2. **Pick an organization.** Your MSO is listed first, with its practices under it.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793857508062-CanvasPlatformforMSOs-01-OrganizationmenuwiththeMSOanditspractices.png?Expires=253370764800&Signature=vYUPM3p25BOvVd-~OX1XkeIoSo0E9Q~TzfvAtgrG3GVsHMP2RRrksvYh5vFkY093C6Te2FzHk65eGzHK7WhpwO3AM6RJzR~aX4HnwXjQ9Yclgj7uRjUlGI2fsgFBIA3Of4EmNqklT-ACk0C5YGq7mDtpIjTKtcejZFNGc5CtFbFqV-JML6-lGyYVTBwzUZr4Xw7CKQRE7geCrR9G350YnSHJvNCp550Yo5SZd808WvycOrmOMXloT1FY7Q-HSkPF0inynGOm5GQpVU8GpGc-79K-rCblMll8SLNLrnA690S6wgK8bwDp51s7ina8FWW3NQVJemwVzM-jduewZqClRg__&Key-Pair-Id=K3NV4LZ47N8M46)
+# What You See From the MSO
+Where| On the MSO| On a practice  
+---|---|---  
+**Canvas Instances → All instances**|  The MSO's instances and every practice's, with an **Organization** column| That practice's instances only  
+**What is installed where**|  Plugin versions compared across the MSO and all its practices| Compared within that practice  
+Promotions| Every practice's promotions| That practice's own  
+**Studio → Overview**|  The MSO's Studio, then each practice's Studio with its projects, messages and deploys counted (project names stay private)| Not shown  
+**Onboarding**| **Practice implementations** , each practice's onboarding progress| That practice's own  
+**Usage & Billing**| The total across the MSO and every practice| That practice's spend, marked **Billed to** your MSO  
+## Promoting From One Practice to Another
+On the MSO, **Compare two instances** (on **Canvas Instances → All instances**) lets you promote changes from one of your organizations to another, at the same stage or a higher one. You need the Deploy manager role on both sides. The promotion belongs to the practice that receives it, and each step is recorded in the receiving practice's audit log, the sending practice's and the MSO's.
+# What Reaches Your Practices
+What| How it reaches the practices  
+---|---  
+Plugins your MSO publishes| They run on every practice's instances and show in each practice's **Plugin Catalog** , as if granted to each. A practice's own plugins stay with that practice.  
+Studio roles| Each practice has its own Studio. Someone with a Studio role at the MSO opens a practice's Studio with that role once Canvas links them to a staff member in that practice's Studio.  
+The AI Agreement| Your MSO's agreement covers every practice. See below.  
+Admin emails| A practice's single sign-on and domain notices, and its budget alerts, go to its own Organization admins and the MSO's.  
+Second sign-in step| If you sign in with a password and any organization you reach requires a second sign-in step, you need one.  
+# How to Send the AI Agreement for Your Practices
+The MSO signs the AI Agreement once for itself and all its practices. A practice can't send its own: its people see that the MSO must complete it.
+  1. **Switch to the MSO.** Use the organization menu at the top of the sidebar.
+  2. **Open Studio or Onboarding.** While the agreement is outstanding, a note across the top says so.
+  3. **Start sending.** Click **Send AI Agreement for Review**.
+  4. **Name your signer.** Enter their **First name** , **Last name** and **Email** , then click **Send agreement**. They get a link to review and sign.
+Once your MSO's agreement is signed, Studio, Navigator and Onboarding open for every practice.
+# How Budgets Work
+Each practice keeps its own budget, and your MSO's Billing admins set it. Your MSO's own budget covers the MSO and every practice together. A practice's requests count against its own budget first, then the MSO's, so a practice can reach the MSO's limit with room left in its own.
+To set a practice's budget (Billing admin at the MSO):
+  1. **Switch to the practice.**
+  2. **Open Keys & limits.** Click **Inference → Keys & limits**.
+  3. **Set the amount.** Under **Organization budget** , enter the **Monthly budget** , up to the ceiling Canvas set, and click **Save**.
+  4. **Choose what happens.** Turn on **Stop requests** to refuse new requests once the budget is reached, and pick the percentages under **Notify at**.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793857531154-CanvasPlatformforMSOs-02-Apractice%2527sOrganizationbudget_setbytheMSO.png?Expires=253370764800&Signature=gT6ufVWR7v3CYJENyGHJOz9~RoEmMRSxMyAS1B1A8iM-Q5Xu9YWqY6lqwUYHWnYgbvWa0wxqYFRk701Uu3B7qz0~dU9Vl9uCVzx4mbaFQlXnkkA5nufHGoPpwifvde0cyc-Bv8k7~44WeDsPre8gmxiXh4-VjhKRogQ8o-4Yd8~6377mpOO7J0iWZc2IH2QHMEkudA3CIQ5ZQHPa67RPNW6DocKnceIVL-JJ4gTA~zNVGk8oWU-GtyOJGr~2hc1JXflD9e8vZ7XPrqKrGsrPgdBBeT52gfIqgE1MgdZ3wUTv0BljjeQqjDachCrnv7DK4UoL6pGZhTxuMj4sm~NqYw__&Key-Pair-Id=K3NV4LZ47N8M46)
+The same page shows your MSO's budget and what the MSO and its practices have spent against it. A practice's own Billing admin sees the practice's budget with a line saying your MSO sets it, and still sets each key's own limit. They never see the MSO's budget or spend.
+# Credits and Billing
+Every practice's usage is billed to your MSO. On the MSO's **Usage & Billing**, **Total token spend month to date** covers the MSO and all its practices, and the **Practices** section lists each one's **Spend this month** and **After credits** , ending with the total billed to the MSO.
+Canvas grants credits. Your MSO's credits apply on the MSO's bill:
+  - **Percent and unlimited credits** apply to each practice's line as well as the MSO's.
+  - **A dollar credit** is one pool, drawn down once across the MSO's and every practice's usage.
+  - **A credit on Studio, Navigator or Onboarding** reaches the practices' usage of that product. A credit on one of the MSO's own keys stays with that key.
+A practice's own pages show only the credits granted to that practice, and its **Billing settings** say it is covered by your MSO's agreement and billed to your MSO.
+# FAQ
+**How do we add a practice to our MSO, or remove one?**  
+Contact your Canvas team. Only Canvas links and unlinks practices, and each change is recorded in the practice's audit log and the MSO's.
+**What happens to our plugins when a practice leaves the MSO?**  
+Plugins your MSO publishes stay installed on the practice's instances and can still be uninstalled, but they can no longer be updated, deployed or configured there. The Organization admins of both the practice and the MSO get an email listing them.
+**Can a practice see our other practices?**  
+No. A practice's members reach their own practice only, and its pages show only its own instances and spend.
+**Why does the MSO's Instances page say a plugin is behind when the instance's page doesn't?**  
+The MSO's page compares versions across the MSO and all its practices. An instance's own page compares within its practice only, so a version can be the newest in one practice and still behind another.
+**Why can't I open a practice's Studio?**  
+You need a Studio role at the MSO, and Canvas has to link you to a staff member in that practice's Studio. Contact your Canvas team. If the practice's row on **Studio → Overview** says Studio is not set up, Canvas sets that up too.
+### Next: [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+----- END PAGE https://help.canvasmedical.com/articles/2380085275-canvas-platform-for-msos
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2395218732-facility-group-scheduling
 Canvas understands the importance of accurate provider scheduling. Facility blocks help administrative staff understand when a provider is scheduled for facility-based work and when they are unavailable for direct patient appointments.
 **Implementation note:** For new implementations, provider availability should be managed through the Provider Availability plugin rather than a Canvas-created Google Calendar setup. Some legacy organizations may still use Google Calendar-based facility blocks. If your organization is on a legacy setup, continue following your existing support guidance or contact Canvas Support before changing the workflow.
@@ -1691,6 +1760,80 @@ An outstanding referral is a referral that has not been completed and populates 
 ----- END PAGE https://help.canvasmedical.com/articles/2840851415-outstanding-referrals
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2844677357-supervisor-cosign-reference-plugin
+The Supervisor Co-sign plugin supports practices where a supervising provider reviews and co-signs notes written by the clinicians they supervise. When a supervised clinician signs a note, the plugin records that it needs a co-sign. When the supervisor opens that note, the note's **Sign** button is replaced with **Co-sign** , which saves a written attestation to the chart in the same step as the supervisor's signature. A **Co-sign Summary** page lists the notes each supervisor still owes.
+## Overview
+  - **Supervised clinicians** have no extra steps. They sign their notes as usual.
+  - **Supervising providers** see a green **Co-sign** button in place of **Sign** on notes waiting for their co-sign. It opens a short form to pick or write an attestation.
+  - The attestation is saved on the note as an **Attestation Review** entry in the Plan section, ending with who co-signed and when. It appears in **Print note** and in the PDF saved when the note is signed.
+  - The **Co-sign Summary** page, in the provider menu, shows co-sign status across a supervisor's team and lets them co-sign from the list.
+  - Optionally, each note waiting for a co-sign also creates a task for the supervisor.
+## Before you begin
+  - **Set who supervises whom.** The plugin uses the supervising provider set on the note itself. If the note has none, it uses the **Default Supervising Provider** on the note provider's staff profile. If neither is set, the note is not tracked for co-sign.
+  - **Decide which note types need a co-sign.** By default every note type does. Your Canvas team can limit this to specific note types (see Plugin secrets below).
+  - **Supervisors must be able to sign notes they did not write.** Co-signing briefly unlocks the note, adds the attestation, and signs it again as the supervisor. If your instance restricts signing to the note's own provider, the co-sign cannot be saved. Ask your Canvas team to confirm this setting.
+## When a note needs a co-sign
+A note is tracked for co-sign when the supervised clinician signs or locks it and all of these are true:
+  - The note has a provider, and a supervising provider is set on the note or on that provider's staff profile.
+  - The note's type is one of the types your practice requires a co-sign for (or no types are configured, which means all types).
+  - The note is not already waiting for a co-sign, and has not already been co-signed.
+Each note is tracked on its own, so a patient with several notes from a supervised clinician has a separate co-sign for each one. If your practice turned on tasks, the supervisor also gets a task titled **Co-sign review** with the note date and patient name, labeled **cosign** , due three days later, with a link to the note.
+## Co-sign a note
+  1. Open the note from the patient's chart, the task link, or the **Encounter List.**
+  2. In the note footer, click the green **Co-sign** button. You see it only on notes that are signed or locked and waiting for **your** co-sign. Everyone else, including the clinician who wrote the note, sees the usual footer.
+![A signed note opened by its supervisor, with Co-sign and Amend in the footer](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1c899690-0e32-4450-9824-2d41037671ad-cosign-01.png?Expires=253370764800&Signature=M26s9YRa5zH6ajbbV96NWUOINurFECj~2wgCcnPmRDucm8RgqYnJ0S5noFnL87TLa91hlJQDRNfCfxF98FjK0tlPV1gWO-wdzn2zV3SBPS9CJe1u~jR0Ih-y7dgkbcu86ZGlEplUpKi6SHJzKvC~S1POqIGNOfRZA93m7n1BZ~FmdYRfguwchViXZb7MB6lXjY6ak72TgmFHwrnykEJfpjTjX~39CjstmWzSTTTqPKDLEcPf6bf5NbmuDxMBE8CIjGUV-EKCEmST4lPKcmVUo1mqnIVPh0YCJzvK1BRDX4or9~VT~gKf6JAvO-oLoDAXuZ-vH5P3o6sq6sZo32dPAg__&Key-Pair-Id=K3NV4LZ47N8M46)
+The **Supervisor Co-sign** window opens. It shows the patient, note date, supervisee, and an **Attestation log** of any earlier attestations on this note.
+  1. Under **Attestation template** , pick a template. **Reviewed & agree** is selected by default. The options are **Teaching physician - present & participated**, **Reviewed & agree**, **Personally performed** , and **Custom (write your own)**.
+  2. Edit the text under **Attestation text** if needed. What is in the box when you submit is what is saved.
+  3. Optionally, add **Additional comments**. They are added below the attestation.
+  4. Click **Approve & Co-sign**. When you see **Co-sign recorded. You can close this window.** , close the window.
+![The Supervisor Co-sign window](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1fea72c3-805a-4c64-a77e-77fad7c9b975-cosign-02.png?Expires=253370764800&Signature=TroPUwJf1xAHvTj7nKVvTiA1IqvHREejz~pMud4FECU7~1sbTXUbT11AODNOwvaCxf0BYOxelyplnb5Qf~DM~GmaRi6w2CGQSMXKxlj76EcMRv9SXISHmt2uN15L~25et8qOKMhGtRFLRO5iMXU8v1Nd7cf6GzP47fPPr39sH7dpNUMcmrrzVy99MJGw-CM6gfFDCMyJSY7osQzykC9LDIrDMQ1sN61RrcDWihuHibmC1-N5YmeHMPnXRx78~shyLXDg~Tgj6-mPN5ak6DBcwxCwsMVyaO9oUrBQNaeOJQXd2jXpYSHNBiOzZdaF6D3oRpitZr69rkv2xiLErq6ssw__&Key-Pair-Id=K3NV4LZ47N8M46)
+The note now shows an **Attestation Review** entry in its Plan section, ending with **Co-signed by** your name and the date and time. The footer goes back to the usual buttons, and the note history shows the note signed again by you.
+![The Attestation Review entry on the note, ending with the Co-signed by line](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5fc96dcd-3322-4e21-927e-55aefb330a5b-cosign-03.png?Expires=253370764800&Signature=CBA5DaCCusjSHZnSha8Q540rUJp~5yi1geuDbU03Z~cIvnVHcrP5MDnCmHfh~Yd30Zo3tTEF4u-vii1DXYdwYe9BvsPGevAhA2jCZ63jkOoggx0DHpoAJOwBDABBMJScxCX9uiWrEHufnrS47CfLqXLYjXC-aSKz4PPNYBlMcMLIHI-m3lESdr2kN4WUQkKrD9mekJVw7NH4RrPemUiQjxoTuKSAprFx-VZ~Zs5xQ3jjKxdpj0Wa99sqHiv1bOS9U3LIn2MfPmANhHTseyuAwFnju0GhgwygZo~J2aATJ3NjpSaiJ54iVRBSmUWvlK5XAT6YBYdc3lAY-4~NNw~xAw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Use **Co-sign** , not **Amend**. The footer also shows **Amend** (or **Unlock**). Clicking it reopens the note for editing, and an open note shows the regular **Sign** button. Signing from there records your signature without an attestation, and the note still counts as waiting for your co-sign. If you open a note by mistake, close it without signing, and use **Co-sign** instead.
+## Use the Co-sign Summary page
+Open **Co-sign Summary** from the provider menu. It lists co-sign work for your supervisees, with compliance percentages for each supervisee across the top.
+![The Co-sign Summary page](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F734dd96f-08fb-4a11-89ff-d52682fe9c42-cosign-05.png?Expires=253370764800&Signature=qHv3RXQ9zMwvJIzcf31HBwwxebqCefwJgvpi9D3gnHG8y7ZMKt8QzNefua2x67I0-qhsfsDZjX1r8joIb3cWwy9ZPWgYN4TJ-YDeFAqCxb3BIpyvZ7h9LMbBaABfybzUMy84YaxK~UCOPY3JTp7pGCxs9q-R96xAIKKIDBV5AHVZG~5crUluisn9oGMrzXQtNPrI5XHJGDgn7GqGUF7HJNk61dqQX4yR0LIDJPcqk-1If-F6boWFFNwlxleOMLSh8Owi0tsXeNRRW~UXLUBdRjka5VgKM5pmCHBTzfFtqK9WwDuuOG-CVfRG-zH1uIczvImwB2800ZovjG2Ne7F5xw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  - **View** : **Co-sign records** lists the notes tracked for co-sign, pending and done. **All supervisee notes** lists every note your supervisees wrote in the date range, so you can see the full picture. Drafts, unlocked, locked, and signed notes all appear there.
+  - **Filters** : date range, **Supervisor** , **Supervisee** , and **Status** (**Pending** or **Co-signed**). In the all-notes view you can also include cancelled and no-show visits and non-clinical note types, or check **Co-sign-eligible note types only** to show only the note types your practice requires a co-sign for.
+  - The **Co-sign** column shows **Co-signed** , **Pending** , or **Overdue**. A co-sign becomes overdue when it is still pending three days after the note was signed.
+  - Click a row's date to open that note in the chart.
+  - Click **Co-sign** on a row to open the attestation form right under it, then **Approve & Co-sign**. This saves the same attestation as co-signing from the note.
+Who can open the page:
+Who| What they see  
+---|---  
+A supervisor of at least one active staff member| Their own supervisees' notes  
+Staff your Canvas team listed for oversight| All supervisors, with supervisor and supervisee filters. They can view but cannot co-sign.  
+Everyone else| A page saying there is nothing to show  
+Every staff member sees the menu item, but only supervisors and oversight staff see data.
+## When a supervised clinician amends a co-signed note
+By default, a co-signed note stays co-signed if it is amended later. Your practice can choose instead to send amended notes back for review: when the supervised clinician amends and signs a co-signed note again, it goes back on the supervisor's list as needing a co-sign. Changes made by anyone else, such as billing updates, never reopen a co-signed note. Whether amendments need a new co-sign is a practice policy decision; tell your Canvas team which you want.
+## Troubleshooting
+What you see| What to check  
+---|---  
+The supervisor does not see **Co-sign** on a note| The note must be signed or locked. An open note shows the usual footer. Confirm a supervising provider is set on the note or the clinician's staff profile, that the note type requires a co-sign, and that you are signed in as that supervisor.  
+The note was signed before the plugin was installed| Only notes signed after installation are tracked.  
+**Attestation text is required.**|  The attestation box is empty. Pick a template or type an attestation.  
+An error saying you are not authorized to co-sign this note| Only the supervisor the co-sign is waiting on can submit it.  
+An error saying there is no pending co-sign for this note| The note was already co-signed, or it was never tracked for co-sign.  
+An error saying the attestation could not be written to the chart| Your instance may restrict signing to the note's own provider. Contact your Canvas team.  
+The Co-sign Summary page says there is nothing to show| You are not a supervisor of any active staff member and are not on the oversight list.  
+After co-signing, the note shows as unlocked| The attestation was saved, but something in the note stopped it from being signed again, such as a required field left empty. Fill in the missing field, sign the note, and tell your Canvas team.  
+## Install the Plugin
+Your Canvas team installs and configures this plugin. Ask them to turn it on for your practice.
+### Plugin secrets
+Admins set these in Canvas admin settings, under **Plugin_Io > Plugins > supervisor_cosign**.
+Secret| Required| What it does  
+---|---|---  
+`namespace_read_access_key`, `namespace_read_write_access_key`| Yes| Let the plugin store co-sign records. Without them, nothing is tracked and no Co-sign button appears, with no error shown.  
+`COSIGN_NOTE_TYPE_CODES`| No| Note type codes that need a co-sign, as a JSON list (`["office_visit", "follow_up"]`) or comma-separated. Matching ignores capitals, spaces, dashes, and underscores, but otherwise must be exact. Leave empty to require a co-sign on every note type.  
+`COSIGN_CREATE_TASKS`| No| Set to `false` to track notes without creating a task for the supervisor. Empty creates tasks.  
+`COSIGN_REOPEN_ON_AMEND`| No| Set to `true` to send amended co-signed notes back for a new co-sign (see above). Empty keeps them co-signed.  
+`SAMPLE_PERCENTAGE`| No| Percent of eligible notes tracked for co-sign, from 0 to 100. Default 100. Use a lower number only for audit-style sampling; each note is picked at random.  
+`COSIGN_OVERSIGHT_STAFF_IDS`| No| Staff IDs who see every supervisor's notes on the Co-sign Summary page. Empty means nobody; `*` means everybody.
+----- END PAGE https://help.canvasmedical.com/articles/2844677357-supervisor-cosign-reference-plugin
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2884413456-printing-a-chart-note
 A printed note is frequently desired within the clinic. Canvas includes basic patient demographic and visit information along with all contents of the encounter note in a note print out. If `RESTRICT_NOTE_SIGNING_TO_PROVIDER` setting is enabled in config the print template is updated to reflect signature history at the bottom of the print template as well as last modified time stamps next to each command.
 ### Print a Note
@@ -1811,6 +1954,111 @@ To verify appointment reminders are working correctly:
 **Keywords:** appointment reminders, telehealth notifications, patient communication, verified contacts, SMS reminders, email reminders, custom reminders
 **Categories:** Patient Communication, Appointment Management, Telehealth
 ----- END PAGE https://help.canvasmedical.com/articles/2892642076-appointment-reminders
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2941620841-working-with-the-onboarding-agent
+Onboarding is where you and your Canvas team manage your implementation. You can track projects and activities, manage assignments and deadlines, and use the Onboarding Agent to complete tasks, submit forms, and securely share credentials. An implementation can be a new location, a move off another system, or a second instance. **Onboarding** appears in the sidebar while your organization has an active implementation.
+### Access and Roles
+Role| Onboarding| Studio  
+---|---|---  
+**Onboarding admin**|  Manage projects, activities, and chat| No access  
+**Studio admin**|  Manage projects, activities, and chat| Access all projects and Studio settings  
+You can assign the **Onboarding admin** role to implementation leads who need to manage onboarding without building in Studio.
+Your role must also be linked to your staff member in your Canvas instance. An Organization admin assigns roles on the **Users** page. See [Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles).
+## Open Your Implementation
+  1. Select **Onboarding** from the sidebar.
+  2. Under **In flight** , review your implementation's name, go-live target, lead, instance, completed activities, and overdue activities.
+  3. Click **Open** to access your implementation.
+  4. Choose a view:
+     - **Projects:** View projects, their progress, and the Onboarding Agent chat.
+     - **Kanban:** View all activities across projects, organized by status.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793854265680-WorkingwiththeOnboardingAgent-01-OnboardingpagewiththeInflightcard.png?Expires=253370764800&Signature=nqe8U5rnr2i8wcqIQSGtJaB9bf4gu4IFw781bj~c5pIcQfH5sKDXwAExedMPofWsFW9HOcqVaK2UeDzAMj1~XnobM2UJsTOGLPI3NrppdmK~jzu8vHVfqzMAUXbkbox8WFD25MDmA5CcOWH1m7gnW6rm9pUQqX1Mc8lqylkyuA8NrbddUQxNYDJuXvABEBEbSWL9Hb0GZTF4FIVgdMuPh~F7As2HgfWDqTd2mkN0wwBcgkqe~1CEZV26mpDdw1R2VjBKrmuCAL85N-~FwyR1mgc~awPIJCCngCKJuoYUp0LBdxii4ZWE5TdcDGiDN10Za6sHEJhLTUuktSqY18hZlw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Manage Activities
+Each project contains activities that make up your implementation. Open a project to view its activities and progress, then select an activity to manage its details.
+Within an activity, you can:
+  - **Update status:** Select a status under **Status**.
+  - **Assign work:** Add or change people under **Assignees**.
+  - **Set deadlines:** Select **Set a start date** or **Set a due date**. Past-due activities appear as overdue.
+  - **Add notes:** Use **Notes** to share information with everyone working on your onboarding.
+  - **Create subtasks:** Enter a task under **Add a subtask.**
+  - **Add or remove activities:** Use **Add an activity** and click **Add** , or select **Delete activity**.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793854279116-WorkingwiththeOnboardingAgent-02-AnopenactivitywithStatus_Assigneesanddates.png?Expires=253370764800&Signature=i7PSNj3Rw7~RWFMo4jVemSS-kLQxy3GW03hwnMQYUFYybl-5zJANwIQwuUT2bOKWLczA6jYjuNWUv4qYIYvx7A6z8iRVfsFJK4RzGFNHZewaZqSc-mdm~B85ZkvXJ7fs-ErwTNA~V9ZrDezaFlm4du5hIPr1oXtoDcVBjE5oE9JbU-fh~8nJHwWFpmUIpIJdefo6AU44nQp91W8xneFaLzYcBekbIw6ucAvYPdAgd3XNC42CC6w8m4Af5SljpfzhoXZRSqEIyH8CAey8UP-vLEM5FRXJJvltsjH~AHlbpsIvmWlULcuoLbJRTlWKXCAz3JC2Yuwzu8P1LZdPLeElQQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Use the Kanban Board
+The Kanban board organizes activities by status.
+Status| Meaning  
+---|---  
+**Blocked**|  Waiting on someone outside the activity. See Notes for the reason.  
+**Gated**|  Waiting on another activity. Automatically moves to Ready to Start when the dependency is complete.  
+**Ready to Start**|  Ready for work to begin.  
+**In Progress**|  Work is underway.  
+**Done**|  Activity is complete.  
+You can also:
+  - **Change status:** Drag an activity to another column. Gated activities cannot move until their dependencies are complete.
+  - **Assign yourself:** Click **+** on an activity card.
+  - **Filter activities:** Use **Assignees** to view someone's work or **Overdue only** to find late activities.
+Activities marked **N/A** are removed from the board and excluded from progress calculations.
+## Chat with the Onboarding Agent
+The Onboarding Agent is available in the **Projects** view. Switch from Kanban to Projects to open chat.
+Chat| Where to find it| Who can see it  
+---|---|---  
+**Personal Chat**|  Onboarding Projects overview| Only you  
+**Shared Chat**|  Inside each project| Your onboarding team, including Canvas  
+In **Personal Chat** , ask **"What should I work on next?"** to see upcoming activities. Click **Assign to me** to take ownership of an activity that isn't assigned to you.
+If your question belongs to another project, the agent offers to send it to the appropriate project.
+### Start or Resume an Activity
+  1. **Find the activity** in its project or on the Kanban board.
+  2. **Click Start or Resume** to open Shared Chat.
+     - **Start** asks what information is needed to begin.
+     - **Resume** reviews what's completed and what's outstanding.
+  3. **Follow the prompts** to answer questions or complete forms.
+When the agent first saves a change to an activity that hasn't started, its status automatically changes to **In progress**. Manually set statuses are preserved.
+**Note:** Gated and completed activities don't have a **Start** button. Gated activities must have their dependencies completed first.
+## Share Files
+Click the **paperclip** beside the chat message box or drag files into chat. The agent reviews attachments along with your message.
+  - **Supported formats:** Images, PDF, Word, Excel, PowerPoint, CSV, text, Markdown, JSON, YAML, and TOML.
+  - **File limit:** 10 MB per message. Send additional files in separate messages.
+If a vendor requires paperwork, the agent may provide a form with a **Download** button. Complete the form and upload the finished PDF in chat.
+## Complete Forms and Submit Credentials
+### Complete Forms
+When information is needed, the agent displays a **Complete your [form name]** card.
+  1. **Open the form** by clicking the card.
+  2. **Review auto-filled fields.** Edit values as needed or select **Clear pre-filled**.
+  3. **Click Submit to Canvas** to save your answers to your onboarding record.
+Select **Dismiss this form** to close it without submitting. If you've entered information, you'll be asked to confirm.
+You can also find forms grouped within each project, with progress shown for each activity. Click **Open form** to view a form in a tab beside chat.
+**Sending forms to staff**
+In some projects, the agent can email forms using individual, one-time links. Select **Recipients** , add an optional message, set **Link expires after** , and click **Send to [number] recipients**.
+[Screenshot: A form card open in chat]
+### **Submit** Keys and Passwords Securely
+When credentials are needed, the agent displays an **Enter [vendor] key securely** card.
+Enter the credentials and click **Submit securely**. The card confirms when the information is saved.
+**Important:** Never enter keys or passwords in the chat message box. Secure cards send credentials directly to Canvas, where they are not visible to the agent.
+## Track Practice Implementations (MSOs)
+If your organization is an MSO, anyone with a role at the MSO sees Onboarding, which includes a **Practice implementations** view to track onboarding across your practices.
+Each practice appears in a row showing:
+  - Percentage of activities completed
+  - Users and messages from the past 7 days
+  - Progress for each project
+  - Overdue activities, highlighted in red
+Use **All** , **In progress** , or **Not started** to filter practices. Metrics refresh every 15 minutes.
+Click a practice to open its Onboarding, where you have access.
+## Frequently Asked Questions
+**Why don't I see Onboarding in my sidebar?**
+Your organization may not have an active implementation, or you may be missing the Onboarding admin or Studio admin role. Ask an Organization admin to review your access or contact your Canvas team about starting an implementation.
+**Why is Start a new implementation disabled?**
+Your Canvas team creates implementations, and your organization already has one in flight.
+**Can I change the go-live target or implementation schedule?**
+No. Your Canvas team manages the go-live target and schedule used to generate activity dates. You can update start and due dates for individual activities.
+**Why doesn't an activity have a Start button?**
+The agent may not support the activity yet, or the activity may be gated or completed. You can manage it directly on the board.
+**Can teammates see my Personal Chat?**
+No. Personal Chat is visible only to you. Use **Shared Chat** for conversations your onboarding team should see.
+**Why does Onboarding say it's unavailable until the AI Agreement is complete?**
+Onboarding uses Canvas AI, which requires your organization's AI Agreement. Click **Send AI Agreement for Review** in the notice to send it to an authorized signer. If an MSO manages your organization, the MSO completes the agreement.
+**Can I receive email notifications when work is assigned to me?**
+Yes. Click the **bell** at the top of the page and enable **Work assigned to me**. Notifications are off by default. Once enabled, an email is sent a few minutes after an assignment to avoid notifications from accidental changes.
+### Next: [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+----- END PAGE https://help.canvasmedical.com/articles/2941620841-working-with-the-onboarding-agent
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/3042359596-click-to-dial
@@ -4217,6 +4465,90 @@ The objective is to give a snapshot at how effective your practice is at liquida
 ----- END PAGE https://help.canvasmedical.com/articles/4388376289-key-performance-indicators
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4401978424-platform-analytics
+Platform Analytics helps you identify plugin issues, review available fixes, and monitor plugin performance across your Canvas instances.
+Go to **Platform Analytics** in the sidebar and select **Issues** or **Performance**.
+### Access and Permissions 
+Analytics Feature| Required role  
+---|---  
+**View Issues**|  Any organization role  
+**Apply fixes**|  Studio user or Studio admin  
+**View Performance**|  Read-only, Plugin developer, Deploy manager, or Organization admin  
+## Issues
+Canvas monitors plugins for performance, security, reliability, and deprecation issues.
+When Canvas detects a problem in a **Customer-managed plugin** , Studio prepares a fix. The issue appears in Platform Analytics once the fix is ready for review.
+**Canvas-managed plugins** are handled separately. Canvas fixes those issues and releases updates automatically, so they don't appear in your Issues list.
+### Review an Issue
+  1. **Open Issues:** Go to **Platform Analytics → Issues**. Issues are sorted by severity, then by most recently seen.
+  2. **Filter the list:** Use **Severity** , **Kind** , **Fix** , **Last seen** , **Issue** , or **Plugin**. Click **Clear filters** to reset.
+  3. **Choose a view:** Switch between **Card view** and **Table view**. Your browser remembers your preference.
+  4. **Open an issue:** Click **Review & apply** if you can apply the fix, or **View** to review it.
+  5. **Review the problem:** See when it was detected, affected instances, and the associated Studio project or plugin. **What we observed** summarizes the issue; **See technical description** provides more detail.
+  6. **Review the fix:** **What the fix does** explains the proposed change and who maintains the plugin.
+To apply a fix, see [Fixes from Canvas Platform](https://help.canvasmedical.com/articles/2771862260-fixes-from-canvas-platform).
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793855321186-PlatformAnalytics-01-Issueslistincardview_withseverityandfixstatusoneachIssue.png?Expires=253370764800&Signature=Avo3dpQIwnPxgWIM4AnHrtpKVdCBe~t2iFVfYo4cCH5S-9S56R3CBWsQf0mmm6n7Ez2B7t9un3CeDf6~lLwiGAzYaVW2SowPVGl131E0JFt7dMArjvWVgnc5luue~BhpzAQQB1fd-~QEgX-4duI0oKZB7uGMS55H35i29mBXztUrpf8OPL-zJV5sZjKtqWd1aFkQpi2DW83~DnzsC6mBenHZivQE8-gZLLNaddHVZySBm1iX3kgZT-DoGDJ~tcZSDXU4QE8GI~RDTJpGAqQjVuoLGPgsrU95nZ7lnqZYeTsBMQtKVXw2cszJqL3hjIJivIZsA9aZIGEQiJd4BYGWxg__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Issue Severity and Type
+Issues are categorized by severity:
+Severity| Meaning  
+---|---  
+**Critical**|  Highest priority  
+**Serious**|  High priority  
+**Warning**|  Lower priority  
+**Opportunity**|  Suggested improvement rather than a problem  
+Each issue also has a **Kind** : Performance, Security, Reliability, Deprecation, Standardization, or Opportunity.
+### Track Fix Status
+Status| Meaning| Next step  
+---|---|---  
+**Ready to apply**|  Studio has prepared and tested a fix.| Review and apply it.  
+**Confirming on [instance]**|  The fix is installed, and Canvas is verifying it's running.| No action needed.  
+**Testing on [instance]**|  The fix is running on your Studio test instance.| Test and publish from Studio.  
+**Released to [instance]** or **Released to 2 of 3**|  The fix is published to release targets. The count shows how many are confirmed running it.| No action once all targets are running the fix.  
+After applying a fix, the issue page displays **Where the fix stands** , showing progress from **Fix ready** through testing and release, including each release target.
+If you use Studio, click **Open the Studio project →** to continue the release process.
+## Performance
+Performance helps you understand how long plugin code takes to run on a specific instance, identify slow plugins, and track changes over time.
+Canvas measures every plugin call and updates performance data daily. The latest day's data is available by the following day.
+### Monitor Plugin Performance
+  1. **Open Performance:** Go to **Platform Analytics → Performance**.
+  2. **Select an instance:** Your production instance is selected by default, if available.
+  3. **Choose a time range:** **7 days** , **30 days** (default), or **90 days**.
+  4. **Review summary metrics:**
+     - **Plugin calls:** Total executions.
+     - **Runtime:** Total execution time.
+     - **Mean per call:** Average execution time.
+     - **Errors:** Failed calls.
+  5. **Review trends:**
+     - **Runtime per day:** Daily runtime for your five busiest plugins, with the remainder grouped under **Everything else**.
+     - **Runtime per hour:** Hourly activity over the last seven days to help identify when performance changed.
+All dates and times use UTC.
+  6. **Find slow plugins:** In **Every plugin** , use **Group by** (Plugin, Handler, or Handler and event) and **Sort by**(Runtime, Mean, p99 est., Calls, or Slowest). Filter by plugin name using the **Plugin** column.
+  7. **Export data:** Select **Download this table ↓** to export the current table, or **Daily detail CSV ↓** or **Hourly CSV ↓** for detailed data across the selected range.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793855426408-PlatformAnalytics-02-Performancepagewiththetotals_dailychartandEveryplugintable.png?Expires=253370764800&Signature=sr78IRiUz4DvxIvLlql2djabFoGH0V7576kugCPZNlqPCDL0wmp0vfzH3fQpq6G4RuppThkruJQHyPBxgUWGMlloQF5bJ9qQyoiaW77nBKxX7Ybm0ApotL~TYFdKXVPwYD0W5jmUmLUoTLa21Y7On8CGAzq9JlYHK9fh1Gqp8dqRY49y6w06~JZb3mJMAUkqk40J~Zw3CuvhaVQL65RMr7bUuz5QI24Ym9qY1nKz5KBmQ7ZAoCT0JPZDbAUpAQjnUEHDkf45Lq-HBxGLra~oQCI4dQtLOmpzp9PY3uZqUnw8qj~7nXzyXVItYlMX6I~rRGUHLMcbFOtIc2KAXhXBkw__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Understand Performance Metrics
+Metric| Meaning  
+---|---  
+**Calls**|  Number of times the plugin code ran.  
+**Errors**|  Number of failed calls.  
+**Runtime**|  Total execution time.  
+**Mean**|  Average execution time per call.  
+**Median est., p95 est., p99 est.**|  Estimated typical and slower execution times. Estimates may run high for plugins called only a few times per minute.  
+**Slowest**|  Longest individual execution.  
+**Minutes over 5 s**|  Number of minutes containing at least one call longer than five seconds.  
+**Performance summary on Home**
+If you're a **Deploy manager** or **Plugin developer** , your Home page also shows a weekly performance summary. It identifies the slowest handler when its estimated p95 reaches **500 ms or more** , or confirms that all handlers remained below that threshold. Click **Dismiss** to hide the summary.
+## Frequently Asked Questions
+**Why is my Issues list empty?**
+Canvas hasn't identified any customer-managed plugin issues with fixes ready for review. Canvas-managed plugin issues are handled separately. For problems you've identified yourself, contact your Canvas team.
+**Why can't I apply a fix?**
+The issue page explains why the action is unavailable. Applying fixes requires the **Studio user** or **Studio admin** role. Ask an Organization admin to update your access.
+**Why can't I see Performance?**
+Performance requires the **Read-only** , **Plugin developer** , **Deploy manager** , or **Organization admin** role. Ask an Organization admin to update your access.
+**Why does Performance show "No timings yet"?**
+Canvas updates performance data once per day. For new instances, the first day's data appears by the following day. Days that haven't been processed won't show a bar on the chart.
+### Next: [Fixes from Canvas Platform](https://help.canvasmedical.com/articles/2771862260-fixes-from-canvas-platform)
+----- END PAGE https://help.canvasmedical.com/articles/4401978424-platform-analytics
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4408606761-care-protocols
 Care Protocols in Canvas are designed to assist care teams by identifying recommended services and interventions for patients. These protocols are visible via the **Protocol Icon** , located in the top-right menu bar of the patient chart. A red badge indicates protocols that are due for the patient. Protocol flexibility is enhanced with the **Snooze Protocol** feature, which allows temporary postponement of a protocol when treatment is not appropriate.
 # Understanding Protocols
@@ -5545,6 +5877,42 @@ Faxes sent directly from Data Integration will not be tracked in the patient's c
 ----- END PAGE https://help.canvasmedical.com/articles/4882014801-fax-migration-event-history
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help
+# How to Sign In
+  1. Go to [platform.canvasmedical.com](http://platform.canvasmedical.com), enter your email and click **Continue**.
+     1. If your organization has set up single sign-on, you go straight to your identity provider. Otherwise, enter your password.
+     2. If you sign in with a password and have a second sign-in step, enter the code from your authenticator app or use your passkey.
+# Keeping Your Account Secure
+If you sign in with a password, open **Sign-in security** from the account menu to add a passkey or an authenticator app. After that, Canvas Platform asks for it at every sign-in, so a stolen password isn't enough to get in. If your organization requires a second step, Canvas Platform asks you to set one up the first time you sign in.
+When you add your first passkey or authenticator app, Canvas Platform gives you recovery codes. Save them somewhere safe. Each one signs you in once if you lose your phone or passkey. To get a fresh set, click **Generate new codes** on **Sign-in security**.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793407649548-05-sign-in-security.png?Expires=253370764800&Signature=CKHMBPmPvfoc4m8cvEy6yjyPpQDj39iUkD9ZUJYixvntScPG1wCyw2DHj82KHHJUeqUAvnZjEIjC5BZe50xPdhw-hI5PjweGG0523IKX6CewnhQZvZ6tWRYv2RZstJZUsYnDUpAGENf~3OsPLjVflG17zSb2UGTd9TM6O~MIfwnOTPdHoAdGIT~x25PNqTo98NTVC4XAOA1B4CZvvk~hvfCynjzEk6Nc53q8Z-fZSepXiToHtiTheFS1kxMKZbT1hnonlybujWpG1dD81f3OPnvz4tVK0RMga57TRBKajO6kiEX3Aw1fXpfpnhdcx2WiXurQPecHqZR0bXHxO2xTuw__&Key-Pair-Id=K3NV4LZ47N8M46)
+💡 If you sign in only through single sign-on, you won't see **Sign-in security**. Your identity provider controls how you sign in.
+# When You Can't Get In
+What you see| Why| What to do  
+---|---|---  
+"That email and password do not match an account."| The email or password is wrong| Check both, or click **Forgot your password?** to choose a new one  
+"Too many attempts. Try again in … minutes."| Ten failed sign-ins in an hour lock your sign-in for a while, and each further failure makes the wait longer, up to a day| Wait for the time shown, then try again. If you've forgotten your password, click **Forgot your password?**  
+"Your session has ended. Sign in again to continue."| Canvas Platform signs you out after 15 minutes without activity, and 12 hours after you sign in| Sign in again  
+"That sign-in could not be completed."| Your identity provider didn't confirm your sign-in| Try again. If it keeps happening, contact your organization's administrator  
+"[Your organization] signs in through its identity provider, which could not be reached."| Your identity provider didn't respond| Try again later. If password sign-in is still on for your organization, you can use your password instead  
+"Your account is not attached to an organization, so there is nothing here yet."| You can sign in, but you don't belong to an organization yet| Ask your administrator to add you, or accept your invitation if you have one  
+You don't see a section, an instance or a button| Your roles don't include it| Ask an Organization admin to change your roles. See [Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)  
+# How to Reset Your Password
+  1. Start from the sign-in page. Enter your email, click **Continue** , then click **Forgot your password?**
+  2. Check your email. If your account signs in with a password, a link to choose a new one arrives. It expires in an hour.
+  3. Choose a new password from the link, then sign in.
+Accounts that sign in only through single sign-on don't have a Canvas Platform password. Reset your password with your identity provider instead.
+# FAQ
+**Can I stay signed in longer?**  
+No. Canvas Platform signs everyone out after 15 minutes without activity, and 12 hours after signing in.
+**I lost my phone and my recovery codes. How do I get back in?**  
+Contact your Canvas team. They can reset your second sign-in step so you can set up a new one the next time you sign in.
+**I didn't get the password reset email.**  
+Check your spam folder, and wait five minutes before asking for another one. If your account signs in only through single sign-on, no email is sent: reset your password with your identity provider.
+### Next: [📄 Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+----- END PAGE https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4966226408-educational-material-command
 Providing patient educational material related to medications, conditions and diseases allows providers to clearly communicate vital information to their patients at the time of care. Canvas integrates with Healthwise for patient education using the Educational Material command.
 # Tips & Tricks
@@ -6591,7 +6959,7 @@ A: If you can't verify enough information for DrFirst to confirm your identity, 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5540123924-users-and-roles
 Your roles decide what you can see and do in Canvas Platform. Each person can hold several roles and only an Organization admin on your team can manage users and assign roles from the **Users** page in Canvas Platform.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395131198-03-users-roles.png?Expires=253370764800&Signature=Vxv7ukj-mamFFXFUBSClAF2jyNxeAzq4mDC5nDQ8uRFdKY1M1rGLuwurXMQkc9gSuAFpMiQmIOcQhWTX2VZhX~ORuZKPcwBdA4XEhnbDaxk4n3O7M0VRgEcPtI3Du2rkAKXQ7aVC976dCmz5yVnF1zWjmkB~bU9MNg7cTMGqWmRBrQqpQinBLgw~1iFD-OSyTmNaY~3grElbdBZXeONyjSGr7kP4Jx9xIrlLApBFdZ8r1DGtRTggT2LyrZCsyiD0DbSfyWkzIuWBS5Df~sRtooh-u0JzyY1JDxsOA3vpQhbnWoUaAhdKs-c7hOijbAC1mtFB24E2rxuBMNMlgmtD0w__&Key-Pair-Id=K3NV4LZ47N8M46)
+![1793395131198-03-users-roles.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395131198-03-users-roles.png?Expires=253370764800&Signature=Vxv7ukj-mamFFXFUBSClAF2jyNxeAzq4mDC5nDQ8uRFdKY1M1rGLuwurXMQkc9gSuAFpMiQmIOcQhWTX2VZhX~ORuZKPcwBdA4XEhnbDaxk4n3O7M0VRgEcPtI3Du2rkAKXQ7aVC976dCmz5yVnF1zWjmkB~bU9MNg7cTMGqWmRBrQqpQinBLgw~1iFD-OSyTmNaY~3grElbdBZXeONyjSGr7kP4Jx9xIrlLApBFdZ8r1DGtRTggT2LyrZCsyiD0DbSfyWkzIuWBS5Df~sRtooh-u0JzyY1JDxsOA3vpQhbnWoUaAhdKs-c7hOijbAC1mtFB24E2rxuBMNMlgmtD0w__&Key-Pair-Id=K3NV4LZ47N8M46)
 # How to Invite Someone
   1. **Open Users.** Click your name at the bottom of the sidebar, then **Users**.
   2. **Start the invitation.** Click **Invite user**.
@@ -6605,7 +6973,7 @@ They show as **Invited** on the Users page until they sign in for the first time
   2. **Edit their roles.** Click **Edit roles** beside the person.
   3. **Check or clear roles.** A person with no roles stays in your organization but can't do anything until you give them one.
   4. **Save.** Click **Save roles**. Every change is recorded in your organization's audit log.
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395145523-04-edit-roles.png?Expires=253370764800&Signature=NdVwo3E9NzN2EhJDtwMf2ko5N25X5rSRjYbMsnqgxFVzQNGPTqoigT3d-6uvy74oLKAxdNneuLOp~-ogT1HZFJN3DsfVSKFTukYEAFrVVTN53qdTrzqfdEXgyBj1-TFf~ZYbRvVhABCNEX17Xh9~qfnyCLyrU4OsBjZaewHkqop4dLVRUvsgQoHRXzJSicI1KsPUaoha-qtpd-IObrQ2XTJOLmIVjSl3GbJ1HA-6pTCCz6vJsSydhcrRNsSlWrWdG4CL0hlsaEAfgIasMdk9pk9FLbIj0FUs5VYQrqLCfbqnxwe98TQ70gVIYhZJ6clIJXA-PWd5rneptfjzXutzsw__&Key-Pair-Id=K3NV4LZ47N8M46)
+![1793395145523-04-edit-roles.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793395145523-04-edit-roles.png?Expires=253370764800&Signature=NdVwo3E9NzN2EhJDtwMf2ko5N25X5rSRjYbMsnqgxFVzQNGPTqoigT3d-6uvy74oLKAxdNneuLOp~-ogT1HZFJN3DsfVSKFTukYEAFrVVTN53qdTrzqfdEXgyBj1-TFf~ZYbRvVhABCNEX17Xh9~qfnyCLyrU4OsBjZaewHkqop4dLVRUvsgQoHRXzJSicI1KsPUaoha-qtpd-IObrQ2XTJOLmIVjSl3GbJ1HA-6pTCCz6vJsSydhcrRNsSlWrWdG4CL0hlsaEAfgIasMdk9pk9FLbIj0FUs5VYQrqLCfbqnxwe98TQ70gVIYhZJ6clIJXA-PWd5rneptfjzXutzsw__&Key-Pair-Id=K3NV4LZ47N8M46)
 # How to Remove Someone
 Click **Remove** beside the person on the Users page. You can't remove yourself, so your organization always keeps at least one admin.
 # How Roles Work
@@ -6621,7 +6989,7 @@ Role| Who it's for| What it lets you do
 **Deploy manager**|  Whoever decides what runs on each of the organization's instances| Everything Read-only can, plus install, upgrade, configure and remove plugins, promote configuration between instances, approve plugin access, and manage service accounts  
 **Organization admin**|  Whoever runs the organization itself on Canvas Platform| Everything Read-only can, plus organization settings, single sign-on, people and roles, inference keys, and service accounts  
 **Publisher**|  Whoever offers the organization's plugins to other organizations| List the organization's plugins in the Plugin Catalog and make them available to other organizations  
-**Billing admin**|  Finance staff, who handle the bill without touching plugins or people| See usage, spend and invoices, and manage the payment method  
+**Billing admin**|  Finance staff, who handle the bill without touching plugins or people| See token and plugin spend on Usage & Billing, and the billing terms behind it  
 **Studio admin**|  Whoever oversees the organization's Studio and runs its onboarding| Build in Studio, see every Studio project, change Studio settings, and run onboarding  
 **Studio user**|  Clinical and operations staff who build in Studio without writing plugin code| Build in Studio  
 **Onboarding admin**|  The implementation lead, who runs onboarding without building in Studio| Run onboarding  
@@ -6635,7 +7003,7 @@ Canvas hasn't set up Studio for your organization yet. Contact your Canvas team.
 An Organization admin on your team. If your organization doesn't have one yet, contact your Canvas team.
 **Someone never got their invitation. What should I check?**  
 Check that the email address is spelled correctly on the Users page. If their address is on a domain your organization signs in to through single sign-on, they don't need the email: they can sign in through your identity provider, and their Home page shows the invitation. Their roles apply once they click **Accept**.
-Next: [What Is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
+### Next: [📄 What is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
 ----- END PAGE https://help.canvasmedical.com/articles/5540123924-users-and-roles
 
 
@@ -6780,15 +7148,79 @@ A: You will use the same passphrase at each location because a provider's NPI is
 ----- END PAGE https://help.canvasmedical.com/articles/5551249431-troubleshooting-epcs-authentication-errors
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5591256446-plugin-catalog
+The Plugin Catalog helps you discover, review, and install plugins available to your organization. Everyone can browse the catalog, but installation and instance visibility depend on your assigned roles.
+### Access and Permissions
+Role| What you can do  
+---|---  
+**Any role**|  Browse plugins, view details, and read release notes.  
+**Read-only, Plugin developer, Deploy manager, Organization admin**|  View which instances have a plugin installed.  
+**Studio user or Studio admin**|  Start or continue installations in Studio, once Studio is set up for your organization.  
+**Deploy manager**|  Configure plugin settings and install plugins on instances. Through the catalog, this also needs a Studio role.  
+Installing takes two roles: a Studio role (Studio user or Studio admin) to open the installation project, and the Deploy manager role to configure and install. If the person who starts an installation isn't a Deploy manager, someone with both a Studio role and the Deploy manager role must finish it in the same Studio project.
+## Find a Plugin
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853839087-PluginCatalog-01-PluginCatalogwithfiltersandplugincards.png?Expires=253370764800&Signature=UC05YPaF3bllpkoTFa9Nvg0EvGQ3ELYxUhUkoZXSf3FFALU06dIxb49BnDgFOyhn916kUfyVBUnOCuAxM7cES84-B4gK-lQMcoUahv8jS6Dl4pZNrMzxzu~b-OpAd1nP3xgtxCn~m7CUtaMIfSNm8JlQDQZTGfH394J34CA58QHCnMhWBUUhWdHQ3X513nOCxJzIsrqJ79gNMhFGtwq-hNIrz5iIk1p4l8HN8-8Wg3e~u9IlqSRvGJQbQwC6iQZ9gQZwzAmBajmFnLC8XuZWcCLlsBHvK9iDgJQa8aWjGpl0PX0IRMVYKMi-ZKjXZ~KfOxPAFmnn~RPa7-saNAZ~fA__&Key-Pair-Id=K3NV4LZ47N8M46)
+  1. **Open Plugin Catalog** from the sidebar. Featured plugins appear under **Our featured picks**.
+  2. **Search** under **Explore the full catalog** by plugin name, functionality, vendor, or tag.
+  3. **Filter** by Type (Agentic or Deterministic), Category, Where it appears, Cost, or Maintained by. If you can see your organization's instances, you can also filter by In your org. Filter options display the number of matching plugins. Click **Clear** to reset.
+  4. **Sort** by **Most established first** , **Recently updated** , or **Name, A to Z**.
+  5. **Select a plugin** to view its details.
+Each plugin card shows its maintainer and what it does. It also shows any fees, and, if you can see your organization's instances, how many of them use it.
+## Review Plugin Details
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853861573-PluginCatalog-02-Aplugin%2527spagewithPricingandHowsetupworks.png?Expires=253370764800&Signature=anm6D~nlnRbbRmbjVIT1AiSlo5ho0NI7B08C2ZH~DFcA9j7OBl-UZqBfc8B45GaXy3RaRYYXXkRZ2VGbY6FYQUgsPvBMiL0HuYRe1FSmBNetXLWMhACfC2I7AA9YpKK58LBwiq4I4i3G000INN7xw9iuVVz~0Cgc1lzjIu7gwqDRVvpAx5jZ9y5RxW0vaaw1l93Qys1bsSdq0ZQITV5iFNbgXp-KBoziComV3BGfeKAyFgY89cPPilZ9d4hOoPFG6Id2zZAmNm6uRtFwH4ACc2DgArsdN1VsgA0gAqTFdtNpldfbHxWyuw51tctIPUmrnaf~kaBXHEUsKIYvPrtRZQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+Select a plugin to view its latest version, maintainer, and setup requirements.
+Section| What you'll find  
+---|---  
+**Pricing**|  Canvas charges, token usage, and any direct vendor fees. Select **Have a promo code?** to apply one.  
+**How setup works**|  Required settings, data storage, and plugin dependencies. Access to another plugin's data requires your organization's approval.  
+**What it decides** (agents only)| What the agent does, its limitations, model, and when it runs.  
+**Maintenance** (Canvas-managed only)| Current version and a link to release notes.  
+For more information about plugin ownership, see [Understanding Plugin Maintenance in Canvas](https://help.canvasmedical.com/articles/8323755956-canvas-managed-and-customer-managed-plugins).
+### Release Notes
+**Release notes** show Canvas-managed plugin versions released in the past 90 days, labeled **Fix** , **Performance** , or **Breaking**.
+If you have instance access, you can also see how many instances are running each version.
+**Breaking changes** are applied as part of releases. Canvas notifies affected organizations before they are released.
+## Install a Plugin
+Plugins are installed through Studio.
+  1. **Open the plugin** from the catalog.
+  2. **Click Start installation in Studio.** Studio opens an installation project with setup instructions.
+  3. **Complete setup in Studio.** The agent guides you through configuration and selecting the instances where the plugin will be installed.
+For detailed instructions, see [Installing a Plugin Catalog Plugin with Studio](https://help.canvasmedical.com/articles/6317421757-installing-a-plugin-catalog-plugin-with-studio).
+**Note:** Your organization can have one open installation project per plugin. Once started, the button changes to **Continue installation in Studio** , allowing your team to resume the same project.
+## View Plugin Installations
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853894767-PluginCatalog-03-Manageinstallstable.png?Expires=253370764800&Signature=TVTcD5d5DBUvl51HRT8DnvdC8Utnj1AhcFq4mxohbfIxCyzX3V~bjhvVWntP15sp2pTV16nyFFAc9xnc~KlZ9zZb9WqKOOTIHdmcjAB8mv4c2951DCd8uxojQFJSRuG9fqONJie5Io9~OifKZ94AmZQ8XeCddK4tcttB8lH3gG2Ua769~Hs0ezI8ofGVFVwDQt9pkol3CEBFihojwMCE0ZKQ8RzMWwYse49kWhPxgMclfDZWlsPYLykBQJr96deggB~tHFUmV7uuOpc-jPD249pF3ptK5c-FEL6BSQGut571PkYm76AX~DpaWu3JIkbJ~UFa8wzOBm6o5av6eS4i3Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+To see where a plugin is installed, open its catalog page and click **Manage installs**. The number on the button, for example **Manage installs (3)** , shows how many instances use the plugin.
+The installation table shows:
+Column| What it shows  
+---|---  
+**Instance**|  Instance name. Click a row to open it.  
+**Stage**|  The instance's environment.  
+**Version**|  Installed version. **Behind** indicates a newer version is available; **Disabled** means the plugin is installed but turned off.  
+**Settings**|  Number of plugin variables configured on the instance.  
+If the plugin isn't installed anywhere, **Manage installs** won't appear as a button, and the section will indicate that no installations exist.
+Canvas Platform retrieves installation data from each instance every six hours. Recent changes may take up to six hours to appear.
+## Frequently Asked Questions
+**Why is Start installation in Studio disabled?**
+Hover over the button to see why. Your organization may not have Studio set up, or you may need the Studio user or Studio admin role. Contact your Canvas team for Studio setup or an Organization admin for role access.
+**Why can't I see Manage installs or In use on?**
+Viewing installations requires the Read-only, Plugin developer, Deploy manager, or Organization admin role.
+**Why isn't there an installation button for my organization's plugin?**
+Plugins your organization maintains (marked **Yours**) are changed and installed from their own Studio project, not through the catalog.
+**Why can't I find a particular plugin?**
+The catalog only shows plugins available to your organization. A partner's plugin appears once its publisher makes it available to you and Canvas has approved its listing.
+### Next: [Installing a Plugin Catalog plugin with Studio](https://help.canvasmedical.com/articles/6317421757-installing-a-plugin-catalog-plugin-with-studio)
+----- END PAGE https://help.canvasmedical.com/articles/5591256446-plugin-catalog
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5617793432-inference-gateway
 ## What Inference Gateway does
 Inference Gateway gives your developers a Canvas-issued key for Claude models. The agents, automations and apps they build on Canvas can call a model without your team signing its own contract with a model provider.
 Canvas's BAA covers the model providers behind the gateway. They are configured for zero data retention (ZDR) and do not train on your data. You create keys, set budgets and track spend in Canvas Platform.
 ## Pricing
-Inference Gateway is an additional charge on top of your Canvas subscription. Usage is billed per token and appears on your monthly Canvas invoice. Your organization needs a signed AI Addendum before Canvas turns on your inference account. Billing admins can see the per-model token prices on the Billing settings page in Canvas Platform.
+Inference Gateway is an additional charge on top of your Canvas subscription. Usage is billed per token and appears on your monthly Canvas invoice. Your organization needs a signed AI Agreement before anyone can create a key. Billing admins can see the per-model token prices on the Billing settings page in Canvas Platform.
 ## Before you start
-  - **Your organization needs an active inference account.** Your Canvas team turns it on for you.
-  - **Creating keys takes the Organization admin role.** Billing admins see spend and manage the organization's budget and alerts.
+  - **Your organization needs a signed AI Agreement.** If it isn't signed yet, **Create key** offers to send it to the person who signs contracts for you.
+  - **Creating and revoking keys takes the Organization admin role.** Billing admins see spend, manage the organization's budget and alerts, and change a key's limit after it is created.
 ## Create a key
   1. Sign in to [Canvas Platform](https://platform.canvasmedical.com) and open **Inference > Keys & limits**.
   2. Click **Create key**. Name the key for the automation that uses it, choose its intended use (Workflow, Development or External app), and add a monthly limit if you want one.
@@ -6806,7 +7238,7 @@ The gateway serves message requests (`/v1/messages`) and token counting (`/v1/me
   - By default, reaching the budget only sends an alert while requests keep running and are billed. A Billing admin can turn on Stop requests instead.
   - Stop requests halts every workflow that uses the organization's keys, including patient-facing workflows. Check what depends on inference before turning it on.
 ## Studio and Inference Gateway
-Studio makes its model calls through Inference Gateway on your organization's account. Its usage is metered per token and shows on the Usage & Billing page next to your own keys. Token fees for Studio apply under your AI Addendum.
+Studio, Navigator and the Onboarding Agent make their model calls through Inference Gateway on your organization's account. Their usage shows on the Usage & Billing page next to your own keys and counts toward your organization's budget. Their usage is free through December 31, 2026; after that, token fees apply under your AI Agreement.
 ## FAQ
 **Do I need my own Anthropic account?**
 No. You use a Canvas key in place of an Anthropic key.
@@ -6815,12 +7247,12 @@ The gateway returns this error when a key was revoked or mistyped, or when your 
 **Can I revoke a key?**
 Yes. An Organization admin can revoke a key from Keys & limits, and anything using that key stops working immediately. A revoked key cannot be restored, so create a new one for the caller.
 **Can we send PHI through Inference Gateway?**
-Yes, once your AI Addendum is signed and your inference account is active. Requests go only to model providers covered by Canvas's BAA, configured for zero data retention, so your team does not need its own BAA with the model provider for these calls.
+Yes, once your AI Agreement is signed. Requests go only to model providers covered by Canvas's BAA, configured for zero data retention, so your team does not need its own BAA with the model provider for these calls.
 **Does Canvas store our prompts or the model's responses?**
-No. The gateway passes each request and response through unchanged and reads only the token counts it needs for billing. Prompts and completions are not logged or saved. Usage records hold the key, the model and the token counts, which is what you see on the Usage & Billing page.
+No. The gateway passes each request and response through unchanged and reads only the token counts it needs for billing. Prompts and completions are not logged or saved. Usage records hold the key, the model, the time, the token counts and the cost, which is what you see on the Usage & Billing page. This covers requests made with your keys. Studio and the Onboarding Agent keep your conversations so you can return to them.
 **How is this different from using our own Anthropic or other model provider account?**
 The model is the same Claude you would reach directly, and the API is the same Anthropic Messages API. The differences are in everything around the model call.
-  - With your own provider account, your organization has to put its own BAA and zero data retention terms in place with that provider before any PHI is sent. Through the gateway, those are already covered by Canvas's BAA with Anthropic (and your BAA with Canvas) and your AI Addendum.
+  - With your own provider account, your organization has to put its own BAA and zero data retention terms in place with that provider before any PHI is sent. Through the gateway, those are already covered by Canvas's BAA with Anthropic (and your BAA with Canvas) and your AI Agreement.
   - Your own account bills you separately from the provider. Gateway usage appears on your monthly Canvas invoice next to the rest of your Canvas usage.
   - The gateway gives every key its own optional monthly limit on top of an organization budget, with email alerts and an optional hard stop. You can see spend per key, so you know which automation is driving cost.
   - Keys are created and revoked in Canvas Platform by your Organization admins. A leaked Canvas key can be revoked in one step, and its monthly limit caps what it can spend in the meantime.
@@ -6829,11 +7261,11 @@ The model is the same Claude you would reach directly, and the API is the same A
 Yes. They run in Claude Code on your machine or in your app and reach the model through ordinary message requests, so they work the same way through the gateway as with a direct Anthropic key. This includes the Canvas Plugin Assistant, a Claude Code plugin Canvas publishes for building Canvas plugins, with the Canvas SDK reference, plugin patterns, security review, test authoring and deployment workflows built in. Install it with `/plugin marketplace add canvas-medical/coding-agents` and then `/plugin install cpa@canvas-medical`.
 The BAA covers the model providers behind the gateway. An MCP server or other tool that Claude Code calls is a separate service, so check that any tool receiving PHI is covered by its own agreement with your organization.
 **Can we use Anthropic's server-side tools, such as web search?**
-Tool definitions and tool calls inside a message request pass through the gateway unchanged. Web search is billed per search in addition to tokens, and those charges appear in the same usage view.
+Web search works and is billed per search in addition to tokens, in the same usage view. Code execution, containers (including skills that run in one), the MCP connector and files are not available, because Anthropic stores their data outside zero data retention. A request that uses one returns an error naming the feature.
 **Which Anthropic APIs are not available through the gateway?**
 The gateway serves message requests and token counting only. Other Anthropic endpoints, such as Message Batches, Files, Skills uploads and Models, return an error saying the gateway does not proxy them. The priority service tier is also not available, so leave `service_tier` unset or use the standard tier.
 **What happens when a limit is reached with Stop requests turned on?**
-New requests on the affected key, or on every key if it is the organization budget, return a `402 billing_error` that says when the budget resets. Raising the key's limit in Keys & limits, or a Billing admin raising the organization budget, lets requests resume before then.
+New requests on the affected key, or on every key if it is the organization budget, return a `402 billing_error` that says when the budget resets. A Billing admin can let requests resume before then by raising the key's limit in Keys & limits, or by raising the organization budget up to the ceiling Canvas set. If Canvas hasn't set a ceiling, the budget can't be changed in Platform. To raise or set the ceiling, contact your Canvas team.
 ----- END PAGE https://help.canvasmedical.com/articles/5617793432-inference-gateway
 
 
@@ -7055,7 +7487,7 @@ Section| What it's for| Who sees it
 **Home**|  Your organization and its instances at a glance| Everyone  
 **Canvas Instances**|  Every instance you run, comparing instances, and promoting configuration between them| Any of: Read-only, Plugin developer, Deploy manager, Organization admin.Only Deploy managers can promote  
 **Plugin Catalog**|  Browsing and installing plugins| Everyone  
-**Onboarding**|  Your implementation with Canvas| Studio and Onboarding users, only while your implementation is active  
+**Onboarding**|  Your implementation with Canvas| Studio admin, Onboarding admin, only while your implementation is active.At an MSO: anyone with a role, to follow its practices  
 **Studio**|  Building plugins with Canvas's AI assistant| Studio user, Studio admin  
 **Platform Analytics**|  Issues Canvas finds in your plugins, plugin performance, and Ask your data| Issues: everyone.Performance: anyone who can see instances  
 **Inference**|  Keys and usage for Inference Gateway| Everyone.Only Organization admin can create keys.  
@@ -8571,6 +9003,7 @@ Find the plugin to install at <https://github.com/Medical-Software-Foundation/ca
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6984866654-sso-single-sign-on
+This article covers single sign-on for your Canvas EMR. For Canvas Platform, see [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-Set-up-single-sign-on-for-Canvas-Platform).
 Canvas supports **Single Sign-On (SSO)** , enabling users to log in using external identity providers such as Google Workspace, Okta, and Microsoft Azure. Canvas's integration with SSO streamlines login processes, providing secure and seamless access for users across supported platforms. This article outlines the configuration process, frequently asked questions, and detailed step-by-step instructions for each provider.
 # Setup & Configuration
 ## Okta SSO Configuration
@@ -8833,7 +9266,7 @@ A: The email address attached to the Canvas user must match the SSO email addres
 **Q: Will a user be automatically created when I configure SSO?**  
 A: No. Users must be manually connected to Canvas, and the email used to create the user must be unique.
 **Q: Why is the user getting a**`No user could be authenticated` **error when trying to login to Canvas with SSO?**
-A: The user has multiple staff profiles in Canvas with the same email. Check the active and inactive staff profiles in Canvas. The emails cannot match whether inactive or inactive. 
+A: The user has multiple staff profiles in Canvas with the same email. Check the active and inactive staff profiles in Canvas. The emails cannot match whether inactive or inactive.
 * * *
 **Keywords & Metadata**
 **Keywords** Single Sign-On (SSO), Canvas SSO, Okta SSO, Microsoft Azure SSO, Google Workspace SSO, Identity Provider, SSO setup guide, SAML authentication, Canvas login, external login service, secure authentication, enterprise login
@@ -11391,6 +11824,49 @@ Although the logic may account for the majority of cases, you may still need to 
 ----- END PAGE https://help.canvasmedical.com/articles/8319995182-patient-groups
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/8323755956-canvas-managed-and-customer-managed-plugins
+Plugins installed on your Canvas instance fall into three maintenance categories, depending on who is responsible for their ongoing maintenance and support.
+  1. **Canvas-managed:** Officially maintained and supported by Canvas.
+  2. **Customer-managed:** Maintained by your organization.
+  3. **Partner-managed**
+     1. **Third-party integration vendor-managed:** Maintained by the vendor providing an integration with Canvas.
+     2. **Third-party developer-managed:** Maintained by an external developer or development partner.
+In Canvas Platform, each installed plugin is labeled by who maintains it: **Canvas-managed** , **Partner-managed** , **Yours** (customer-managed), or **Another organization**. The Plugin Catalog's **Maintained by** filter calls partner plugins **Partner-maintained**.
+## Canvas-managed plugins
+A plugin is **Canvas-managed** when both conditions are met:
+  - It is part of the official set of plugins Canvas owns and maintains.
+  - Your installed copy matches a version released by Canvas.
+For Canvas-managed plugins, Canvas is responsible for maintaining compatibility with Canvas SDK releases for supported plugin versions, fixing defects, and providing support for questions or issues.
+## 2\. Customer-managed plugins
+A plugin is **customer-managed** when your organization is responsible for its ongoing maintenance.
+This includes:
+  - Plugins developed by your team. Canvas Platform labels these **Yours** when they are published from your organization's repository.
+  - Canvas-managed plugins that your organization has modified.
+  - Plugins Canvas built specifically for your organization.
+  - Other Canvas-developed plugins that are not part of the official Canvas-managed set.
+For customer-managed plugins, your organization is responsible for managing the plugin's code and deciding when changes are made, maintaining compatibility with new Canvas SDK releases, and fixing defects and testing changes before deployment. Your organization can maintain these plugins internally or work with an external developer.
+## 3\. Partner-managed plugins
+Canvas Platform labels a plugin **Partner-managed** when a Canvas certified partner publishes it from its own organization. A plugin shared with you by any other organization is labeled **Another organization**. A developer working in your organization's repository publishes as your organization, so those plugins show **Yours**.
+### Third-party integration vendor-managed plugins
+These plugins are maintained by vendors that integrate their products or services with Canvas.
+For vendor-managed plugins, the vendor is responsible for ongoing maintenance according to its agreement with your organization. This may include:
+  - Maintaining compatibility with Canvas SDK releases.
+  - Fixing defects in the integration.
+  - Providing technical support for the integration unless otherwise specified.
+### Third-party developer-managed plugins
+These plugins are built and maintained by external developers or development partners.
+For developer-managed plugins, the developer's responsibilities are defined by your organization's agreement with them. These may include:
+  - Maintaining and updating the plugin's code.
+  - Keeping it compatible with Canvas SDK releases.
+  - Troubleshooting defects and testing changes before deployment.
+If your organization takes over ongoing maintenance, the plugin becomes customer-managed.
+## Modifying a Canvas-managed plugin
+You can customize a Canvas-managed plugin to fit your organization's workflows. However, **any modification** to the plugin makes it customer-managed, and your organization becomes responsible for ongoing maintenance.
+Canvas Platform stops labeling a modified copy **Canvas-managed**. Its maintainer shows as a dash (Maintainer unknown) until your organization publishes the modified plugin from its own repository. After that, it shows **Yours**.
+### Next: [Plugin Catalog](https://help.canvasmedical.com/articles/5591256446-plugin-catalog)
+----- END PAGE https://help.canvasmedical.com/articles/8323755956-canvas-managed-and-customer-managed-plugins
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8339414277-command-referrals
 The Refer command is available to document and send a referral. An outbound referral is a request for transfer of care or request to provide assessment, treatment or clinical advice on the care of a patient.
 ## Create a refer command
@@ -11453,6 +11929,94 @@ OR
 # Resources
 ### [Video: Refer Command](https://www.loom.com/share/aac3fb153ee749ca94555b4c931c1be2?sid=908136fe-137d-45a5-8694-f6699e0db617)
 ----- END PAGE https://help.canvasmedical.com/articles/8339414277-command-referrals
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/8405097946-canvas-instances
+Canvas Platform gives you a central place to monitor your Canvas instances, compare configurations, and promote changes from lower to higher environments.
+The **Deploy manager** role is required to promote configuration or manage integration credentials.
+## View All Instances
+Go to **Canvas Instances → All instances** in the sidebar. Each instance is also listed individually, with a colored dot indicating its health.
+The **All instances** page includes:
+Section| What it shows  
+---|---  
+**Summary tiles**|  Total production and pre-production instances, completed and pending promotions, plugins with drift, and Canvas releases in use.  
+**All instances**|  Each instance's stage, release, plugin count, staff count, and health. Click an instance name to open it.  
+**What is installed where**|  A matrix of plugins and their installed versions across instances. Amber indicates a version behind the newest one running in your organization. A dot indicates the plugin isn't installed.  
+**Filter the plugin matrix** using **Drift only** , **Production only** , the **Plugin** search field, or the filter icon to select which instances appear.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853009848-CanvasInstances-01-Allinstancespagewiththepluginmatrix.png?Expires=253370764800&Signature=FB40xCWN32F~q5Kd27Gq-Y0CpMjwvGY0C3btE2Q3x-Rs7HB8~rFBXJVecwOfCUdqeyZle-DwzNwFvmRZhHjogp1ece4gF25btMol3KA~fwj5gHwBTV3pDd7UQJkGxFGqFvWyy8diYDM3tfNw7A4QHcLYTrMr1-Xe0UnEEYa1EK1MQVP1JAY9gDkzprcNx1VQ5hQ~nR~jDlhVvGMlDhEN0AwDATU0fGS9Cg9APQgOkOy88SS6ZFJTPytlyrifcpwXxH-OQofzhG3GsPAKeEjU4a4fZGyaOhn2n9leMb-a1dMvq4BfzK5Ge519Bioe2QydVR-Nn8MDTifvHsPAXceQXA__&Key-Pair-Id=K3NV4LZ47N8M46)
+The date beside **All instances** shows when the data was last retrieved. Opening the page refreshes data if the previous reading is at least 15 minutes old, up to 12 times a day per instance.
+## View Instance Details
+Select an instance to view its health, stage, Canvas release, and creation date.
+Use **Open the EMR** or **Instance settings** to open the corresponding page in a new tab.
+Tab| What you'll find  
+---|---  
+**Overview**|  Open issues, monthly active patients, staff, installed plugins, running agents, plugins behind, active users (staff sign-ins), and promotion path.  
+**Configuration**|  EMR configuration records used in comparisons and promotions. View-only; edit them in instance settings.  
+**Integrations**|  Integration status and setup options. Canvas manages regulated connections (level 1); your team configures the remaining integrations (level 2).  
+**Plugins & agents**| Installed plugins, maintainers, current and newest deployed versions, and effects and errors from the last 30 days.  
+**Users & access**| A note with an **Open instance settings** link. Staff accounts, roles, and sign-in are managed in the EMR admin.  
+**Activity**|  Note volume and staff sign-ins over 24 hours, 7 days, 30 days, or 12 months. View charts or tables and select **Download CSV** to export.  
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853193731-CanvasInstances-02-Aninstance%2527sOverviewtab.png?Expires=253370764800&Signature=AVaw1yf658BI-fkYBQyTHPKCroXxwZAbiB~kSHP-zyIxdKdWffL8irD5jLkw4PwnBSAnBmIOmZtT62sua9kAvoG8NULl-baaAoBC4SW2ugbpaunuaA4Fl1snYS53K0TgWmEwvYdGr8-8glQwC-mCV1kDOQ3kX6zsb4-QUtc9C7OHsvdBUppOHXVah2~DGCf8CJ9Y~OGiC8wJ9kJh2ipceRf9O5pOBvOYwy5Yz57KdTUV4e9uBHa6KR9Cj~tVNe~nzGpduqpz2zSxQTwXsJyNkqxXi8hzvWhnakf-RSjjhs8r~Y7KFYXx73JXA6Kmu53Q0FHJJsrH693iXZohUiRG-Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Understand Instance Health
+Status| Meaning  
+---|---  
+**Healthy**|  The healthcheck passes, and the instance is running its deployed release.  
+**Degraded**|  The running release differs from the deployed release, indicating a pending or failed release.  
+**Action needed**|  The healthcheck failed or the instance is in an error state. A banner explains the issue.  
+**Not checked**|  No healthcheck result is available, or the instance is still being set up.  
+### Manage Integration Credentials
+Deploy managers can configure credentials directly from the **Integrations** tab.
+  1. Click **Set up** , **Finish setup** , **Fix key** , or **Replace keys** , depending on the integration's status.
+  2. Enter only the credentials you want to update. Each field indicates what the instance currently holds.
+  3. Click **Set on [instance name]** to save.
+Entered credentials are not displayed again. Changes are recorded as promotions.
+## Compare Two Instances
+Compare instances to identify differences in configuration, plugins, and engineering settings.
+  1. **Open Compare.** Click **Compare two instances** from All instances or **Compare** on an instance's page.
+  2. **Select your instances.** Choose one on each side. If you plan to promote changes, place the lower instance on the left. Use **Swap** to reverse them.
+  3. **Review differences.** Select the summary counts to jump between **Basic configuration** , **Plugins** , and **Engineering configuration**.
+Each difference shows what the right-hand instance needs to match the left. Items found only on the right are counted separately and remain unchanged.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793853220642-CanvasInstances-03-Comparingtwoinstances.png?Expires=253370764800&Signature=Dxva669Ic7R4x31HD5p7Fq8l7AGFBJ7xaRcOA8LtEkqkdbKpY1zgmbfnpGFnBBXAlGAWV6JblLQeWKOaK8CDNajslaS10pXFuFlYUfyIntbXmYBV6rhlxuB2NxMVXm9~rilDEGGSoszlQQDPllK~~uWVhipDx6mcAk-JrPnyvjMVR-GTyItMNhR85cyzESDW5RVyIHoPnm7vgr0MN3wnrgkt6nmhKLd9TNO~kkDE7q214pzm~Z84rCLFh7Rb5pvposQHTq90UuquVFVAZSUtS9ppXdNv8LcooToGvM1JP0aJ5Zz5Kc-LMU1pI6XrRp8YY6fj6g67WVPrH8752hXUaQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Promote Configuration
+Promotions let you apply selected configuration changes from a lower instance to a higher one, following this sequence:
+**Sandbox → Development → Staging → Production**
+You need the **Deploy manager** role on the destination instance.
+  1. **Compare instances.** Place the lower instance on the left and the destination on the right.
+  2. **Start a promotion.** Click **Begin new promotion**. If disabled, hover over the button to see why.
+  3. **Select changes.** Check the differences to promote. Enter any destination-specific values, such as secrets, when prompted. Your selections save automatically, so you can choose **Finish later**.
+  4. **Review and apply.** Click **Apply [number] changes** to review the summary. If a plugin requests access to another plugin's custom data, select the checkbox to allow it. Then click **Apply to [instance name]**.
+**Before applying:**
+  - Canvas Platform checks both instances again. If either has changed since the promotion began, the promotion stops.
+  - Changes to production take effect immediately when applied.
+  - Each change is recorded under your name in your organization's audit log.
+**Important:** Promotions only create or update configuration. Items that exist exclusively on the destination instance are not deleted.
+## Track Instance Promotions
+From **All instances** , click the **Instance promotions** tile to view promotion history.
+Status| What it means  
+---|---  
+**Pending**|  Started but not applied. Click to resume.  
+**Completed**|  Applied promotion showing changes, who applied them, when, and whether writes succeeded. Use **Retry failed** if any writes failed.  
+**Abandoned**|  Canceled before changes were written. Cannot be reopened.  
+Anyone with access to Canvas Instances can view promotions. Only **Deploy managers** can start, edit, apply, or abandon them.
+**Note:** To publish a Studio project to an instance, use Studio.
+## Frequently Asked Questions
+**Why can't I see Canvas Instances?**
+Your assigned roles may not include access. Publisher, Billing admin, Studio, and Onboarding roles do not provide instance access. Ask an Organization admin to assign Read-only or another eligible role.
+**Why is _Begin new promotion_ disabled?**
+Hover over the button for details. A promotion requires:
+  - The lower instance on the left
+  - Two instances at different stages, each with a stage assigned
+  - At least one difference to promote
+  - Deploy manager access to the destination instance
+**What if my pending promotion says the data is stale?**
+One of the instances changed after the promotion started. Abandon the promotion and create a new one from an updated comparison.
+**How current is instance data?**
+Each page shows when its data was last retrieved. Opening a page refreshes data if the previous reading is at least 15 minutes old, up to 12 times a day per instance. Every instance is also checked at least once every six hours.
+**Can I edit an instance's configuration in Canvas Platform?**
+The **Configuration** tab is view-only. Make changes through the instance's settings or promote configuration from another instance.
+In Platform you can view every Canvas instance your organization runs, compare two instances, and promote configuration from a lower instance to a higher one.
+### Next: [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+----- END PAGE https://help.canvasmedical.com/articles/8405097946-canvas-instances
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8412752412-restricting-staff-to-specific-patients
@@ -12573,6 +13137,71 @@ Health Gorilla is used to process incoming and outgoing lab orders between Canva
 ----- END PAGE https://help.canvasmedical.com/articles/9512475619-labs-ordering-in-health-gorilla
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/9592380294-usage-billing
+**Usage & Billing** helps you monitor your organization's monthly AI token and usage-based plugin spend. View spending trends, identify what's driving costs, and review your organization's pricing terms. Only the **Billing admin** has access to this section of Platform.
+Usage & Billing does not replace your monthly Canvas invoice, which also includes subscription fees, MAP charges, additional environment fees, pass-through costs, and token usage fees.
+## View This Month's Spend
+Go to **Usage & Billing** in the sidebar to see your month-to-date spending.
+The summary tiles show:
+Category| What it includes  
+---|---  
+**Total token spend**|  Total AI token spend, broken down into **Canvas-managed keys** (Studio, Navigator, and Onboarding) and **Your keys** (keys created by your organization).  
+**Total plugin spend**|  Usage-based plugin charges, split into **Agents** and **Other plugins** , including how many plugins generated charges.  
+Starting on the **6th of each month** , the total tile also displays projected month-end spend based on your current usage.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793855670108-Usage%2526Billing-01-Usage%2526Billingtiles.png?Expires=253370764800&Signature=VGSRg5UO1DNeNgVbM6f6IpDlCqfkbV~0QooGk-SmMDuBmnssFBCI2uF-lfJ~KBlqmBbfh8BZxu-1x16RCgfqtltKt~DdLAqnLDYDVDIvnaxJx5PaYqWI44jSw99hUgkVBMdpHIgB0FxXnKUTi-ooWeNDqoRIu~24~0O40dJcB2R4tEL-doT8rQUGfdppvsPVkSgMCYVLesQVOGNEFftrDuCJ3DtrWQqsuz0H1eI6KPQn0VAN1dZsY-F2ncdZkGzFbrPQp86h-Xk-Q~BlyzeQjhrIEhgj2bUNhywOIBLYTi0c7xXs~BUHyZw3h5vRw7ybjtgPIWsLWNZRlJoGJlsfCQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Analyze Spending Trends
+Use the **Spending** chart to see how costs change over time and which products contribute most.
+  1. **Choose a time range:** Select **by day** , **by week** (last 8 weeks), or **by month** (six months, starting with your first month of usage).
+  2. **Review previous months:** In the daily view, use the arrows beside the month to navigate.
+  3. **Review spending details:** The table below the chart totals the period shown, split into:
+     - Tokens used by Canvas-managed keys
+     - Tokens used by your organization's keys
+     - Your three highest-spending plugins, including billable units
+     - Remaining plugin spend, grouped together
+  4. **View token spend by model:** Click **Spend by model →** to open **Inference → Usage** for a breakdown by model and day.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793855695256-Usage%2526Billing-02-Spendingchartwiththetableunderit.png?Expires=253370764800&Signature=hjJ-YzngMXvcUmtOZhgdfjGMKlq3B6WA1N32p157iLdU6GEP751V5G5d6F21krWmJVSmwfXycEuDtE222buEuGV~Rq1-HJAnZYuvuttXmxjK6HDwBY6VvYWpQtTwVkJ8CkC4CEDXPFqcXY~1~hds6ojGdVjhfkC2I3q7QqOwuky~D9yBqQpuoiv8OP3NlB3homO7RGSG6ZLwFhwno0sx~gtEVNSRXf6gL9GDRLtfkq6YIO-gBffM1nr7gDLAiU4YAM4iAnfUQ746dnbJY-GbkFURjMjA~s3qOqqXFNfJ~VakPV5T1yx61Jvc6VgwI1P4wlKOQXmhutTh-1ur33iqZA__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Download Token Usage Details
+The **Token details** table shows this month's usage by product or key, including:
+  - **Source:** Canvas-managed, Your key, or No key recorded
+  - **Token usage:** Input, cache writes, cached input, and output, measured in millions of tokens
+  - **Usage:** Total cost in dollars
+Click **Download CSV** to export the same data with exact token counts.
+## Understand Credits and Discounts
+Credits and discounts appear throughout Usage & Billing.
+What you see| What it means  
+---|---  
+**"Canvas has granted you…"**|  An active billing credit. Each credit shows what it covers and its effective dates.  
+**Strikethrough amount**|  Original price before credits, alongside the remaining amount after credits.  
+**"Covered through [date]"**|  Canvas covers token usage for the indicated Canvas-managed products through that date.  
+**"On pace for … before credits"**|  Projected spend excludes credits because they may expire before month-end.  
+**"Promo code [code] gives you…"** or **"Promo code [code] caps…"**|  A plugin promo code applies. The plugin tiles show your cost after the discount, with the original amount struck through. The Spending chart and its table show plugin spend before the discount.  
+**"Billed to [organization]"**|  Your MSO is responsible for billing.  
+## Review Billing Settings
+Click **Billing settings** at the top of Usage & Billing to review the pricing terms from your Canvas agreement.
+Section| What it shows  
+---|---  
+**Pricing**|  How model usage through inference keys is priced.  
+**Canvas-managed keys**|  Products using Canvas-managed keys and whether credits apply.  
+**Your keys**|  Number of organization-created keys and a **Manage keys** link.  
+**Token prices**|  Input, cached input, and output pricing per million tokens for each model.  
+These settings reflect your agreement and are **view-only**.
+To manage budgets, per-key spending limits, and alerts, go to **Inference → Keys & limits**. See [Inference Gateway](https://help.canvasmedical.com/articles/5617793432-inference-gateway).
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1793855731731-Usage%2526Billing-03-Billingsettingspage.png?Expires=253370764800&Signature=DCXE-PsYdXii3petcXq1ORc9LRpllcdww6lneq1EQHglFCzrlZFgLYLTP~z1sWzzsjk9UZSsC97Hg-no1e3vsQBbuPPvrvnIOrFrPqyms0OOcjOuzbbUOr9lCFaro0o7oFxAeFRJM06oRJTej3Yi5qbRRly-d22UcvOwiQ~dcwDeFWCzHk9AcBAnByX9CjwoxDRvjfdr~n2PW5VbNV7MEd8atNqeRkewnf7F8QE0mz1s3VFpMevIja5nObYkTp2qWJoFuuuBd-RmYM0yyP9te-PhDjuerF~gSR~geHNvVJm0kFmQHjCmiR48-fa3CJIdrA9r-K5WDfwVW0wOBgY5fw__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Frequently Asked Questions
+**Why can't I see Usage & Billing?**
+You need the **Billing admin** role. Organization admin access does not automatically include billing permissions. Ask an Organization admin to assign the role.
+**What does "No inference account" mean?**
+Your organization doesn't have an inference account yet, so there is no usage data to display. Contact your Canvas team for assistance.
+**When does a new billing month begin?**
+At **00:00 UTC on the first day of each month**. Daily and weekly reporting also uses UTC, with weeks starting on Monday.
+**Which plugins are included in plugin spend?**
+Canvas-published plugins that charge per unit of work and run on your production instances.
+**Where can I find my Canvas invoice?**
+Usage & Billing displays token and plugin usage costs, not your complete invoice. Token usage fees appear on your monthly Canvas invoice alongside other Canvas charges. Contact your Canvas team with invoice questions.
+### Next: [Inference Gateway](https://help.canvasmedical.com/articles/5617793432-inference-gateway)
+----- END PAGE https://help.canvasmedical.com/articles/9592380294-usage-billing
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/9726289513-fs-appointment-labels
 Every healthcare practice operates differently, but appointment scheduling systems often force everyone into the same rigid categories. Canvas Medical customers have consistently asked for more ways to organize and identify appointments beyond basic status updates.
 **Appointment Labels** answers that call, bringing the flexible custom labeling system you already rely on for tasks and claims into your scheduling workflow. Now you can tag appointments with the specific categories, priorities, and identifiers that make sense for how your practice actually works.
@@ -12735,10 +13364,7 @@ Canvas Platform has its own sign-in, separate from your Canvas EMR, so an Organi
 ## Before you start
   - You need Organization admin access on Canvas Platform, which your Canvas team grants to the person setting up single sign-on.
   - You need access to your company's DNS settings and to the admin console of your identity provider.
-## Sign in to Canvas Platform
-  1. Open Studio from your Canvas instance from the hamburger menu. You'll see a notice that Studio has moved to Canvas Platform, so click **Go to Canvas Platform**.
-  2. Your email is already filled in. Choose a password and click **Set password and sign in**.
-  3. Add a second sign-in step under **Sign-in security** with an authenticator app on your phone or a passkey. Save the backup codes somewhere safe, since they get you back in if you ever lose your phone.
+Sign in at [platform.canvasmedical.com](http://platform.canvasmedical.com) with your email and password, then add a passkey or an authenticator app under **Sign-in security** in the account menu before you connect single sign-on. See [Signing In and Access Help](https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help).
 ## Connect single sign-on
   1. Open the account menu at the bottom left and choose **Organization**.
   2. Under **Domains** , claim your company's email domain. Platform shows a TXT record to publish at `_canvas-platform-verification.yourdomain.com`. Once the record is live in your DNS, click **Check now** and the domain should read Verified.
@@ -12752,6 +13378,19 @@ The **Passwords** section on the Organization page has two settings.
 Single sign-on only covers addresses at your verified domains. Anyone on your team with an email outside those domains, such as a contractor, still signs in with a password, so turn on Require a second factor if you want those sign-ins protected too.
 ## After single sign-on is on
 Your existing team members keep their access and roles. Someone new who signs in through single sign-on gets a Canvas Platform account with no roles, so an Organization admin grants them access from the Users page.
+## Add and remove people from your identity provider (optional)
+Turn on provisioning and your identity provider adds, updates and removes your organization's members over SCIM. Removing someone in your provider ends their access to Canvas Platform.
+  1. **Issue a token.** On the Organization page, under **Provisioning** , click **Issue token** and copy it. It's shown only once, and any token issued before it stops working.
+  2. **Set up your provider.** Pick your provider under **Identity provider** and follow the provisioning steps shown on the page. Give your provider the **SCIM base URL** and the token.
+  3. **Turn it on.** Turn on **Managed by your identity provider**. Your domain must be verified and your identity provider connected first.
+  4. **Choose what each group confers.** Groups your provider sends appear under **Provisioning** and confer no roles until you click **Choose roles** beside them.
+Once it's on:
+  - Inviting is off on the Users page. Add people in your identity provider instead.
+  - Only addresses at your verified domains can be added.
+  - Someone in a group that confers roles holds exactly those roles. Change their groups in your provider to change their roles.
+  - Anyone else has their roles set on the Users page.
+  - People already in your organization keep their access and roles, and turning provisioning off later keeps everyone and their roles.
+  - Signing in through single sign-on no longer adds someone to your organization. Your provider adds them.
 ## Questions
 Feel free to message us in your organization's shared Canvas Slack channel or submit a ticket to our team using [this form](https://canvas-medical.portal.usepylon.com/forms/platform-support). For more on the move itself, see [Studio and Onboarding are moving to Canvas Platform](https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform).
 ----- END PAGE https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform

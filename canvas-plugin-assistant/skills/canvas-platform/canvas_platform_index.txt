@@ -1519,6 +1519,16 @@
     - Billing
     - Troubleshooting
     - Install the Plugin
+- [Supervisor Cosign](https://help.canvasmedical.com/articles/2844677357-supervisor-cosign-reference-plugin)
+    - Overview
+    - Before you begin
+    - When a note needs a co-sign
+    - Co-sign a note
+    - Use the Co-sign Summary page
+    - When a supervised clinician amends a co-signed note
+    - Troubleshooting
+    - Install the Plugin
+        - Plugin secrets
 - [Scoring Visualizer Plugin](https://help.canvasmedical.com/articles/6966029821-scoring-visualizer-plugin)
     - Open the visualizer
     - Read the chart
@@ -1621,12 +1631,33 @@
 ### Users and access
 - [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
     - Before you start
-    - Sign in to Canvas Platform
     - Connect single sign-on
     - Set your sign-in rules
     - After single sign-on is on
+    - Add and remove people from your identity provider (optional)
     - Questions
 - [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+        - Next:📄 What is Canvas Platform
+- [Signing In and Access Help](https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help)
+        - Next:📄 Platform: Users and Roles
+
+### Analytics
+- [Platform Analytics](https://help.canvasmedical.com/articles/4401978424-platform-analytics)
+        - Access and Permissions
+    - Issues
+        - Review an Issue
+        - Issue Severity and Type
+        - Track Fix Status
+    - Performance
+        - Monitor Plugin Performance
+        - Understand Performance Metrics
+    - Frequently Asked Questions
+        - Next:Fixes from Canvas Platform
+
+### MSOs and their practices
+- [Canvas Platform for MSOs](https://help.canvasmedical.com/articles/2380085275-canvas-platform-for-msos)
+    - Promoting From One Practice to Another
+        - Next:Platform: Users and Roles
 
 ### AI usage and billing
 - [Inference Gateway](https://help.canvasmedical.com/articles/5617793432-inference-gateway)
@@ -1638,6 +1669,61 @@
     - Budgets, limits and alerts
     - Studio and Inference Gateway
     - FAQ
+- [Usage & Billing](https://help.canvasmedical.com/articles/9592380294-usage-billing)
+    - View This Month's Spend
+    - Analyze Spending Trends
+    - Download Token Usage Details
+    - Understand Credits and Discounts
+    - Review Billing Settings
+    - Frequently Asked Questions
+        - Next:Inference Gateway
+
+### Instances
+- [Canvas Instances](https://help.canvasmedical.com/articles/8405097946-canvas-instances)
+    - View All Instances
+    - View Instance Details
+        - Understand Instance Health
+        - Manage Integration Credentials
+    - Compare Two Instances
+    - Promote Configuration
+    - Track Instance Promotions
+    - Frequently Asked Questions
+        - Next:Platform: Users and Roles
+
+### Onboarding
+- [Working with the Onboarding Agent](https://help.canvasmedical.com/articles/2941620841-working-with-the-onboarding-agent)
+        - Access and Roles
+    - Open Your Implementation
+    - Manage Activities
+        - Use the Kanban Board
+    - Chat with the Onboarding Agent
+        - Start or Resume an Activity
+    - Share Files
+    - Complete Forms and Submit Credentials
+        - Complete Forms
+        - SubmitKeys and Passwords Securely
+    - Track Practice Implementations (MSOs)
+    - Frequently Asked Questions
+        - Next:Platform: Users and Roles
+
+### Plugins
+- [Plugin Catalog](https://help.canvasmedical.com/articles/5591256446-plugin-catalog)
+        - Access and Permissions
+    - Find a Plugin
+    - Review Plugin Details
+        - Release Notes
+    - Install a Plugin
+    - View Plugin Installations
+    - Frequently Asked Questions
+        - Next:Installing a Plugin Catalog plugin with Studio
+- [Understanding Plugin Maintenance in Canvas](https://help.canvasmedical.com/articles/8323755956-canvas-managed-and-customer-managed-plugins)
+    - Canvas-managed plugins
+    - 2. Customer-managed plugins
+    - 3. Partner-managed plugins
+        - Third-party integration vendor-managed plugins
+        - Third-party developer-managed plugins
+    - Modifying a Canvas-managed plugin
+        - Next:Plugin Catalog
 - [Canvas Patient Safety Scale](https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale)
     - Introduction
     - Scale
