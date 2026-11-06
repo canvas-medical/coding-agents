@@ -13,7 +13,7 @@ Use `uv run python <script>.py ...` for scripts, and `uv run <tool> ...` for Pyt
 
 **CRITICAL: Canvas plugins MUST use absolute imports with the full package path.**
 
-Relative imports will fail in the Canvas runtime. Always use the full package path starting with the inner folder name (snake_case).
+Relative imports will fail in the Canvas runtime. Always use the full package path starting with the inner package folder name (`<prefix>__<name>`).
 
 ### What NOT to do
 
@@ -27,14 +27,14 @@ from ...utils.helpers import format_date
 
 ```python
 # GOOD - absolute import with full package path
-from my_plugin_name.protocols.handler import MyHandler
-from my_plugin_name.utils.helpers import format_date
+from acme__my_plugin_name.protocols.handler import MyHandler
+from acme__my_plugin_name.utils.helpers import format_date
 ```
 
-The package name must match the inner folder name:
+The package name must match the inner folder name, which for Canvas Platform plugins carries the organization prefix:
 
-- Inner folder: `vitals_alert/`
-- Import: `from vitals_alert.protocols.handler import ...`
+- Inner folder: `acme__vitals_alert/`
+- Import: `from acme__vitals_alert.protocols.handler import ...`
 
 ## Sandbox: Imports and RestrictedPython
 
@@ -56,8 +56,8 @@ When importing your own plugin's modules, use the FULL plugin-namespace prefix:
 
 ```python
 # GOOD
-from my_plugin.utils.helpers import format_date
-from my_plugin.services.session import Session
+from acme__my_plugin.utils.helpers import format_date
+from acme__my_plugin.services.session import Session
 
 # BAD — sandbox rejects these as unknown modules
 import thresholds
@@ -65,20 +65,20 @@ from models.cache import get
 from utils.helpers import format_date
 ```
 
-The package name must match the inner snake_case folder name. See "Imports: Use Absolute Paths Only" below.
+The package name must match the inner package folder name. See "Imports: Use Absolute Paths Only" below.
 
 ### Imports — no deep attribute access
 
-The sandbox rejects deep getattr chains like `my_plugin.services.session.Session` at the use site. Import the name at the top of the file instead:
+The sandbox rejects deep getattr chains like `acme__my_plugin.services.session.Session` at the use site. Import the name at the top of the file instead:
 
 ```python
 # GOOD
-from my_plugin.services.session import Session
+from acme__my_plugin.services.session import Session
 def make() -> Session: ...
 
 # BAD — sandbox raises "X.Y.Z is an invalid attribute name (not in ALLOWED_MODULES)"
-import my_plugin.services.session
-def make(): return my_plugin.services.session.Session()
+import acme__my_plugin.services.session
+def make(): return acme__my_plugin.services.session.Session()
 ```
 
 ### RestrictedPython features that are banned

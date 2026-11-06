@@ -88,6 +88,8 @@ scanned for secrets) and pushing is confirmed with you first.
 - Recommends appropriate architecture complexity
 - Produces a `plugin-spec.md` for review before implementation
 
+**deploy-uat-legacy** - Deploy plugins without an organization prefix with `canvas install`, for `:deploy-legacy` until December 14, 2026
+
 **instance-analyzer** - Understand Canvas instance configuration:
 
 - Documents roles, teams, questionnaires, note types, appointment types
@@ -98,8 +100,7 @@ scanned for secrets) and pushing is confirmed with you first.
 **deploy-uat** - Deploy plugins and guide user acceptance testing:
 
 - Pre-deployment validation (manifest, tests)
-- Deploy to dev/staging/production environments
-- Real-time log monitoring during testing
+- Deploy to dev/staging/production environments through Canvas Platform
 - UAT checklist and results documentation
 
 ### Skills
@@ -121,60 +122,84 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 
 | Command                        | Description                                                 |
 |--------------------------------|-------------------------------------------------------------|
-| `:check-setup`                 | Verify environment tools (uv, unbuffer)                     |
+| `:check-setup`                 | Verify environment tools and Canvas Platform sign-in        |
 | `:new-plugin`                  | Start brainstorming a new plugin specification              |
 | `:create-icon`                 | Generate SVG icon and convert to 48x48 PNG for Applications |
 | `:analyze-instance`            | Analyze Canvas instance configuration                       |
-| `:deploy`                      | Deploy plugin and monitor logs                              |
+| `:deploy`                      | Deploy plugin through Canvas Platform                       |
+| `:deploy-lite`                 | Quick-deploy: no version bump, no tests                     |
+| `:deploy-legacy`               | Deploy a plugin without an org prefix, with log monitoring; removed by December 14, 2026 |
 | `:coverage`                    | Run tests with coverage, offer to improve if below 90%      |
 | `:security-review`             | Comprehensive security audit with report                    |
 | `:database-performance-review` | Database query optimization review with report              |
 | `:wrap-up`                     | Final checklist before calling a plugin "done"              |
 | `:run-evals`                   | Run eval suite to test review command accuracy              |
 
-## Credentials Setup
+## Canvas Platform Sign-in
 
-Add your Canvas instance credentials to `~/.canvas/credentials.ini`:
+`/cpa:new-plugin` and `/cpa:deploy` act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
+
+```bash
+uv run --with 'canvas>=0.263.0' canvas login
+```
+
+- `CANVAS_PLATFORM_TOKEN`: set in CI to deploy without a stored sign-in
+- `CANVAS_PLATFORM_URL`: points the CLI at a different Canvas Platform
+- `/cpa:check-setup` reports the signed-in person, their organizations with each plugin prefix, and the instances available for deploys
+
+A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and it is committed to a git repository. `/cpa:new-plugin` creates plugins with `canvas init`: outside any repository the plugin folder becomes its own repository with Canvas Platform as `origin`, and inside an existing repository, such as a monorepo, it stays a folder of that repository.
+
+A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 0.263.0 or newer), which pushes the package folder as committed at HEAD to the plugin's `main` on Canvas Platform and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes `main` was last deployed from, and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+
+A plugin made before Canvas Platform needs one of:
+
+- Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and commit it to a git repository
+- Run `canvas init` for a new plugin and move the code into it
+
+Until December 14, 2026, `/cpa:deploy-legacy` deploys such a plugin as it is with `canvas install`.
+
+### Legacy deploys and log streaming
+
+`canvas logs` signs in only with `~/.canvas/credentials.ini`, not with the Canvas Platform sign-in. `/cpa:deploy` and `/cpa:deploy-lite` stream logs with `canvas logs --host <instance>` when the file has a section named after the instance, and otherwise deploy without logs and ask you to test in Canvas. `/cpa:deploy-legacy` deploys with `canvas install` and streams logs, both reading that section:
 
 ```ini
 [plugin-testing]
 client_id = your_client_id
 client_secret = your_client_secret
 root_password = your_admin_password
-
-[customer-instance]
-client_id = ...
-client_secret = ...
-root_password = ...
 ```
 
-- `client_id` / `client_secret`: For Canvas CLI (API access)
+- `client_id` / `client_secret`: For `canvas install` and the Canvas CLI log stream
 - `root_password`: For admin portal access (instance analyzer)
+
+`credentials.ini` support ends December 14, 2026, and `/cpa:deploy-legacy` is removed by then.
 
 ### Plugin Secrets
 
-Plugins that declare `secrets` in `CANVAS_MANIFEST.json` need secret values for deployment. CPA reads these values from a per-instance JSON file and
-passes them to the `canvas install` command — secret values are never exposed to Claude Code.
+Plugins that declare `variables` in `CANVAS_MANIFEST.json` need values for each instance. CPA reads these values from a per-instance JSON file and
+passes them to `canvas config set` after each successful deploy. Secret values are never exposed to Claude Code.
 
 **Default location:**
 
 ```
-~/.canvas/plugin-secrets/{instance}.json
+~/.canvas/plugin-secrets/{instance slug}.json
 ```
 
-**File format** (keyed by plugin name):
+**File format** (keyed by the manifest `name`, which carries the organization prefix):
 
 ```json
 {
-  "my_plugin": {
+  "acme__my_plugin": {
     "API_KEY": "sk-...",
     "WEBHOOK_SECRET": "abc..."
   },
-  "other_plugin": {
+  "acme__other_plugin": {
     "TOKEN": "xyz..."
   }
 }
 ```
+
+A file keyed by an unprefixed name needs its key renamed to `<prefix>__<name>`.
 
 On each deployment, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
 
@@ -189,7 +214,11 @@ export CPA_SECRET_FILEPATH=/path/to/my-secrets.json
 When set, this single file is used for all instances (the instance name is ignored for file resolution). This is useful for CI/CD pipelines or shared
 secret stores.
 
-If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The install still proceeds — the warning is informational.
+If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The deploy still proceeds, and the warning is informational.
+
+### Custom Data Consent
+
+When a plugin's `custom_data` reads or writes a namespace that another plugin created on the instance, the deployment waits for the instance organization's consent. The CLI asks for consent at a terminal only, so CPA shows each request (plugin, access, namespace, instances) and gives you the `canvas deploy` command to run in your own terminal. Approval is per plugin, namespace, and instance, and one denial cancels the deployment.
 
 ### Evals Setup
 
@@ -204,7 +233,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ## Workflow
 
 ```
-:check-setup      →  Verify environment tools (uv, unbuffer)
+:check-setup      →  Verify environment tools and Canvas Platform sign-in
 :new-plugin       →  Create plugin from requirements
 :deploy           →  Deploy to Canvas instance for UAT
 :coverage                    →  Check test coverage (aim for 90%)
@@ -214,7 +243,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ```
 
 1. **Check Setup** (`:check-setup`)
-    - Verify uv and unbuffer are installed
+    - Verify git, uv, unbuffer, and the Canvas CLI are installed and you are signed in to Canvas Platform
 
 2. **Describe the Problem** (`:new-plugin`)
     - Tell Claude what the customer needs
@@ -224,7 +253,7 @@ This key is used by the comparison script to evaluate whether review commands co
 
 3. **Deploy and Test** (`:deploy`)
     - Deploy to test instance
-    - Perform user acceptance testing with real-time log monitoring
+    - Perform user acceptance testing
 
 4. **Quality Checks** (`:coverage`, `:security-review`, `:database-performance-review`)
     - Verify test coverage meets 90% threshold
@@ -287,6 +316,8 @@ automatically.
 │   ├── create-icon.md         # :create-icon
 │   ├── analyze-instance.md    # :analyze-instance
 │   ├── deploy.md              # :deploy
+│   ├── deploy-lite.md         # :deploy-lite
+│   ├── deploy-legacy.md       # :deploy-legacy (removed by December 14, 2026)
 │   ├── coverage.md            # :coverage
 │   ├── security-review.md     # :security-review
 │   ├── database-performance-review.md # :database-performance-review
@@ -310,7 +341,8 @@ automatically.
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
-│   └── deploy-uat.md          # Deployment and testing
+│   ├── deploy-uat.md          # Deployment and testing
+│   └── deploy-uat-legacy.md   # canvas install deploys for :deploy-legacy
 └── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
@@ -385,7 +417,8 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `constants.py`                | CPA environment variable constants          |
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `mcp_canvas_installer.py`     | MCP server for plugin install with secrets  |
+| `mcp_canvas_deployer.py`      | MCP server for plugin deploy and variables  |
+| `platform_session.py`         | Canvas Platform sign-in and instance lookup |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |
 | `validate_cpa_environment.py` | Environment variable validation             |
 | `verify_plugin_structure.py`  | Plugin structure verification               |

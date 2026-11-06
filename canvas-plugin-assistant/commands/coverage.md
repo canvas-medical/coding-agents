@@ -115,7 +115,7 @@ Files needing attention:
 This command is **step 4** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%), save report  ← YOU ARE HERE

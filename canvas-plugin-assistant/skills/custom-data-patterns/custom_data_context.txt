@@ -689,6 +689,15 @@ When choosing a namespace name:
 2. **Second part (purpose):** Describe the domain or use case the data serves, not the plugin that creates it
 3. Think: "If a second plugin needed to share this data, would the name still make sense?"
 
+### Reading another plugin's namespace needs consent
+
+A plugin whose `custom_data` reads or writes a namespace that another plugin created on that instance makes the deployment wait for the instance organization's consent. Consent is requested per plugin, namespace, and access (`read` or `read_write`), and applies to each instance the deployment targets.
+
+- The CLI asks at a terminal only. In Claude Code the person runs the printed `canvas deploy <package> --no-push --instance <instance>` command in their own terminal and answers there.
+- The last approval starts the deployment. One denial cancels it.
+- Approval is per plugin, namespace, and instance, so deploying the same plugin to another instance asks again.
+- A plugin that only uses namespaces it created itself needs no consent.
+
 ---
 
 ## 13. Managing Schema Evolution
@@ -730,8 +739,8 @@ canvas namespace reset acme_clinic__patient_intake --host dev-instance
 # 3. Execute after reviewing
 canvas namespace reset acme_clinic__patient_intake --host dev-instance --execute
 
-# 4. Reinstall the plugin to recreate tables with updated models
-canvas install my_plugin --host dev-instance
+# 4. Redeploy the plugin to recreate tables with updated models
+canvas deploy acme__my_plugin --instance dev-instance
 ```
 
 ### For production schema issues

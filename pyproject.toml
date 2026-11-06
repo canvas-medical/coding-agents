@@ -11,13 +11,15 @@ dev = []
 
 [dependency-groups]
 dev = [
-    "mcp>=1.26.0",
+    "mcp>=1.26.0,<2",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     # Imported by test_generate_platform_context.py; the generator itself declares
     # these in its PEP 723 header for the `uv run --script` path in CI.
     "beautifulsoup4>=4.12",
     "html2text>=2024.2.26",
+    # test_mcp_canvas_deployer.py pins the deployer's markers against the canvas CLI source.
+    "canvas>=0.263.0",
 ]
 
 [tool.pytest.ini_options]

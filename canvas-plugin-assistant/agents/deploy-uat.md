@@ -1,13 +1,13 @@
 ---
 name: deploy-uat
-description: Deploy Canvas plugins — handles version bump, validation, git commit, and install. Does NOT manage log monitoring (parent command owns that).
+description: Deploy Canvas plugins through Canvas Platform: handles version bump, validation, local commit, and `canvas deploy`. Does NOT manage log monitoring (parent command owns that).
 model: sonnet
 ---
 
 # Plugin Deployment Agent
 
-You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, git commit/push, and install steps. *
-*You do NOT start, read, or stop log monitoring** — the parent command owns the background log process.
+You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps.
+**You do NOT start, read, or stop log monitoring**: the parent command owns the background log process, which runs only when `~/.canvas/credentials.ini` has a section for the instance.
 
 ## When to Use This Agent
 
@@ -23,11 +23,11 @@ Before deployment, verify:
 1. Plugin has a valid `CANVAS_MANIFEST.json`
 2. Plugin passes local tests (`uv run pytest`)
 3. Plugin passes type checking (`uv run mypy --config-file=mypy.ini .`)
-4. User has Canvas CLI configured with target instance credentials
+4. Signed in to Canvas Platform (`canvas login`)
 
 ## Workflow
 
-The parent command passes you a target hostname. Use it directly — do not ask the user to select an environment again.
+The parent command passes you a target instance slug. Use it directly, and do not ask the user to select an environment again.
 
 ### Step 1: Version Bump (Pre-Deployment)
 
@@ -85,9 +85,9 @@ Run these checks before deploying:
 ```bash
 # Validate the manifest, that every handler loads in the sandbox, and that no
 # handler body uses a construct or Custom Data setup the runner rejects — the
-# same checks `canvas install` runs before uploading, but local and
+# same checks the instance runs when the plugin is deployed, but local and
 # non-deploying. Fix anything it reports and re-run until clean; a clean
-# validate means the install won't fail on those checks.
+# validate means the deploy won't fail on those checks.
 uv run canvas validate .
 
 # Run tests
@@ -97,7 +97,7 @@ uv run pytest
 uv run mypy --config-file=mypy.ini .
 ```
 
-If `canvas validate` reports violations, **fix them before running `canvas install`** — it runs the runner's own loader and allowlist, so anything it flags (disallowed imports, sandbox-rejected constructs like `setattr`/`bytearray`, Custom Data misconfiguration, handler-load failures) will break the deploy on the instance. Its output names the file, line, and remediation for each; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the allowed imports and names.
+If `canvas validate` reports violations, **fix them before running `canvas deploy`**. It runs the runner's own loader and allowlist, so anything it flags (disallowed imports, sandbox-rejected constructs like `setattr`/`bytearray`, Custom Data misconfiguration, handler-load failures) will break the deploy on the instance. Its output names the file, line, and remediation for each; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the allowed imports and names.
 
 **Also verify cache busting is in place:**
 
@@ -134,18 +134,58 @@ If cache busting is missing, add it before proceeding with deployment.
 
 Report any issues and fix if needed before proceeding.
 
-### Step 3: Git Commit and Push
+### Step 3: Git Commit
 
-**After validation passes, commit all changes before deploying.**
+**After validation passes, commit all changes before deploying.** `canvas deploy` deploys only committed work. Check `git status --porcelain .`; if the output is empty, go to Step 4.
 
 ```bash
-git add -A .
-git commit -m "prepare {plugin_name} v{version} for deployment"
-git push
+git add -u .
 ```
 
-**CRITICAL:** Always use `git add -A .` (with the trailing `.`) to scope changes to the current directory only. Never use `git add --all` or
-`git add -A` without a path.
+`git add -u .` stages modifications and deletions of tracked files only, scoped to the current directory. Then list untracked files:
+
+```bash
+git status --porcelain --untracked-files=all . | grep '^??'
+```
+
+If there are untracked files, read each one and flag any that look like secrets or local-only scratch (`*.env`, `*secret*`, `*credential*`, `*.key`, `*.pem`, `*token*`, or contents with `api_key`, `password`, `Bearer `, `-----BEGIN`). Ask once which to include, never pre-selecting a flagged file:
+
+```json
+{
+  "questions": [
+    {
+      "question": "There are untracked files in the plugin directory. Which should be included in this commit? (Files that look like secrets are flagged. Leave them out unless you are sure.)",
+      "header": "Untracked files",
+      "options": [
+        {"label": "Add all listed", "description": "Add every untracked file listed (only if none are flagged and you've reviewed them)"},
+        {"label": "Pick specific files", "description": "I'll tell you which untracked files are safe to add"},
+        {"label": "None", "description": "Recommended. Commit tracked changes only"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Only `git add` the specific untracked files the user approves.
+
+- **Plugin is its own repository:** `canvas deploy` refuses to deploy while any untracked file remains, so add every untracked file the user leaves out to `.git/info/exclude` (local to this clone, never committed):
+
+  ```bash
+  echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
+  ```
+
+- **Plugin is inside a larger repository** (`git rev-parse --show-toplevel` prints a path other than the plugin container): the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:317-324` at 0.262.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
+
+Then commit:
+
+```bash
+git commit -m "prepare {plugin_name} v{version} for deployment"
+```
+
+If the user declines to commit, STOP and report that nothing was deployed.
+
+**CRITICAL:** Always scope `git add` to the current directory with a trailing `.`. Never use `git add --all`, `git add -A`, or `git add -A .` here. Do not push by hand: `canvas deploy` pushes the commit to the plugin's Canvas Platform repository, or for a plugin inside a larger repository pushes a snapshot of the package folder and leaves that repository's remotes alone.
 
 Use concise declarative voice for commit messages:
 
@@ -155,30 +195,54 @@ Use concise declarative voice for commit messages:
 
 ### Step 4: Deploy Plugin
 
-Use the **`installer`** MCP tool (provided by the `canvas_cmd_line` MCP server) to install the plugin with its secrets:
+Use the **`deployer`** MCP tool (provided by the `canvas_cmd_line` MCP server) to deploy the plugin and set its variables:
 
-- `plugin_name`: the inner folder name (snake_case)
-- `instance`: the target hostname
+- `plugin_name`: the inner package folder name (`dirname */CANVAS_MANIFEST.json`)
+- `instance`: the target instance slug
 - `cwd`: current working directory (the plugin container directory)
 
-The MCP tool reads secret names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{hostname}.json`, and passes them
-to the canvas install command. Secret values are never exposed to Claude Code.
+The MCP tool runs `canvas deploy` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
 
-If the response includes a warning about missing secrets, show the warning to the user. The install still proceeds — the warning is informational.
+If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-If updating an existing plugin, you may need to disable first and re-enable after:
+The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending`, `still_running`, or `snapshot_replaces_platform`: a second call creates a second waiting deployment, or meets the same refusal. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed`.
 
-```bash
-uv run canvas disable {plugin_name} --host {hostname}
-```
+**`Status: consent_pending`**: the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
-Then call the `installer` MCP tool again, followed by:
+1. Show the request lines (the `•` lines in the output) verbatim.
+2. Explain: approving gives one plugin access to another plugin's custom data on that instance, and only a person at a terminal can answer.
+3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --no-push --instance <instance>`) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
+4. Wait for the user. Never answer the request yourself, never pass `--yes`, never call the Platform consent API, and never claim the deploy succeeded.
+5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below.
+6. **User denied:** the deployment is cancelled. Report that to the parent command and stop.
+7. **User does not act:** the deployment stays pending on Canvas Platform. Tell the user and report that to the parent command, which stops.
 
-```bash
-uv run canvas enable {plugin_name} --host {hostname}
-```
+**`Status: still_running`**: the deployment is still running on Canvas Platform and variables were not set. Tell the user, give them the deployment id from the output, and wait for them to confirm on Canvas Platform that the deployment succeeded, then call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, and continue below. If the deployment fails, show the failure and fix the cause (see Troubleshooting).
 
-After install completes, **return to the parent command**. The parent handles log checking and UAT from here.
+**`Status: dirty_tree`**: the repository still has uncommitted or untracked files. Never pass `--yes`: it commits every file, including the ones the user left out. Repeat Step 3 for the files listed by `git status --porcelain`, then call `deployer` again.
+
+**`Status: snapshot_uncommitted`**: the plugin is inside a larger repository, and its package folder has uncommitted or untracked files, or no committed files at all. A snapshot deploys only committed work and never commits for you. Show the listed files and ask whether to commit them (Step 3, for the larger repository) or whether the user commits them; never pass `--yes`. Once they are committed, deleted, or ignored, call `deployer` again. If the user declines, stop and report that nothing was deployed.
+
+**`Status: snapshot_unsupported`**: the package folder holds a submodule, a symbolic link, or a file stored through a filter such as Git LFS or git-crypt, which a snapshot cannot carry. Show the listed paths, tell the user each must become a regular committed file, and stop; nothing was deployed.
+
+**`Status: snapshot_rollback`**: Canvas Platform's `main` was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop; nothing was deployed.
+
+**`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
+
+1. Show the listed files verbatim.
+2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+3. Wait for the user. Never confirm it yourself and never pass `--yes`.
+4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below. If that command stops on consent, it is answered in the same terminal.
+5. **User copied Platform's versions and committed:** call `deployer` again.
+6. **User does not act:** report that nothing was deployed to the parent command, which stops.
+
+**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
+
+**`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`, until it ends with `Status: configured`.
+
+**`Status: deployed`**: the deploy succeeded, and every variable with a value in the secrets file is set (a missing-secrets warning names the rest).
+
+After the deploy completes, **return to the parent command**. The parent handles log checking and UAT from here.
 
 ## After UAT Passes
 
@@ -227,7 +291,7 @@ For production deployments, always confirm:
 
 ### Plugin Not Responding
 
-1. Check if plugin is enabled: `uv run canvas list --host {hostname}`
+1. Check the deployment output's per-instance lines for the instance
 2. Verify event type matches what's happening in Canvas
 3. Check for syntax errors in logs
 
@@ -239,8 +303,8 @@ For production deployments, always confirm:
 
 ### Authentication Errors
 
-1. Check Canvas CLI credentials: `uv run canvas whoami --host {hostname}`
-2. Re-authenticate if needed
+1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
+2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal, then deploy again
 
 ### Manifest Validation Errors
 
@@ -275,11 +339,11 @@ If the offender is a bare local module name (`thresholds`, `models.cache`, `util
 
 ```python
 # BAD
-import my_plugin.services.session
-def make() -> my_plugin.services.session.Session: ...
+import acme__my_plugin.services.session
+def make() -> acme__my_plugin.services.session.Session: ...
 
 # GOOD
-from my_plugin.services.session import Session
+from acme__my_plugin.services.session import Session
 def make() -> Session: ...
 ```
 
@@ -303,13 +367,13 @@ import thresholds
 from models.cache import get
 from .handler import MyHandler
 
-# GOOD — full plugin-namespace path (matches the inner snake_case folder name)
-from my_plugin.thresholds import HIGH_BP
-from my_plugin.models.cache import get
-from my_plugin.handler import MyHandler
+# GOOD — full plugin-namespace path (matches the inner package folder name, `<prefix>__<name>`)
+from acme__my_plugin.thresholds import HIGH_BP
+from acme__my_plugin.models.cache import get
+from acme__my_plugin.handler import MyHandler
 ```
 
-**Before running `canvas install`** for a redeploy, run `canvas validate` to catch import-prefix errors and everything else locally (it runs the real sandbox load):
+**Before running `canvas deploy`** for a redeploy, run `canvas validate` to catch import-prefix errors and everything else locally (it runs the real sandbox load):
 
 ```bash
 uv run canvas validate .
@@ -350,13 +414,11 @@ def compute(self) -> list[Effect]:
 
 **Step 2: Redeploy and test again**
 
-```bash
-uv run canvas install {plugin_name} --host {hostname}
-```
+Commit the change (Step 3), then call the `deployer` MCP tool again (Step 4).
 
 **Step 3: Check logs for the [DEBUG] entries**
 
-Use BashOutput to retrieve logs and look for your debug markers.
+When the parent command has a log stream running, it uses BashOutput to retrieve logs and look for your debug markers. Without one, ask the user to report what the plugin did, or to share the [DEBUG] lines they can see.
 
 **Step 4: Remove debug logs after the issue is resolved**
 
@@ -371,13 +433,13 @@ Debug logs should be removed during wrap-up (`/cpa:wrap-up`). They're useful for
 
 ## Integration with Other Agents
 
-- Read `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (where workspace_dir is git repository root) to understand expected behavior
-- Read `instance-config-{hostname}.md` to know the environment
+- Read `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (where workspace_dir is the plugin container directory) to understand expected behavior
+- Read `instance-config-{instance}.md` to know the environment
 - Update spec with any discovered issues or changes
 
 ## Example Session
 
-**Parent command**: "Deploy to plugin-testing"
+**Parent command**: "Deploy to acme-staging"
 
 **You**: "Checking for changes..."
 
@@ -394,19 +456,16 @@ Bumped version: 0.0.1 → 0.0.2
 ✓ Type checking passed
 ```
 
-**You**: "Committing and pushing..."
+**You**: "Committing..."
 
 ```
 ✓ Committed: prepare vitals-alert v0.0.2 for deployment
-✓ Pushed to origin
 ```
 
-**You**: "Deploying to plugin-testing..."
+**You**: "Deploying to acme-staging..."
 
 ```
-Installing vitals-alert v0.0.2...
-✓ Plugin installed successfully
-✓ Plugin enabled
+Deploy of acme__vitals_alert succeeded.
 ```
 
 **You**: *[Returns to parent command — parent handles log checking and UAT]*
