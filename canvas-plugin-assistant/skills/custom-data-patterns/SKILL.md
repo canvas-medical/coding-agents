@@ -15,6 +15,7 @@ Invoke this skill **proactively** as soon as Custom Data is involved — don't w
 - You are about to write or edit code that uses `AttributeHub`
 - You are adding relationships (ForeignKey, OneToOneField, ManyToManyField) to SDK models
 - You are setting up the plugin directory structure and it will include CustomModels
+- The plan reads or writes a namespace another plugin created (see section 17: prefer the owner plugin's own route for writes, and settle the join's approval or key before building)
 - Reviewing existing plugin code that uses Custom Data
 
 ## Quick Reference
