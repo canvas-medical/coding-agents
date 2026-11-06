@@ -47,7 +47,34 @@ Resolve the deployment target **before** delegating to the agent — the parent 
 
 Save the resolved hostname — you will pass it to the agent and use it for log monitoring.
 
-### Step 3: Start Log Monitoring (BEFORE install)
+### Step 3: Reference Review
+
+Run this before log monitoring starts so a blocking finding never leaves a log tail running.
+
+Set `ARTIFACTS` to `$CPA_PLUGIN_DIR/.cpa-workflow-artifacts`, where `/cpa:new-plugin` moves the artifacts once the plugin exists. If only `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts` holds `existing-plugins-reference.md`, it may belong to another plugin in progress: ask the user whether it is this plugin's, and move that folder into `$CPA_PLUGIN_DIR` only if it is. If `$ARTIFACTS` holds no contract, or its `## PATTERNS` section is `None.`, skip to Step 4.
+
+Use the **reference-reviewer** agent with this brief:
+
+```
+contract: $ARTIFACTS/existing-plugins-reference.md
+ledger: $ARTIFACTS/reference-review.json
+repo: $CPA_PLUGIN_DIR
+base_sha: <plugin_sha of the last ledger entry marked "deployed": true, or empty>
+head_sha: <output of git rev-parse HEAD>
+prior_findings: <findings already in the ledger, with their dispositions>
+deviations: $ARTIFACTS/plugin-spec.md
+```
+
+The reviewer diffs `base_sha` against the working tree, so uncommitted changes that this deploy is about to ship are reviewed too.
+
+- If it returns no findings and its ledger entry has a `findings` key (a completed review, not a `review skipped` entry), add `"deployed": true` to the entry and continue. A skipped review is never marked deployed, so its changes stay in the next diff.
+- If it returns findings, show them and ask the user whether to fix first or deploy anyway.
+  - **Fix first:** stop the deploy here, leaving the entry without `deployed`. Fix the code, then run `/cpa:deploy` again. Only deployed reviews are a base, so the rerun diffs from the last deployed review and re-raises whatever still deviates.
+  - **Deploy anyway:** set each finding's `disposition` to `declined: <reason>`, add `"deployed": true` to the entry, and continue.
+  - Whenever a finding gets a disposition, give the same disposition to every earlier finding in the ledger for the same pattern and build file that has none.
+- If the reviewer fails without writing a ledger entry, append `{"plugin_sha": "<head_sha>", "status": "review skipped: <reason>"}` to the ledger and continue.
+
+### Step 4: Start Log Monitoring (BEFORE install)
 
 **Start log monitoring in the parent context** so the background process survives the agent lifecycle.
 
@@ -59,7 +86,7 @@ unbuffer uv run canvas logs --host {hostname}
 
 Save the `bash_id` — you will use it later to check logs. This captures installation errors and runtime behavior.
 
-### Step 4: Deploy via Agent
+### Step 5: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, git commit/push, and install. Pass the resolved hostname so the agent does not need to ask again.
 
@@ -67,7 +94,7 @@ Tell the agent: "Deploy to {hostname}".
 
 The agent will return when the install is complete.
 
-### Step 5: Post-Deployment Log Check
+### Step 6: Post-Deployment Log Check
 
 After the agent returns and the install is complete, check the logs **in the parent context** (you own the background process).
 
@@ -78,10 +105,10 @@ After the agent returns and the install is complete, check the logs **in the par
    1. Stop log monitoring (KillShell)
    2. Show the errors to the user
    3. Analyze root cause and fix the code
-   4. Re-deploy (repeat from step 3)
+   4. Re-deploy (repeat from step 3, so the fix is reviewed too)
 5. **If no errors:** leave log monitoring running and continue to UAT
 
-### Step 6: UAT
+### Step 7: UAT
 
 Log monitoring is still running in the background (owned by this parent context).
 

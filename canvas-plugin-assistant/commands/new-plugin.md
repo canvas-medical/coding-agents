@@ -61,7 +61,7 @@ This command handles three scenarios:
 
 ---
 
-Use the **plugin-brainstorm** agent for the full workflow from spec to deployment, or in **update mode** for modifying existing plugins.
+Use the **plugin-brainstorm** agent for the full workflow from spec to deployment, or in **update mode** for modifying existing plugins. In Phase 1 the command itself asks the questions and runs the reference-finder, and hands plugin-brainstorm only the spec writing (step 7), because a subagent cannot launch the finder.
 
 ### Phase 1: Gather Requirements
 
@@ -75,12 +75,29 @@ Use the **plugin-brainstorm** agent for the full workflow from spec to deploymen
    - What should trigger the plugin?
    - What should the plugin create or do?
 5. Map answers to Canvas SDK concepts (events, effects)
-6. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification
-7. Wait for user approval before any implementation
+6. Unless step 3 found the need fully covered natively (then skip steps 6 to 8), use the **reference-finder** agent to find and read the closest reference plugins:
+
+   ```
+   pass: 1
+   problem: <what the plugin does: domain, task, surface, trigger events, effects, data read and written>
+   output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+   ```
+
+7. Write a `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` file with the specification. Launch plugin-brainstorm with the problem, the native-coverage result and the answers from steps 2-5, and tell it they are already answered so it asks nothing. It reads `existing-plugins-reference.md` and cites the adopted pattern IDs; tell it to keep each concern under its own `##` section and to return once the spec is written, because approval comes at step 9, after the mapping.
+8. Use the **reference-finder** agent again to map the patterns to the spec:
+
+   ```
+   pass: 2
+   problem: <same as pass 1>
+   output: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/existing-plugins-reference.md
+   plan: $CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md
+   ```
+
+9. Wait for user approval before any implementation. If the user's feedback changes the spec's `##` headings, run step 8 again before approval.
 
 If `$CPA_WORKSPACE_DIR/.cpa-workflow-artifacts/plugin-spec.md` already exists, ask if they want to:
 - Start fresh (replace it)
-- Continue refining the existing spec
+- Continue refining the existing spec. Keep the existing `existing-plugins-reference.md` (skip step 6, so its pattern IDs stay stable) and run step 8 after the spec changes.
 
 ### Phase 2: Scaffold Plugin (after user approves spec)
 
