@@ -179,7 +179,17 @@ uv run canvas --version
 - **If works**: Report the Canvas CLI version
 - **If fails**: Note that Canvas CLI will be installed when creating a plugin (it's a dependency)
 
-### 9. Check Claude Model
+### 9. Check the style toolchain
+
+```bash
+uv run --no-project --with ruff==0.15.14 ruff --version
+uv run --no-project --with "mypy>=1.19.0,<2" mypy --version
+```
+
+- **If both print a version**: Report "Style toolchain resolves (ruff, mypy)" and continue
+- **If either fails**: Report which one, and that `/cpa:style` cannot produce a verdict until it resolves. Both are fetched on demand rather than installed, so this needs uv to reach its package index; it does not need either tool on PATH.
+
+### 10. Check Claude Model
 
 Identify which Claude model you are currently running (you know this from your system context).
 
@@ -194,7 +204,7 @@ Identify which Claude model you are currently running (you know this from your s
   To switch, use the /model command or update your .claude/settings.json file to set "model": "opus".
   ```
 
-### 10. Report Results
+### 11. Report Results
 
 If all checks pass, report:
 
@@ -225,8 +235,9 @@ If any checks fail, summarize what needs to be fixed before proceeding and provi
 This command is the **first step** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools  ← YOU ARE HERE
+/cpa:check-setup      →  Verify environment tools (uv, unbuffer)  ← YOU ARE HERE
 /cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
