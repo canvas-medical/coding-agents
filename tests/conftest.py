@@ -48,6 +48,10 @@ sys.path.insert(0, str(tests_dir))
 scripts_dir = Path(__file__).parent.parent / "canvas-plugin-assistant" / "scripts"
 sys.path.insert(0, str(scripts_dir))
 
+# Add the quality directory to sys.path for the rule-manifest validator
+quality_dir = Path(__file__).parent.parent / "canvas-plugin-assistant" / "quality"
+sys.path.insert(0, str(quality_dir))
+
 
 def is_dataclass(cls: type, fields: dict) -> bool:
     """

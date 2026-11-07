@@ -1,0 +1,262 @@
+# Plugin-quality rule manifest — SINGLE SOURCE OF TRUTH (SSOT).
+#
+# One taxonomy, two expressions:
+#   - TEACH: each rule's `teach_ref` points into a CPA skill section.
+#   - CATCH: each rule's `detector` is code-generated into a lint check (M4).
+#
+# Recorded decisions (M0):
+#   - HOME: this file is sourced here in coding-agents/canvas-plugin-assistant,
+#     next to the skills its teach_refs reference. A generated lint artifact is
+#     vendored into canvas-plugins in M4 (generated code, never this YAML), so
+#     `canvas validate`'s hot path never parses YAML. NOTE: coding-agents and
+#     canvas-plugins are BOTH public repos, so keep this file public-safe —
+#     generic, OWASP-standard defect patterns only, never customer detail.
+#   - DELIVERY: lint detectors are CODE-GENERATED from this manifest (M4), not
+#     read at runtime. Generation is fast, diff-reviewable, and tripwire-testable
+#     (regenerate + `git diff --exit-code`).
+#
+# M0 records the taxonomy and validates it. It does NOT change lint behavior and
+# does NOT author skills. `teach_ref` may forward-reference skills not yet
+# authored (see forward_ref_skills); the anchor is recorded now, the skill lands
+# in M2. Detector `pattern` for regex types is a seed that must compile; ast /
+# whole_plugin patterns are descriptive specs the M4 generator implements.
+#
+# Schema per rule:
+#   rule_id        unique, matches [A-Z]{2,}(-[A-Z0-9]+)+-\d{3}
+#   title          one line
+#   axis           security | performance | memory | correctness
+#   severity       block | nudge
+#   stages[]       subset of: discovery, initial_build, iteration, final_review, published
+#   delivery       push | pull
+#   always_on      bool — true only for the irreducible core one-liners
+#   detector       {type: regex|ast|whole_plugin, pattern: <seed regex | spec>}
+#   teach_ref      "<skill>#<section-anchor>"
+#   fix            short BAD / GOOD / Action
+#   runtime_signal query_count | peak_rss | latency | none  (the M1 oracle metric)
+
+version: 1
+
+# Skills a teach_ref may point at before they exist (authored in M2).
+forward_ref_skills:
+  - llm-integration
+  - memory
+
+rules:
+  - rule_id: PERF-N1-001
+    title: Query or reverse-relation access inside a loop (N+1)
+    axis: performance
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: ast
+      pattern: >-
+        For/comprehension whose body accesses a related manager or issues a
+        queryset call (.all/.filter/.get/.count) on the loop variable
+    teach_ref: "database-performance#quick-detection"
+    fix: |
+      BAD:  for a in appointments: a.patient.first_name        # 1 query per row
+      GOOD: Appointment.objects.select_related("patient")       # 1 query total
+      Action: hoist related lookups out of the loop with select_related / prefetch_related.
+    runtime_signal: query_count
+
+  - rule_id: PERF-UNBOUNDED-001
+    title: Unbounded .objects.all()/list() over patient data without slice or .iterator()
+    axis: performance
+    severity: nudge
+    stages: [discovery, initial_build, iteration, final_review]
+    delivery: push
+    always_on: true
+    detector:
+      type: regex
+      pattern: '\.objects\.all\(\)(?!\s*[.\[])'
+    teach_ref: "database-performance#quick-detection"
+    fix: |
+      BAD:  rows = list(Model.objects.all())                    # materializes every row
+      GOOD: for row in Model.objects.iterator(chunk_size=500):  # bounded memory
+      Action: slice, paginate, or .iterator() every scan; never materialize an unbounded set.
+    runtime_signal: peak_rss
+
+  - rule_id: PERF-BLOB-001
+    title: Blob-column hydration without defer/only/values
+    axis: performance
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: regex
+      pattern: '\b\w*(?:_body|_json|payload|content)\b'
+    teach_ref: "database-performance#quick-detection"
+    fix: |
+      BAD:  notes = Note.objects.all()                          # hydrates _body on every row
+      GOOD: Note.objects.defer("_body")  /  .only("id", "dbid")
+      Action: defer/only large text/JSON columns (_body, *_json, payload, content) you don't read.
+    runtime_signal: peak_rss
+
+  - rule_id: PERF-HTTP-BLOCK-001
+    title: Synchronous HTTP call in a handler compute path
+    axis: performance
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: regex
+      pattern: '\b(?:requests\.(?:get|post|put|patch|delete)|urllib\.request\.urlopen|httpx\.(?:get|post))\b'
+    teach_ref: "plugin-patterns#quick-reference"
+    fix: |
+      BAD:  requests.get(url) inside compute()                  # blocks the handler / EHR request
+      GOOD: move the call off the request path (task/effect) or bound it with a tight timeout.
+      Action: never make an unbounded blocking network call in a synchronous handler.
+    runtime_signal: latency
+
+  - rule_id: PERF-EFFECT-FANOUT-001
+    title: Effects emitted in a loop over a queryset (64MB effect-batch ceiling)
+    axis: performance
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: ast
+      pattern: >-
+        For over a queryset whose body appends/returns an Effect (originate/apply),
+        with no bound on the queryset size
+    teach_ref: "database-performance#the-four-failure-modes"
+    fix: |
+      BAD:  for row in qs: effects.append(Something(...).originate())   # unbounded batch
+      GOOD: bound the queryset and cap the batch well under the 64MB effect ceiling.
+      Action: limit effect fan-out; a per-row effect over an unbounded queryset breaches the batch limit.
+    runtime_signal: peak_rss
+
+  - rule_id: MEM-CACHE-ACCUM-001
+    title: Cache-blob accumulation across cron ticks
+    axis: memory
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: whole_plugin
+      pattern: >-
+        cache get -> append/concat -> set of a value that grows monotonically
+        across CronTask invocations, with no eviction or size cap
+    teach_ref: "memory#cache-accumulation"
+    fix: |
+      BAD:  data = cache.get(k, []) + [new]; cache.set(k, data)  # grows forever
+      GOOD: cap size / evict old entries / store a bounded window.
+      Action: never accumulate into a cache blob across ticks without a hard size bound.
+    runtime_signal: peak_rss
+
+  - rule_id: CRON-FREQ-001
+    title: CronTask with a very frequent SCHEDULE and a heavy or no-op body
+    axis: performance
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: whole_plugin
+      pattern: >-
+        CronTask subclass whose SCHEDULE fires more often than a threshold while
+        compute() does heavy work (queries/effects) or nothing at all
+    teach_ref: "database-performance#performance-checklist"
+    fix: |
+      BAD:  SCHEDULE = "* * * * *" with a full-table scan each minute
+      GOOD: widen the interval, or gate the body so most ticks are cheap.
+      Action: match cron frequency to the work; a heavy body on a tight schedule is sustained load.
+    runtime_signal: latency
+
+  - rule_id: SEC-XSS-001
+    title: "|safe on user- or patient-controlled template input"
+    axis: security
+    severity: block
+    stages: [initial_build, iteration, final_review]
+    delivery: push
+    always_on: false
+    detector:
+      type: regex
+      pattern: '\|\s*safe\b'
+    teach_ref: "plugin-api-server-security#security-checklist"
+    fix: |
+      BAD:  {{ user_value|safe }}                               # renders raw HTML -> XSS
+      GOOD: drop |safe; let autoescaping run, or sanitize server-side first.
+      Action: never mark user/patient-controlled text |safe.
+    runtime_signal: none
+
+  - rule_id: SEC-AUTH-TRUE-001
+    title: authenticate() returns True / "any logged-in" without a patient-scope check
+    axis: security
+    severity: block
+    stages: [discovery, initial_build, iteration, final_review]
+    delivery: push
+    always_on: true
+    detector:
+      type: ast
+      pattern: >-
+        authenticate()/Authentication.authenticate whose body returns True
+        unconditionally or checks only "is authenticated" with no patient/record scope
+    teach_ref: "plugin-api-server-security#best-practice-use-authentication-mixins"
+    fix: |
+      BAD:  def authenticate(self, ...): return True            # exposes every patient
+      GOOD: verify the credential AND that the caller is scoped to the requested patient/record.
+      Action: authenticate the caller and authorize the specific patient scope.
+    runtime_signal: none
+
+  - rule_id: SEC-SECRET-CMP-001
+    title: Secret compared with == (non-constant-time)
+    axis: security
+    severity: nudge
+    stages: [initial_build, iteration, final_review]
+    delivery: push
+    always_on: false
+    detector:
+      type: regex
+      pattern: '(?i)\b(?:secret|token|api_?key|password|signature)\w*\s*=='
+    teach_ref: "plugin-api-server-security#security-checklist"
+    fix: |
+      BAD:  if token == expected:                               # timing side-channel
+      GOOD: if hmac.compare_digest(token, expected):
+      Action: compare secrets/tokens/signatures with a constant-time comparison.
+    runtime_signal: none
+
+  - rule_id: SEC-PHI-LLM-001
+    title: Raw patient/EHR text sent to an external LLM outside the SDK client
+    axis: security
+    severity: block
+    stages: [discovery, initial_build, iteration, final_review]
+    delivery: push
+    always_on: true
+    detector:
+      type: ast
+      pattern: >-
+        Patient/EHR-derived text passed to a non-SDK LLM call (openai/anthropic/
+        google.generativeai/litellm/raw httpx to a model endpoint) rather than
+        canvas_sdk.clients.llms
+    teach_ref: "llm-integration#phi-to-provider"
+    fix: |
+      BAD:  openai.ChatCompletion.create(messages=[{"content": transcript}])
+      GOOD: use canvas_sdk.clients.llms so provider routing / BAA boundaries hold.
+      Action: never send raw patient/EHR text to an external LLM outside the SDK client.
+    runtime_signal: none
+
+  - rule_id: CORR-EFFECT-ORIGINATE-001
+    title: Reading persisted state in-request after originate()
+    axis: correctness
+    severity: nudge
+    stages: [initial_build, iteration]
+    delivery: push
+    always_on: false
+    detector:
+      type: ast
+      pattern: >-
+        A read/query of a record in the same handler AFTER calling originate()
+        on it, assuming the effect has already persisted
+    teach_ref: "plugin-patterns#quick-reference"
+    fix: |
+      BAD:  x.originate(); y = Model.objects.get(id=x.id)       # effect not yet applied
+      GOOD: carry the value forward; don't read back an effect within the same request.
+      Action: originate() enqueues an effect; it is not persisted synchronously — don't read it back in-request.
+    runtime_signal: none
