@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Evidence</title>
+  </head>
+  <body>
+    <p class="summary">{{ summary|linebreaksbr }}</p>
+    <h3>Sources</h3>
+    <ol>
+      {% for c in citations %}
+        <li><a href="{{ c.citation_url }}" target="_blank" rel="noopener noreferrer">{{ c.title }}</a></li>
+      {% endfor %}
+    </ol>
+  </body>
+</html>

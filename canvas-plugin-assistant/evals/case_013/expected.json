@@ -1,0 +1,19 @@
+{
+  "eval_name": "case_013",
+  "review_command": "security-review",
+  "description": "Template renders a constant SVG icon with |safe beside free-text condition notes with |safe; only the notes are a finding",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "templates/problems.html renders {{ condition.notes|safe }} (free-text Condition.notes) unescaped, a stored XSS; fix is plain escaping or |linebreaksbr (or |sanitize_html)",
+      "must_detect": true
+    }
+  ],
+  "must_not_flag": [
+    {
+      "description": "{{ icon|safe }}, where icon is the module-level ICON_SVG constant in api/problems.py"
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

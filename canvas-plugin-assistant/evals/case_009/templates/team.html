@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Care Team</title>
+  </head>
+  <body>
+    <input id="search" type="search" placeholder="Patient last name">
+    <div id="results"></div>
+    <p>Selected: <span id="selected"></span></p>
+    <script>
+      let selectedPatient = null;
+
+      function pickPatient(id, name) {
+        selectedPatient = { id, name };
+        document.getElementById("selected").textContent = name;
+        document.getElementById("results").replaceChildren();
+      }
+
+      document.getElementById("search").addEventListener("input", async (event) => {
+        const response = await fetch(
+          `/plugin-io/api/eval_case_009/team/patients?q=${encodeURIComponent(event.target.value)}`,
+        );
+        document.getElementById("results").innerHTML = await response.text();
+      });
+    </script>
+  </body>
+</html>
