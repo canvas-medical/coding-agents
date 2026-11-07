@@ -56,7 +56,25 @@ INNER=$(echo "$CONTAINER" | tr '-' '_')
 
 ---
 
-### 1. Security Review
+### 1. UI Design System Validation
+
+Check if the plugin serves HTML pages:
+
+```bash
+INNER=$(basename "$PWD" | tr '-' '_')
+grep -rn "HTMLResponse\|render_to_string" --include="*.py" "$INNER/" 2>/dev/null
+ls "$INNER"/static/*.html "$INNER"/templates/*.html 2>/dev/null
+```
+
+**If HTML pages exist:**
+- Invoke the **plugin-ui** skill
+- Run the validation checklist (phases 0 through 6) from the skill's `references/validation-checklist.md`
+- This checks palette compliance, web component usage, toggle and submit prohibition, ARIA mirroring, touch targets, right pane padding, token usage, banner voice and copy, loading and empty state handling, tab panel scroll wrapping, and date input usage
+- Report any violations found
+
+**If no HTML pages:** Mark UI validation as N/A.
+
+### 2. Security Review
 
 Run the comprehensive security review command:
 
@@ -72,7 +90,7 @@ This covers:
 
 The command saves a report to `.cpa-workflow-artifacts/` and offers to fix any issues found.
 
-### 2. Database Performance Review
+### 3. Database Performance Review
 
 Check if the plugin queries Canvas data models:
 
@@ -89,7 +107,7 @@ grep -rn "\.objects\." --include="*.py" .
 
 **If no data queries:** Mark database performance as N/A.
 
-### 3. Type checking
+### 4. Type checking
 
 ```bash
 uv run mypy --config-file=mypy.ini .
@@ -97,7 +115,7 @@ uv run mypy --config-file=mypy.ini .
 
 **If errors exist:** Flag this as a blocker.
 
-### 4. Test Coverage
+### 5. Test Coverage
 
 Run coverage check:
 
@@ -113,7 +131,7 @@ uv run pytest --cov=. --cov-report=term-missing --cov-branch
 
 **If no tests exist:** Flag this as a blocker.
 
-### 5. Debug Log Cleanup
+### 6. Debug Log Cleanup
 
 Check for debug logging statements that were added during UAT troubleshooting:
 
@@ -146,7 +164,7 @@ log.info(f"[DEBUG] Entering compute()")  # Only useful during debugging
 print(f"vitals: {vitals}")  # Should use logger, and too verbose
 ```
 
-### 6. Dead Code Removal
+### 7. Dead Code Removal
 
 Identify and remove unused code:
 
@@ -191,7 +209,7 @@ Check that all test files test code that still exists:
 
 **Remove dead code rather than commenting it out.** Git history preserves old code if needed.
 
-### 7. Cache Busting Verification
+### 8. Cache Busting Verification
 
 **If the plugin serves HTML content**, verify cache busting is properly implemented.
 
@@ -232,7 +250,7 @@ ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py"
 
 **If no HTML content:** Mark as N/A.
 
-### 8. WebSocket Deploy Resilience
+### 9. WebSocket Deploy Resilience
 
 **If the plugin uses a WebSocket** (a `WebSocketAPI` handler, a `Broadcast` effect, or client-side `new WebSocket(...)`), verify it's built to survive Canvas's daytime blue/green deploys. A deploy closes every live socket mid-session and clients reconnect onto a freshly booted process, so a socket that works in testing can silently lose updates or hammer the new container in production.
 
@@ -270,7 +288,7 @@ Full rationale and worked client code are in the **canvas-sdk** skill ("WebSocke
 
 **If no WebSocket:** Mark as N/A.
 
-### 9. README Review
+### 10. README Review
 
 Read the plugin's README.md and verify:
 
@@ -294,7 +312,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 10. Application Icon Check
+### 11. Application Icon Check
 
 **If the plugin has an Application component, verify it has an icon.**
 
@@ -326,7 +344,7 @@ ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 
 **If no applications:** Mark as N/A.
 
-### 11. License Check
+### 12. License Check
 
 Check for any license file or license mentions:
 
@@ -357,7 +375,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 12. Final Verdict
+### 13. Final Verdict
 
 After all checks, present a summary:
 
@@ -367,6 +385,7 @@ After all checks, present a summary:
 | Check | Status | Notes |
 |-------|--------|-------|
 | Project Structure | ✅ Pass / ❌ Errors | ... |
+| UI Design System | ✅ Pass / ⚠️ Issues / N/A | ... |
 | Plugin API Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | FHIR Client Security | ✅ Pass / ⚠️ Issues / N/A | ... |
 | DB Performance | ✅ Pass / ⚠️ N+1 Issues / N/A | ... |
@@ -412,6 +431,7 @@ cat > "$REPORT_FILE" <<'REPORT_END'
 | Check | Status | Notes |
 |-------|--------|-------|
 | Project Structure | {status} | {notes} |
+| UI Design System | {status} | {notes} |
 | Plugin API Security | {status} | {notes} |
 | FHIR Client Security | {status} | {notes} |
 | DB Performance | {status} | {notes} |
@@ -455,13 +475,13 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 13. Commit Changes (Interactive)
+### 14. Commit Changes (Interactive)
 
 **After all checks pass (or issues are resolved), commit the plugin changes.**
 
 This is done here, in the live session, on purpose — so untracked files can be reviewed and you are asked before anything is staged or pushed. **Never blindly `git add -A` and never push without explicit confirmation.**
 
-**Step 13a — Show what changed:**
+**Step 14a — Show what changed:**
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
@@ -472,7 +492,7 @@ Split the output into:
 - **Tracked changes** (lines starting with ` M`, `M `, `MM`, ` D`, `D `, `R `, etc.) — modifications and deletions of files git already tracks.
 - **Untracked files** (lines starting with `??`) — new files git does not yet track.
 
-**Step 13b — Stage tracked changes only:**
+**Step 14b — Stage tracked changes only:**
 
 ```bash
 git add -u .
@@ -480,7 +500,7 @@ git add -u .
 
 `-u` stages modifications and deletions of already-tracked files and **never** picks up untracked files. This is the safe default: a stray secrets dump, `.env`, or scratch file written during the session is not swept in.
 
-**Step 13c — Review untracked files before including any:**
+**Step 14c — Review untracked files before including any:**
 
 If there are untracked files, do NOT add them automatically. For each one, read it and decide whether it is safe and intended for the repo:
 
@@ -514,13 +534,13 @@ Present the untracked files to the user and ask which (if any) to include. Defau
 
 Only `git add` the specific untracked files the user explicitly approves. If a flagged (possible-secret) file is among them, confirm a second time and suggest adding it to `.gitignore` instead.
 
-**Step 13d — Show the staged diff and commit:**
+**Step 14d — Show the staged diff and commit:**
 
 ```bash
 git diff --cached --stat
 ```
 
-If there is nothing staged, report "no changes to commit" and skip to Step 14. Otherwise commit (replace `{plugin_name}` with the actual name):
+If there is nothing staged, report "no changes to commit" and skip to Step 15. Otherwise commit (replace `{plugin_name}` with the actual name):
 
 ```bash
 git commit -m "complete {plugin_name} wrap-up
@@ -528,7 +548,7 @@ git commit -m "complete {plugin_name} wrap-up
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-**Step 13e — Ask before pushing:**
+**Step 14e — Ask before pushing:**
 
 Pushing is outward-facing and irreversible, so confirm first:
 
@@ -550,7 +570,7 @@ Pushing is outward-facing and irreversible, so confirm first:
 
 Only run `git push` if the user chooses to push.
 
-### 14. Wrap-Up Complete
+### 15. Wrap-Up Complete
 
 **After the commit step, the plugin is ready for this version.**
 
