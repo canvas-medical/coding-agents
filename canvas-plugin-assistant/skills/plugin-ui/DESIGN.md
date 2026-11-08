@@ -11,10 +11,10 @@ The Canvas home-app aesthetic is clinical and dense, not decorative. Screens pri
 Every value and rule below is a default. When the person building the plugin asks for something different, follow the request. See Defaults, Not Mandates in [SKILL.md](SKILL.md).
 
 
-The home-app renders stock Semantic UI 2.4.0 (`home-app/app/static/css/semantic.min.css` in canvas-medical/canvas) with a few Canvas overrides in `home-app/static/scripts/themes/theme.ts` and `home-app/static/styles/`. Every token in `assets/canvas-plugin-ui.css` is marked with its source.
+Most of the home-app still renders stock Semantic UI 2.4.0, but its newest visual work is the note revamp (`home-app/static/scripts/views/components/Note/revamp.scss` in canvas-medical/canvas, behind the `note-revamp:enabled` switch). The revamp keeps Lato and moves to a cool gray scale, a single `#155dfc` blue, 12px cards, and a soft shadow, all from the Tailwind CSS v4 default palette. Plugins follow the revamp so they match where the EMR is heading rather than the Semantic screens it is replacing. Every token in `assets/canvas-plugin-ui.css` is marked with its source.
 
-- **Anchored values** match the home-app exactly: Lato, text sizes, the palette hues, corner radius, border color, control padding, and the active tab treatment. These are what make a plugin read as part of Canvas. Keep them unless the person asks for something else.
-- **Open values** are deliberate improvements over the home-app: the 4px spacing grid, a visible keyboard focus ring, darker button fills so white text passes contrast, consistent control heights, and short transitions. These may be tuned as long as the page still flows with the Canvas UI around it.
+- **Anchored values** come from the note revamp, or from the same Tailwind palette for hues the revamp does not define (green, red, amber), plus the Semantic text sizes the revamp keeps. These are what make a plugin read as part of Canvas. Keep them unless the person asks for something else.
+- **Open values** are deliberate choices with no home-app source: the 4px spacing grid, an 8px corner radius, a visible keyboard focus ring, and short transitions. These may be tuned as long as the page still flows with the Canvas UI around it.
 
 ## Color Palette and Roles
 
@@ -24,20 +24,19 @@ Green is rare. In the home-app, green buttons commit something: lock a note, sen
 
 | Color | Hex | Role |
 |---|---|---|
-| Blue | `#2185d0` | Links, selected states, info badges, the Canvas brand blue |
-| Blue button fill | `#1a69a4` | `canvas-button` default. Canvas blue darkened so white text passes 4.5:1 |
-| Green | `#21ba45` | Success badges, progress |
-| Green button fill | `#16802e` | `canvas-button variant="success"`. Canvas green darkened so white text passes 4.5:1 |
-| Red | `#db2828` | Destructive actions, error badges |
-| Orange | `#f2711c` | Warnings, due-soon and stale indicators |
+| Blue | `#155dfc` | `canvas-button` default fill, links, selected states, info badges. 5.25:1 with white text |
+| Green | `#008236` | `canvas-button variant="success"`, success badges, progress. 4.95:1 with white text |
+| Red | `#c10007` | Destructive actions, error badges. 6.42:1 with white text |
+| Amber | `#bb4d00` | Warnings, due-soon and stale indicators. 5.03:1 with white text |
 | Purple | `#a333c8` | Rare category badges only |
-| Neutral | `#e0e1e2` | Ghost buttons (cancel, dismiss) |
+| Neutral | `#e5e7eb` | Ghost buttons (cancel, dismiss). One step darker than Light Gray so they show on gray footers |
 | White | `#ffffff` | Plugin page background (default), card surfaces, input backgrounds |
-| Light Gray | `#f5f5f5` | Sidebars, opt-in page canvas for peer `canvas-card` collections |
-| Border | `rgba(34,36,38,.15)` | Borders, dividers |
-| Dark Text | `rgba(0,0,0,.87)` | Primary text |
-| Muted Text | `#767676` | Secondary text (only on white backgrounds) |
-| Error text and fill | `#9f3a38` on `#fff6f6`, border `#e0b4b4` | Field errors, error banners |
+| Light Gray | `#f3f4f6` | Sidebars, opt-in page canvas for peer `canvas-card` collections |
+| Border | `#e5e7eb` | Borders, dividers, card outlines |
+| Ink | `#101828` | Headings and primary information |
+| Body Text | `#364153` | Body text |
+| Muted Text | `#6a7282` | Secondary text (only on white backgrounds). 4.84:1 on white |
+| Error text and fill | `#c10007` on `#fef2f2`, border `#ffc9c9` | Field errors, error banners |
 
 ## Typography
 
@@ -99,13 +98,12 @@ Nesting indent is a separate concern from container padding. When a component ne
 
 | Property | Value | Notes |
 |---|---|---|
-| Border-radius | `.28571429rem` | All rounded elements. Canvas baseline default. |
+| Border-radius | `8px` | All rounded elements. Open value between the revamp's 6px controls and 12px cards. |
 | Border width | `1px` | Default for inputs, cards, dividers |
-| Border color | `rgba(34, 36, 38, 0.15)` | The `--color-border` token |
-| Focus ring | `2px solid #85b7d9` | The `--focus-ring` token. Open value: Semantic only recolors the border |
-| Focus ring offset | `1px` | The `--focus-ring-offset` token |
-| Input focus border | `#85b7d9` | Semantic `.ui.input>input:focus` |
-| Shadow | `0 1px 2px 0 rgba(34, 36, 38, 0.15)` | The `--shadow` token, Semantic `.ui.segment` |
+| Border color | `#e5e7eb` | The `--color-border` token, the revamp's card border |
+| Focus ring | `2px solid #155dfc` | The `--focus-ring` token. Open value: Semantic only recolors the border |
+| Focus ring offset | `2px` | The `--focus-ring-offset` token |
+| Shadow | `0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px -1px rgb(0 0 0 / 10%)` | The `--shadow` token, the revamp's card shadow |
 | Transition fast | `100ms` | Hover and color transitions, Semantic `.1s ease` |
 | Transition base | `200ms` | Layout and visibility transitions |
 
@@ -130,16 +128,16 @@ Shared properties that apply across all components. These are defined in `assets
 
 | Token | Default | Affects |
 |---|---|---|
-| `--palette-blue` | `#2185d0` | Selected states, blue badges, links, calendar today |
-| `--palette-green` | `#21ba45` | Green badges, green chips, progress |
-| `--palette-red` | `#db2828` | Danger buttons, red badges |
-| `--palette-orange` | `#f2711c` | Warning banners, orange badges |
+| `--palette-blue` | `#155dfc` | Selected states, blue badges, links, calendar today |
+| `--palette-green` | `#008236` | Green badges, green chips, progress |
+| `--palette-red` | `#c10007` | Danger buttons, red badges |
+| `--palette-orange` | `#bb4d00` | Warning banners, orange badges (amber in the Tailwind palette) |
 | `--palette-purple` | `#a333c8` | Purple badges |
-| `--palette-grey` | `#767676` | Grey badges, muted text |
-| `--palette-black` | `#1b1c1d` | Black badges |
+| `--palette-grey` | `#6a7282` | Grey badges, muted text |
+| `--palette-black` | `#101828` | Black badges |
 | `--palette-white` | `#ffffff` | Surfaces, backgrounds |
 
-Button fills have their own tokens (`--canvas-button-primary-bg` `#1a69a4`, `--canvas-button-success-bg` `#16802e`, and their hover and pressed shades) so the darker contrast-safe fills do not change badges, links, or selected states.
+Button fills have their own tokens (`--canvas-button-primary-bg` `#155dfc`, `--canvas-button-success-bg` `#008236`, and their hover and pressed shades) so a plugin can shift button fills without changing badges, links, or selected states.
 
 **Semantic aliases.** Named by role. Resolve through the palette. Changing one shifts every component that uses that role without affecting other uses of the same color.
 
@@ -164,7 +162,7 @@ Button fills have their own tokens (`--canvas-button-primary-bg` `#1a69a4`, `--c
 | `--font-size-base` | `14px` | Page body text |
 | `--font-size-control` | `1rem` | Inputs, textareas, dropdowns, comboboxes, multi-selects, date inputs |
 | `--font-weight-bold` | `700` | Buttons, labels, headings |
-| `--radius` | `.28571429rem` | Buttons, inputs, cards, badges, dropdowns |
+| `--radius` | `8px` | Buttons, inputs, cards, badges, dropdowns |
 | `--space-mini` | `4px` | Tight inline gaps |
 | `--space-tiny` | `8px` | Button icon gaps, compact spacing |
 | `--space-small` | `12px` | Form field spacing |
@@ -173,8 +171,8 @@ Button fills have their own tokens (`--canvas-button-primary-bg` `#1a69a4`, `--c
 | `--space-huge` | `24px` | Page padding |
 | `--transition-fast` | `100ms` | Hover and color transitions |
 | `--transition-base` | `200ms` | Layout and visibility transitions |
-| `--focus-ring` | `2px solid #85b7d9` | Focus outline on interactive elements |
-| `--focus-ring-offset` | `1px` | Focus outline offset |
+| `--focus-ring` | `2px solid #155dfc` | Focus outline on interactive elements |
+| `--focus-ring-offset` | `2px` | Focus outline offset |
 
 ### Layer 3. Component tokens
 
@@ -246,7 +244,7 @@ Clinicians scan, they do not read. The most critical piece of information on any
 - In a medication list, the drug name and dose are primary. The prescriber and date are secondary.
 - In a lab result, the value and its abnormal/normal status are primary. The collection time and ordering provider are secondary.
 - In a patient list, the patient name and chief concern are primary. The appointment time and status are secondary.
-- Use font-weight `700` and dark text (`rgba(0,0,0,0.87)`) for primary information. Use regular weight and muted text (`#767676`) for secondary information. This creates a two-level hierarchy without needing different font sizes.
+- Use font-weight `700` and ink text (`#101828`) for primary information. Use regular weight and muted text (`#6a7282`) for secondary information. This creates a two-level hierarchy without needing different font sizes.
 
 ## Information Density
 

@@ -1,88 +1,91 @@
 /*
  * Canvas plugin UI tokens.
  *
- * ANCHOR values match the Canvas home-app and must not change. They are what
- * makes a plugin read as part of Canvas. Sources, all in canvas-medical/canvas:
- *   [S]  home-app/app/static/css/semantic.min.css (stock Semantic UI 2.4.0)
- *   [T]  home-app/static/scripts/themes/theme.ts
- *   [V]  home-app/static/styles/variables.scss
+ * ANCHOR values follow the note revamp, the newest visual work in the Canvas
+ * home-app (canvas-medical/canvas, home-app/static/scripts/views/components/
+ * Note/revamp.scss, behind the note-revamp:enabled switch). Its grays and blue
+ * are the Tailwind CSS v4 default palette, so the other hues here come from the
+ * same palette. Keep them unless the person asks for something else.
+ *   [R]  Note/revamp.scss
+ *   [TW] Tailwind CSS v4 theme.css, converted from OKLCH to hex
+ *   [S]  home-app/app/static/css/semantic.min.css, for values the revamp keeps
  *
- * OPEN values are deliberate improvements over home-app (accessibility,
- * spacing rhythm, motion). They may be tuned as long as the page still flows
- * with the Canvas UI around it.
+ * OPEN values are deliberate choices with no home-app source (spacing rhythm,
+ * motion, focus ring). They may be tuned as long as the page still flows with
+ * the Canvas UI around it. Contrast ratios are against white text or a white
+ * background.
  */
 
 :root {
   /* ---- Palette (ANCHOR) ---- */
-  --palette-blue: #2185d0;          /* [S] .ui.blue/.primary.button, [T] primary.blue */
-  --palette-blue-hover: #1678c2;    /* [S] .ui.blue.button:hover */
-  --palette-blue-focus: #85b7d9;    /* [S] .ui.input>input:focus border */
-  --palette-blue-light: #e9f3fa;    /* [T] light.blue */
-  --palette-green: #21ba45;         /* [S] .ui.green.button, [T] strong.buttonGreen */
-  --palette-green-hover: #16ab39;   /* [S] .ui.green.button:hover */
-  --palette-green-light: #e9f8ec;   /* [T] light.buttonGreen */
-  --palette-red: #db2828;           /* [S] .ui.red.button (color="red" in 61 home-app files) */
-  --palette-red-hover: #d01919;     /* [S] .ui.red.button:hover */
-  --palette-alert: #bd0b00;         /* [T] primary.alert, for inline alert text only */
-  --palette-orange: #f2711c;        /* [S] .ui.orange.button, [T] primary.orange */
-  --palette-orange-light: #fdf1e8;  /* [T] light.orange */
-  --palette-purple: #a333c8;        /* [S] .ui.purple, [T] primary.purple */
-  --palette-purple-light: #f5ebf9;  /* [T] light.purple */
-  --palette-grey: #767676;          /* [S] .ui.grey, [V] $semantic-grey */
-  --palette-black: #1b1c1d;         /* [S] .ui.black */
+  --palette-blue: #155dfc;          /* [R] $revamp-blue-600, 5.25:1 */
+  --palette-blue-hover: #1447e6;    /* [TW] blue-700 */
+  --palette-blue-focus: #155dfc;    /* [R] $revamp-blue-600 */
+  --palette-blue-light: #eff6ff;    /* [TW] blue-50 */
+  --palette-green: #008236;         /* [TW] green-700, 4.95:1 */
+  --palette-green-hover: #016630;   /* [TW] green-800 */
+  --palette-green-light: #f0fdf4;   /* [TW] green-50 */
+  --palette-red: #c10007;           /* [TW] red-700, 6.42:1 */
+  --palette-red-hover: #9f0712;     /* [TW] red-800 */
+  --palette-alert: #c10007;         /* [TW] red-700, for inline alert text only */
+  --palette-orange: #bb4d00;        /* [TW] amber-700, 5.03:1 */
+  --palette-orange-light: #fffbeb;  /* [TW] amber-50 */
+  --palette-purple: #a333c8;        /* [S] .ui.purple, rare category badges only */
+  --palette-purple-light: #f5ebf9;
+  --palette-grey: #6a7282;          /* [R] $revamp-gray-500, 4.84:1 */
+  --palette-black: #101828;         /* [R] $revamp-gray-900 */
   --palette-white: #ffffff;
 
   /* ---- Surfaces and text (ANCHOR) ---- */
-  --palette-bg: #f5f5f5;            /* [V] $lighterLightestGray */
-  --palette-neutral: #e0e1e2;       /* [S] .ui.button default background */
-  --palette-neutral-hover: #cacbcd; /* [S] .ui.button:hover */
-  --palette-border: rgba(34, 36, 38, 0.15); /* [S] borders, [V] $semantic-border-color */
-  --palette-text: rgba(0, 0, 0, 0.87);       /* [S] body color */
-  --palette-text-active: rgba(0, 0, 0, 0.95);
-  --palette-text-muted: #767676;
-  --palette-text-on-neutral: rgba(0, 0, 0, 0.6); /* [S] .ui.button color */
+  --palette-bg: #f3f4f6;            /* [R] $revamp-gray-100 */
+  --palette-neutral: #e5e7eb;       /* [R] $revamp-gray-200, ghost button fill, visible on white and on --palette-bg */
+  --palette-neutral-hover: #d1d5dc; /* [R] $revamp-gray-300 */
+  --palette-border: #e5e7eb;        /* [R] $revamp-gray-200, card border */
+  --palette-text: #364153;          /* [TW] gray-700, 10.30:1 */
+  --palette-text-active: #101828;   /* [R] $revamp-gray-900 */
+  --palette-text-muted: #6a7282;    /* [R] $revamp-gray-500, 4.84:1 */
+  --palette-text-on-neutral: #101828;
 
   /* ---- Error state (ANCHOR) ---- */
-  --palette-error-bg: #fff6f6;      /* [S] .ui.form .field.error input */
-  --palette-error-border: #e0b4b4;
-  --palette-error-text: #9f3a38;
+  --palette-error-bg: #fef2f2;      /* [TW] red-50 */
+  --palette-error-border: #ffc9c9;  /* [TW] red-200 */
+  --palette-error-text: #c10007;    /* [TW] red-700 */
 
   /* ---- Roles ---- */
-  --color-primary: var(--palette-blue, #2185d0);   /* default action color */
-  --color-secondary: var(--palette-blue, #2185d0); /* kept for components that still reference it */
-  --color-success: var(--palette-green, #21ba45);  /* clinical state transitions only */
-  --color-danger: var(--palette-red, #db2828);
-  --color-warning: var(--palette-orange, #f2711c);
-  --color-text: var(--palette-text, rgba(0, 0, 0, 0.87));
-  --color-text-active: var(--palette-text-active, rgba(0, 0, 0, 0.95));
-  --color-text-muted: var(--palette-text-muted, #767676);
-  --color-bg: var(--palette-bg, #f5f5f5);
-  --color-border: var(--palette-border, rgba(34, 36, 38, 0.15));
+  --color-primary: var(--palette-blue, #155dfc);   /* default action color */
+  --color-secondary: var(--palette-blue, #155dfc); /* kept for components that still reference it */
+  --color-success: var(--palette-green, #008236);  /* clinical state transitions only */
+  --color-danger: var(--palette-red, #c10007);
+  --color-warning: var(--palette-orange, #bb4d00);
+  --color-text: var(--palette-text, #364153);
+  --color-text-active: var(--palette-text-active, #101828);
+  --color-text-muted: var(--palette-text-muted, #6a7282);
+  --color-bg: var(--palette-bg, #f3f4f6);
+  --color-border: var(--palette-border, #e5e7eb);
   --color-surface: var(--palette-white, #ffffff);
 
   /* ---- Typography (ANCHOR) ---- */
-  --font-family: Lato, "Helvetica Neue", Arial, Helvetica, sans-serif; /* [S] body */
+  --font-family: Lato, "Helvetica Neue", Arial, Helvetica, sans-serif; /* [S] body, kept by the revamp */
   --font-size-base: 14px;           /* [S] body. Canvas body text is 14px, not 16px */
   --font-size-small: 0.92857143em;  /* [S] .ui.form .field>label (13px) */
   --font-size-label: 0.92857143em;
   --font-weight-bold: 700;          /* [S] .ui.button, labels */
   --line-height-base: 1.4285em;     /* [S] body */
 
-  /* ---- Control sizing (ANCHOR) ---- */
-  --btn-padding: 0.78571429em 1.5em;   /* [S] .ui.button */
+  /* ---- Control sizing and shape (ANCHOR) ---- */
+  --btn-padding: 0.78571429em 1.5em;   /* [S] .ui.button, keeps buttons level with inputs */
   --input-padding: 0.67857143em 1em;   /* [S] .ui.input>input */
-  --radius: 0.28571429rem;             /* [S] .ui.button, .ui.input, .ui.segment */
+  --radius: 8px;                       /* OPEN: between the revamp's 6px controls and 12px cards */
   --border-width: 1px;
-  --shadow: 0 1px 2px 0 rgba(34, 36, 38, 0.15); /* [S] .ui.segment */
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px -1px rgb(0 0 0 / 10%); /* [R] card shadow */
 
-  /* ---- Button fills (OPEN: darker than Canvas so white text passes 4.5:1).
-     Canvas renders #2185d0 (3.94:1) and #21ba45 (2.57:1). These keep the hue. */
-  --canvas-button-primary-bg: #1a69a4;        /* 5.83:1, [S] .ui.blue.button:active */
-  --canvas-button-primary-hover-bg: #175d92;
-  --canvas-button-primary-active-bg: #14507e;
-  --canvas-button-success-bg: #16802e;        /* 5.05:1 */
-  --canvas-button-success-hover-bg: #136f28;
-  --canvas-button-success-active-bg: #105e22;
+  /* ---- Button fills. Every fill passes 4.5:1 with white text. ---- */
+  --canvas-button-primary-bg: #155dfc;        /* [R] blue-600, 5.25:1 */
+  --canvas-button-primary-hover-bg: #1447e6;  /* [TW] blue-700 */
+  --canvas-button-primary-active-bg: #193cb8; /* [TW] blue-800 */
+  --canvas-button-success-bg: #008236;        /* [TW] green-700, 4.95:1 */
+  --canvas-button-success-hover-bg: #016630;  /* [TW] green-800 */
+  --canvas-button-success-active-bg: #0d542b; /* [TW] green-900 */
 
   /* ---- Spacing (OPEN: 4px grid; Semantic uses em steps) ---- */
   --space-mini: 4px;
@@ -97,8 +100,8 @@
   --transition-base: 200ms;
 
   /* ---- Focus (OPEN: visible ring for keyboard users; Semantic only recolors the border) ---- */
-  --focus-ring: 2px solid var(--palette-blue-focus, #85b7d9);
-  --focus-ring-offset: 1px;
+  --focus-ring: 2px solid var(--palette-blue-focus, #155dfc);
+  --focus-ring-offset: 2px;
 }
 
 /* Root stays 16px so rem values match home-app (app.scss html 16px);
@@ -109,7 +112,7 @@ body {
   font-family: var(--font-family, Lato, "Helvetica Neue", Arial, Helvetica, sans-serif);
   font-size: var(--font-size-base, 14px);
   line-height: var(--line-height-base, 1.4285em);
-  color: var(--color-text, rgba(0, 0, 0, 0.87));
+  color: var(--color-text, #364153);
   -webkit-font-smoothing: antialiased;
 }
 

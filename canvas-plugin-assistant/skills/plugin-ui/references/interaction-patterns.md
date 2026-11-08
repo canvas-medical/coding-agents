@@ -146,7 +146,7 @@ These rules are driven by the clinical environment. Clinicians work under time p
 
 - Minimum touch target size is `44px` by `44px` for all interactive elements (buttons, checkboxes, toggles, links, table row actions). Clinicians use tablets at the bedside and rolling cart touchscreens.
 - Clickable areas can be visually smaller than 44 px as long as the hit area (padding included) meets the minimum.
-- All color pairings must meet WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text). Canvas's own button blue `#2185d0` (3.94:1) and green `#21ba45` (2.57:1) fail with white text, which is why `canvas-button` fills use the darker `#1a69a4` (5.83:1) and `#16802e` (5.05:1). Do not override button fills back to the lighter shades. Muted text `#767676` on white passes at 4.6:1.
+- All color pairings must meet WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text). The Semantic screens' button blue `#2185d0` (3.94:1) and green `#21ba45` (2.57:1) fail with white text. The `canvas-button` fills, blue `#155dfc` (5.25:1) and green `#008236` (4.95:1), both pass. Do not override button fills with the lighter Semantic shades. Muted text `#6a7282` on white passes at 4.84:1.
 - Never rely on color alone to convey meaning. Pair color with text, icons, or patterns. A red badge should also have a label like "Critical" or an icon.
 
 ### Confirmation Hierarchy

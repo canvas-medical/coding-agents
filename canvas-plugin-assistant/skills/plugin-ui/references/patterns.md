@@ -15,7 +15,7 @@ User has never added data here.
 ```html
 <div style="padding: var(--space-huge); text-align: center">
   <h3 style="margin: 0 0 var(--space-small); font-weight: 700">No medications recorded</h3>
-  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">Track this patient's active medications here.</p>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #6a7282)">Track this patient's active medications here.</p>
   <canvas-button>Add first medication</canvas-button>
 </div>
 ```
@@ -27,7 +27,7 @@ Data existed, the user removed it all.
 ```html
 <div style="padding: var(--space-huge); text-align: center">
   <h3 style="margin: 0 0 var(--space-small); font-weight: 700">Medication list cleared</h3>
-  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">All medications were removed. Add a new entry or restore the previous list.</p>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #6a7282)">All medications were removed. Add a new entry or restore the previous list.</p>
   <canvas-button style="margin-right: var(--space-small)">Add medication</canvas-button>
   <canvas-button variant="ghost">Restore previous</canvas-button>
 </div>
@@ -40,7 +40,7 @@ Underlying data exists, the current filter excludes everything. Render inside th
 ```html
 <div style="padding: var(--space-huge); text-align: center">
   <h3 style="margin: 0 0 var(--space-small); font-weight: 700">No results match your filters</h3>
-  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #767676)">Try widening the date range or removing a tag.</p>
+  <p style="margin: 0 0 var(--space-medium); color: var(--color-text-muted, #6a7282)">Try widening the date range or removing a tag.</p>
   <canvas-button variant="ghost">Clear filters</canvas-button>
 </div>
 ```
@@ -77,8 +77,8 @@ Use in modals or standalone pages where the patient chart is not visible. See `s
   padding-bottom: var(--space-small); border-bottom: 1px solid var(--color-border);
   margin-bottom: var(--space-medium)">
   <span style="font-weight: 700">Jane Smith</span>
-  <span style="color: var(--color-text-muted, #767676); font-size: .92857143em">DOB: Mar 15, 1985</span>
-  <span style="color: var(--color-text-muted, #767676); font-size: .92857143em">MRN: 12345</span>
+  <span style="color: var(--color-text-muted, #6a7282); font-size: .92857143em">DOB: Mar 15, 1985</span>
+  <span style="color: var(--color-text-muted, #6a7282); font-size: .92857143em">MRN: 12345</span>
 </div>
 ```
 
