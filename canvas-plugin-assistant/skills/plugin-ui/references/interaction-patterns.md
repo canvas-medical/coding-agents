@@ -14,7 +14,7 @@ Cross-cutting interaction rules that apply across components. Focus management f
 
 This is the most common UX mistake in generated plugin UI. It must be prevented.
 
-- Toggles must never appear on a screen that has a Save or Submit button. This is a hard rule with no exceptions.
+- By default, toggles do not appear on a screen that has a Save or Submit button, because a toggle reads as instant effect and a clinician may assume a change already saved. If the person asks for one anyway, say that once, then build it.
 - If a form collects settings that are saved together, every control must be a checkbox, radio button, or input. Never a toggle.
 - If a setting should take effect immediately, use a standalone toggle with no submit button anywhere on the screen. Provide instant visual feedback (an inline banner or confirmation).
 - Mixed patterns on the same screen (some toggles for instant effect, some checkboxes for deferred submission) confuse users about what is saved and what is not. Pick one model per screen and apply it consistently.

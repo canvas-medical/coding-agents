@@ -20,6 +20,12 @@ allowed-tools: Read, Grep, Glob
 
 Complete design system for Canvas plugin user interfaces. Anchored values (font, sizes, palette, radius, borders, control padding) come from the Canvas home-app's Semantic UI 2.4.0 styles so plugins read as part of Canvas. Open values (spacing grid, focus ring, contrast-safe button fills) improve on the home-app. [DESIGN.md](DESIGN.md) lists which is which.
 
+## Defaults, Not Mandates
+
+Every value and rule in this skill is a default. When the person building the plugin asks for something different, such as a customer's brand color, larger text, a pill-shaped button, or a toggle on a form, do what they ask. Do not argue the point or quietly revert it later. Use the defaults whenever nobody has asked for something else, and do not drift from them on your own initiative.
+
+Two rules protect the chart rather than the look: absolute dates in clinical documentation, and no toggles on a screen with a Save or Submit button. When a request goes against one of those, say the clinical reason once in a sentence, then follow the request.
+
 ## Workflow
 
 **Read [references/workflow.md](references/workflow.md) before starting any UI work.** It defines the step by step process for building new plugin UI and improving existing plugin UI. The workflow handles both cases through decision points at each step.
@@ -66,13 +72,13 @@ When building plugin UI, exhaust each level before moving to the next.
 
 ## Customization Boundaries
 
-Every form element has properties split into three tiers. This determines what the agent can adjust and what stays fixed.
+Every form element has properties split into three tiers. The tiers decide how readily the agent changes a default on its own. Any of them changes when the person asks (see Defaults, Not Mandates).
 
-**Locked. Never change unless the user explicitly overrides.**
-- Checkbox: entire appearance is fixed. Shape, size, white background, dark checkmark, border color, border-radius, checked/unchecked states. The canvas-checkbox component handles checked state internally.
-- Radio: entire appearance is fixed. Circle shape, dot centering, dot color, border color, border-radius 500rem, checked/unchecked states. The canvas-radio component handles checked state internally.
-- Toggle: track colors (blue active, gray inactive), track shape, thumb shape and color. Never use green for the active track.
-- Shape and border rules (radius, border styles, focus border) are defined in [DESIGN.md](DESIGN.md) Shape section. They are locked.
+**Held. Keep unless the user asks for something different.**
+- Checkbox: default appearance is held. Shape, size, white background, dark checkmark, border color, border-radius, checked/unchecked states. The canvas-checkbox component handles checked state internally.
+- Radio: default appearance is held. Circle shape, dot centering, dot color, border color, border-radius 500rem, checked/unchecked states. The canvas-radio component handles checked state internally.
+- Toggle: track colors (blue active, gray inactive), track shape, thumb shape and color. The active track is blue by default, not green.
+- Shape and border rules (radius, border styles, focus border) are defined in [DESIGN.md](DESIGN.md) Shape section. They are held defaults.
 - Label-to-input relationship: label above input, spacing `.28571429rem`. Toggle label inline.
 - Button colors: green (`variant="success"`) only for clinical state transitions and payments, blue (the default) for standard actions, gray (`variant="ghost"`) for cancel and neutral actions, red for destructive. Disabled is `opacity: 0.45` on any variant via the `disabled` attribute.
 

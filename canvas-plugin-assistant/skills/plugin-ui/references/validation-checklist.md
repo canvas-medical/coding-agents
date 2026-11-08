@@ -6,6 +6,8 @@ Six-phase binary validation. Each check is pass or fail against the generated HT
 
 Before starting, reread the generated HTML as a string. Do not validate from memory.
 
+The checks test against the skill's defaults. A deviation the person asked for is not a violation: list it under Requested changes in the report and move on. Only fix deviations nobody asked for.
+
 ## Phase 0. Preconditions
 
 Setup rules live in [setup.md](setup.md). Anti-pattern Global CSS Reset in [anti-patterns.md](anti-patterns.md).

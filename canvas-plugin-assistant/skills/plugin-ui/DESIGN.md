@@ -8,14 +8,17 @@ The Canvas home-app aesthetic is clinical and dense, not decorative. Screens pri
 
 ## Where the Values Come From
 
+Every value and rule below is a default. When the person building the plugin asks for something different, follow the request. See Defaults, Not Mandates in [SKILL.md](SKILL.md).
+
+
 The home-app renders stock Semantic UI 2.4.0 (`home-app/app/static/css/semantic.min.css` in canvas-medical/canvas) with a few Canvas overrides in `home-app/static/scripts/themes/theme.ts` and `home-app/static/styles/`. Every token in `assets/canvas-plugin-ui.css` is marked with its source.
 
-- **Anchored values** match the home-app exactly: Lato, text sizes, the palette hues, corner radius, border color, control padding, and the active tab treatment. These are what make a plugin read as part of Canvas. Do not change them.
+- **Anchored values** match the home-app exactly: Lato, text sizes, the palette hues, corner radius, border color, control padding, and the active tab treatment. These are what make a plugin read as part of Canvas. Keep them unless the person asks for something else.
 - **Open values** are deliberate improvements over the home-app: the 4px spacing grid, a visible keyboard focus ring, darker button fills so white text passes contrast, consistent control heights, and short transitions. These may be tuned as long as the page still flows with the Canvas UI around it.
 
 ## Color Palette and Roles
 
-This palette is closed. Never use teal, olive, violet, pink, yellow, or cyan. AI models reach for these to add visual variety. The Canvas palette does not include them.
+This palette is the default. Do not reach for teal, olive, violet, pink, yellow, or cyan on your own. AI models add these for visual variety, and the Canvas palette does not include them. A color the person asks for, such as a customer's brand color, is fine.
 
 Green is rare. In the home-app, green buttons commit something: lock a note, send a fax, collect or post a payment. Plugins follow the same rule. Use green only for clinical state transitions that affect the patient record or leave the system (sign or lock a note, send a message to a patient, submit a referral, confirm a fax, check in a patient) and for taking a payment. Blue is the default for all standard actions. Most screens have blue buttons only.
 
@@ -96,7 +99,7 @@ Nesting indent is a separate concern from container padding. When a component ne
 
 | Property | Value | Notes |
 |---|---|---|
-| Border-radius | `.28571429rem` | All rounded elements. Canvas baseline, never change. |
+| Border-radius | `.28571429rem` | All rounded elements. Canvas baseline default. |
 | Border width | `1px` | Default for inputs, cards, dividers |
 | Border color | `rgba(34, 36, 38, 0.15)` | The `--color-border` token |
 | Focus ring | `2px solid #85b7d9` | The `--focus-ring` token. Open value: Semantic only recolors the border |
@@ -230,7 +233,7 @@ body {
 
 ## Text and Background Pairing
 
-These rules are mandatory with no exceptions.
+Follow these by default. They keep text readable.
 
 - **On white (`#FFFFFF`) backgrounds.** Both dark text and muted gray text are allowed. This is the only background where gray text may appear.
 - **On light gray and mid gray backgrounds.** Only dark text. Never place gray text on a gray background.
@@ -323,8 +326,8 @@ Copy-paste templates for empty states, patient context header, filter bar, and s
 - Use font-weight 700 and dark text for primary information, regular weight and muted text for secondary.
 
 **Don't.**
-- Use teal, olive, violet, pink, yellow, cyan, or any color outside the palette. These are common AI-generation defaults.
-- Change an anchored value (font, text sizes, palette hues, radius, border color, control padding) to make a plugin look different. Plugins should read as part of Canvas.
+- Add teal, olive, violet, pink, yellow, cyan, or any other color outside the palette unless the person asks for it. These are common AI-generation defaults.
+- Change an anchored value (font, text sizes, palette hues, radius, border color, control padding) on your own initiative. Change it when the person asks.
 - Use `box-shadow` to simulate borders. Use actual `border` properties.
 - Set `outline: none` on focusable elements without providing an alternative focus indicator.
 - Use custom scrollbar styling in plugin CSS. Let the browser handle scrollbars natively.
