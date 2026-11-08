@@ -232,7 +232,25 @@ ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py"
 
 **If no HTML content:** Mark as N/A.
 
-### 8. WebSocket Deploy Resilience
+### 8. UI Design System Validation
+
+**If the plugin serves HTML pages**, check them against the plugin-ui skill.
+
+```bash
+grep -rn "HTMLResponse\|render_to_string" --include="*.py" "$INNER/" 2>/dev/null
+ls "$INNER"/static/*.html "$INNER"/templates/*.html 2>/dev/null
+```
+
+**If HTML pages exist:**
+- Invoke the **plugin-ui** skill
+- Run the validation checklist in the skill's `references/validation-checklist.md`
+- It covers palette and button color use (green only for clinical state transitions and payments), Lato and Canvas text sizes, web component usage, the toggle and submit prohibition, ARIA, 44px touch targets, token usage, absolute dates, and loading and empty states
+- Confirm `canvas-plugin-ui.js` and `canvas-plugin-ui.css` in `static/` match the current skill assets, and recopy them from `${CLAUDE_PLUGIN_ROOT}/skills/plugin-ui/assets/` if they are older
+- Report any violations found
+
+**If no HTML pages:** Mark as N/A.
+
+### 9. WebSocket Deploy Resilience
 
 **If the plugin uses a WebSocket** (a `WebSocketAPI` handler, a `Broadcast` effect, or client-side `new WebSocket(...)`), verify it's built to survive Canvas's daytime blue/green deploys. A deploy closes every live socket mid-session and clients reconnect onto a freshly booted process, so a socket that works in testing can silently lose updates or hammer the new container in production.
 
@@ -270,7 +288,7 @@ Full rationale and worked client code are in the **canvas-sdk** skill ("WebSocke
 
 **If no WebSocket:** Mark as N/A.
 
-### 9. README Review
+### 10. README Review
 
 Read the plugin's README.md and verify:
 
@@ -294,7 +312,7 @@ Read the plugin's README.md and verify:
 
 Update the README if issues are found.
 
-### 10. Application Icon Check
+### 11. Application Icon Check
 
 **If the plugin has an Application component, verify it has an icon.**
 
@@ -326,7 +344,7 @@ ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 
 **If no applications:** Mark as N/A.
 
-### 11. License Check
+### 12. License Check
 
 Check for any license file or license mentions:
 
@@ -357,7 +375,7 @@ If a LICENSE file exists or the README mentions a license (MIT, BSD, Apache, GPL
 
 If the user says to remove it, delete the LICENSE file and remove any license section from the README.
 
-### 12. Final Verdict
+### 13. Final Verdict
 
 After all checks, present a summary:
 
@@ -375,6 +393,7 @@ After all checks, present a summary:
 | Debug Logs | ✅ Clean / ⚠️ Removed X logs | ... |
 | Dead Code | ✅ Clean / ⚠️ Removed X items | ... |
 | Cache Busting | ✅ Pass / ⚠️ Fixed / N/A | ... |
+| UI Design System | ✅ Pass / ⚠️ Issues / N/A | ... |
 | WebSocket Resilience | ✅ Pass / ⚠️ Fixed / N/A | ... |
 | README | ✅ Current / ⚠️ Updated | ... |
 | Application Icon | ✅ Present / ⚠️ Created / N/A | ... |
@@ -420,6 +439,7 @@ cat > "$REPORT_FILE" <<'REPORT_END'
 | Debug Logs | {status} | {notes} |
 | Dead Code | {status} | {notes} |
 | Cache Busting | {status} | {notes} |
+| UI Design System | {status} | {notes} |
 | WebSocket Resilience | {status} | {notes} |
 | README | {status} | {notes} |
 | Application Icon | {status} | {notes} |
@@ -455,13 +475,13 @@ Use AskUserQuestion if any issues were found:
 }
 ```
 
-### 13. Commit Changes (Interactive)
+### 14. Commit Changes (Interactive)
 
 **After all checks pass (or issues are resolved), commit the plugin changes.**
 
 This is done here, in the live session, on purpose — so untracked files can be reviewed and you are asked before anything is staged or pushed. **Never blindly `git add -A` and never push without explicit confirmation.**
 
-**Step 13a — Show what changed:**
+**Step 14a — Show what changed:**
 
 ```bash
 cd "$CPA_PLUGIN_DIR"
@@ -472,7 +492,7 @@ Split the output into:
 - **Tracked changes** (lines starting with ` M`, `M `, `MM`, ` D`, `D `, `R `, etc.) — modifications and deletions of files git already tracks.
 - **Untracked files** (lines starting with `??`) — new files git does not yet track.
 
-**Step 13b — Stage tracked changes only:**
+**Step 14b — Stage tracked changes only:**
 
 ```bash
 git add -u .
@@ -480,7 +500,7 @@ git add -u .
 
 `-u` stages modifications and deletions of already-tracked files and **never** picks up untracked files. This is the safe default: a stray secrets dump, `.env`, or scratch file written during the session is not swept in.
 
-**Step 13c — Review untracked files before including any:**
+**Step 14c — Review untracked files before including any:**
 
 If there are untracked files, do NOT add them automatically. For each one, read it and decide whether it is safe and intended for the repo:
 
@@ -514,13 +534,13 @@ Present the untracked files to the user and ask which (if any) to include. Defau
 
 Only `git add` the specific untracked files the user explicitly approves. If a flagged (possible-secret) file is among them, confirm a second time and suggest adding it to `.gitignore` instead.
 
-**Step 13d — Show the staged diff and commit:**
+**Step 14d — Show the staged diff and commit:**
 
 ```bash
 git diff --cached --stat
 ```
 
-If there is nothing staged, report "no changes to commit" and skip to Step 14. Otherwise commit (replace `{plugin_name}` with the actual name):
+If there is nothing staged, report "no changes to commit" and skip to Step 15. Otherwise commit (replace `{plugin_name}` with the actual name):
 
 ```bash
 git commit -m "complete {plugin_name} wrap-up
@@ -528,7 +548,7 @@ git commit -m "complete {plugin_name} wrap-up
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-**Step 13e — Ask before pushing:**
+**Step 14e — Ask before pushing:**
 
 Pushing is outward-facing and irreversible, so confirm first:
 
@@ -550,7 +570,7 @@ Pushing is outward-facing and irreversible, so confirm first:
 
 Only run `git push` if the user chooses to push.
 
-### 14. Wrap-Up Complete
+### 15. Wrap-Up Complete
 
 **After the commit step, the plugin is ready for this version.**
 

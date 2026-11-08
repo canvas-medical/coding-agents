@@ -59,6 +59,8 @@ unbuffer uv run canvas logs --host {hostname}
 
 Save the `bash_id` — you will use it later to check logs. This captures installation errors and runtime behavior.
 
+If the plugin serves HTML (look for `HTMLResponse` or `render_to_string` in its Python files), confirm its `static/` directory contains `canvas-plugin-ui.js` and `canvas-plugin-ui.css`. If either is missing, warn the user before deploying, because the pages will render without Canvas styling or components.
+
 ### Step 4: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, git commit/push, and install. Pass the resolved hostname so the agent does not need to ask again.

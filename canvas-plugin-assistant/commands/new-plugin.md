@@ -346,10 +346,23 @@ fi
 
 This is the standard resume flow. The **plugin-brainstorm** agent will handle implementation.
 
+**If the spec includes a user interface**, set up the UI design system before any HTML is written. A plugin has UI when it uses `HTMLResponse`, an `Application` class, a `SimpleAPI` route that serves HTML, an `ActionButton` that opens a page, or `LaunchModalEffect` with a URL. Copy the two design system files into the plugin's static directory:
+
+```bash
+plugin_name_snake=$(basename "$CPA_PLUGIN_DIR" | tr '-' '_')
+static_dir="$CPA_PLUGIN_DIR/$plugin_name_snake/static"
+mkdir -p "$static_dir"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/plugin-ui/assets/canvas-plugin-ui.js" "$static_dir/"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/plugin-ui/assets/canvas-plugin-ui.css" "$static_dir/"
+```
+
+Then invoke the **plugin-ui** skill and follow its `references/workflow.md`. The skill covers the `<head>` snippet, the SimpleAPI routes that serve the static files, and how to compose pages from the `<canvas-*>` components so the plugin looks like part of Canvas. If the plugin has no UI, skip this.
+
 The agent will:
 - Edit the generated protocol handler
 - Create Application class if needed
 - Generate icon for Applications (mandatory)
+- Build UI pages with the plugin-ui skill (if the plugin has UI)
 - Write tests following the testing skill guidelines
 - Deploy for UAT
 
