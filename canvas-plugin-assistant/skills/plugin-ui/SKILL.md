@@ -18,7 +18,7 @@ allowed-tools: Read, Grep, Glob
 
 # Canvas Plugin UI Design System
 
-Complete design system for Canvas plugin user interfaces. Anchored values (font, sizes, palette, radius, borders, control padding) come from the Canvas home-app's Semantic UI 2.4.0 styles so plugins read as part of Canvas. Open values (spacing grid, focus ring, contrast-safe button fills) improve on the home-app. [DESIGN.md](DESIGN.md) lists which is which.
+Complete design system for Canvas plugin user interfaces. Anchored values (font, sizes, palette, borders, shadow) follow the note revamp, the newest visual work in the Canvas home-app, so plugins match where the EMR is heading. Open values (spacing grid, corner radius, focus ring) have no home-app source. [DESIGN.md](DESIGN.md) lists which is which.
 
 ## Defaults, Not Mandates
 

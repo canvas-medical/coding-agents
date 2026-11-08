@@ -76,10 +76,10 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 
 **Variant rules.** These match the existing Canvas design system rules and are not changed by the web component migration.
 
-- **primary** (blue `#1a69a4`, hover `#175d92`, a darker Canvas blue so white text passes contrast) is the default when no variant is set. Save, done, next, add, update, edit, adjust, refill, back.
-- **success** (green `#16802e`, hover `#136f28`, a darker Canvas green so white text passes contrast) is for clinical state transitions that affect the patient record or leave the system. Sign/lock a note, send a message to a patient, submit a referral, confirm a fax, check in a patient. Most screens will not have a success button.
-- **ghost** (gray `#e0e1e2` with `rgba(0, 0, 0, 0.6)` text, hover `#cacbcd`) is for cancel, dismiss, close, and other neutral actions. This is the solid Semantic neutral button, not a transparent style.
-- **danger** (red `#db2828`, hover `#d01919`) is for destructive actions. Always require confirmation.
+- **primary** (blue `#155dfc`, hover `#1447e6`, the note revamp's blue, 5.25:1 with white text) is the default when no variant is set. Save, done, next, add, update, edit, adjust, refill, back.
+- **success** (green `#008236`, hover `#016630`, 4.95:1 with white text) is for clinical state transitions that affect the patient record or leave the system. Sign/lock a note, send a message to a patient, submit a referral, confirm a fax, check in a patient. Most screens will not have a success button.
+- **ghost** (light gray `#e5e7eb` with `#101828` text, hover `#d1d5dc`) is for cancel, dismiss, close, and other neutral actions. It is a solid neutral button, not a transparent style.
+- **danger** (red `#c10007`, hover `#9f0712`) is for destructive actions. Always require confirmation.
 
 **Size rules.**
 
@@ -87,13 +87,15 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 - **sm** (13px text, same em padding as base, 36px minimum height) for card headers and table row actions where every element in the row is a button. For toolbars and inline form rows that include dropdowns, comboboxes, or inputs, use default size on every element in the row. See Inline Form Rows and Same Row Height Cohesion in component-usage.md.
 - **xs** for floating utility actions not paired with an input. Normal weight (400), no min-height.
 
-**Focus and states.** Keyboard focus shows a 2px `--focus-ring` outline (`#85b7d9`) offset by 1px. Hover and pressed states use the Semantic hover and active shades for each color, with a 100ms ease transition. Disabled buttons render at 45% opacity, matching Semantic.
+**Focus and states.** Keyboard focus shows a 2px `--focus-ring` outline (`#155dfc`) offset by 2px. Hover and pressed states use the Semantic hover and active shades for each color, with a 100ms ease transition. Disabled buttons render at 45% opacity, matching Semantic.
 
 **Form submission.** A button with `type="submit"` finds the closest `<form>` ancestor and calls `requestSubmit()` on click. The component crosses the shadow DOM boundary to find the form.
 
 **ARIA.** The component extends the `AriaProxy` mixin with a custom attribute list of `aria-label`, `aria-pressed`, `aria-expanded`, `aria-controls`, and `aria-disabled`. Setting any of these on the host mirrors onto the inner `<button>` automatically. Disabled buttons use `aria-disabled="true"` rather than the native `disabled` attribute so the inner `<button>` stays in the focus order, screen readers still announce the disabled affordance, and tooltips can still anchor to the trigger. Pair `aria-pressed` with toggle buttons that hold an on or off state, pair `aria-expanded` and `aria-controls` with buttons that act as triggers for `canvas-popover`, `canvas-menu-button`, or `canvas-modal`. Icon only buttons must carry `aria-label` so screen readers announce a meaningful name. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy mixin contract.
 
 **Component tokens**
+
+The fallback values below are the component's built-in defaults, which apply only when `canvas-plugin-ui.css` is not loaded. The token file sets the current values listed in the variant rules above.
 
 | Token | What it controls | Fallback chain |
 |---|---|---|
@@ -576,7 +578,7 @@ A standalone month grid for date selection. Single date, range, or multi-date mo
 
 **Live region.** A visually hidden `role="status" aria-live="polite"` region inside the calendar announces month changes (after navigation buttons or PageUp / PageDown), single selection, range start vs range complete, and multi-select count changes including granular adds. Picked list clear announces "All dates cleared." Range pick after the first click announces "Start date <date> selected. Pick an end date." After the second click announces "Range <start> to <end> selected."
 
-**Today indicator.** Today cells carry a 1px border in the `--canvas-calendar-today-color` token color (default `--color-primary`, blue `#2185d0`) and a bold day number, so the today signal does not rely on color alone. When today is also selected, the cell fills blue with white text, and a 2px white inset ring inside the blue border keeps it distinguishable from other selected days. Selected and highlighted days use `--color-primary` blue. Keyboard focus on a day, nav button, or picked-list control draws a 2px `#85b7d9` outline (`--canvas-calendar-focus-ring` overrides the color). The gray header strip (`#f0f0f0`) matches the stock react-datepicker header used in the Canvas home-app.
+**Today indicator.** Today cells carry a 1px border in the `--canvas-calendar-today-color` token color (default `--color-primary`, blue `#155dfc`) and a bold day number, so the today signal does not rely on color alone. When today is also selected, the cell fills blue with white text, and a 2px white inset ring inside the blue border keeps it distinguishable from other selected days. Selected and highlighted days use `--color-primary` blue. Keyboard focus on a day, nav button, or picked-list control draws a 2px `#85b7d9` outline (`--canvas-calendar-focus-ring` overrides the color). The gray header strip (`#f0f0f0`) matches the stock react-datepicker header used in the Canvas home-app.
 
 **Reduced motion.** All cell, nav button, and picked-list transitions are removed when `prefers-reduced-motion: reduce` is active.
 

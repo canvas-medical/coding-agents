@@ -1,6 +1,6 @@
 # Canvas Plugin UI Skill
 
-Design system for Canvas plugin interfaces, so plugins look like part of Canvas. Anchored values (font, sizes, palette, radius, borders, control padding) come from the home-app's Semantic UI 2.4.0 styles in canvas-medical/canvas, and DESIGN.md marks which values are anchored and which improve on the home-app.
+Design system for Canvas plugin interfaces, so plugins look like part of Canvas. Anchored values (font, sizes, palette, borders, shadow) follow the note revamp in canvas-medical/canvas (`Note/revamp.scss`), the newest visual work in the home-app, and DESIGN.md marks which values are anchored and which have no home-app source.
 
 The skill activates automatically when the task involves plugin HTML or CSS. You can also invoke it explicitly with `/plugin-ui`. It ships with the CPA, and `/cpa:new-plugin` and `/cpa:wrap-up` call it for any plugin that serves HTML.
 
