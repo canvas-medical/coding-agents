@@ -246,7 +246,8 @@ ls "$INNER"/static/*.html "$INNER"/templates/*.html 2>/dev/null
 - Run the validation checklist in the skill's `references/validation-checklist.md`
 - It covers palette and button color use (green only for clinical state transitions and payments), Lato and Canvas text sizes, web component usage, the toggle and submit prohibition, ARIA, 44px touch targets, token usage, absolute dates, and loading and empty states
 - Confirm `canvas-plugin-ui.js` and `canvas-plugin-ui.css` in `static/` match the current skill assets, and recopy them from `${CLAUDE_PLUGIN_ROOT}/skills/plugin-ui/assets/` if they are older
-- Report any violations found
+- The skill's values are defaults, so anything the plugin's author asked for (a brand color, larger text, a toggle on a form) is listed as a requested change, not a violation
+- Report only the drift nobody asked for
 
 **If no HTML pages:** Mark as N/A.
 
