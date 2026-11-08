@@ -2,6 +2,8 @@
 
 Reference for the Canvas plugin web component system. The system registers 30 components spanning 50 tag names (the count that includes shared children like `canvas-option` and subcomponents like `canvas-card-body`, `canvas-tab-panel`, `canvas-modal-header`). Authoritative count for the skill. Other files point here rather than stating a number. This file covers how components load and the API, keyboard, ARIA, and visual spec for each component. For the token system, palette, typography, spacing, shape, pairing, and hierarchy rules, see [DESIGN.md](../DESIGN.md). For setup and serving, see [setup.md](setup.md).
 
+Components keep the shape, sizing, and behavior of the Semantic UI elements they were modeled on, so an entry that says it matches a Semantic UI class describes structure. Their colors follow the note revamp palette in [DESIGN.md](../DESIGN.md). Color values written in an entry are the component's built-in values, and a token set in `canvas-plugin-ui.css` takes precedence wherever the component reads one.
+
 ## Contents
 
 [Layout](#layout) | [Components](#components)
@@ -87,7 +89,7 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 - **sm** (13px text, same em padding as base, 36px minimum height) for card headers and table row actions where every element in the row is a button. For toolbars and inline form rows that include dropdowns, comboboxes, or inputs, use default size on every element in the row. See Inline Form Rows and Same Row Height Cohesion in component-usage.md.
 - **xs** for floating utility actions not paired with an input. Normal weight (400), no min-height.
 
-**Focus and states.** Keyboard focus shows a 2px `--focus-ring` outline (`#155dfc`) offset by 2px. Hover and pressed states use the Semantic hover and active shades for each color, with a 100ms ease transition. Disabled buttons render at 45% opacity, matching Semantic.
+**Focus and states.** Keyboard focus shows a 2px `--focus-ring` outline (`#155dfc`) offset by 2px. Hover and pressed states step one or two shades darker in the same palette, with a 100ms ease transition. Disabled buttons render at 45% opacity, matching Semantic.
 
 **Form submission.** A button with `type="submit"` finds the closest `<form>` ancestor and calls `requestSubmit()` on click. The component crosses the shadow DOM boundary to find the form.
 
@@ -95,26 +97,26 @@ A button with four color variants, three sizes, and disabled state. Renders a na
 
 **Component tokens**
 
-The fallback values below are the component's built-in defaults, which apply only when `canvas-plugin-ui.css` is not loaded. The token file sets the current values listed in the variant rules above.
+The fallback values below are the component's built-in defaults, which apply when the token is not set. They match the values `canvas-plugin-ui.css` sets.
 
 | Token | What it controls | Fallback chain |
 |---|---|---|
-| `--canvas-button-primary-bg` | Primary (default) background | `#1a69a4` (Canvas blue darkened to 5.83:1 with white text) |
-| `--canvas-button-primary-hover-bg` | Primary hover background | `#175d92` |
-| `--canvas-button-primary-active-bg` | Primary pressed background | `#14507e` |
+| `--canvas-button-primary-bg` | Primary (default) background | `#155dfc` (5.25:1 with white text) |
+| `--canvas-button-primary-hover-bg` | Primary hover background | `#1447e6` |
+| `--canvas-button-primary-active-bg` | Primary pressed background | `#193cb8` |
 | `--canvas-button-primary-color` | Primary text | `--palette-white` then `#fff` |
-| `--canvas-button-success-bg` | Success variant background | `#16802e` (Canvas green darkened to 5.05:1 with white text) |
-| `--canvas-button-success-hover-bg` | Success hover background | `#136f28` |
-| `--canvas-button-success-active-bg` | Success pressed background | `#105e22` |
+| `--canvas-button-success-bg` | Success variant background | `#008236` (4.95:1 with white text) |
+| `--canvas-button-success-hover-bg` | Success hover background | `#016630` |
+| `--canvas-button-success-active-bg` | Success pressed background | `#0d542b` |
 | `--canvas-button-success-color` | Success text | `--palette-white` then `#fff` |
-| `--canvas-button-ghost-bg` | Ghost variant background | `--palette-neutral` then `#e0e1e2` |
-| `--canvas-button-ghost-color` | Ghost variant text | `--palette-text-on-neutral` then `rgba(0, 0, 0, 0.6)` |
-| `--canvas-button-ghost-hover-bg` | Ghost hover background | `--palette-neutral-hover` then `#cacbcd` |
-| `--canvas-button-ghost-hover-color` | Ghost hover text | `rgba(0, 0, 0, 0.8)` |
-| `--canvas-button-ghost-active-bg` | Ghost pressed background | `#babbbc` |
-| `--canvas-button-danger-bg` | Danger variant background | `--color-danger` then `--palette-red` then `#db2828` |
-| `--canvas-button-danger-hover-bg` | Danger hover background | `--palette-red-hover` then `#d01919` |
-| `--canvas-button-danger-active-bg` | Danger pressed background | `#b21e1e` |
+| `--canvas-button-ghost-bg` | Ghost variant background | `--palette-neutral` then `#e5e7eb` |
+| `--canvas-button-ghost-color` | Ghost variant text | `--palette-text-on-neutral` then `#4a5565` |
+| `--canvas-button-ghost-hover-bg` | Ghost hover background | `--palette-neutral-hover` then `#d1d5dc` |
+| `--canvas-button-ghost-hover-color` | Ghost hover text | `#101828` |
+| `--canvas-button-ghost-active-bg` | Ghost pressed background | `#99a1af` |
+| `--canvas-button-danger-bg` | Danger variant background | `--color-danger` then `--palette-red` then `#c10007` |
+| `--canvas-button-danger-hover-bg` | Danger hover background | `--palette-red-hover` then `#9f0712` |
+| `--canvas-button-danger-active-bg` | Danger pressed background | `#82181a` |
 | `--canvas-button-danger-color` | Danger variant text | `--palette-white` then `#fff` |
 | `--canvas-button-padding` | Base size padding | `--btn-padding` then `.78571429em 1.5em` |
 | `--canvas-button-padding-sm` | Small size padding | `--btn-padding` then `.78571429em 1.5em` |
@@ -128,7 +130,7 @@ The fallback values below are the component's built-in defaults, which apply onl
 | `--canvas-button-border` | Border | `1px solid transparent` |
 | `--canvas-button-gap` | Gap between slot children | `--space-tiny` then `8px` |
 | `--canvas-button-transition` | Transition duration | `--transition-fast` then `100ms` |
-| `--canvas-button-focus-ring` | Focus outline | `--focus-ring` then `2px solid #85b7d9` |
+| `--canvas-button-focus-ring` | Focus outline | `--focus-ring` then `2px solid #155dfc` |
 | `--canvas-button-focus-ring-offset` | Focus outline offset | `--focus-ring-offset` then `1px` |
 
 **File.** `assets/canvas-plugin-ui.js`
@@ -200,7 +202,7 @@ A status indicator with 7 colors, 4 sizes, a basic (outlined) variant, and a cir
 
 | Attribute | Values | Default |
 |---|---|---|
-| `color` | red, orange, green, blue, purple, grey, black | none (gray `#e8e8e8`) |
+| `color` | red, orange, green, blue, purple, grey, black | none (gray `#e5e7eb`) |
 | `size` | mini, tiny, small, large | base |
 | `basic` | boolean | false |
 | `circular` | boolean | false |
@@ -225,7 +227,7 @@ A status indicator with 7 colors, 4 sizes, a basic (outlined) variant, and a cir
 | orange | Warnings, preferred tags |
 | purple | Category tags with no status meaning |
 
-**Basic variant.** White background with a colored 1px border and colored text (with no color, a `rgba(34, 36, 38, 0.15)` border and `rgba(0, 0, 0, 0.87)` text). Use for de-emphasized statuses like "Inactive" or "Self-pay."
+**Basic variant.** White background with a colored 1px border and colored text (with no color, a `#d1d5dc` border and `#364153` text). Use for de-emphasized statuses like "Inactive" or "Self-pay."
 
 **Circular variant.** For count indicators. Single digits render as circles, longer text stretches into a pill shape.
 
@@ -237,8 +239,8 @@ A status indicator with 7 colors, 4 sizes, a basic (outlined) variant, and a cir
 
 | Token | What it controls | Fallback chain |
 |---|---|---|
-| `--canvas-badge-bg` | Default (no color) background | `#e8e8e8` |
-| `--canvas-badge-color` | Default (no color) text | `--palette-text-on-neutral` then `rgba(0, 0, 0, 0.6)` |
+| `--canvas-badge-bg` | Default (no color) background | `#e5e7eb` |
+| `--canvas-badge-color` | Default (no color) text | `--palette-text-on-neutral` then `#4a5565` |
 | `--canvas-badge-{color}-bg` | Specific color background | `--palette-{color}` then hardcoded hex |
 | `--canvas-badge-{color}-color` | Specific color text | `#fff` |
 | `--canvas-badge-padding` | Padding | `.5833em .833em` |
@@ -271,7 +273,7 @@ A dismissible tag element for filters, selections, and tags. Always shows an X d
 
 | Attribute | Values | Default |
 |---|---|---|
-| `color` | red, orange, green, blue, purple, grey, black | none (gray `#e8e8e8`) |
+| `color` | red, orange, green, blue, purple, grey, black | none (gray `#e5e7eb`) |
 | `size` | mini, tiny, small | base |
 | `basic` | boolean | false |
 
@@ -317,8 +319,8 @@ container.appendChild(chip);
 
 | Token | What it controls | Fallback chain |
 |---|---|---|
-| `--canvas-chip-bg` | Default (no color) background | `#e8e8e8` |
-| `--canvas-chip-color` | Default (no color) text | `--palette-text-on-neutral` then `rgba(0, 0, 0, 0.6)` |
+| `--canvas-chip-bg` | Default (no color) background | `#e5e7eb` |
+| `--canvas-chip-color` | Default (no color) text | `--palette-text-on-neutral` then `#4a5565` |
 | `--canvas-chip-{color}-bg` | Specific color background | `--palette-{color}` then hardcoded hex |
 | `--canvas-chip-{color}-color` | Specific color text | `#fff` |
 | `--canvas-chip-padding` | Padding (asymmetric, see note) | `.5833em .708em .5833em .833em` |
@@ -333,7 +335,7 @@ container.appendChild(chip);
 
 **Asymmetric padding.** The right padding is 15% less than the left to optically balance the dismiss icon. The X button adds visual weight to the right side, so reduced padding compensates. When overriding `--canvas-chip-padding`, keep the right value about 15% smaller than the left (e.g., if left is `1em`, right should be about `.85em`).
 
-**Focus.** When the chip host has keyboard focus it shows the `--focus-ring` outline (`2px solid #85b7d9`, 1px offset) around the chip. The X sits at 70% opacity and goes to full opacity on hover, a little stronger than Semantic's 50% so it stays visible on gray.
+**Focus.** When the chip host has keyboard focus it shows the `--focus-ring` outline (`2px solid #155dfc`, 1px offset) around the chip. The X sits at 70% opacity and goes to full opacity on hover, a little stronger than Semantic's 50% so it stays visible on gray.
 
 **Keyboard and ARIA.** The dismiss button carries an `aria-label` that names the chip rather than a generic `Remove`, so a `Provider: Dr. Magee` chip exposes `Remove Provider Dr Magee` to assistive technology. When the chip itself is interactive, for example a filter chip that the user can activate to edit the filter, the host carries `tabindex="0"` and listens for the Delete and Backspace keys, both of which fire the same `dismiss` event the X button fires. The chip becomes a single Tab stop in this case, with the dismiss button reachable through the Enter or Space activation rather than as a second Tab stop, matching the WAI ARIA tag pattern. Static, non interactive chips do not carry `tabindex` and the dismiss button is the only focusable element inside.
 
@@ -406,7 +408,7 @@ A single-line text input with integrated label, error state, and native form par
 document.querySelector('canvas-input').removeAttribute('error');
 ```
 
-When in error state, the label turns red (`#9f3a38`), the input background turns pink (`#fff6f6`), the border turns pink (`#e0b4b4`), and the error text appears. The input gets `aria-invalid="true"` and `aria-describedby` linking to the error message.
+When in error state, the label turns red (`#c10007`), the input background turns pink (`#fef2f2`), the border turns pink (`#ffc9c9`), and the error text appears. The input gets `aria-invalid="true"` and `aria-describedby` linking to the error message.
 
 **Phone formatting.** Set `format="phone"` to mask a North American phone number as the user types. The display fills in progressively, `000`, then `(000) 000`, then `(000) 000-0000`, and the field accepts at most 10 digits. This mirrors the home-app patient phone field, where raw digits live in state and the mask exists only for display. Pair it with `type="tel"` so mobile keyboards show the numeric keypad.
 
@@ -446,20 +448,20 @@ phone.addEventListener('change', () => {
 | `--canvas-input-font-size` | Input/textarea font size | `1em` |
 | `--canvas-input-font-family` | Font family (label, input, error) | `--font-family` then `Lato, "Helvetica Neue", Arial, Helvetica, sans-serif` |
 | `--canvas-input-line-height` | Input/textarea line height | `1.21428571em` |
-| `--canvas-input-color` | Input text color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
+| `--canvas-input-color` | Input text color | `--color-text` then `#364153` |
 | `--canvas-input-bg` | Input background | `--color-surface` then `#FFFFFF` |
-| `--canvas-input-border` | Input border | `1px solid rgba(34, 36, 38, 0.15)` |
+| `--canvas-input-border` | Input border | `1px solid #d1d5dc` |
 | `--canvas-input-radius` | Border radius | `--radius` then `.28571429rem` |
-| `--canvas-input-focus-border` | Focus border color. Keyboard focus also draws the shared `--focus-ring` outline (2px `#85b7d9`, 1px offset). | `#85b7d9` |
-| `--canvas-input-placeholder` | Placeholder color | `rgba(191, 191, 191, 0.87)` |
-| `--canvas-input-focus-placeholder` | Placeholder color on focus | `rgba(115, 115, 115, 0.87)` |
-| `--canvas-input-disabled-bg` | Disabled background | `--color-bg` then `#F5F5F5` |
+| `--canvas-input-focus-border` | Focus border color. Keyboard focus also draws the shared `--focus-ring` outline (2px `#155dfc`, 1px offset). | `#155dfc` |
+| `--canvas-input-placeholder` | Placeholder color | `#99a1af` |
+| `--canvas-input-focus-placeholder` | Placeholder color on focus | `#6a7282` |
+| `--canvas-input-disabled-bg` | Disabled background | `--color-bg` then `#f3f4f6` |
 | `--canvas-input-label-font-size` | Label font size | `.92857143em` |
 | `--canvas-input-label-font-weight` | Label font weight | `--font-weight-bold` then `700` |
-| `--canvas-input-label-color` | Label color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
-| `--canvas-input-error-text` | Error text and label color | `#9f3a38` |
-| `--canvas-input-error-bg` | Error input background | `#fff6f6` |
-| `--canvas-input-error-border` | Error border and placeholder color | `#e0b4b4` |
+| `--canvas-input-label-color` | Label color | `--color-text` then `#364153` |
+| `--canvas-input-error-text` | Error text and label color | `#c10007` |
+| `--canvas-input-error-bg` | Error input background | `#fef2f2` |
+| `--canvas-input-error-border` | Error border and placeholder color | `#ffc9c9` |
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -578,7 +580,7 @@ A standalone month grid for date selection. Single date, range, or multi-date mo
 
 **Live region.** A visually hidden `role="status" aria-live="polite"` region inside the calendar announces month changes (after navigation buttons or PageUp / PageDown), single selection, range start vs range complete, and multi-select count changes including granular adds. Picked list clear announces "All dates cleared." Range pick after the first click announces "Start date <date> selected. Pick an end date." After the second click announces "Range <start> to <end> selected."
 
-**Today indicator.** Today cells carry a 1px border in the `--canvas-calendar-today-color` token color (default `--color-primary`, blue `#155dfc`) and a bold day number, so the today signal does not rely on color alone. When today is also selected, the cell fills blue with white text, and a 2px white inset ring inside the blue border keeps it distinguishable from other selected days. Selected and highlighted days use `--color-primary` blue. Keyboard focus on a day, nav button, or picked-list control draws a 2px `#85b7d9` outline (`--canvas-calendar-focus-ring` overrides the color). The gray header strip (`#f0f0f0`) matches the stock react-datepicker header used in the Canvas home-app.
+**Today indicator.** Today cells carry a 1px border in the `--canvas-calendar-today-color` token color (default `--color-primary`, blue `#155dfc`) and a bold day number, so the today signal does not rely on color alone. When today is also selected, the cell fills blue with white text, and a 2px white inset ring inside the blue border keeps it distinguishable from other selected days. Selected and highlighted days use `--color-primary` blue. Keyboard focus on a day, nav button, or picked-list control draws a 2px `#155dfc` outline (`--canvas-calendar-focus-ring` overrides the color). The gray header strip (`#f3f4f6`) matches the stock react-datepicker header used in the Canvas home-app.
 
 **Reduced motion.** All cell, nav button, and picked-list transitions are removed when `prefers-reduced-motion: reduce` is active.
 
@@ -672,19 +674,19 @@ A multi-line text area with integrated label, error state, optional auto-resize,
 | `--canvas-textarea-font-size` | Textarea font size | `--canvas-input-font-size` then `1em` |
 | `--canvas-textarea-font-family` | Font family (label, textarea, error) | `--font-family` then `Lato, "Helvetica Neue", Arial, Helvetica, sans-serif` |
 | `--canvas-textarea-line-height` | Textarea line height | `--canvas-input-line-height` then `1.21428571em` |
-| `--canvas-textarea-color` | Textarea text color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
+| `--canvas-textarea-color` | Textarea text color | `--color-text` then `#364153` |
 | `--canvas-textarea-bg` | Textarea background | `--color-surface` then `#FFFFFF` |
-| `--canvas-textarea-border` | Textarea border | `--canvas-input-border` then `1px solid rgba(34, 36, 38, 0.15)` |
+| `--canvas-textarea-border` | Textarea border | `--canvas-input-border` then `1px solid #d1d5dc` |
 | `--canvas-textarea-radius` | Border radius | `--canvas-input-radius` then `--radius` then `.28571429rem` |
-| `--canvas-textarea-focus-border` | Focus border color. Keyboard focus also draws the shared `--focus-ring` outline. | `--canvas-input-focus-border` then `#85b7d9` |
-| `--canvas-textarea-placeholder` | Placeholder color | `--canvas-input-placeholder` then `rgba(191, 191, 191, 0.87)` |
-| `--canvas-textarea-disabled-bg` | Disabled background | `--canvas-input-disabled-bg` then `--color-bg` then `#F5F5F5` |
+| `--canvas-textarea-focus-border` | Focus border color. Keyboard focus also draws the shared `--focus-ring` outline. | `--canvas-input-focus-border` then `#155dfc` |
+| `--canvas-textarea-placeholder` | Placeholder color | `--canvas-input-placeholder` then `#99a1af` |
+| `--canvas-textarea-disabled-bg` | Disabled background | `--canvas-input-disabled-bg` then `--color-bg` then `#f3f4f6` |
 | `--canvas-textarea-label-font-size` | Label font size | `--canvas-input-label-font-size` then `.92857143em` |
-| `--canvas-textarea-label-color` | Label color | `--color-text` then `rgba(0, 0, 0, 0.87)` |
-| `--canvas-textarea-error-text` | Error text and label color | `--canvas-input-error-text` then `#9f3a38` |
-| `--canvas-textarea-error-bg` | Error background | `--canvas-input-error-bg` then `#fff6f6` |
-| `--canvas-textarea-error-border` | Error border color | `--canvas-input-error-border` then `#e0b4b4` |
-| `--canvas-textarea-counter-color` | Counter text color | `--color-text-muted` then `#767676` |
+| `--canvas-textarea-label-color` | Label color | `--color-text` then `#364153` |
+| `--canvas-textarea-error-text` | Error text and label color | `--canvas-input-error-text` then `#c10007` |
+| `--canvas-textarea-error-bg` | Error background | `--canvas-input-error-bg` then `#fef2f2` |
+| `--canvas-textarea-error-border` | Error border color | `--canvas-input-error-border` then `#ffc9c9` |
+| `--canvas-textarea-counter-color` | Counter text color | `--color-text-muted` then `#6a7282` |
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -751,7 +753,7 @@ A locked radio button matching the Canvas home-app. No visual customization. Gro
 
 **Keyboard and ARIA.** Radios sharing a `name` attribute form a real composite. The first sibling on connect carries `role="radiogroup"` semantics on the host wrapper, every radio inside carries `role="radio"` and `aria-checked` reflecting its checked state. Roving tabindex applies, the checked radio is the only Tab stop into the group, ArrowUp and ArrowLeft move the selection to the previous radio, ArrowDown and ArrowRight move to the next, with wrap at the ends. Selection follows focus, so arrow keys both move focus and check the new radio, matching the WAI ARIA radio group pattern. The implementation mirrors the `focusGrid` template `canvas-calendar` uses for its day grid. Disabled radios are skipped during arrow navigation.
 
-**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.radio.checkbox`, a 15px circle with a `#d4d4d5` border that darkens on hover and a dark center dot when selected. Focus border uses `#85b7d9` matching canvas-input, and keyboard focus adds the shared `--focus-ring` outline.
+**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.radio.checkbox`, a 15px circle with a `#d1d5dc` border that darkens on hover and a dark center dot when selected. Focus border uses `#155dfc` matching canvas-input, and keyboard focus adds the shared `--focus-ring` outline.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -822,13 +824,13 @@ A locked checkbox matching the Canvas home-app. White box with a dark checkmark,
 
 **ARIA.** The component extends the `AriaProxy` mixin with the default attribute list so the host attributes mirror onto the inner shadow `<input type="checkbox">`. The visible label and the inner input both carry `cuid` generated ids so the label's `for` points at the input and the input's `aria-labelledby` points at the label, redundantly wiring the association from both sides. The native `<input type="checkbox">` already exposes `aria-checked` semantics through the browser, the component does not duplicate that attribute on the host. See [interaction-patterns.md](interaction-patterns.md) Accessibility Helpers for the AriaProxy and cuid contracts.
 
-**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.checkbox`, a 17px box with a `#d4d4d5` border and `.21428571rem` radius that darkens on hover. Focus border uses `#85b7d9` matching canvas-input and canvas-radio, and keyboard focus adds the shared `--focus-ring` outline.
+**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.checkbox`, a 17px box with a `#d1d5dc` border and `.21428571rem` radius that darkens on hover. Focus border uses `#155dfc` matching canvas-input and canvas-radio, and keyboard focus adds the shared `--focus-ring` outline.
 
 **File.** `assets/canvas-plugin-ui.js`
 
 ### canvas-toggle
 
-A locked toggle switch matching the Canvas home-app. Blue active track (`#2185d0`, not green), white thumb with gradient and shadow, slide animation. Toggles mean instant effect and must never appear on a screen with a Save or Submit button. If a form has submit, use checkboxes instead.
+A locked toggle switch matching the Canvas home-app. Blue active track (`#155dfc`, not green), white thumb with gradient and shadow, slide animation. Toggles mean instant effect and must never appear on a screen with a Save or Submit button. If a form has submit, use checkboxes instead.
 
 **Usage**
 
@@ -879,7 +881,7 @@ A locked toggle switch matching the Canvas home-app. Blue active track (`#2185d0
 
 **ARIA.** The inner switch control carries `role="switch"` and `aria-checked` reflecting state, matching the WAI ARIA switch pattern. The visible label text span carries a `cuid` generated id and the inner switch points `aria-labelledby` at that id so screen readers announce the label whether `label-position` is `start` or `end`. The component extends the `AriaProxy` mixin so `disabled` and `aria-describedby` set on the host mirror onto the inner switch. Toggles still must not appear on screens with a Save or Submit button, see Toggle and Submit Prohibition above.
 
-**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.toggle.checkbox`. The off track is `rgba(0, 0, 0, 0.05)` and darkens to `rgba(0, 0, 0, 0.15)` on hover. The active track is always blue `#2185d0` and darkens to `#1678c2` on hover. The thumb slides in 200ms, and motion is removed under `prefers-reduced-motion`. Keyboard focus draws the shared `--focus-ring` outline (2px `#85b7d9`).
+**Locked component.** No visual customization tokens beyond touch targets. Matches Semantic UI `.ui.toggle.checkbox`. The off track is `rgba(0, 0, 0, 0.05)` and darkens to `rgba(0, 0, 0, 0.15)` on hover. The active track is always blue `#155dfc` and darkens to `#1447e6` on hover. The thumb slides in 200ms, and motion is removed under `prefers-reduced-motion`. Keyboard focus draws the shared `--focus-ring` outline (2px `#155dfc`).
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -974,7 +976,7 @@ Body only (simple inline messages).
 
 ### canvas-card
 
-A segment card matching the Canvas home-app (Semantic UI `.ui.segments`). White surface with a 1px `rgba(34, 36, 38, 0.15)` border, `.28571429rem` radius, and the segment shadow `0 1px 2px 0 rgba(34, 36, 38, 0.15)`. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer (`#f3f4f5` background, `rgba(0, 0, 0, 0.6)` text, matching a Semantic secondary segment) for actions and metadata. Used for notes, stacked content blocks, and detail panels. For the decision rule on when to reach for this component rather than a raw div, see [component-usage.md](component-usage.md) Cards and Content Containers.
+A segment card matching the Canvas home-app (Semantic UI `.ui.segments`). White surface with a 1px `#d1d5dc` border, `.28571429rem` radius, and the segment shadow `0 1px 2px 0 rgba(16,24,40,0.15)`. The card is always 100% width of its parent container. Supports multiple body sections separated by borders, and an optional gray footer (`#f3f4f6` background, `#4a5565` text, matching a Semantic secondary segment) for actions and metadata. Used for notes, stacked content blocks, and detail panels. For the decision rule on when to reach for this component rather than a raw div, see [component-usage.md](component-usage.md) Cards and Content Containers.
 
 Three custom elements are registered from a single file: `canvas-card` (outer container), `canvas-card-body` (body sections), and `canvas-card-footer` (gray footer area).
 
@@ -1050,7 +1052,7 @@ Three custom elements are registered from a single file: `canvas-card` (outer co
 
 | Token | What it controls | Fallback chain |
 |---|---|---|
-| `--canvas-card-shadow` | Box shadow | `0 1px 2px 0 rgba(34, 36, 38, 0.15)` (default) or `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)` (raised) |
+| `--canvas-card-shadow` | Box shadow | `0 1px 2px 0 rgba(16,24,40,0.15)` (default) or `0 2px 4px 0 rgba(16,24,40,0.12), 0 2px 10px 0 rgba(16,24,40,0.15)` (raised) |
 
 The shadow token can be used for hover effects or to remove the shadow entirely.
 
@@ -1341,7 +1343,7 @@ The component dispatches a `loading-cancel` event when the user disengages while
 </script>
 ```
 
-**Locked component.** No visual customization tokens. Border, hover border (`rgba(34, 36, 38, 0.35)`), focus and open border (`#96c8da`), open shadow (`0 2px 3px 0 rgba(34, 36, 38, 0.15)`), item hover, and item selected styling are fixed to match Semantic UI `.ui.selection.dropdown` in the Canvas home-app. The closed trigger is 38px tall, the same as `canvas-input`. Keyboard focus on the closed trigger draws the shared `--focus-ring` outline.
+**Locked component.** No visual customization tokens. Border, hover border (`#99a1af`), focus and open border (`#155dfc`), open shadow (`0 2px 3px 0 rgba(16,24,40,0.15)`), item hover, and item selected styling are fixed to match Semantic UI `.ui.selection.dropdown` in the Canvas home-app. The closed trigger is 38px tall, the same as `canvas-input`. Keyboard focus on the closed trigger draws the shared `--focus-ring` outline.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1420,7 +1422,7 @@ A searchable dropdown with type-ahead filtering, keyboard navigation, and viewpo
 
 **Loading state.** Same contract as `canvas-dropdown`. The editable input row is replaced with the spinner row while `loading` is set, so filtering as the user types is suppressed during loading. Same `loading`, `loading-label`, and `loading-cancel` API. See `canvas-dropdown` Loading state for the full contract and the copy paste sample.
 
-**Locked component.** No visual customization tokens. Border, hover border (`rgba(34, 36, 38, 0.35)`), focus and open border (`#96c8da`), open shadow (`0 2px 3px 0 rgba(34, 36, 38, 0.15)`, or `0 -2px 3px 0 rgba(0, 0, 0, 0.08)` when the menu flips up), placeholder (`rgba(191, 191, 191, 0.87)`), item hover, and item selected styling are fixed to match Semantic UI `.ui.search.selection.dropdown` in the Canvas home-app. The input is 38px tall, the same as `canvas-input`. Keyboard focus on the closed input draws the shared `--focus-ring` outline.
+**Locked component.** No visual customization tokens. Border, hover border (`#99a1af`), focus and open border (`#155dfc`), open shadow (`0 2px 3px 0 rgba(16,24,40,0.15)`, or `0 -2px 3px 0 rgba(0, 0, 0, 0.08)` when the menu flips up), placeholder (`#99a1af`), item hover, and item selected styling are fixed to match Semantic UI `.ui.search.selection.dropdown` in the Canvas home-app. The input is 38px tall, the same as `canvas-input`. Keyboard focus on the closed input draws the shared `--focus-ring` outline.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1484,7 +1486,7 @@ A multi-value combobox with chip rendering, inline checkbox indicators, and sear
 
 **Loading state.** Same contract as `canvas-combobox`. Selected chips remain visible inside the trigger so the user can still remove them, only the input row swaps for the spinner row while `loading` is set. Same `loading`, `loading-label`, and `loading-cancel` API. See `canvas-dropdown` Loading state for the full contract.
 
-**Locked component.** No visual customization tokens. Trigger border, hover, focus, and open states match `canvas-combobox`, with a 38px minimum height. Selected values render as Semantic UI `.ui.label` chips (`#e8e8e8` background, `rgba(0, 0, 0, 0.6)` text). Selected options show a blue (`#2185d0`) checkbox mark in the menu. Keyboard focus on the input or a chip's remove button draws the shared `--focus-ring` outline.
+**Locked component.** No visual customization tokens. Trigger border, hover, focus, and open states match `canvas-combobox`, with a 38px minimum height. Selected values render as Semantic UI `.ui.label` chips (`#e5e7eb` background, `#4a5565` text). Selected options show a blue (`#155dfc`) checkbox mark in the menu. Keyboard focus on the input or a chip's remove button draws the shared `--focus-ring` outline.
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -1560,18 +1562,18 @@ Icon only triggers must carry their own `aria-label`. The default ghost trigger 
 
 *Default trigger.* When no `slot="trigger"` child is provided, the component renders a ghost button that matches the neutral Semantic UI `.ui.button` and `canvas-button variant="ghost"`.
 
-- Background, `var(--palette-neutral, #e0e1e2)`. Hover, `var(--palette-neutral-hover, #cacbcd)`. Pressed, `#babbbc`.
-- Text color, `var(--palette-text-on-neutral, rgba(0, 0, 0, 0.6))`. Hover, `rgba(0, 0, 0, 0.8)`.
+- Background, `var(--palette-neutral, #e5e7eb)`. Hover, `var(--palette-neutral-hover, #d1d5dc)`. Pressed, `#99a1af`.
+- Text color, `var(--palette-text-on-neutral, #4a5565)`. Hover, `#101828`.
 - Padding, `var(--btn-padding, .78571429em 1.5em)`. Font size, `1rem`. Font weight, `700`. Line height, `1em`. With the transparent border the trigger is 38px tall, the same as `canvas-button`.
 - Border, `1px solid transparent`. Radius, `var(--radius, .28571429rem)`.
 - Caret, 8 px wide by 5 px tall SVG, inherits `currentColor`.
-- Focus, `var(--focus-ring, 2px solid #85b7d9)` outline with `var(--focus-ring-offset, 1px)` offset.
+- Focus, `var(--focus-ring, 2px solid #155dfc)` outline with `var(--focus-ring-offset, 1px)` offset.
 
 *Menu container.* Matches Semantic UI `.ui.dropdown .menu`.
 
 - Background, `var(--color-surface, #ffffff)`.
-- Border, `1px solid var(--palette-border, rgba(34, 36, 38, 0.15))`. Radius, `var(--radius, .28571429rem)`.
-- Shadow, `0 2px 3px 0 rgba(34, 36, 38, 0.15)`.
+- Border, `1px solid var(--palette-border, #d1d5dc)`. Radius, `var(--radius, .28571429rem)`.
+- Shadow, `0 2px 3px 0 rgba(16,24,40,0.15)`.
 - Offset from trigger, 2 px margin on the open axis.
 - Width, `min-width: 180px`, `max-width: 320px`. Text wraps at the cap.
 - Height, `max-height: 16.02857143rem` with `overflow-y: auto`. Scroll bar rendered by the browser, no custom scrollbar styling.
@@ -1581,16 +1583,16 @@ Icon only triggers must carry their own `aria-label`. The default ghost trigger 
 *Option.*
 
 - Padding, `.78571429rem 1.14285714rem`. Font size, `1rem`. Line height, `1em`.
-- Default color, `var(--color-text, rgba(0, 0, 0, 0.87))`.
-- Hover and highlighted, background `rgba(0, 0, 0, 0.05)`, color `var(--color-text-active, rgba(0, 0, 0, 0.95))`.
-- Keyboard focus, when an option takes focus it shows `var(--focus-ring, 2px solid #85b7d9)` inset by 2 px.
-- Disabled, color `var(--color-text-muted, #767676)`, default cursor, background transparent on hover. Muted text replaces Semantic's 45% opacity so disabled items stay legible.
+- Default color, `var(--color-text, #364153)`.
+- Hover and highlighted, background `rgba(0, 0, 0, 0.05)`, color `var(--color-text-active, #101828)`.
+- Keyboard focus, when an option takes focus it shows `var(--focus-ring, 2px solid #155dfc)` inset by 2 px.
+- Disabled, color `var(--color-text-muted, #6a7282)`, default cursor, background transparent on hover. Muted text replaces Semantic's 45% opacity so disabled items stay legible.
 - No per option border.
 
 *Section divider.*
 
 - Rendered for each `<hr>` child inside the default slot.
-- Border top, `1px solid rgba(34, 36, 38, 0.1)`, matching Semantic `.ui.dropdown .menu > .divider`.
+- Border top, `1px solid #e5e7eb`, matching Semantic `.ui.dropdown .menu > .divider`.
 - Height, `0`. Margin, `.5em 0`. Padding, `0`.
 - Role, `separator`. Not focusable, skipped by keyboard navigation.
 
@@ -1707,10 +1709,10 @@ The surface uses `overflow-wrap: anywhere` so long unbreakable tokens such as IR
 *Surface.*
 
 - Background, `var(--color-surface, #ffffff)`.
-- Border, `1px solid #d4d4d5`. Radius, `var(--radius, .28571429rem)`. Matches `canvas-tooltip` and `canvas-card` so anchored surfaces share one container gray.
-- Shadow, `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`, the Semantic UI `.ui.popup` shadow, same as `canvas-tooltip`.
+- Border, `1px solid #d1d5dc`. Radius, `var(--radius, .28571429rem)`. Matches `canvas-tooltip` and `canvas-card` so anchored surfaces share one container gray.
+- Shadow, `0 2px 4px 0 rgba(16,24,40,0.12), 0 2px 10px 0 rgba(16,24,40,0.15)`, the Semantic UI `.ui.popup` shadow, same as `canvas-tooltip`.
 - Padding, `1em 1.14285714em`. The surface holds arbitrary content, padding belongs to the container not the options.
-- Text, font size `1rem`, line height `1.4285714`, color `var(--color-text, rgba(0, 0, 0, 0.87))`.
+- Text, font size `1rem`, line height `1.4285714`, color `var(--color-text, #364153)`.
 - Positioning, `position: fixed` with inline top and left values set by the component. Z index, `2000`.
 - Offset from trigger, 6 px gutter without `pointer`, 10 px gutter with `pointer` (matches `canvas-tooltip`).
 - Overflow, none. Long unbreakable tokens are broken by `overflow-wrap: anywhere`.
@@ -1723,7 +1725,7 @@ The surface uses `overflow-wrap: anywhere` so long unbreakable tokens such as IR
 
 *Pointer artwork.*
 
-- 14 px by 7 px SVG triangle, rotated 45 degrees equivalent via path geometry. Border color `#d4d4d5`, fill `var(--color-surface, #ffffff)` on the overlay cover.
+- 14 px by 7 px SVG triangle, rotated 45 degrees equivalent via path geometry. Border color `#d1d5dc`, fill `var(--color-surface, #ffffff)` on the overlay cover.
 - Layering, grey arrow sits behind the surface so only the protruding tip shows in the border color. White cover sits above the surface and masks the 1 px surface border at the 14 px joint so the arrow reads as continuous with the surface body. Same technique as the tooltip.
 - Offset, 5 px of the 7 px arrow protrudes outside the surface, 2 px overlaps behind the surface so the cover has a surface to paint on.
 - Position, arrow tracks the trigger center even when the surface edge clamps inward from the viewport. Clamp inside the surface keeps the arrow 6 px from each corner so it cannot slide into the border radius.
@@ -1734,8 +1736,8 @@ The surface uses `overflow-wrap: anywhere` so long unbreakable tokens such as IR
 
 Anchored surfaces and containers share one gray. Form indicators share a second gray that darkens on hover.
 
-- `#d4d4d5` on container chrome, `canvas-tooltip`, `canvas-popover` surface, `canvas-card` outer border.
-- `rgba(34, 36, 38, 0.15)` on form controls and form indicators, `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-textarea`, `canvas-multi-select`, `canvas-checkbox` resting, `canvas-radio` resting. Darkens to `rgba(34, 36, 38, 0.35)` on hover, to `#85b7d9` on focus.
+- `#d1d5dc` on container chrome, `canvas-tooltip`, `canvas-popover` surface, `canvas-card` outer border.
+- `#d1d5dc` on form controls and form indicators, `canvas-input`, `canvas-dropdown`, `canvas-combobox`, `canvas-textarea`, `canvas-multi-select`, `canvas-checkbox` resting, `canvas-radio` resting. Darkens to `#99a1af` on hover, to `#155dfc` on focus.
 
 Do not introduce a third gray without mapping it into one of these two categories.
 
@@ -1795,7 +1797,7 @@ A tabbed interface with automatic panel switching, bold-shift prevention, badge 
 
 **Panel overflow.** `canvas-tab-panel` is not a scroll container. Content flows naturally and is allowed to paint outside the panel's box (focus rings, box shadows, dropdown menus). When panel content needs to scroll inside a bounded region, wrap it in `canvas-scroll-area vertical` with an explicit `max-height` and `aria-label`. Same contract as `canvas-card-body` and `canvas-popover`. Do not place `overflow: auto` on the panel or on a raw div inside it. See [component-usage.md](component-usage.md) Scroll Areas.
 
-**Appearance.** Tabs follow the Semantic UI secondary pointing menu: a 2px `rgba(34, 36, 38, 0.15)` baseline, 14px labels with `1.14285714em` side padding, and a 2px underline on the active tab. The active tab is bold and uses `#1b1c1d` for both the underline and the label, matching the Chart, Profile and Portal tabs in the patient chart. Override with `--canvas-tabs-active-color`. Keyboard focus shows the `--focus-ring` outline inset on the tab button.
+**Appearance.** Tabs follow the Semantic UI secondary pointing menu: a 2px `#d1d5dc` baseline, 14px labels with `1.14285714em` side padding, and a 2px underline on the active tab. The active tab is bold and uses `#101828` for both the underline and the label, matching the Chart, Profile and Portal tabs in the patient chart. Override with `--canvas-tabs-active-color`. Keyboard focus shows the `--focus-ring` outline inset on the tab button.
 
 **Bold-shift prevention.** The component handles this internally. Tab buttons reserve width for the bold (700) state so sibling tabs do not shift when the active tab changes weight.
 
@@ -1995,7 +1997,7 @@ The modal does not render on page load. Call `modal.open()` to show it and `moda
 </canvas-modal-content>
 ```
 
-**Appearance.** The modal matches Semantic UI `.ui.modal` with the Canvas dimmer override. The backdrop is `rgba(0, 0, 0, 0.5)`. The header has `1.25rem 1.5rem` padding, a `1.42857143rem` bold title in `rgba(0, 0, 0, 0.85)`, and a 1px `rgba(34, 36, 38, 0.15)` bottom border. Content has `1.5rem` padding and `1.4` line height. The footer has `1rem` padding, a `#f9fafb` background, an 8px gap between buttons, and a 1px top border. The close button shows the `--focus-ring` outline on keyboard focus.
+**Appearance.** The modal matches Semantic UI `.ui.modal` with the Canvas dimmer override. The backdrop is `rgba(0, 0, 0, 0.5)`. The header has `1.25rem 1.5rem` padding, a `1.42857143rem` bold title in `#101828`, and a 1px `#d1d5dc` bottom border. Content has `1.5rem` padding and `1.4` line height. The footer has `1rem` padding, a `#f9fafb` background, an 8px gap between buttons, and a 1px top border. The close button shows the `--focus-ring` outline on keyboard focus.
 
 **Locked component.** No visual customization tokens. Box shadow, backdrop color, header/footer styling are all fixed.
 
@@ -2086,17 +2088,17 @@ Combine modifier attributes on the same `canvas-table` element as needed.
 | `--canvas-table-cell-padding` | Body cell padding | `.78571429em .78571429em` (compact: `.5em .7em`) |
 | `--canvas-table-header-padding` | Header cell padding | `.92857143em .78571429em` (compact: `.92857143em .7em`) |
 | `--canvas-table-header-bg` | Header background | `#ffffff` |
-| `--canvas-table-header-border` | 1px line under the header row | `var(--color-border, rgba(34, 36, 38, 0.15))` |
-| `--canvas-table-border` | Row and cell border color | `rgba(34, 36, 38, 0.1)` |
+| `--canvas-table-header-border` | 1px line under the header row | `var(--color-border, #d1d5dc)` |
+| `--canvas-table-border` | Row and cell border color | `#e5e7eb` |
 | `--canvas-table-stripe-bg` | Striped row background | `rgba(0, 0, 50, 0.02)` |
 | `--canvas-table-row-hover-bg` | Selectable row hover background | `rgba(0, 0, 0, 0.05)` |
-| `--canvas-table-row-positive-bg` | Positive row background | `#fcfff5` |
-| `--canvas-table-row-positive-text` | Positive row text | `#2c662d` |
-| `--canvas-table-row-warning-bg` | Warning row background | `#fffaf3` |
-| `--canvas-table-row-warning-text` | Warning row text | `#573a08` |
-| `--canvas-table-row-negative-bg` | Negative row background | `#fff6f6` |
-| `--canvas-table-row-negative-text` | Negative row text | `#9f3a38` |
-| `--canvas-table-row-active-bg` | Active/selected row background | `#e0e0e0` |
+| `--canvas-table-row-positive-bg` | Positive row background | `#f0fdf4` |
+| `--canvas-table-row-positive-text` | Positive row text | `#016630` |
+| `--canvas-table-row-warning-bg` | Warning row background | `#fffbeb` |
+| `--canvas-table-row-warning-text` | Warning row text | `#973c00` |
+| `--canvas-table-row-negative-bg` | Negative row background | `#fef2f2` |
+| `--canvas-table-row-negative-text` | Negative row text | `#c10007` |
+| `--canvas-table-row-active-bg` | Active/selected row background | `#e5e7eb` |
 
 **File.** `assets/canvas-plugin-ui.js`
 
@@ -2157,7 +2159,7 @@ The `change` event is a single listener path when you do not care to distinguish
 
 **Slot.** `canvas-sortable-item` has a default slot for content. The drag handle is rendered inside Shadow DOM and cannot be replaced.
 
-**Drag behavior.** Pointer down on the handle starts a drag. The dragged item becomes a fixed overlay following the cursor, lifted with the Semantic raised shadow `0 2px 4px 0 rgba(34, 36, 38, 0.12), 0 2px 10px 0 rgba(34, 36, 38, 0.15)`. A placeholder holds space at the current target position. As the cursor moves past item midpoints, the placeholder shifts and other items animate into place via FLIP transforms (200ms ease). On pointer up, the item is inserted at the placeholder position and the matching `reorder` or `move` event fires, followed by `change`.
+**Drag behavior.** Pointer down on the handle starts a drag. The dragged item becomes a fixed overlay following the cursor, lifted with the Semantic raised shadow `0 2px 4px 0 rgba(16,24,40,0.12), 0 2px 10px 0 rgba(16,24,40,0.15)`. A placeholder holds space at the current target position. As the cursor moves past item midpoints, the placeholder shifts and other items animate into place via FLIP transforms (200ms ease). On pointer up, the item is inserted at the placeholder position and the matching `reorder` or `move` event fires, followed by `change`.
 
 **Cross list drop indication.** The placeholder holds an empty gap at the insertion point and items animate into place via FLIP. No color indicator is applied by default. The list currently under the cursor carries a `data-drop-active` attribute that consumers can style on their own for a column highlight or insertion bar if desired.
 
@@ -2237,7 +2239,7 @@ A two-column layout with a fixed-width sidebar and flexible content area. Regist
 |---|---|---|
 | `--canvas-sidebar-layout-height` | Layout height | `auto` |
 | `--canvas-sidebar-width` | Sidebar width (overrides variant) | `260px` |
-| `--canvas-sidebar-bg` | Sidebar background | `var(--color-bg, #f5f5f5)` |
+| `--canvas-sidebar-bg` | Sidebar background | `var(--color-bg, #f3f4f6)` |
 | `--canvas-sidebar-padding` | Sidebar padding | `0` |
 | `--canvas-content-bg` | Content area background | `var(--color-surface, #ffffff)` |
 | `--canvas-content-padding` | Content area padding | `0` |
@@ -2309,12 +2311,12 @@ A loading spinner matching the Canvas home-app. Renders a spinning circular bord
 | `--canvas-loader-size-large` | Large spinner dimensions | `3.42857143rem` |
 | `--canvas-loader-border-width` | Track and arc border width | `.2em` |
 | `--canvas-loader-track-color` | Track circle color | `rgba(0, 0, 0, 0.1)` |
-| `--canvas-loader-arc-color` | Spinning arc color | `#767676` |
+| `--canvas-loader-arc-color` | Spinning arc color | `#6a7282` |
 | `--canvas-loader-track-color-inverted` | Track color on dark backgrounds | `rgba(255, 255, 255, 0.15)` |
 | `--canvas-loader-arc-color-inverted` | Arc color on dark backgrounds | `#fff` |
 | `--canvas-loader-backdrop` | Light backdrop color | `rgba(255, 255, 255, 0.85)` |
 | `--canvas-loader-backdrop-dark` | Dark backdrop color | `rgba(0, 0, 0, 0.5)` |
-| `--canvas-loader-text-color` | Label text color | `rgba(0, 0, 0, 0.87)` |
+| `--canvas-loader-text-color` | Label text color | `#364153` |
 | `--canvas-loader-text-color-inverted` | Label text color on dark backgrounds | `rgba(255, 255, 255, 0.9)` |
 | `--canvas-loader-text-gap` | Space between spinner and label | `.78571429rem` |
 | `--canvas-loader-font-family` | Label font family | inherited from --font-family |
@@ -2405,7 +2407,7 @@ An infrastructure component that activates a global tooltip system. Place it onc
 
 **Viewport flipping.** If the tooltip would overflow the viewport edge on the requested side, it flips to the opposite side automatically.
 
-**Visual treatment.** Matches the Canvas home-app tooltip, which is Semantic UI `.ui.popup`. White background, 1px solid #d4d4d5 border, .28571429rem border-radius, `.833em 1em` padding, 250px max width, 14px Lato text in `var(--palette-text)`, drop shadow, and a 14px arrow. Inverted variant uses `var(--palette-black, #1b1c1d)` background with white text and no border or shadow, matching `.ui.inverted.popup`.
+**Visual treatment.** Matches the Canvas home-app tooltip, which is Semantic UI `.ui.popup`. White background, 1px solid #d1d5dc border, .28571429rem border-radius, `.833em 1em` padding, 250px max width, 14px Lato text in `var(--palette-text)`, drop shadow, and a 14px arrow. Inverted variant uses `var(--palette-black, #101828)` background with white text and no border or shadow, matching `.ui.inverted.popup`.
 
 **Infrastructure component.** Unlike UI components, `canvas-tooltip` is placed once per page, not per element. It does not render visible content. The double registration guard prevents issues if it appears multiple times. The `connectedCallback` creates the shared tooltip div and attaches listeners. The `disconnectedCallback` cleans up both.
 
@@ -2447,8 +2449,8 @@ A horizontal rule matching the Canvas home-app. Separates content sections with 
 | Token | What it controls | Fallback chain |
 |---|---|---|
 | `--canvas-divider-margin` | Vertical margin | `1rem 0` |
-| `--canvas-divider-border` | Line color | `var(--color-border, rgba(34, 36, 38, 0.15))` |
-| `--canvas-divider-color` | Text color | `rgba(0, 0, 0, 0.85)` |
+| `--canvas-divider-border` | Line color | `var(--color-border, #d1d5dc)` |
+| `--canvas-divider-color` | Text color | `#101828` |
 | `--canvas-divider-font-size` | Text label size | `1rem` (14px, bold uppercase, as Semantic `.ui.divider`) |
 
 **File.** `assets/canvas-plugin-ui.js`
