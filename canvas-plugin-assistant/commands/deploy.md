@@ -133,6 +133,8 @@ Save the resolved instance slug, the confirmed branch, and the plugin name (the 
   Save the `bash_id` to use it later to check logs. This captures deployment errors and runtime behavior, including a handler that fails to load in the sandbox, which leaves the plugin enabled with that handler missing.
 - **`logs=false`:** tell the user they lack the Plugin developer or Deploy manager role on {instance}, so logs are unavailable for this deploy. Continue.
 
+If the plugin serves HTML (look for `HTMLResponse` or `render_to_string` in its Python files), confirm its `static/` directory contains `canvas-plugin-ui.js` and `canvas-plugin-ui.css`. If either is missing, warn the user before deploying, because the pages will render without Canvas styling or components.
+
 ### Step 4: Deploy via Agent
 
 Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
