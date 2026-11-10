@@ -21,6 +21,14 @@ def _bash(cwd: Path, command: str = "git commit -m change") -> str:
     return json.dumps({"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)})
 
 
+def _installer(session: Path, tool_input: dict) -> dict:
+    return {
+        "tool_name": "mcp__plugin_cpa_canvas_cmd_line__installer",
+        "tool_input": {"instance": "acme-dev", **tool_input},
+        "cwd": str(session),
+    }
+
+
 def _completed(returncode: int, stdout: str = "", stderr: str = "") -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
 
@@ -60,14 +68,28 @@ class TestTargetDir:
 
     def test_the_installer_tool_targets_its_plugin_name_under_its_cwd(self, tmp_path: Path) -> None:
         """The MCP installer names the plugin and the directory it runs in."""
-        plugin = _plugin(tmp_path)
-        payload = {
-            "tool_name": "mcp__plugin_cpa_canvas_cmd_line__installer",
-            "tool_input": {"plugin_name": "acme_intake", "instance": "acme-dev", "cwd": str(tmp_path)},
-            "cwd": "/elsewhere",
-        }
+        container = tmp_path / "acme-intake"
+        plugin = _plugin(container)
+        payload = _installer(tmp_path, {"plugin_name": "acme_intake", "cwd": str(container)})
 
         assert plugin_gate.target_dir(payload) == plugin
+
+    @pytest.mark.parametrize(
+        "tool_input",
+        [
+            pytest.param({"plugin_name": "acme_intake", "cwd": "/"}, id="cwd_outside_the_session"),
+            pytest.param({"plugin_name": "../outside"}, id="parent_traversal"),
+            pytest.param({"plugin_name": "/etc"}, id="absolute_name"),
+            pytest.param({"plugin_name": ""}, id="empty_name"),
+        ],
+    )
+    def test_the_installer_tool_never_reaches_outside_the_session(self, tmp_path: Path, tool_input: dict) -> None:
+        """The hook runs before approval, so a target outside the session's cwd is not checked."""
+        session = tmp_path / "session"
+        _plugin(session)
+        _plugin(tmp_path, "outside")
+
+        assert plugin_gate.target_dir(_installer(session, tool_input)) is None
 
     def test_a_bash_call_targets_the_plugin_at_its_cwd(self, tmp_path: Path) -> None:
         """A Bash call resolves from the session's cwd."""
@@ -76,31 +98,40 @@ class TestTargetDir:
         assert plugin_gate.target_dir(json.loads(_bash(tmp_path))) == plugin
 
 
-class TestValidateCommand:
-    """Tests for validate_command."""
+class TestCanvasExecutable:
+    """Tests for canvas_executable."""
 
-    def test_a_uv_project_uses_its_own_canvas(self, tmp_path: Path) -> None:
-        """A CPA project's `[project]` pins canvas, so its version wins over an older one on PATH."""
+    def test_the_projects_own_venv_wins_over_path(self, tmp_path: Path) -> None:
+        """CPA's scaffold keeps `.venv` in the container above the plugin, pinning its canvas."""
         plugin = _plugin(tmp_path)
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "acme"\ndependencies = ["canvas"]\n')
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("")
         with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
-            assert plugin_gate.validate_command(plugin) == ["uv", "run", "canvas", "validate", str(plugin)]
+            assert plugin_gate.canvas_executable(plugin) == str(venv_canvas)
 
-    def test_a_pyproject_without_a_project_table_uses_canvas_from_path(self, tmp_path: Path) -> None:
-        """Studio's workspace pyproject has no `[project]`, where `uv run` exits before canvas starts."""
+    def test_without_a_venv_canvas_comes_from_path(self, tmp_path: Path) -> None:
+        """Studio's image installs canvas system-wide and its workspaces have no `.venv` canvas."""
         plugin = _plugin(tmp_path)
-        (tmp_path / "pyproject.toml").write_text("[tool.coverage.run]\nsource = ['acme_intake']\n")
         with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
-            assert plugin_gate.validate_command(plugin) == ["canvas", "validate", str(plugin)]
-
-    def test_no_canvas_on_path_falls_back_to_uv(self, tmp_path: Path) -> None:
-        """With no pyproject and no `canvas` on PATH, uv is the only way to reach one."""
-        with patch("plugin_gate.shutil.which", return_value=None):
-            assert plugin_gate.validate_command(tmp_path) == ["uv", "run", "canvas", "validate", str(tmp_path)]
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
 
 
+@pytest.fixture
+def canvas_on_path():
+    """A `canvas` executable to run, so these tests do not depend on the machine's PATH."""
+    with patch("plugin_gate.canvas_executable", return_value="/usr/local/bin/canvas"):
+        yield
+
+
+@pytest.mark.usefixtures("canvas_on_path")
 class TestRunValidate:
     """Tests for run_validate."""
+
+    def test_no_canvas_anywhere_is_a_problem(self, tmp_path: Path) -> None:
+        """With no project `.venv` canvas and none on PATH, the check could not run."""
+        with patch("plugin_gate.canvas_executable", return_value=None):
+            assert "Run `uv sync`" in plugin_gate.run_validate(tmp_path)
 
     def test_a_passing_validate_has_nothing_to_fix(self, tmp_path: Path) -> None:
         """Exit 0 from `canvas validate` returns None."""
@@ -134,7 +165,7 @@ class TestRunValidate:
     @pytest.mark.parametrize(
         ("error", "expected"),
         [
-            pytest.param(FileNotFoundError("uv"), "could not start", id="not_on_path"),
+            pytest.param(PermissionError("canvas"), "could not start (canvas)", id="not_executable"),
             pytest.param(subprocess.TimeoutExpired(["canvas"], 120), "did not finish within 120", id="timeout"),
         ],
     )
@@ -144,6 +175,7 @@ class TestRunValidate:
             assert expected in plugin_gate.run_validate(tmp_path)
 
 
+@pytest.mark.usefixtures("canvas_on_path")
 class TestMain:
     """Tests for main, the hook entry point."""
 

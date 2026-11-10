@@ -9,6 +9,7 @@ Stdlib only, so the hook never depends on a resolver being healthy.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +20,7 @@ MODE_VARIABLE = "CPA_PLUGIN_GATE"
 MODES = ("off", "advise", "block")
 MANIFEST = "CANVAS_MANIFEST.json"
 INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
+PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
 VALIDATE_TIMEOUT_SECONDS = 120
 OUTPUT_LIMIT = 3500
 
@@ -35,48 +37,50 @@ def find_plugin_dir(start: Path) -> Path | None:
 
 
 def target_dir(payload: dict) -> Path | None:
-    """The plugin the gated tool call acts on, or None when it acts on no plugin."""
-    cwd = Path(payload.get("cwd") or ".")
+    """The plugin the gated tool call acts on, or None when it acts on no plugin.
+
+    The hook runs before the call is approved, so an installer target outside the
+    session's working directory is never checked: checking runs code there.
+    """
+    cwd = Path(payload.get("cwd") or ".").resolve()
     tool_input = payload.get("tool_input") or {}
     if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
-        install_cwd = Path(tool_input.get("cwd") or cwd)
-        return find_plugin_dir(install_cwd / tool_input.get("plugin_name", ""))
+        plugin_name = str(tool_input.get("plugin_name", ""))
+        if not PLUGIN_NAME.fullmatch(plugin_name):
+            return None
+        target = (Path(tool_input.get("cwd") or cwd) / plugin_name).resolve()
+        if target != cwd and cwd not in target.parents:
+            return None
+        return find_plugin_dir(target)
     return find_plugin_dir(cwd)
 
 
-def is_uv_project(plugin_dir: Path) -> bool:
-    """Whether the nearest pyproject.toml declares a `[project]`, so `uv run` can run its canvas.
-
-    Studio's workspaces carry a pyproject.toml with no `[project]` table, where
-    `uv run` exits 2 before canvas starts.
-    """
-    for directory in (plugin_dir, *plugin_dir.parents):
-        pyproject = directory / "pyproject.toml"
-        if pyproject.is_file():
-            return any(line.strip() == "[project]" for line in pyproject.read_text().splitlines())
-    return False
-
-
-def validate_command(plugin_dir: Path) -> list[str]:
-    """The plugin project's own canvas through uv, else `canvas` from PATH (Studio's image)."""
-    if is_uv_project(plugin_dir) or not shutil.which("canvas"):
-        return ["uv", "run", "canvas", "validate", str(plugin_dir)]
-    return ["canvas", "validate", str(plugin_dir)]
+def canvas_executable(plugin_dir: Path) -> str | None:
+    """The project's own `.venv` canvas (CPA's scaffold puts it beside or above the plugin),
+    else `canvas` from PATH (Studio's image). Never `uv run`, which builds environments."""
+    for directory in (plugin_dir, plugin_dir.parent):
+        candidate = directory / ".venv" / "bin" / "canvas"
+        if candidate.is_file():
+            return str(candidate)
+    return shutil.which("canvas")
 
 
 def run_validate(plugin_dir: Path) -> str | None:
     """What the agent must fix, or None when `canvas validate` passes."""
+    executable = canvas_executable(plugin_dir)
+    if executable is None:
+        return "`canvas validate` could not start: no `canvas` in the project's `.venv` or on PATH. Run `uv sync`."
     try:
         result = subprocess.run(
-            validate_command(plugin_dir),
+            [executable, "validate", str(plugin_dir)],
             cwd=plugin_dir,
             capture_output=True,
             text=True,
             timeout=VALIDATE_TIMEOUT_SECONDS,
             check=False,
         )
-    except OSError:
-        return "`canvas validate` could not start (neither `canvas` nor `uv` is on PATH)."
+    except OSError as error:
+        return f"`canvas validate` could not start ({error})."
     except subprocess.TimeoutExpired:
         return f"`canvas validate` did not finish within {VALIDATE_TIMEOUT_SECONDS} seconds."
     if result.returncode == 0:

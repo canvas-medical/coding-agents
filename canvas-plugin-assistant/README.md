@@ -62,8 +62,9 @@ A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox
 
 - `advise` hands any failure back to Claude as context and lets the call run.
 - `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
-- It uses the plugin project's own `canvas` through `uv run` when the nearest `pyproject.toml` has a `[project]` table, and `canvas` from `PATH` otherwise.
-- The hook is stdlib-only and runs under `python3`, so it does not depend on `uv` resolving.
+- It runs the project's own `.venv/bin/canvas` (in the plugin folder or the one above it), else `canvas` from `PATH`. It never runs `uv`, since the hook runs before the call is approved and `uv` builds environments.
+- An `installer` call is checked only when its plugin sits inside the session's working directory.
+- The hook is stdlib-only and runs under `python3`.
 
 ### Command Requirements
 
