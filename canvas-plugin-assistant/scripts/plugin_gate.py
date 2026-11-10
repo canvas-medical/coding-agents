@@ -3,6 +3,7 @@
 
 Off unless CPA_PLUGIN_GATE is `advise` (findings go back to Claude, nothing is
 stopped) or `block` (a failure stops the tool call, and Claude sees why).
+Warnings from a passing validate reach Claude in either mode and never stop anything.
 Stdlib only, so the hook never depends on a resolver being healthy.
 """
 
@@ -21,6 +22,8 @@ MODES = ("off", "advise", "block")
 MANIFEST = "CANVAS_MANIFEST.json"
 INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
 PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
+# How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
+WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
 OUTPUT_LIMIT = 3500
 
@@ -57,7 +60,8 @@ def target_dir(payload: dict) -> Path | None:
 
 def canvas_executable(plugin_dir: Path) -> str | None:
     """The project's own `.venv` canvas (CPA's scaffold puts it beside or above the plugin),
-    else `canvas` from PATH (Studio's image). Never `uv run`, which builds environments."""
+    else `canvas` from PATH (Studio's image). Never `uv run`, which builds environments.
+    """
     for directory in (plugin_dir, plugin_dir.parent):
         candidate = directory / ".venv" / "bin" / "canvas"
         if candidate.is_file():
@@ -65,53 +69,77 @@ def canvas_executable(plugin_dir: Path) -> str | None:
     return shutil.which("canvas")
 
 
-def run_validate(plugin_dir: Path) -> str | None:
-    """What the agent must fix, or None when `canvas validate` passes."""
+def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:
+    """What the agent must fix (None when `canvas validate` passes), and the warnings it printed."""
     executable = canvas_executable(plugin_dir)
     if executable is None:
-        return "`canvas validate` could not start: no `canvas` in the project's `.venv` or on PATH. Run `uv sync`."
+        return (
+            "`canvas validate` could not start: no `canvas` in the project's `.venv` or on PATH. Run `uv sync`.",
+            [],
+        )
     try:
         result = subprocess.run(
             [executable, "validate", str(plugin_dir)],
             cwd=plugin_dir,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=VALIDATE_TIMEOUT_SECONDS,
             check=False,
         )
     except OSError as error:
-        return f"`canvas validate` could not start ({error})."
+        return f"`canvas validate` could not start ({error}).", []
     except subprocess.TimeoutExpired:
-        return f"`canvas validate` did not finish within {VALIDATE_TIMEOUT_SECONDS} seconds."
+        return f"`canvas validate` did not finish within {VALIDATE_TIMEOUT_SECONDS} seconds.", []
     if result.returncode == 0:
-        return None
+        return None, [line.strip() for line in WARNING_LINE.findall(result.stdout)]
     output = "\n".join(t for t in (result.stdout.strip(), result.stderr.strip()) if t)
     if "No such command 'validate'" in output:
-        return "`canvas validate` could not run: this canvas CLI predates it. Upgrade the `canvas` package."
-    return "`canvas validate` reported errors the Canvas plugin runner will reject:\n\n" + (
+        return (
+            "`canvas validate` could not run: this canvas CLI predates it. Upgrade the `canvas` package.",
+            [],
+        )
+    problem = "`canvas validate` reported errors the Canvas plugin runner will reject:\n\n" + (
         output[-OUTPUT_LIMIT:] or "(no output)"
     )
+    return problem, []
 
 
 def main(stdin: str) -> int:
     """Run the gate for one hook payload and return the hook's exit code."""
     mode = environ.get(MODE_VARIABLE, "off").strip().lower() or "off"
     if mode not in MODES:
-        print(f"{MODE_VARIABLE}={mode!r} is not one of {', '.join(MODES)}; the gate is off.", file=sys.stderr)
+        print(
+            f"{MODE_VARIABLE}={mode!r} is not one of {', '.join(MODES)}; the gate is off.",
+            file=sys.stderr,
+        )
         return 1
     if mode == "off":
         return 0
     plugin_dir = target_dir(json.loads(stdin or "{}"))
     if plugin_dir is None:
         return 0
-    problem = run_validate(plugin_dir)
-    if problem is None:
-        return 0
-    if mode == "block":
-        print(f"CPA plugin gate ({plugin_dir.name}): {problem}\n\nFix these, then try again.", file=sys.stderr)
+    problem, warnings = run_validate(plugin_dir)
+    if problem is not None and mode == "block":
+        print(
+            f"CPA plugin gate ({plugin_dir.name}): {problem}\n\nFix these, then try again.",
+            file=sys.stderr,
+        )
         return 2
-    context = f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {problem}"
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": context}}))
+    if problem is not None:
+        context = f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {problem}"
+    elif warnings:
+        context = (
+            f"CPA plugin gate: `canvas validate` passed for {plugin_dir.name} with warnings. They do not block; "
+            "fix them unless the code is intended:\n" + "\n".join(warnings)
+        )
+    else:
+        return 0
+    print(
+        json.dumps(
+            {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": context}}
+        )
+    )
     return 0
 
 

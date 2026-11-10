@@ -21,6 +21,13 @@ def _bash(cwd: Path, command: str = "git commit -m change") -> str:
     return json.dumps({"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)})
 
 
+# A warning line as `canvas validate` prints it (captured from canvas 0.269.0).
+WARNING = (
+    "  ⚠ handlers/h.py:1  [custom-model-id-vs-dbid]  `Widget.objects.filter(id=…)` — CustomModels use `dbid` "
+    "as their primary key (only core SDK models have `id`). Use `dbid=…` instead."
+)
+
+
 def _installer(session: Path, tool_input: dict) -> dict:
     return {
         "tool_name": "mcp__plugin_cpa_canvas_cmd_line__installer",
@@ -131,27 +138,37 @@ class TestRunValidate:
     def test_no_canvas_anywhere_is_a_problem(self, tmp_path: Path) -> None:
         """With no project `.venv` canvas and none on PATH, the check could not run."""
         with patch("plugin_gate.canvas_executable", return_value=None):
-            assert "Run `uv sync`" in plugin_gate.run_validate(tmp_path)
+            problem, warnings = plugin_gate.run_validate(tmp_path)
 
-    def test_a_passing_validate_has_nothing_to_fix(self, tmp_path: Path) -> None:
-        """Exit 0 from `canvas validate` returns None."""
-        with patch("plugin_gate.subprocess.run", return_value=_completed(0)):
-            assert plugin_gate.run_validate(tmp_path) is None
+        assert "Run `uv sync`" in problem
+        assert warnings == []
+
+    def test_a_clean_pass_has_nothing_to_report(self, tmp_path: Path) -> None:
+        """Exit 0 with no warnings returns no problem and no warnings."""
+        clean = _completed(0, stdout="Plugin acme_intake has a valid CANVAS_MANIFEST.json file\n")
+        with patch("plugin_gate.subprocess.run", return_value=clean):
+            assert plugin_gate.run_validate(tmp_path) == (None, [])
+
+    def test_a_pass_with_warnings_returns_each_warning(self, tmp_path: Path) -> None:
+        """Validate exits 0 on warnings, so they are read from its output rather than its exit code."""
+        warned = _completed(0, stdout=f"Plugin acme_intake has a valid CANVAS_MANIFEST.json file\n{WARNING}\n")
+        with patch("plugin_gate.subprocess.run", return_value=warned):
+            assert plugin_gate.run_validate(tmp_path) == (None, [WARNING.strip()])
 
     def test_a_failing_validate_returns_its_output(self, tmp_path: Path) -> None:
         """Both streams reach the agent, since handler loads print to stdout and errors to stderr."""
         failed = _completed(1, stdout="h.py:1 [type-blocked]", stderr="1 handler failed")
         with patch("plugin_gate.subprocess.run", return_value=failed):
-            problem = plugin_gate.run_validate(tmp_path)
+            problem, warnings = plugin_gate.run_validate(tmp_path)
 
-        assert problem is not None
         assert "h.py:1 [type-blocked]\n1 handler failed" in problem
+        assert warnings == []
 
     def test_a_cli_too_old_for_validate_is_not_read_as_plugin_errors(self, tmp_path: Path) -> None:
         """canvas releases before `validate` answer "No such command", which says nothing about the plugin."""
         too_old = _completed(2, stderr="Error: No such command 'validate'. Did you mean 'validate-manifest'?")
         with patch("plugin_gate.subprocess.run", return_value=too_old):
-            problem = plugin_gate.run_validate(tmp_path)
+            problem, _ = plugin_gate.run_validate(tmp_path)
 
         assert problem == (
             "`canvas validate` could not run: this canvas CLI predates it. Upgrade the `canvas` package."
@@ -160,7 +177,9 @@ class TestRunValidate:
     def test_a_silent_failure_still_says_so(self, tmp_path: Path) -> None:
         """A non-zero exit with no output is still a failure."""
         with patch("plugin_gate.subprocess.run", return_value=_completed(1)):
-            assert "(no output)" in plugin_gate.run_validate(tmp_path)
+            problem, _ = plugin_gate.run_validate(tmp_path)
+
+        assert "(no output)" in problem
 
     @pytest.mark.parametrize(
         ("error", "expected"),
@@ -172,7 +191,10 @@ class TestRunValidate:
     def test_a_validate_that_cannot_run_is_a_problem(self, tmp_path: Path, error: Exception, expected: str) -> None:
         """A check that could not run is reported, never read as a pass."""
         with patch("plugin_gate.subprocess.run", side_effect=error):
-            assert expected in plugin_gate.run_validate(tmp_path)
+            problem, warnings = plugin_gate.run_validate(tmp_path)
+
+        assert expected in problem
+        assert warnings == []
 
 
 @pytest.mark.usefixtures("canvas_on_path")
@@ -203,12 +225,29 @@ class TestMain:
             assert plugin_gate.main(_bash(tmp_path)) == 0
         run.assert_not_called()
 
-    def test_a_passing_plugin_passes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """A plugin that validates lets the call through silently."""
+    def test_a_passing_plugin_passes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A plugin that validates cleanly lets the call through silently."""
         monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
         _plugin(tmp_path)
         with patch("plugin_gate.subprocess.run", return_value=_completed(0)):
             assert plugin_gate.main(_bash(tmp_path)) == 0
+        assert capsys.readouterr().out == ""
+
+    @pytest.mark.parametrize("mode", ["advise", "block"])
+    def test_warnings_reach_claude_in_either_mode_without_stopping(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str
+    ) -> None:
+        """A pass with warnings exits 0 and hands each warning to Claude as context."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+        _plugin(tmp_path)
+        with patch("plugin_gate.subprocess.run", return_value=_completed(0, stdout=f"{WARNING}\n")):
+            assert plugin_gate.main(_bash(tmp_path)) == 0
+
+        context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
+        assert context.startswith("CPA plugin gate: `canvas validate` passed for acme_intake with warnings.")
+        assert context.endswith(WARNING.strip())
 
     def test_block_mode_stops_a_failing_plugin(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
