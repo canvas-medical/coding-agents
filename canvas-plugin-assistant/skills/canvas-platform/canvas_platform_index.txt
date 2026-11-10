@@ -1565,6 +1565,66 @@
     - Install the Plugin
         - Plugin secrets
 
+### Patient Communications
+- [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications)
+    - What's included
+    - Where to find it
+    - Notifications Admin
+    - Before you begin
+    - Install the Plugin
+        - Plugin secrets
+    - Troubleshooting
+- [Patient Communications | Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)
+    - Overview
+    - Before you begin
+    - The campaigns
+        - Appointment Reminders
+        - Join Telehealth
+        - Cancellation Alert
+    - Edit a template
+    - Visit Type Overrides
+    - See what was sent
+    - Troubleshooting
+- [Patient Communications | Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)
+    - Overview
+    - Before you begin
+    - Intake sections
+    - Assign forms from the chart
+    - Send forms before each visit
+    - Text and email the patient
+    - What the patient sees
+    - Where answers go
+    - Troubleshooting
+- [Patient Communications | Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents)
+    - Overview
+    - Before you begin
+    - How patients sign
+    - Set up consents
+        - Consents for new patients
+        - Consents before a visit
+        - Assign a consent from the chart
+    - What the patient sees
+    - Dual-signature consents
+    - Where signed consents go
+    - Troubleshooting
+- [Patient Communications | Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks)
+    - Overview
+    - Message a patient
+    - Tell the patient about a new message
+    - Tasks for patient messages
+    - Tasks for completed paperwork
+        - Completed paperwork emails
+    - Message notes on the timeline
+    - Troubleshooting
+- [Patient Communications | Portal Invite and Password Reset Emails](https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails)
+    - Overview
+    - Before you begin
+    - When these emails are sent
+    - Set up the emails
+    - Check your wording
+    - Go back to Canvas's standard email
+    - Troubleshooting
+
 ## Canvas for Administrative Developers
 - [Enable Automated Patient Statements and Payment Reminders via Email](https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email)
     - Overview

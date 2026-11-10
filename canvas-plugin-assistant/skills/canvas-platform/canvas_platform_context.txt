@@ -850,6 +850,70 @@ Hand off a document, send it for signature, and read its history.
 ----- END PAGE https://help.canvasmedical.com/articles/1652834476-processing-lab-reports
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/1662279684-patient-communications
+The Patient Communications plugin handles how your practice reaches patients outside the visit: appointment texts and emails, forms and intake patients complete in the portal before a visit, consents they review and sign, secure messages with staff, and the tasks that tell staff when a patient has done something. Admins set it up in one place, **Notifications Admin** , and staff work with it from a panel in the patient's chart.
+This guide describes Patient Communications 0.19.10. Your Canvas team can tell you which version your practice runs.
+## What's included
+Feature| What it does| Guide  
+---|---|---  
+Appointment notifications| Texts and emails for confirmations, reminders, telehealth join links, no-shows, and cancellations| [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
+Forms and intake| Questionnaires and intake sections patients complete in the portal, assigned by staff or automatically before a visit| [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)  
+Consents| Consents patients sign on the portal or in DocuSign, including consents a provider countersigns| [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents)  
+Messaging and tasks| Secure messages with patients, message notifications, and tasks for patient messages and completed paperwork| [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks)  
+Portal invite and password reset emails| Your own wording for the emails Canvas sends with a portal login link| [Portal Invite and Password Reset Emails](https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails)  
+## Where to find it
+Who| Where| What it's called  
+---|---|---  
+Admins| Provider menu| **Notifications Admin**  
+Staff| Patient chart, right-hand panel| **Patient Communications** , with **Secure Messages** , **Forms** , and **Notifications** tabs  
+Patients| Patient portal menu| **Forms**  
+Patients| Patient portal home| A welcome banner, plus an **Action Required** banner when a consent is waiting  
+## Notifications Admin
+**Notifications Admin** opens a full page with four tabs:
+  - **Campaigns** : every message the plugin sends, each as a card you turn on or off and edit. Also holds the **Completed Paperwork Notifications** and **Patient Message Tasks** settings.
+  - **Visit Type Overrides** : turn appointment messages off for a visit type, or give a visit type its own wording, channels, and timing.
+  - **Pre-Visit Forms** : choose the intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Consents** : link consents to DocuSign, choose which consents every new patient gets, and set up provider countersignature.
+One **Save** button, in the tab bar, saves every tab at once. Nothing changes until you click it.
+The top of the **Campaigns** tab shows **Integration Status** : whether **Twilio SMS** and **SendGrid Email** are **Configured**. This only checks that the settings are filled in, not that the accounts work.
+Any staff member who can sign in to Canvas can open Notifications Admin and save changes. Let your team know who should be making changes there.
+## Before you begin
+  1. **Set up text and email delivery.** Your Canvas team adds your Twilio and SendGrid details (see Plugin secrets below). Check that both show **Configured** under **Integration Status**.
+  2. **Turn off Canvas's built-in appointment reminders** before turning on the plugin's reminders, or patients get both. See [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications).
+  3. **Check patient contact details.** Texts go only to a phone number marked as consenting to messages and not opted out. Emails go to an email address that is not opted out.
+  4. **Give staff an email address on their staff record** if they should get completed-paperwork emails.
+  5. **Turn on the campaigns you want** in Notifications Admin, review the wording, and click **Save**. Every campaign is off until you turn it on. **Completed Paperwork Notifications** and **Patient Message Tasks** are on from the start.
+## Install the Plugin
+Your Canvas team installs and configures this plugin. Ask them to turn it on for your practice.
+### Plugin secrets
+Admins set these in Canvas admin settings, under **Plugin_Io > Plugins > patient_communications**. None is required to install the plugin; each feature below works once its secrets are set.
+Secret| Needed for| When it's empty  
+---|---|---  
+`twilio-account-sid`, `twilio-auth-token`, `twilio-phone-number`| All text messages. Texts come from `twilio-phone-number`.| No texts are sent. **Integration Status** shows Twilio as **Not configured**.  
+`sendgrid-api-key`, `sendgrid-from-email`| All patient emails, and completed-paperwork emails to staff. Emails come from `sendgrid-from-email`.| No emails are sent. Tasks are still created.  
+`CANVAS_FHIR_CLIENT_ID`, `CANVAS_FHIR_CLIENT_SECRET`| Filing signed consents to the chart| Consents are recorded in the plugin but not filed to the chart.  
+`FHIR_BASE_URL`, `FHIR_CLIENT_ID`, `FHIR_CLIENT_SECRET`| Saving gender identity, race, preferred language, and emergency contact from the intake form| Those intake answers are not saved to the chart.  
+`FHIR_EMERGENCY_CONTACT_CODE`, `FHIR_RELEASE_CONTACT_CODE`| The contact categories used for emergency contacts and release of information| Built-in defaults are used. Ask your Canvas team to confirm them for your instance.  
+`INTAKE_DEFAULT_PROVIDER_ID`| The provider a patient-reported history note is filed under when the patient has no default provider| Another active staff member is used.  
+`TREATMENT_CONSENT_SYSTEM`| Which consents the plugin offers, by coding system (comma-separated)| `treatment-consent`  
+`DOCUSIGN_INTEGRATION_KEY`, `DOCUSIGN_USER_ID`, `DOCUSIGN_ACCOUNT_ID`, `DOCUSIGN_RSA_PRIVATE_KEY`, `DOCUSIGN_BASE_URL`| Signing consents in DocuSign. All five are needed.| Consents are signed on the portal signature pad, and provider countersignature cannot be turned on.  
+`DOCUSIGN_TEMPLATE_MAP`| A fallback DocuSign template for each consent| Only templates chosen on the **Consents** tab are used.  
+`DOCUSIGN_TEMPLATE_GROUP_ID`| Sharing templates created from the **Consents** tab with a DocuSign group| Templates are not shared.  
+`DOCUSIGN_HMAC_SECRET`, `WEBHOOK_BASIC_AUTH_USERNAME`, `WEBHOOK_BASIC_AUTH_PASSWORD`| Hearing from DocuSign the moment a consent is signed| Signatures are still picked up when the signing screen closes and by a check every 15 minutes.  
+`BRAND_PRIMARY`, `BRAND_PRIMARY_HOVER`, `BRAND_PRIMARY_TINT_BG`, `BRAND_PRIMARY_TINT_TEXT`| Your colors on the plugin's pages and portal banners, as hex values such as `#1a73e8`| Canvas colors are used.  
+`BRAND_FONT_STACK`, `BRAND_FONT_URL`| Your font on the plugin's pages. The URL must be a Google Fonts stylesheet.| The system font is used.  
+## Troubleshooting
+What you see| What to check  
+---|---  
+Nothing is sent for any campaign| **Integration Status** shows Twilio or SendGrid as **Not configured** , or the campaign is off. Every campaign starts off.  
+A patient gets no texts| Their phone number is not marked as consenting to messages, is opted out, or is missing. The patient's **Notifications** tab in the chart shows each attempt.  
+A patient gets no emails| Their email address is missing or opted out.  
+A setting went back to how it was| Changes save only when you click **Save** in the tab bar.  
+A link in a message is blank| The link to the portal **Forms** page needs your instance's address, which your Canvas team sets up with the plugin. Contact them.  
+For problems with a specific feature, see the troubleshooting section of that feature's guide.
+----- END PAGE https://help.canvasmedical.com/articles/1662279684-patient-communications
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1679996479-print-patient-chart
 Users have the ability to generate and print the patient's entire chart.
 ## FAQ:
@@ -1191,6 +1255,89 @@ Hand off a document, send it for signature, and read its history.
 • **Keywords** : Uncategorized reports, document upload, Canvas Medical, Data Integration, patient chart, clinical documentation, chart review, review command  
 • **Categories** : Clinical Documentation, Data Integration, Patient Records, Workflow Management
 ----- END PAGE https://help.canvasmedical.com/articles/2240101532-command-uncategorized-document-review
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2250124863-patient-communications-consents
+Patient Communications sends consents to patients to review and sign in the patient portal, either on a signature pad or in DocuSign. Consents can go to every new patient, to patients before a visit, or to one patient from their chart. A consent can also need a provider's countersignature after the patient signs. Signed consents are filed to the chart. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+## Overview
+  - **Admins** set up consents on the **Consents** tab of **Notifications Admin** : which DocuSign template each consent uses, which consents every new patient gets, and which need a provider countersignature.
+  - **Patients** see an **Action Required** banner on the portal home page and sign from **Forms** in the portal menu.
+  - **Staff** assign a consent from the **Forms** tab of the **Patient Communications** panel in the chart, and countersign from there.
+  - **Signed consents** are filed to the patient's chart, and staff get a task when a patient accepts or declines.
+## Before you begin
+  - **Choose which consents to offer.** The plugin offers consents whose coding system is `treatment-consent` (or the systems in the `TREATMENT_CONSENT_SYSTEM` plugin secret) and that are set to show in the patient portal.
+  - **Set up filing to the chart.** Filing needs the `CANVAS_FHIR_CLIENT_ID` and `CANVAS_FHIR_CLIENT_SECRET` plugin secrets.
+  - **To use DocuSign,** your Canvas team adds the five `DOCUSIGN_*` connection secrets, and the three webhook secrets so signatures are picked up right away. See Plugin secrets in [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+  - **Set up DocuSign for embedded signing.** Patients sign inside Canvas, so DocuSign should not email them. Your Canvas team can help with the account settings.
+## How patients sign
+How the consent is set up| How the patient signs  
+---|---  
+No DocuSign template| On the portal signature pad  
+DocuSign template, patient signs alone, assigned by staff from the chart| In DocuSign, inside the portal  
+DocuSign template, patient signs alone, sent automatically to new patients or before a visit| On the portal signature pad  
+**Requires provider countersignature**|  In DocuSign, then the provider countersigns  
+## Set up consents
+  1. In **Notifications Admin** , open the **Consents** tab. Each consent shows its name and code.
+  2. Under **DocuSign template** , pick the template the consent is signed with, or **No template (portal signature pad)**.
+     - If the list doesn't load, paste the template ID from DocuSign instead.
+     - To create a new template, drop the consent PDF on the row, or click to choose it. The plugin creates a template named after the consent and opens DocuSign's editor in a pop-up. Place the signature fields, then click **Save and Close** in DocuSign. Allow pop-ups for Canvas if the editor doesn't open.
+  3. Check **Assign to new patients** to send the consent to every patient created from now on.
+  4. Check **Requires provider countersignature** if a provider signs after the patient. See Dual-signature consents below.
+  5. Click **Save** in the tab bar. Each row confirms what was saved.
+### Consents for new patients
+Consents checked **Assign to new patients** go to each new patient when they are created. Patients created before you checked the box don't get them, and a patient who already has the consent assigned or accepted isn't sent it again.
+**New patient consents order** lists these consents. Use **Move up** and **Move down** to set the order they are sent in.
+To text or email new patients about their consents, turn on **New Patient Consent Notifications** on the **Campaigns** tab. It goes out once, within about 5 minutes of the patient being created, after their phone number and email are saved, and links to their portal **Forms** page. It doesn't name the consents. Patients created more than a day before are skipped.
+### Consents before a visit
+On the **Pre-Visit Forms** tab, each visit type has a **Consents** list. Those consents are sent with the visit's forms, within the visit type's lead time. A patient who already has the consent assigned or accepted isn't sent it again. See [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake).
+### Assign a consent from the chart
+  1. Open the patient's chart, then **Patient Communications** > **Forms**.
+  2. Under **Assign Consent** , choose the **Consent Form**. Consents marked (Dual signature) also need a **Countersigner**.
+  3. Click **Assign Consent**.
+If **Form Assignment Notifications** is on, the patient gets a text or email. **Assigned Consents** shows each consent's status: **Pending** , **Awaiting countersignature** , **Accepted** , **Declined** , or **Countersignature declined**. To remove a pending consent, click its **×**.
+## What the patient sees
+  1. When a consent is waiting, the portal home page shows **Action Required** : "You have 1 consent form requiring your attention." The patient clicks **Review Now** , or opens **Forms** from the portal menu.
+  2. Consents are listed first on **My Forms** , most recently sent first. The patient clicks **Review & Sign**.
+  3. **Signature pad:** the patient reads the consent document, checks "I have read and understand the consent document above.", signs in the box, and clicks **Accept & Sign**, or clicks **Decline**.
+  4. **DocuSign:** the document opens inside the page. The patient signs and clicks **Sign and Submit**. If the session times out or they pause, they can open the document again from the same page.
+  5. Accepted consents with a signed copy appear under **History** , with **View** and **Download**.
+## Dual-signature consents
+A dual-signature consent is signed by the patient first, then countersigned by a provider in DocuSign. It is filed to the chart once both have signed.
+To turn it on for a consent, on the **Consents** tab:
+  1. Choose a DocuSign template with two signer roles named exactly `Patient` and `Provider`, with Provider signing second. Templates created from the tab are set up this way.
+  2. Check **Requires provider countersignature**.
+  3. Choose a **Default Countersigner** : an active staff member with an email address.
+  4. Optionally choose a **Countersigner team** ; anyone on the team can also countersign.
+  5. Optionally check **Route to the appointment provider** so the provider on the patient's appointment countersigns, following reschedules. A consent sent without an appointment waits for the next appointment booked.
+  6. Click **Save**.
+**Who countersigns:** the staff member chosen when assigning from the chart; otherwise the appointment's provider when routing is on; otherwise the **Default Countersigner**. Anyone on the countersigner team can also sign.
+**Countersigning:**
+  1. When the patient signs, the countersigner gets a task **Countersign consent: <consent name>**, labeled **consent-countersignature**.
+  2. In the patient's chart, under **Patient Communications** > **Forms** > **Assigned Consents** , the consent shows **Awaiting countersignature**. Click **Countersign**.
+  3. Sign in the DocuSign window that opens. When you see **Countersignature recorded.** , the signed consent is filed to the chart and the window closes.
+If the appointment's provider changes, or the appointment is rescheduled or canceled, the countersignature task moves to the new provider when routing is on.
+## Where signed consents go
+  - **DocuSign:** the consent is recorded in the chart as accepted with the signed PDF attached, and the signed document is added to the patient's documents, dated the day the patient signed. A declined consent is recorded as declined.
+  - **Signature pad:** the consent is recorded in the chart as accepted or declined, with the consent's document attached.
+  - **Staff task:** a task **Consent accepted: <consent>** or **Consent declined: <consent>**, labeled **paperwork-completed** , goes to the appointment's provider or the staff member who assigned it. Consents sent to new patients have neither, so the task is unassigned. See [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks).
+## Troubleshooting
+What you see| What to check  
+---|---  
+A consent isn't on the **Consents** tab or in **Assign Consent**|  Its coding system isn't offered, or it isn't set to show in the patient portal.  
+**Requires provider countersignature** is grayed out| The consent has no DocuSign template yet.  
+"DocuSign secrets are not configured, so dual-signature consents cannot be enabled."| The DocuSign connection secrets aren't set.  
+A consent with a DocuSign template opened the signature pad| It was sent automatically to a new patient or before a visit, which uses the signature pad for consents the patient signs alone.  
+"This document is not ready to sign yet. Please contact your care team."| A dual-signature consent couldn't be sent to DocuSign. Look for a task starting "Consent not sent".  
+A new patient didn't get a consent| **Assign to new patients** was checked after the patient was created.  
+No new-patient consent text or email| **New Patient Consent Notifications** is off, the patient was created more than a day before it was turned on, or they had no phone or email when it ran.  
+Consents appear in a different order on the portal| The portal lists the most recently sent consent first.  
+No **Countersign** button| You aren't the countersigner or on the countersigner team, or the consent is waiting for an appointment to be booked.  
+A countersignature shows up late| The webhook secrets aren't set or DocuSign couldn't reach Canvas. A check every 15 minutes catches up.  
+Signed in DocuSign, but nothing in the chart| The `CANVAS_FHIR_*` secrets aren't set, or the signed PDF couldn't be downloaded. Filing is retried every 15 minutes.  
+A patient signed in DocuSign but the consent still shows **Pending**|  The patient closed the page before it finished recording the signature. Contact your Canvas team.  
+The DocuSign template editor doesn't open| Allow pop-ups for Canvas in your browser.  
+"This signing link has expired or has already been used."| The consent was already signed, or it was removed.
+----- END PAGE https://help.canvasmedical.com/articles/2250124863-patient-communications-consents
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2348566112-understanding-note-states-in-canvas
@@ -1808,6 +1955,63 @@ If your organization uses **Gated Release** , select **Clone Fix Branch** from t
 Studio sends the fix to a branch in your team's code repository, where your technical team can review and release it through your organization's process.
 ### Next: Publishing and updating Studio plugins
 ----- END PAGE https://help.canvasmedical.com/articles/2771862260-fixes-from-canvas-platform
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks
+Patient Communications gives staff a secure message conversation with each patient inside the chart, can text or email the patient when a new message is waiting, and creates tasks so staff know when a patient has sent a message or finished their paperwork. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+## Overview
+  - **Secure Messages** in the chart shows the full conversation with the patient and lets staff reply.
+  - **Secure Message Notifications** texts or emails the patient to log in and read a new message.
+  - **Patient Message Tasks** creates a task when a patient sends a message.
+  - **Completed Paperwork Notifications** creates a task, and optionally an email, when a patient finishes forms or responds to a consent.
+## Message a patient
+  1. Open the patient's chart, then **Patient Communications**. **Secure Messages** opens first.
+  2. The conversation shows every message between the patient and your staff, including messages sent from Canvas messaging. The newest 20 load first; click **Load older messages** for more.
+  3. Type in the box and click **Send** , or press Enter. Shift+Enter starts a new line.
+The message is sent from you through Canvas messaging, and the patient reads it in the patient portal. New messages appear in the conversation on their own while it's open.
+  - The top of the panel shows whether the patient is **✓ Portal Registered** or **Not Registered** , and when they were last invited.
+  - Unread messages from the patient are marked with **UNREAD MESSAGES**. Click **Mark all as read** to mark them read; opening the conversation doesn't.
+  - Photos the patient sends show in the conversation; click one to see it larger.
+  - A warning shows when the patient has no phone number or email marked as consenting to messages, since the patient may not be notified.
+## Tell the patient about a new message
+**Secure Message Notifications** on the **Campaigns** tab of **Notifications Admin** texts or emails the patient when staff send a message from **Secure Messages**. It is off by default and has no visit type settings.
+  1. Open the card, turn on its toggle, and check **SMS** , **Email** , or both.
+  2. Edit each **Template**. **\+ Insert Field** offers the patient's name, `{{sender_name}}` and `{{sender_credentials}}` for the staff member who sent the message, and your organization's details.
+  3. Click **Save**.
+The email subject is "New Message". Keep message content out of the template; it tells the patient to log in to read the message. Messages sent from Canvas messaging, outside the plugin's **Secure Messages** , don't trigger it.
+## Tasks for patient messages
+When a patient sends a message, the plugin creates a task **New message from patient** , labeled **patient-message** and linked to the patient. Filter the task list by that label to see who is waiting on a reply.
+  - The task goes to the staff member the message was sent to.
+  - Messages that went to Canvas Bot, rather than a staff member, go to the person chosen in **Route Unassigned patient messages to** , or stay unassigned.
+  - While a patient has an open **patient-message** task, new messages from them don't add another. Completing or closing the task lets the next message create a new one.
+  - The task doesn't include the message text.
+To set it up, open the **Patient Message Tasks** card on the **Campaigns** tab. **Create a task when a patient sends a message** is on by default. Choose who gets unassigned messages under **Route Unassigned patient messages to** (**Leave unassigned** by default), then click **Save**.
+## Tasks for completed paperwork
+When a patient submits forms or intake in the portal, or accepts or declines a consent, the plugin creates a task linked to the patient and labeled **paperwork-completed** :
+  - **Completed: <form names>**
+  - **Consent accepted: <consent>** or **Consent declined: <consent>**
+The task goes to the provider of the appointment the forms were sent for, or the staff member who assigned them from the chart. When there is neither, such as consents sent to every new patient, the task is unassigned. For consents that need a provider countersignature, the task is created when the patient signs.
+### Completed paperwork emails
+The **Completed Paperwork Notifications** card on the **Campaigns** tab also sends an email. Tasks are created whatever these settings are.
+  - **Send an email when a patient** : **Completes a form or intake** and **Accepts or declines a consent**. Both are on by default.
+  - **Send the email to** : **The staff member the task is assigned to** (on by default) and **These email addresses** (off by default), for addresses such as a shared front-desk inbox, separated by commas. These addresses are emailed even when the task is unassigned, and their email says who the task is assigned to.
+While either email is on, at least one place to send it must be chosen.
+The email's subject doesn't name the patient. The body names them by first initial and last name, for example "J. Smith completed a questionnaire.", and links to the submission. Staff who click the link go to the patient's chart, on the note holding the answers when there is one; anyone not signed in to Canvas is asked to sign in first. Staff need an email address on their staff record to get these emails.
+## Message notes on the timeline
+Notes of the note type named "Message" are hidden from the patient's timeline in the chart while the plugin is installed.
+## Troubleshooting
+What you see| What to check  
+---|---  
+The patient wasn't notified about a message| **Secure Message Notifications** is off, the message was sent from Canvas messaging instead of **Secure Messages** , or the patient has no usable phone or email. Check the patient's **Notifications** tab.  
+The no-consent warning shows, but the patient got an email| The warning checks for consent on both phone and email; emails only need an address that isn't opted out.  
+No **New message from patient** task| **Patient Message Tasks** is off, the patient already has an open **patient-message** task, or the message came from staff.  
+A patient message task is unassigned| The message went to Canvas Bot and no one is chosen in **Route Unassigned patient messages to** , or that person is inactive.  
+A completed paperwork task is unassigned| The forms or consent weren't tied to an appointment provider or sent by a staff member.  
+A staff member got the task but no email| The email type is off, **The staff member the task is assigned to** is unchecked, the staff record has no email address, or SendGrid isn't set up.  
+The email says "Log in to Canvas to review the submission." with no link| Contact your Canvas team; the link needs your instance's address set up with the plugin.  
+Save shows "Completed Paperwork Notifications: choose at least one place to send the email."| Check **The staff member the task is assigned to** , **These email addresses** , or both, or turn off both emails.  
+Message notes are missing from the timeline| Expected. Notes of the "Message" note type are hidden.
+----- END PAGE https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2840851415-outstanding-referrals
@@ -5075,6 +5279,90 @@ A: Dropdown options are set during development and cannot be changed through the
 ----- END PAGE https://help.canvasmedical.com/articles/4551334461-patient-metadata
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications
+Patient Communications sends patients texts and emails about their appointments: a confirmation when the appointment is booked, reminders before it, a join link for telehealth visits, and messages after a no-show or cancellation. Each is a card on the **Campaigns** tab of **Notifications Admin** , and each visit type can opt out or use its own wording. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+## Overview
+  - Five appointment campaigns: **Appointment Confirmation** , **Appointment Reminders** , **Join Telehealth** , **No-Show Alert** , and **Cancellation Alert**.
+  - Each campaign has its own on/off toggle and a text and an email template. Every campaign is off until you turn it on.
+  - **Visit Type Overrides** lets each visit type opt out of a campaign or use its own templates, channels, and timing.
+  - Every message sent, skipped, or failed shows on the patient's **Notifications** tab in the chart.
+## Before you begin
+  - **Set up text and email delivery.** See Plugin secrets in [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications). Check **Integration Status** at the top of the **Campaigns** tab.
+  - **Turn off Canvas's built-in appointment reminders** before turning on **Appointment Reminders**. The plugin cannot see that Canvas setting, so with both on, patients get two reminders. Canvas also sends its own telehealth instructions about 45 minutes before a telehealth visit while its reminders are set up; if you use **Join Telehealth** , ask your Canvas team to remove the built-in reminder setting entirely rather than shortening it.
+  - **Check patient contact details.** Texts go to the patient's highest-ranked phone number that is marked as consenting to messages and not opted out. Emails go to the highest-ranked email address that is not opted out. A 10-digit number is treated as a US number.
+## The campaigns
+Campaign| Sent when| Email subject  
+---|---|---  
+**Appointment Confirmation**|  Right after an appointment is booked| Appointment Confirmation  
+**Appointment Reminders**|  Before the appointment, at each reminder interval| Appointment Reminder  
+**Join Telehealth**|  Before a telehealth appointment, at each telehealth interval| Notification  
+**No-Show Alert**|  Right after an appointment is marked as a no-show| We Missed You  
+**Cancellation Alert**|  Right after an appointment is canceled| Appointment Cancelled  
+Email subjects are fixed. Patients see your email from the `sendgrid-from-email` address, and texts from your Twilio number.
+### Appointment Reminders
+Reminders go out for appointments that are unconfirmed, attempted, or confirmed.
+  - **Default Intervals** sets how long before the appointment each reminder goes out. The default is 1 week, 1 day, and 2 hours. Type intervals with `w` for weeks, `d` for days, `h` for hours, and `m` for minutes. A number on its own is read as minutes.
+  - **Send Time for Day-Out Reminders** sets the time of day for reminders 1 day or more ahead, in the time zone you pick (Eastern by default). A 1-day reminder goes out at that time on the day before the appointment. Days are counted whole, so 1d 12h behaves like 1d.
+  - Reminders under 1 day go out that long before the appointment start.
+  - Each reminder goes out once per appointment. If its time has already passed, for example when a visit is booked tomorrow and you have a 1-week reminder, it is skipped rather than sent late.
+**Form Reminder Text** adds a line to reminders when the patient still has paperwork to do. Put `{{form_reminder}}` in a reminder template where you want it. The line is included when a questionnaire or intake assigned for this appointment is not finished, or when the patient has any consent waiting, and it is left out otherwise. `{{forms_link}}` inside it becomes a link to the patient's portal **Forms** page.
+### Join Telehealth
+**Join Telehealth** sends a join link before telehealth appointments. The default **Intervals** is 15 minutes before; telehealth intervals are in minutes only.
+  - An appointment counts as telehealth when its visit type is a telehealth visit type.
+  - The link is the appointment's meeting link, or the provider's personal meeting room when the appointment has none.
+  - If there is no link, nothing is sent, and the patient's **Notifications** tab shows "No meeting link on appointment or provider".
+### Cancellation Alert
+To cancel an appointment without telling the patient, add the label **Silent Cancel** to the appointment before canceling it.
+## Edit a template
+  1. In **Notifications Admin** , on the **Campaigns** tab, click a campaign's arrow to open it.
+  2. Turn on the toggle on the right of the card.
+  3. Under **SMS** and **Email** , check the channels you want and edit each **Template**.
+  4. To add a field, click **\+ Insert Field** , or type `/` in the template, and pick from the list.
+  5. Click **Save** in the tab bar.
+Field| Shows| When it's missing  
+---|---|---  
+`{{patient_first_name}}`, `{{patient_last_name}}`, `{{patient_full_name}}`| The patient's name|   
+`{{patient_preferred_name}}`| The patient's preferred name, or first name|   
+`{{appointment_date}}`| For example, March 05, 2026|   
+`{{appointment_time}}`| For example, 09:30 AM ET, in the patient's time zone|   
+`{{appointment_type}}`| The appointment's description| Blank  
+`{{provider_name}}`| The provider's first and last name| "your provider"  
+`{{credentials}}`| The provider's role abbreviations| Blank  
+`{{location_name}}`, `{{location_full_name}}`| The location's full name| "our clinic"  
+`{{location_short_name}}`, `{{location_address}}`, `{{location_phone}}`| The location's details| Blank  
+`{{organization_full_name}}`, `{{organization_short_name}}`, `{{organization_address}}`, `{{organization_phone}}`| Your organization's details| Blank  
+`{{telehealth_link}}`| The telehealth join link| Blank  
+`{{forms_link}}`| A link to the patient's portal **Forms** page| Blank  
+`{{form_reminder}}`| The **Form Reminder Text** line (reminders only)| Blank  
+Times show in the patient's last known time zone, or the reminder time zone when the patient has none.
+`{{form_reminder}}` works in **Appointment Reminders** only, and `{{forms_link}}` works in every appointment campaign except **Join Telehealth**. In other campaigns they are sent as typed, braces included.
+## Visit Type Overrides
+Every campaign that is on applies to every visit type. The **Visit Type Overrides** tab lists your schedulable visit types, each with a section per campaign.
+  - **Turn a campaign off for one visit type** with that section's toggle. A campaign that is off on the **Campaigns** tab is off for every visit type, whatever this tab says.
+  - **Use different wording or channels** by clicking **Customize**. A template left blank uses the campaign's template. Unchecking both channels uses the campaign's channels; to stop sending for the visit type, use the toggle.
+  - **Use different timing** : under **Customize** , **Reminder Intervals** and **Send Time for Day-Out Reminders** for reminders, and **Telehealth Intervals** for telehealth. Leave a field blank to use the campaign's setting.
+Saved intervals and send times for a visit type stay in effect even when **Customize** is closed. To go back to the campaign's timing, clear them and save.
+## See what was sent
+Open the patient's chart, then **Patient Communications** > **Notifications**. **Notification History** lists the patient's last 100 messages with the campaign and channel. Click a row to see who it went to, the exact text, and the result for each channel. A gray badge means the message was skipped, for example because the patient has no phone number with consent; a red badge means it failed and shows the reason.
+From the same tab, **Send Message** sends a one-off text or email about one of the patient's last 20 appointments. Pick the **Appointment** and **Campaign Type** , click **Preview** , edit the text if needed, choose **Channels** , and click **Send Message**. One-off messages go out whether or not the campaign is on.
+## Troubleshooting
+What you see| What to check  
+---|---  
+Nothing was sent and nothing is in Notification History| The campaign is off on the **Campaigns** tab, off for this visit type on **Visit Type Overrides** , or has no channels checked.  
+A gray SMS badge| The patient has no phone number marked as consenting to messages, or it is opted out, or Twilio is not configured.  
+A gray Email badge| The patient has no email address, it is opted out, or SendGrid is not configured.  
+A reminder never went out for a recent booking| Its interval had already passed when the visit was booked. Reminders are not sent late.  
+A day-out reminder came at an unexpected time| It goes out at **Send Time for Day-Out Reminders** in the time zone chosen for the campaign or the visit type.  
+The time in a message is in the wrong time zone| Times use the patient's last known time zone first.  
+No telehealth link was sent| The appointment and the provider have no meeting link, or the visit type is not a telehealth visit type.  
+A cancellation was not sent| The appointment has the **Silent Cancel** label.  
+A message shows `{{form_reminder}}` or `{{forms_link}}` as text| That field doesn't work in this campaign. See the note under Edit a template.  
+"your appointment" with two spaces| `{{appointment_type}}` is the appointment's description, and this one has none.  
+Patients get two reminders| Canvas's built-in reminders are still on.  
+A red badge with a carrier message, such as "Recipient has opted out of SMS (replied STOP)"| Twilio refused the message. The text explains why.
+----- END PAGE https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4577696191-setting-up-vip-access-on-a-new-phone
 Getting a new phone? Before you trade in your old device, you'll need to migrate your credential or register a second authenticator to your EPCS account. If you don't, you'll lose access to your authenticator app and won't be able to e-prescribe controlled substances.
 ### What you'll learn
@@ -6736,6 +7024,108 @@ Due to the ever evolving nature of our product, recorded videos may be slightly 
 ----- END PAGE https://help.canvasmedical.com/articles/5128727084-managing-medication-commands
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake
+Patient Communications lets patients complete questionnaires and intake in the patient portal before a visit. Staff assign forms from the patient's chart, or each visit type sends its own set automatically before the appointment. Patients work through everything in one guided form, their progress saves as they go, and their answers land in the chart when they submit. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+## Overview
+  - **Staff** assign questionnaires and intake sections from the **Forms** tab of the **Patient Communications** panel in the chart.
+  - **Admins** choose, on the **Pre-Visit Forms** tab of **Notifications Admin** , which intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Patients** open **Forms** in the portal menu, or a link in a text or email, and complete everything in one step-by-step form.
+  - **Answers** go into the chart: questionnaires into the visit note, patient-reported history as draft entries for a provider to review, and demographics into the patient's profile.
+  - **Staff are told** when a patient submits, with a task and an optional email. See [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks).
+## Before you begin
+  - **Questionnaires** must be active to be offered. Intake is a built-in questionnaire called **Patient Intake** that the plugin installs; keep it active.
+  - **Demographics** such as gender identity, race, preferred language, and emergency contact need the `FHIR_*` plugin secrets to be saved. See [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+  - **Texts and emails** need Twilio and SendGrid set up, and the campaigns below turned on.
+## Intake sections
+Intake is made of sections you can send together or on their own:
+Section| What the patient does  
+---|---  
+Demographics| Confirms or updates name, date of birth, sex at birth, preferred language, address, phone, email, contact preference, and emergency contact. Filled in from the chart to start.  
+Preferred Pharmacy| Searches for and adds one or more pharmacies, and picks a default  
+Conditions / Past Medical History (PMH)| Adds conditions  
+Surgical History (PSH)| Adds surgeries and dates  
+Family History (PFH)| Adds a relative and a condition  
+Mental Health History| Writes a free-text answer  
+Previous Antidepressant Trials| Writes a free-text answer  
+Prior Hospitalizations| Writes a free-text answer  
+Medications| Adds medications  
+Allergies| Adds allergies and, optionally, the reaction  
+Goals| Adds goals  
+Vitals| Optionally enters height and weight  
+For conditions, surgeries, medications, allergies, goals, and vitals, the patient also sees what is **already on file** , read-only, so they only add what's missing.
+## Assign forms from the chart
+  1. Open the patient's chart, then **Patient Communications** > **Forms**.
+  2. To send questionnaires, use **Assign Forms** : move them from **Available** to **Selected** , set the **Due Date** (a week from today by default), and click **Assign**. Choosing **Patient Intake** sends every intake section.
+  3. To send only some intake sections, use **Assign Intake** : move the sections to **Selected** , set a **Due Date** , and click **Assign Intake**. The sections appear to the patient in alphabetical order.
+**Assigned Forms** lists what the patient still has to do, grouped by visit or due date, with their progress once they start. **History** lists what they completed or what expired.
+  - To remove a questionnaire, click **×** next to it. This removes every assignment of that questionnaire for the patient, including ones sent for a visit.
+  - A patient can have one intake assigned outside a visit at a time.
+  - The message "Patient has been notified" appears after assigning, but the patient gets a text or email only when **Form Assignment Notifications** is on.
+## Send forms before each visit
+  1. In **Notifications Admin** , open the **Pre-Visit Forms** tab.
+  2. Under **Where should intake histories be filed?** , choose **Into the scheduled visit's note** or **Into a separate timeline note**. For a separate note, choose its **Note type for the separate note** (Chart Review by default).
+  3. For each visit type:
+     - Under **Intake sections** , move the sections to **Selected (in order)** and use ▲ ▼ to set the order the patient sees them.
+     - Under **Questionnaires** , do the same. Questionnaires come after the intake sections.
+     - Under **Consents** , choose consents to send. See [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents).
+     - Set **Lead Time (days)** : how many days before the appointment the forms are sent, from 1 to 30 (7 by default).
+  4. Click **Save**.
+When a patient has a booked appointment of that visit type within the lead time, the plugin assigns its forms, due on the appointment date. This happens when the appointment is booked or changed, and every 5 minutes for upcoming appointments.
+  - Each appointment gets its forms once. Changes to a visit type's forms apply to appointments that haven't been processed yet.
+  - A form you remove from a patient's visit is not sent again for that visit.
+  - Forms for a visit stay on the patient's list until the end of the visit day, then show as **Expired** , including when the appointment is canceled or rescheduled.
+## Text and email the patient
+Two cards on the **Campaigns** tab tell patients they have forms. Both are off by default.
+**Form Assignment Notifications** sends one text or email each time staff assign forms from the chart.
+Field| Shows  
+---|---  
+`{{questionnaire_name}}`| Everything assigned, separated by commas  
+`{{due_date}}`| The due date, or "N/A" when there is none  
+`{{forms_link}}`| A link to the patient's portal **Forms** page  
+Patient and organization fields| As in [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
+The default templates leave out `{{forms_link}}`; add it so patients can go straight to their forms. The menu also lists `{{date_assigned}}` and `{{assigning_provider}}`; in this version they show blank and "Provider", so leave them out.
+**Pre-Visit Forms Notifications** sends one text or email per appointment when its pre-visit forms are assigned: at booking when the visit is already within the lead time, otherwise when the lead time starts. It goes out only for booked appointments.
+Field| Shows  
+---|---  
+`{{form_names}}`| The questionnaires, "Patient intake", and consents that were assigned  
+`{{forms_link}}`| A link to the patient's portal **Forms** page  
+Patient, appointment, location, and organization fields| As in [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
+**Appointment Reminders** can also remind patients about unfinished forms with `{{form_reminder}}`. See [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications).
+## What the patient sees
+  1. The patient opens **Forms** from the portal menu, or the link in a text or email. If they aren't signed in, the portal asks them to sign in first.
+  2. **My Forms** lists consents to sign first, then a card for each set of forms, such as "Forms for your Follow-up on March 05, 2026". Forms not tied to a visit are grouped by due date.
+  3. The patient clicks **Start form** (or **Continue** , showing how far they got). One guided form takes them through the intake sections, then the questionnaires, with **Back** and **Next**.
+  4. Required questions are marked with an asterisk, and **Next** stays off until they're answered.
+  5. Answers save as the patient goes, so they can leave and come back. When they return, the form opens at the first page with their answers filled in.
+  6. The patient clicks **Submit** and sees **Thank you!**. The forms move to **History** on the **My Forms** page.
+After submitting, the patient cannot open or change their answers. The portal home page shows a banner for consents waiting to be signed, and not for questionnaires or intake.
+**Required questions.** In intake, the patient's legal name, date of birth, sex at birth, preferred language, address, mobile phone, email, contact preference, and emergency contact name and phone are required. In other questionnaires, text and single-choice questions are required unless the question text includes "(optional)"; checkbox questions are never required.
+## Where answers go
+What the patient submits| Where it lands  
+---|---  
+Questionnaires| Completed in the visit's note. Forms not tied to a visit go into a new Chart Review note.  
+Conditions, medications, allergies, surgeries, family history, goals, vitals, and the mental health sections| Draft entries for a provider to review and sign, in the visit's note or the separate note chosen on **Pre-Visit Forms**. The note is titled "Patient Intake — self-reported history (review & sign)".  
+Address, phone, email, preferred name, suffix, contact preference| Saved straight to the patient's profile. A blank answer never clears what's there.  
+Name, date of birth, sex at birth| Saved only when the chart has no value. If the patient's answer differs from the chart, a task "Reconcile patient intake" is created instead, labeled **intake-reconcile**.  
+Gender identity, race, preferred language, emergency contact| Saved to the profile when the `FHIR_*` plugin secrets are set  
+Preferred pharmacy| Saved to the patient's preferred pharmacies  
+## Troubleshooting
+What you see| What to check  
+---|---  
+The patient sees "Uh-oh! We couldn't find that." when opening forms| The visit day has passed, the forms were already submitted, or there was nothing to fill out.  
+The link in a message is blank| Contact your Canvas team; the link needs your instance's address set up with the plugin.  
+A form assignment message has no link| The default templates leave out `{{forms_link}}`. Add it to **Form Assignment Notifications**.  
+"Patient has been notified" but no message went out| **Form Assignment Notifications** is off.  
+Pre-visit forms weren't assigned| The visit type has no forms on **Pre-Visit Forms** , the appointment is outside the lead time, or the appointment was processed before the forms were added.  
+No pre-visit text or email| **Pre-Visit Forms Notifications** is off, the appointment isn't booked, or the patient was already notified for this appointment.  
+History answers aren't in the chart| They are draft entries waiting for a provider to review in the visit's note or the separate note. If no note could be found, a task "Patient Intake: self-reported history not filed" is created.  
+A demographic change didn't save| Check for an **intake-reconcile** task, or ask your Canvas team whether the `FHIR_*` secrets are set.  
+Removing one questionnaire removed others| **×** removes every assignment of that questionnaire for the patient. Assign it again if needed.  
+There's no way to remove an intake| Intake can't be removed from the panel. It expires after the visit day, or contact your Canvas team.  
+Forms are still listed after a cancellation| Forms for a visit stay until the end of the original visit day, then expire.
+----- END PAGE https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5155757572-navigator-and-mcp
 Navigator is Canvas Medical's customer-facing AI assistant. It helps your team find Canvas documentation, answer implementation questions, troubleshoot your deployed plugins, and draft validated SQL from the tools where you already work.
 Navigator is scoped to your organization. It is designed to answer questions using Canvas documentation, Canvas product information, and your organization's own configured Canvas context.
@@ -7672,6 +8062,64 @@ An Organization admin on your team. If your organization doesn't have one yet, c
 They moved into Canvas Platform. See [Studio and Onboarding are moving to Canvas Platform](https://help.canvasmedical.com/articles/8280506803-studio-and-onboarding-are-moving-to-canvas-platform).
 Next: [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
 ----- END PAGE https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails
+The Patient Communications plugin lets your practice write its own portal invite and password reset emails. Canvas sends these emails with a link the patient uses to set up or sign in to the patient portal. By default the subject reads "Access to your _practice location_ Patient Portal", so a practice with several locations sends different wording depending on the patient's location. With this feature turned on, the subject and body come from **Notifications Admin** instead, and can name your organization. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
+## Overview
+  - **Staff** send invites and password resets the same way as before, from the **Portal** section of the patient's profile. Nothing changes in their workflow.
+  - **Admins** set the wording in **Notifications Admin** , on the **Campaigns** tab, in the **Portal Invite and Password Reset Emails** card. Invites and password resets each have their own subject and body.
+  - **Patients** receive your wording, with their login link included.
+  - The card is off by default. While it is off, patients get Canvas's standard email.
+## Before you begin
+  - **Canvas version.** This feature needs Canvas release 1.380.0 or later and Patient Communications 0.19.10 or later. Your Canvas team can confirm both.
+  - **Check your organization name.** The prefilled wording uses `{{organization_short_name}}`, the short name on your organization in Canvas. Confirm it reads the way you want patients to see it.
+  - **Pick one plugin to write these emails.** If more than one plugin on your instance sets the portal email wording, Canvas uses the last answer it receives. Ask your Canvas team if you are unsure.
+## When these emails are sent
+Canvas sends a portal email, and uses your wording, when:
+  - Staff click **Send invite** in the **Portal** section of a patient's profile. The patient gets the **invite** email.
+  - Staff click **Reset password** in the same section for a patient who has already registered. The patient gets the **password reset** email.
+  - A patient asks for a sign-in link from the patient portal. Patients who have registered get the password reset email, and patients who have not get the invite email.
+  - Another plugin sends a portal invite, for example online booking.
+The text message Canvas sends with the same link keeps Canvas's wording.
+## Set up the emails
+  1. From the provider menu, open **Notifications Admin**.
+  2. On the **Campaigns** tab, find **Portal Invite and Password Reset Emails** and click the arrow to open it.
+  3. Turn on the toggle on the right of the card.
+  4. Under **Invite email** and **Password reset email** , edit the **Subject** and **Body**. Both start with Canvas's wording, using your organization name in place of the location name.
+  5. Click **Save** at the top of the page.
+To add a field, click **\+ Insert Field** above a body, or type `/` in the body, and pick from the list:
+Field| What it shows  
+---|---  
+`{{patient_first_name}}`| The patient's first name  
+`{{patient_preferred_name}}`| The patient's preferred name, if one is set  
+`{{login_link}}`| The patient's portal login link (body only)  
+`{{organization_short_name}}`| Your organization's short name  
+`{{organization_full_name}}`| Your organization's full name  
+`{{organization_address}}`| Your organization's work address  
+`{{organization_phone}}`| Your organization's work phone number  
+Subjects accept the same fields except `{{login_link}}`. A subject stays on one line, so any line breaks are turned into spaces. Bodies are sent as HTML, so you can use tags such as `<p>` for paragraphs.
+Keep `{{login_link}}` in each body. If a body leaves it out, Canvas adds the link at the end of the email so the patient can still sign in.
+## Check your wording
+  1. Open a test patient's profile and, in the **Portal** section, click **Send invite**. Use a patient who has not registered and has an email address you can read.
+  2. Open the email. Check the subject, the body, and that the link opens portal setup.
+  3. For a test patient who has registered, click **Reset password** and check the password reset email the same way.
+## Go back to Canvas's standard email
+Turn off the toggle on the card and click **Save**. The wording you wrote stays in the card, so you can turn it back on later.
+To use Canvas's wording for just one part, clear that **Subject** or **Body** and save. A blank field uses Canvas's wording for that part only.
+## Troubleshooting
+What you see| What to check  
+---|---  
+Patients still get Canvas's standard email| Confirm the card's toggle is on and that you clicked **Save**. Reopen **Notifications Admin** to check the setting stuck. If it did, ask your Canvas team to confirm the Canvas and plugin versions above.  
+The subject changed but the body did not, or the other way around| The field that did not change is blank, so Canvas's wording is used for it.  
+The login link appears at the end of the email| The body does not include `{{login_link}}`, so Canvas added the link. Add `{{login_link}}` where you want it.  
+A field shows up as text, like `{{patient_name}}`| The field name is not on the list above. Use **\+ Insert Field** to pick it.  
+The patient's name is blank| The patient has no first name or preferred name on their profile.  
+The sender name is the practice location's name| The sender name comes from the practice location in Canvas. This feature sets the subject and body.  
+The text message has Canvas's wording| This feature sets the email only.  
+An email sent to a patient's representative has Canvas's subject| Emails to representatives with portal access use Canvas's wording.  
+This feature has no plugin secrets of its own; everything is set in **Notifications Admin**.
+----- END PAGE https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/5877696655-patient-coverages
