@@ -1,0 +1,23 @@
+{
+  "description": "CPA plugin gate: runs `canvas validate` before a plugin is committed, installed or deployed. Off unless CPA_PLUGIN_GATE is advise or block.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "if": "Bash(git commit*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(canvas install*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(canvas deploy*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(uv run canvas install*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(uv run canvas deploy*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180}
+        ]
+      },
+      {
+        "matcher": "mcp__.*canvas_cmd_line__installer",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180}
+        ]
+      }
+    ]
+  }
+}

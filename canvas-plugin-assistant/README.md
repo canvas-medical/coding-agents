@@ -54,6 +54,16 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 | `CPA_WORKSPACE_DIR`   | Always            | Root workspace directory. Used for storing workflow artifacts in `.cpa-workflow-artifacts/` before being moved within the created plugin directory. |
 | `CPA_PLUGIN_DIR`      | For most commands | Specific plugin directory to work on. Must be a subdirectory of `CPA_WORKSPACE_DIR`.                                                                |
 | `CPA_SECRET_FILEPATH` | No                | Override the default plugin secrets file path. See [Plugin Secrets](#plugin-secrets).                                                                |
+| `CPA_PLUGIN_GATE`     | No                | `off` (default), `advise` or `block`. See [Plugin Gate](#plugin-gate).                                                                               |
+
+### Plugin Gate
+
+A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) on the plugin before `git commit`, `canvas install`, `canvas deploy` (bare or through `uv run`) and the `installer` MCP tool. It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
+
+- `advise` hands any failure back to Claude as context and lets the call run.
+- `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
+- It uses the plugin project's own `canvas` through `uv run` when the nearest `pyproject.toml` has a `[project]` table, and `canvas` from `PATH` otherwise.
+- The hook is stdlib-only and runs under `python3`, so it does not depend on `uv` resolving.
 
 ### Command Requirements
 
@@ -311,10 +321,13 @@ automatically.
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
+├── hooks/
+│   └── hooks.json             # PreToolUse plugin gate (off unless CPA_PLUGIN_GATE is set)
 └── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
     ├── get_plugin_dir.py          # Workspace directory resolution
+    ├── plugin_gate.py             # `canvas validate` before commit, install or deploy
     └── verify_plugin_structure.py # Check the plugin structure
 
 ```
