@@ -54,6 +54,19 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 | `CPA_WORKSPACE_DIR`   | Always            | Root workspace directory. Used for storing workflow artifacts in `.cpa-workflow-artifacts/` before being moved within the created plugin directory. |
 | `CPA_PLUGIN_DIR`      | For most commands | Specific plugin directory to work on. Must be a subdirectory of `CPA_WORKSPACE_DIR`.                                                                |
 | `CPA_SECRET_FILEPATH` | No                | Override the default plugin secrets file path. See [Plugin Secrets](#plugin-secrets).                                                                |
+| `CPA_PLUGIN_GATE`     | No                | `off` (default), `advise` or `block`. See [Plugin Gate](#plugin-gate).                                                                               |
+
+### Plugin Gate
+
+A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) on the plugin before `git commit`, `canvas install`, `canvas deploy` (bare or through `uv run`) and the `installer` MCP tool. It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
+
+- `advise` hands any failure back to Claude as context and lets the call run.
+- `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
+- Warnings from a passing `canvas validate` (lint `⚠` lines and `Warning:` blocks such as handlers the manifest never loads) go to Claude as context in either mode and never stop the call.
+- Any other `CPA_PLUGIN_GATE` value stops every covered call with a message naming the setting, so a typo is seen at once.
+- It runs the project's own `.venv/bin/canvas` (in the plugin folder or the one above it), else `canvas` from `PATH`. It never runs `uv`, since the hook runs before the call is approved and `uv` builds environments.
+- An `installer` call is checked only when its plugin sits inside the session's working directory. In `block` mode one targeting a plugin elsewhere is stopped; in `advise` mode it runs.
+- The hook is stdlib-only and runs under `python3`.
 
 ### Command Requirements
 
@@ -311,10 +324,13 @@ automatically.
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
 │   └── deploy-uat.md          # Deployment and testing
+├── hooks/
+│   └── hooks.json             # PreToolUse plugin gate (off unless CPA_PLUGIN_GATE is set)
 └── scripts/
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
     ├── get_plugin_dir.py          # Workspace directory resolution
+    ├── plugin_gate.py             # `canvas validate` before commit, install or deploy
     └── verify_plugin_structure.py # Check the plugin structure
 
 ```
