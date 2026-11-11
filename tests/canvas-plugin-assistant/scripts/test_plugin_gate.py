@@ -96,7 +96,8 @@ class TestTargetDir:
         _plugin(session)
         _plugin(tmp_path, "outside")
 
-        assert plugin_gate.target_dir(_installer(session, tool_input)) is None
+        with pytest.raises(plugin_gate.OutsideSession):
+            plugin_gate.target_dir(_installer(session, tool_input))
 
     def test_a_bash_call_targets_the_plugin_at_its_cwd(self, tmp_path: Path) -> None:
         """A Bash call resolves from the session's cwd."""
@@ -155,6 +156,24 @@ class TestRunValidate:
         with patch("plugin_gate.subprocess.run", return_value=warned):
             assert plugin_gate.run_validate(tmp_path) == (None, [WARNING.strip()])
 
+    def test_warning_blocks_are_returned_with_their_items(self, tmp_path: Path) -> None:
+        """Validate also prints `Warning:` blocks, such as handlers the manifest never loads."""
+        stdout = (
+            "\nWarning: Found handler classes that are not referenced in the CANVAS_MANIFEST.json:\n"
+            "  - handlers.extra:Extra\n"
+            "These handlers will not be loaded unless you add them to the manifest.\n\n"
+            "Plugin acme_intake has a valid CANVAS_MANIFEST.json file\n"
+            "  - not part of a warning\n"
+        )
+        with patch("plugin_gate.subprocess.run", return_value=_completed(0, stdout=stdout)):
+            assert plugin_gate.run_validate(tmp_path) == (
+                None,
+                [
+                    "Warning: Found handler classes that are not referenced in the "
+                    "CANVAS_MANIFEST.json:\n  - handlers.extra:Extra"
+                ],
+            )
+
     def test_a_failing_validate_returns_its_output(self, tmp_path: Path) -> None:
         """Both streams reach the agent, since handler loads print to stdout and errors to stderr."""
         failed = _completed(1, stdout="h.py:1 [type-blocked]", stderr="1 handler failed")
@@ -209,14 +228,26 @@ class TestMain:
             assert plugin_gate.main(_bash(tmp_path)) == 0
         run.assert_not_called()
 
-    def test_an_unknown_mode_is_a_visible_non_blocking_error(
+    def test_an_unknown_mode_stops_the_call(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """A misspelled mode exits 1, which Claude Code shows without blocking."""
+        """A misspelled mode exits 2, so the typo shows on the first gated call instead of the
+        gate silently being off."""
         monkeypatch.setenv("CPA_PLUGIN_GATE", "blocking")
 
-        assert plugin_gate.main(_bash(tmp_path)) == 1
+        assert plugin_gate.main(_bash(tmp_path)) == 2
         assert "'blocking' is not one of off, advise, block" in capsys.readouterr().err
+
+    @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
+    def test_an_installer_target_outside_the_session_is_stopped_in_block_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, code: int
+    ) -> None:
+        """An install the gate will not check is stopped in block mode and passed in advise mode."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+        payload = json.dumps(_installer(tmp_path, {"plugin_name": "../elsewhere"}))
+        with patch("plugin_gate.subprocess.run") as run:
+            assert plugin_gate.main(payload) == code
+        run.assert_not_called()
 
     def test_a_call_outside_any_plugin_passes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """A commit in an unrelated repository is not the gate's business."""
