@@ -61,23 +61,41 @@ def find_plugin_dir(start: Path) -> Path | None:
     return children[0] if len(children) == 1 else None
 
 
-def target_dir(payload: dict) -> Path | None:
-    """The plugin the gated tool call acts on, or None when it acts on no plugin.
+class OutsideSession(Exception):
+    """An installer target the gate will not check: checking runs code, and the hook runs
+    before the call is approved, so only plugins inside the session's working directory are."""
 
-    The hook runs before the call is approved, so an installer target outside the
-    session's working directory is never checked: checking runs code there.
-    """
+
+def target_dir(payload: dict) -> Path | None:
+    """The plugin the gated tool call acts on, or None when it acts on no plugin."""
     cwd = Path(payload.get("cwd") or ".").resolve()
     tool_input = payload.get("tool_input") or {}
     if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
         plugin_name = str(tool_input.get("plugin_name", ""))
         if not PLUGIN_NAME.fullmatch(plugin_name):
-            return None
+            raise OutsideSession
         target = (Path(tool_input.get("cwd") or cwd) / plugin_name).resolve()
         if target != cwd and cwd not in target.parents:
-            return None
+            raise OutsideSession
         return find_plugin_dir(target)
     return find_plugin_dir(cwd)
+
+
+def validate_warnings(stdout: str) -> list[str]:
+    """The warnings a passing `canvas validate` printed: each `⚠` lint line, and each
+    `Warning:` block (such as handlers the manifest never loads) with its `  - ` items."""
+    warnings: list[str] = []
+    in_block = False
+    for line in stdout.splitlines():
+        if in_block and line.startswith("  - "):
+            warnings[-1] += f"\n{line}"
+            continue
+        in_block = line.startswith("Warning:")
+        if in_block:
+            warnings.append(line)
+        elif WARNING_LINE.match(line):
+            warnings.append(line.strip())
+    return warnings
 
 
 def canvas_executable(plugin_dir: Path) -> str | None:
@@ -114,7 +132,7 @@ def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:
     except subprocess.TimeoutExpired:
         return f"`canvas validate` did not finish within {VALIDATE_TIMEOUT_SECONDS} seconds.", []
     if result.returncode == 0:
-        return None, [line.strip() for line in WARNING_LINE.findall(result.stdout)]
+        return None, validate_warnings(result.stdout)
     output = "\n".join(t for t in (result.stdout.strip(), result.stderr.strip()) if t)
     if "No such command 'validate'" in output:
         return (
@@ -257,11 +275,14 @@ def main(stdin: str) -> int:
     """Run the gate for one hook payload and return the hook's exit code."""
     mode = environ.get(MODE_VARIABLE, "off").strip().lower() or "off"
     if mode not in MODES:
+        # Exit 2, not 1: Claude Code runs the call after a non-blocking error, so a typo would
+        # turn the gate off unnoticed.
         print(
-            f"{MODE_VARIABLE}={mode!r} is not one of {', '.join(MODES)}; the gate is off.",
+            f"{MODE_VARIABLE}={mode!r} is not one of {', '.join(MODES)}. Fix the setting, "
+            "or set it to off; until then the plugin gate stops every call it covers.",
             file=sys.stderr,
         )
-        return 1
+        return 2
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
@@ -271,7 +292,17 @@ def main(stdin: str) -> int:
         action = "upload"
     if action is None:
         return 0
-    plugin_dir = target_dir(payload)
+    try:
+        plugin_dir = target_dir(payload)
+    except OutsideSession:
+        if mode == "block":
+            print(
+                "CPA plugin gate: it checks only plugins inside the session's working directory, "
+                "so it stopped this install. Run it with a plugin from there.",
+                file=sys.stderr,
+            )
+            return 2
+        return 0
     if plugin_dir is None:
         return 0
     problems: list[str] = []
