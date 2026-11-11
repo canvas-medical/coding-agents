@@ -864,3 +864,52 @@ from canvas_sdk.v1.data import Patient, Note, Condition
 ```
 
 The rule is simple: if `canvas_sdk.v1.data` re-exports it, import it from there.
+
+---
+
+## 17. Using a Namespace Another Plugin Created
+
+The plugin that creates a namespace owns it. Any other plugin that declares the same namespace joins it, and the first deploy of a joining plugin needs something only the user or an admin can provide:
+
+- **`canvas deploy` (Canvas Platform):** the organization that runs the instance must approve the join, and the deployment waits for that approval. Canvas Platform sends the access keys. Leave `namespace_read_access_key` and `namespace_read_write_access_key` out of the manifest: Canvas Platform refuses a manifest that declares either one.
+- **`canvas install` (deprecated, support ends December 14, 2026):** the joining plugin declares the owner's key in `variables` and gets its value before install. An admin copies it from the owner plugin's Secrets in the Canvas admin UI. Without it, the install fails.
+
+See the canvas-sdk context, "Custom data on Canvas Platform" and "Configuring Plugin Access".
+
+### BAD: Writing straight into another plugin's tables
+
+```json
+{
+  "custom_data": {
+    "namespace": "acme_clinic__patient_messaging",
+    "access": "read_write"
+  }
+}
+```
+
+This plugin only needs to send a message, but the plan joins the messaging plugin's namespace with write access and inserts rows into its tables. The first deploy fails or waits until the user gets the join approved or the key copied. Once it works, the writes skip the messaging plugin's own validation and side effects.
+
+### GOOD: Calling the owner plugin's own interface
+
+Call the owner plugin's SimpleAPI route, or emit the effect its own UI uses. The plugin joins no namespace and needs no key, and the owner's rules still apply. The canvas-sdk context recommends this for plugins owned by different organizations ("API Sharing").
+
+### GOOD: Joining to read
+
+```json
+{
+  "custom_data": {
+    "namespace": "acme_clinic__patient_messaging",
+    "access": "read"
+  }
+}
+```
+
+A `read` join still needs approval (`canvas deploy`) or the owner's `namespace_read_access_key` (`canvas install`), but this plugin cannot change the owner's data.
+
+### When joining with read_write is right
+
+Join with `read_write` only when the same organization builds the plugins as one data domain, with one schema they evolve together ("Namespace Sharing" in the canvas-sdk context). Then:
+
+1. Name the join in the plan, and state which deploy path the plugin uses.
+2. Before building, tell the user what the first deploy needs: approval from the organization that runs the instance (`canvas deploy`), or an admin who copies the owner plugin's `namespace_read_write_access_key` into this plugin (`canvas install`). Confirm they can get it.
+3. With `canvas install`, declare `{"name": "namespace_read_write_access_key", "sensitive": false}` in `variables`, and pass the value with `--secret` at install. Do not deploy until the value is set.

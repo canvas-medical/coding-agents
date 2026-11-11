@@ -125,6 +125,7 @@
     - Changing portal settings
     - Patient Portal URL
     - Inviting a patient to the portal
+    - Family portal access
     - Patient self-registration
     - Logging in
     - Branding the login page
@@ -150,6 +151,20 @@
     - 3. Keep your business details consistent
     - If your campaign is rejected
     - Related
+- [Family Portal Access](https://help.canvasmedical.com/articles/1380397114-family-portal-access)
+    - Before you begin
+    - Step 1: Add the family member as a contact
+    - Step 2: Give the family member access
+    - Step 3: Send the invite
+    - Step 4: What the family member sees
+    - What the patient sees
+    - Managing access
+    - Flagged access
+    - Notifications family members receive
+    - How family members' actions are recorded
+    - Turning family portal access off
+    - Troubleshooting
+    - Related articles
 
 #### New Provider Onboarding
 - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
@@ -419,6 +434,7 @@
     - Introduction
     - User's Guide
         - Using Contact Categories
+        - Relationship categories
     - Configuration & Set Up
         - Adding Contact Categories
         - Updating & Deleting Contact Categories
@@ -1199,6 +1215,15 @@
         - Duplicate requests
 
 ## Revenue & Billing
+- [Posting Ruleset](https://help.canvasmedical.com/articles/5196278579-posting-ruleset)
+    - Introduction
+    - FAQ
+    - Step by Step
+        - Add A New Posting Rule
+        - Edit A Posting Rule
+        - Delete A Posting Rule
+        - Posting Ruleset Example
+        - Exceptions to Posting Ruleset
 
 ### Payment Processing
 - [Collect Patient Payments](https://help.canvasmedical.com/articles/4431910086-collect-patient-payments)
@@ -1443,7 +1468,7 @@
 
 ### Publish and update
 - [Gated release: from Promote to Production](https://help.canvasmedical.com/articles/7597495196-studio-admin-guide-setting-up-gated-release)
-        - Next: Publishing and Updating Studio Plugins · When Code Changes Outside Studio
+        - Next:Publishing and Updating Studio Plugins·When Code Changes Outside Studio
 - [Publishing and updating Studio Plugins](https://help.canvasmedical.com/articles/6563880190-publishing-and-updating-studio-plugins)
         - Release Strategy
         - How it works
@@ -1555,6 +1580,66 @@
     - Troubleshooting
     - Install the Plugin
         - Plugin secrets
+
+### Patient Communications
+- [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications)
+    - What's included
+    - Where to find it
+    - Notifications Admin
+    - Before you begin
+    - Install the Plugin
+        - Plugin secrets
+    - Troubleshooting
+- [Patient Communications | Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)
+    - Overview
+    - Before you begin
+    - The campaigns
+        - Appointment Reminders
+        - Join Telehealth
+        - Cancellation Alert
+    - Edit a template
+    - Visit Type Overrides
+    - See what was sent
+    - Troubleshooting
+- [Patient Communications | Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)
+    - Overview
+    - Before you begin
+    - Intake sections
+    - Assign forms from the chart
+    - Send forms before each visit
+    - Text and email the patient
+    - What the patient sees
+    - Where answers go
+    - Troubleshooting
+- [Patient Communications | Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents)
+    - Overview
+    - Before you begin
+    - How patients sign
+    - Set up consents
+        - Consents for new patients
+        - Consents before a visit
+        - Assign a consent from the chart
+    - What the patient sees
+    - Dual-signature consents
+    - Where signed consents go
+    - Troubleshooting
+- [Patient Communications | Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks)
+    - Overview
+    - Message a patient
+    - Tell the patient about a new message
+    - Tasks for patient messages
+    - Tasks for completed paperwork
+        - Completed paperwork emails
+    - Message notes on the timeline
+    - Troubleshooting
+- [Patient Communications | Portal Invite and Password Reset Emails](https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails)
+    - Overview
+    - Before you begin
+    - When these emails are sent
+    - Set up the emails
+    - Check your wording
+    - Go back to Canvas's standard email
+    - Troubleshooting
 
 ## Canvas for Administrative Developers
 - [Enable Automated Patient Statements and Payment Reminders via Email](https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email)
@@ -1677,6 +1762,26 @@
     - Review Billing Settings
     - Frequently Asked Questions
         - Next:Inference Gateway
+- [Canvas AI Agreement: Frequently Asked Questions](https://help.canvasmedical.com/articles/1037957869-canvas-ai-agreement-faq)
+    - Signing the agreement
+        - What is the Canvas AI Agreement?
+        - Does signing the agreement cost anything?
+        - Why does my organization need to sign?
+        - How do we sign?
+        - Can we get a copy of our signed agreement?
+        - We manage multiple practices. Does each practice need to sign?
+        - Can our legal team request changes to the agreement?
+    - Pricing and billing
+        - How are Canvas AI products billed?
+        - Can AI pricing change?
+    - Data privacy and security
+        - Is our data used to train AI models?
+        - Which AI providers process our data?
+        - What can Canvas do with our data under this agreement?
+        - What if we use our own AI provider account?
+    - Clinical use
+        - Who is responsible for AI-generated content?
+        - Are Canvas AI agents FDA-cleared?
 
 ### Instances
 - [Canvas Instances](https://help.canvasmedical.com/articles/8405097946-canvas-instances)
@@ -1689,6 +1794,9 @@
     - Track Instance Promotions
     - Frequently Asked Questions
         - Next:Platform: Users and Roles
+- [Designating test instances](https://help.canvasmedical.com/articles/4724162094-designating-test-instances)
+        - Developer guide:Designating test instances
+        - Next:📄 Canvas Instances
 
 ### Onboarding
 - [Working with the Onboarding Agent](https://help.canvasmedical.com/articles/2941620841-working-with-the-onboarding-agent)
@@ -1753,6 +1861,28 @@
     - Step by Step
         - Printing the Requisition Form
         - Ordering in Health Gorilla
+- [Training | Billing Staff](https://help.canvasmedical.com/articles/1159009408-)
+    - Lesson 1
+        - Code and Update Claims
+        - Code and Update Claims Practice Activity
+    - Lesson 2
+        - Navigating the Claim Coverages Table
+        - Navigating the Claim Coverages Table Practice Activity
+    - Lesson 3
+        - Collecting A Payment
+        - Collecting A Payment Practice Activity
+    - Lesson 4
+        - Submitting A Claim
+        - Submitting A Claim Practice Activity
+    - Lesson 5
+        - Adjudicating Claims
+        - Adjudicating Claims Practice Activity
+    - Lesson 6
+        - Rejected Claims Chat
+        - Rejected Claims Practice Activity
+    - Lesson 7
+        - Processing Remits
+        - Processing Remits Practice Activity
 - [Appointments | Recall Appointment Lists](https://help.canvasmedical.com/articles/3484488036-appointments-recall-appointment-lists)
     - Introduction
     - Objectives
