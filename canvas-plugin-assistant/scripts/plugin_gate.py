@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -37,10 +38,10 @@ SECRET_ASSIGNMENT = re.compile(
 )
 CREDENTIAL_FILE = re.compile(r"(?:^|/)(?:\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?|[^/]+\.(?:pem|key|p12|pfx))$")
 DOCS_OR_TESTS = re.compile(r"\.(?:md|rst|txt)$|(?:^|/)tests?/")
-HUNK_START = re.compile(r"^@@ -\S+ \+(\d+)")
-# `git commit -a` / `-am` / `--all` also commits tracked changes that are not staged yet.
-COMMIT_ALL = re.compile(r"\s-[a-zA-Z]*a[a-zA-Z]*\b|\s--all\b")
-GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
+HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+# git's global options that take a separate value: `git -C dir commit` is still a commit.
+GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
+SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")", "\n"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
 WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
@@ -143,17 +144,27 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
     """Credentials on the added lines of a `-U0` diff: (certain, possible), each `path:line: what`."""
     certain: list[str] = []
     possible: list[str] = []
-    path, line_number = "", 0
+    path, line_number, old_left, new_left = "", 0, 0, 0
     for line in diff.splitlines():
-        if line.startswith("+++ "):
-            path = line[6:] if line.startswith("+++ b/") else line[4:]
+        if old_left == 0 and new_left == 0:
+            # Between hunks only: inside one, an added line reading "++ b/x" shows as "+++ b/x".
+            hunk = HUNK_START.match(line)
+            if hunk:
+                old_left = int(hunk.group(1) or 1)
+                line_number = int(hunk.group(2))
+                new_left = int(hunk.group(3) or 1)
+            elif line.startswith("+++ "):
+                path = line[6:] if line.startswith("+++ b/") else line[4:]
             continue
-        hunk = HUNK_START.match(line)
-        if hunk:
-            line_number = int(hunk.group(1))
+        if line.startswith("-"):
+            old_left -= 1
+            continue
+        if line.startswith(" "):
+            old_left, new_left, line_number = old_left - 1, new_left - 1, line_number + 1
             continue
         if not line.startswith("+"):
             continue
+        new_left -= 1
         added, where = line[1:], f"{path}:{line_number}"
         line_number += 1
         for name, pattern in CERTAIN_SECRETS.items():
@@ -169,12 +180,50 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
     return certain, possible
 
 
-def scan_commit(plugin_dir: Path, command: str) -> tuple[list[str], list[str]]:
-    """Credentials the commit adds (certain, possible): its added lines and credential files."""
+def bash_action(command: str) -> str | None:
+    """`commit` for a `git commit`, `upload` for a `canvas install`/`deploy`, else None.
+
+    Reads each simple command, skipping `NAME=value` prefixes and git's global options
+    (`git -C dir commit`). A git alias for commit is not resolved.
+    """
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        tokens = list(lexer)
+    except ValueError:
+        return "commit" if re.search(r"\bgit\b.*\bcommit\b", command) else None
+    words: list[str] = []
+    for token in tokens + [";"]:
+        if token not in SHELL_SEPARATORS:
+            words.append(token)
+            continue
+        while words and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0]):
+            words.pop(0)
+        if words[:2] == ["uv", "run"]:
+            words = words[2:]
+        program = Path(words[0]).name if words else ""
+        if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
+            return "upload"
+        if program == "git":
+            rest = iter(words[1:])
+            for word in rest:
+                if word in GIT_VALUE_OPTIONS:
+                    next(rest, None)
+                elif not word.startswith("-"):
+                    if word == "commit":
+                        return "commit"
+                    break
+        words = []
+    return None
+
+
+def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
+    """Credentials the commit could record (certain, possible): its added lines and credential files.
+
+    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them.
+    """
     git = ["git", "-c", "core.fsmonitor=false", "-C", str(plugin_dir), "diff", "--no-color", "--no-ext-diff"]
-    diffs = [git + ["--no-textconv", "-U0", "--cached"]]
-    if COMMIT_ALL.search(command):
-        diffs.append(git + ["--no-textconv", "-U0"])
+    diffs = [git + ["--no-textconv", "-U0", "--cached"], git + ["--no-textconv", "-U0"]]
     certain: list[str] = []
     possible: list[str] = []
     for args in diffs:
@@ -207,23 +256,29 @@ def main(stdin: str) -> int:
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
+    if payload.get("tool_name") == "Bash":
+        action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
+    else:
+        action = "upload"
+    if action is None:
+        return 0
     plugin_dir = target_dir(payload)
     if plugin_dir is None:
         return 0
     problems: list[str] = []
     advisories: list[str] = []
-    command = str((payload.get("tool_input") or {}).get("command", ""))
-    if payload.get("tool_name") == "Bash" and GIT_COMMIT.search(command):
-        certain, possible = scan_commit(plugin_dir, command)
+    if action == "commit":
+        certain, possible = scan_commit(plugin_dir)
         if certain:
             problems.append(
-                "this commit adds what look like live credentials. Unstage each, store it as a "
-                "manifest secret read with `self.secrets[...]`, and rotate it:\n" + "\n".join(certain)
+                "the changes this commit can record add what look like live credentials. Remove "
+                "each, store it as a manifest secret read with `self.secrets[...]`, and rotate it:\n"
+                + "\n".join(certain)
             )
         if possible:
             advisories.append(
-                f"CPA plugin gate, for {plugin_dir.name}: this commit may add credentials. Check each, "
-                "and move any real one to a manifest secret:\n" + "\n".join(possible)
+                f"CPA plugin gate, for {plugin_dir.name}: the changes this commit can record may add "
+                "credentials. Check each, and move any real one to a manifest secret:\n" + "\n".join(possible)
             )
     problem, warnings = run_validate(plugin_dir)
     if problem is not None:

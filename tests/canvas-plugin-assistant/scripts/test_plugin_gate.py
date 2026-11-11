@@ -343,6 +343,53 @@ class TestScanDiff:
         diff = "--- a/h.py\n+++ b/h.py\n@@ -3 +2,0 @@\n" + f'-KEY = "{STRIPE_LIVE}"\n'
         assert plugin_gate.scan_diff(diff) == ([], [])
 
+    def test_an_added_line_cannot_pose_as_a_file_header(self) -> None:
+        """Added content reading "++ b/README.md" shows as "+++ b/README.md" and must stay content,
+        or every finding after it would be read as docs and only advise."""
+        certain, possible = plugin_gate.scan_diff(
+            _diff("acme_intake/h.py", "++ b/README.md", f'KEY = "{STRIPE_LIVE}"', start=1)
+        )
+
+        assert [line.split(": ")[0] for line in certain] == ["acme_intake/h.py:2"]
+        assert possible == []
+
+    def test_context_and_no_newline_lines_keep_the_count(self) -> None:
+        """A context line moves the new-side line number; git's "no newline" marker does not."""
+        diff = (
+            "--- a/h.py\n+++ b/h.py\n@@ -1,2 +1,3 @@\n import os\n-x = 1\n\\ No newline at end of file\n+x = 1\n"
+            + f'+KEY = "{STRIPE_LIVE}"\n'
+        )
+        certain, _ = plugin_gate.scan_diff(diff)
+
+        assert certain[0].startswith("h.py:3:")
+
+
+class TestBashAction:
+    """Tests for bash_action, which decides what a Bash call is."""
+
+    @pytest.mark.parametrize(
+        ("command", "action"),
+        [
+            pytest.param("git commit -m change", "commit", id="commit"),
+            pytest.param("git -C acme_intake commit -m change", "commit", id="global_dir_option"),
+            pytest.param("git -c user.name=x --no-pager commit -m change", "commit", id="global_config_option"),
+            pytest.param("cd acme && GIT_AUTHOR_NAME=x git commit -am change", "commit", id="compound_with_env"),
+            pytest.param("git commit -m 'unbalanced", "commit", id="unparseable_still_a_commit"),
+            pytest.param("git status --short", None, id="other_git_command"),
+            pytest.param("git log --grep commit", None, id="commit_as_an_argument"),
+            pytest.param("echo 'git commit'", None, id="commit_in_a_string"),
+            pytest.param("canvas deploy acme_intake", "upload", id="deploy"),
+            pytest.param("uv run canvas install acme_intake --host acme-dev", "upload", id="install_through_uv"),
+            pytest.param(".venv/bin/canvas deploy acme_intake", "upload", id="venv_canvas"),
+            pytest.param("canvas validate acme_intake", None, id="validate_alone"),
+            pytest.param("git --version", None, id="git_with_only_options"),
+            pytest.param("", None, id="empty"),
+        ],
+    )
+    def test_bash_action(self, command: str, action: str | None) -> None:
+        """Global options, env prefixes and compound commands do not hide a commit."""
+        assert plugin_gate.bash_action(command) == action
+
 
 def _git(cwd: Path, *args: str) -> None:
     subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True)
@@ -371,16 +418,15 @@ class TestScanCommit:
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
         _git(repo, "add", "h.py")
 
-        certain, _ = plugin_gate.scan_commit(repo, "git commit -m change")
+        certain, _ = plugin_gate.scan_commit(repo)
 
         assert [line.split(": ")[1] for line in certain] == ["a Stripe live key `sk_l…` (35 characters)"]
 
-    def test_commit_all_also_reads_unstaged_tracked_changes(self, repo: Path) -> None:
-        """`git commit -am` records tracked changes that were never staged, so they are read too."""
+    def test_unstaged_tracked_changes_are_read_too(self, repo: Path) -> None:
+        """`git commit -a` and `git commit <path>` record changes that were never staged."""
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
 
-        assert plugin_gate.scan_commit(repo, "git commit -m change") == ([], [])
-        assert len(plugin_gate.scan_commit(repo, "git commit -am change")[0]) == 1
+        assert len(plugin_gate.scan_commit(repo)[0]) == 1
 
     def test_added_credential_files_are_found(self, repo: Path) -> None:
         """A new `.env` or key file is certain; an example env file is not; one under tests only advises."""
@@ -390,7 +436,7 @@ class TestScanCommit:
             path.write_text("A=1\n")
         _git(repo, "add", "-A")
 
-        certain, possible = plugin_gate.scan_commit(repo, "git commit -m change")
+        certain, possible = plugin_gate.scan_commit(repo)
 
         assert certain == ["acme_intake/.env: a credential file"]
         assert possible == ["acme_intake/tests/fixture.pem: a credential file"]
@@ -411,7 +457,7 @@ class TestMainSecretScan:
             assert plugin_gate.main(_bash(repo)) == 2
 
         err = capsys.readouterr().err
-        assert "this commit adds what look like live credentials" in err
+        assert "the changes this commit can record add what look like live credentials" in err
         assert "acme_intake/h.py:1: a Stripe live key" in err
         assert STRIPE_LIVE not in err
 
@@ -440,11 +486,34 @@ class TestMainSecretScan:
             assert plugin_gate.main(_bash(repo)) == 0
 
         context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
-        assert context.startswith("CPA plugin gate, for acme_intake: this commit may add credentials.")
+        assert context.startswith(
+            "CPA plugin gate, for acme_intake: the changes this commit can record may add credentials."
+        )
 
     def test_only_a_commit_is_scanned(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """An install or deploy uploads the plugin, not a commit, so the commit scan does not run."""
         monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
         with patch("plugin_gate.run_validate", return_value=(None, [])), patch("plugin_gate.scan_commit") as scan:
             assert plugin_gate.main(_bash(repo, "canvas deploy acme_intake")) == 0
+        scan.assert_not_called()
+
+    def test_a_git_command_that_is_not_a_commit_runs_nothing(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The hook fires on every `git` call so `git -C dir commit` is caught; the rest pass straight through."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        with patch("plugin_gate.run_validate") as validate, patch("plugin_gate.scan_commit") as scan:
+            assert plugin_gate.main(_bash(repo, "git status --short")) == 0
+        validate.assert_not_called()
+        scan.assert_not_called()
+
+    def test_the_installer_tool_is_validated_without_a_commit_scan(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An installer call uploads the plugin, so it is validated and not scanned as a commit."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        payload = json.dumps(_installer(repo.parent, {"plugin_name": "acme_intake", "cwd": str(repo.parent)}))
+        with patch("plugin_gate.run_validate", return_value=(None, [])) as validate, patch(
+            "plugin_gate.scan_commit"
+        ) as scan:
+            assert plugin_gate.main(payload) == 0
+        validate.assert_called_once_with(repo)
         scan.assert_not_called()
