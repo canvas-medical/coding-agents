@@ -128,6 +128,7 @@ grep -rn "AgentPlugin\|RunAgentEffect\|ToolRegistry" --include="*.py" .
 - every custom tool takes the patient and note from `ctx`, checks each id the model passes belongs to the patient, and declares its `effect_types` and `required_permissions`, with a test that another patient's id is refused
 - each `RunAgentEffect` names a patient and note the trigger's own context vouches for, never one taken from an unauthenticated request body
 - the chat route authenticates the staff member, and nothing broadcasts to an `agent-run-` channel
+- `DecideAgentProposal` is returned only from the route the requester's own approve or deny control calls; no code path decides a proposal for them, such as the chat route approving in the same request
 - a tool over the plugin's Custom Data filters by the run's patient and, for a table spanning many patients, the requester's visibility; any `CustomModel` write happens in `save_state` or is idempotent bookkeeping, never something a person should approve
 - `INFERENCE_GATEWAY_KEY` is declared `"sensitive": true`, and no other LLM provider key or client is present
 - if the agent's output lands in the chart or is shown to a clinician as a suggestion, flag it for Canvas security and compliance review

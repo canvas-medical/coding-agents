@@ -23,7 +23,8 @@ If that fails, or the target instance runs a Canvas release without the framewor
 
 | The spec... | Build |
 |---|---|
-| Needs one model call over input the plugin already has (extract fields from a document, classify a message, summarize a fixed text) | A handler with `canvas_sdk.clients.llms` (`LlmAnthropic` and friends), see the **plugin-patterns** skill |
+| Needs one model call over input the plugin already has (extract fields from text the plugin already holds, classify a message, summarize a fixed text) | A handler with `canvas_sdk.clients.llms` (`LlmAnthropic` and friends), see the **plugin-patterns** skill. This sends patient data to the provider through the plugin's own key, not the gateway, so the BAA item under Security and compliance applies |
+| Reads an incoming fax or upload | An agent with the intake tools (see Standard tools) |
 | Lets the model decide what to read or do next: a chart chat, reconciling outside records, reviewing a visit against earlier follow-up, triaging a queue | An agent |
 | Needs the model to write to the chart | An agent: its tool grant bounds what it can write and the platform checks every effect against the requesting clinician's permissions |
 | Must answer inside a request, in under a second or two | Neither as an LLM call in the request. An agent run is asynchronous: return `202` and let the UI poll or listen for the result |
@@ -34,7 +35,7 @@ An agent reaches Anthropic only through Canvas's inference gateway. Never add an
 "variables": [{"name": "INFERENCE_GATEWAY_KEY", "sensitive": true}]
 ```
 
-The platform builds the `LLMGateway` passed to `run()` from that key; `gateway.client()` is an Anthropic client pointed at the gateway. Gateway keys are issued per organization in Canvas Platform; the user's Canvas team issues one for the plugin, and it is set at install with `canvas install <plugin> --secret INFERENCE_GATEWAY_KEY=<key>`.
+The platform builds the `LLMGateway` passed to `run()` from that key. `gateway.client()` returns a `GatewayClient` pointed at the gateway that offers `messages.create` and `messages.stream` only, not a full Anthropic client, so there is no `client.beta` or `client.models`. Gateway keys are issued per organization in Canvas Platform, and the user's Canvas team issues one for the plugin. The deploy flow's `installer` tool reads it from `~/.canvas/plugin-secrets/<host>.json`, so ask the user to add it there or set it in the plugin's settings in the Admin UI. Never ask for the key in chat or put it on a command line.
 
 ## Shape of an agent plugin
 
@@ -83,7 +84,7 @@ An agent runs with its plugin's Custom Data namespace and declared access, as a 
 ## What an agent may write
 
 - Effect tools **draft**: commands are originated, never committed, and a clinician reviews, commits, or signs them. Don't design a spec where the agent signs, commits, or sends on its own.
-- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply, with everything one call stages decided as a single proposal, and any granted tool that stages the same effect type proposes too; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route, an application, or an action button when the requester approves or denies. Only the requester decides, within an hour; a decision an agent returns is refused.
+- A change that commits waits for the requester's approval. `tools.approve` in the manifest makes any granted tool propose instead of apply, with everything one call stages decided as a single proposal, and any granted tool that stages the same effect type proposes too; the plugin's UI shows the proposal and returns a `DecideAgentProposal` effect from a SimpleAPI route, an application, or an action button when the requester approves or denies. Only the requester decides, within an hour; a decision an agent returns is refused. The platform checks only where the decision came from and that its actor is the requester, so it cannot tell the plugin's code from their click: return `DecideAgentProposal` only from the route the requester's own approve or deny control calls, never from the route that starts the run or from code that decides for them.
 - The agent acts for its requester: tools they lack the permission for are hidden, every effect is checked against their permissions and patient groups, and a run on a patient they cannot see is refused. A run no user started (a Canvas Bot, API-key, or webhook trigger) acts with the plugin's own trust, but cannot propose, commit a command, or add a lab report; a run a patient started may change only that patient's own records.
 - `edit_staged_command` and `delete_staged_command` change only staged drafts in the run's own note, and only kinds the agent's grant can stage.
 
@@ -123,7 +124,7 @@ An agent runs with its plugin's Custom Data namespace and declared access, as a 
 - `prepare_agent(AgentClass, allowed=..., denied=..., approve=..., subject=RunSubject(patient_id=...), requester=RunRequester(staff_id=..., permissions=...))` applies the manifest grant and subject.
 - `run_agent(agent, gateway)` returns `run.effects`, `run.dropped`, the model calls, and the tool calls.
 
-Use the manifest's real grant in tests, and test each custom tool directly, including the refusal of another patient's id. Use the **testing** skill for the general setup.
+Use the manifest's real grant in tests, and test each custom tool directly, including the refusal of another patient's id. `run.effects` is what the tool grant keeps: the harness does not run the platform's permission, patient-run or approval checks, and without a `requester` the run is Canvas Bot's and permissions don't limit it. An effect the requester lacks permission for, or a Canvas Bot run's proposal, passes here and fails the run on an instance. Use the **testing** skill for the general setup.
 
 ## Security and compliance
 
