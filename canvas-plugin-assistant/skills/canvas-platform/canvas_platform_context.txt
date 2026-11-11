@@ -487,6 +487,110 @@ This process begins in an open note of the patient chart.
 ----- END PAGE https://help.canvasmedical.com/articles/1379672479-command-immunization-statement
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/1380397114-family-portal-access
+Family portal access lets your staff give a family member or another representative portal access to a patient's chart. A parent can open their child's records, a guardian can manage appointments for someone in their care, and an adult child can follow a parent's lab results. Each person signs in with their own login, sees only the parts of the chart your staff give them, and everything they do is recorded as them, acting for the patient.
+One login can open several charts: a parent who is also your patient sees their own record and each child's record they were given, and switches between them in the portal.
+## Before you begin
+  - **Canvas turns family portal access on for your instance.** The setting is `FAMILY_PORTAL_ACCESS`, in the **Patient Portal Beta Features** section that Canvas configures for you. Ask your Canvas team when you're ready to use it.
+  - **Who can manage access.** Staff who can change patients, and who can see the patient, can give, change, and remove family access. Removing a contact who has access also takes permission to delete contacts.
+  - **The family member must be one of the patient's contacts.** Access is always given from a contact on the patient's chart, so add them in **Contacts** first.
+## Step 1: Add the family member as a contact
+  1. Open the patient's chart and go to **Profile**.
+  2. In **Contacts** , click **Add**.
+  3. In **Name** , either search for the family member's own chart, if they are also your patient, or type their name and enter their email address and phone number.
+  4. In **Categories** , choose how they're related to the patient, such as **mother** , **father** , **grandparent** , or **spouse**. Family portal access shows it on the family member's access row, in the list of contacts to give access, and to the patient under **Who can see my record**.
+  5. Click **Save**.
+![Contacts section with relationship categories](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fd81b53ea-d44c-461d-98d1-f0719c325664-02-contacts-section.png?Expires=253370764800&Signature=oX2dutuvl9iD1S2W~GUyrzf6J1AxdEyW2atote1Kxyx9Q5WHJu0Hn3laE-b08zZJhc~XCfcZc2Wpd-oZ~UhJhHzBGYAkE6wMLnZvOlvvpfhl9ta2llrANPVkEyDwZB4n6ZqOCffUoU5aGyrtQ9pFnVhkmaN13~trUaO9uU3f~ceEaNzALw8uL~XKe-5Nl8~RYFlHZBYKpzJPDTWyCSQzONpCzqAC-6S2k2Qv3LfOmVfNyxrXst6jwKRPOk5V1SjxXHdbQpsa~~avQ5WPR203QPzCWWrBpZ2WwTSjSnlUpufilOs189DO6lhQ-OTmvWYtvy7F1csvjVnY~b6EZAqi9g__&Key-Pair-Id=K3NV4LZ47N8M46)
+Only relationship categories show as the relationship: the categories that use the HL7 relationship codes (`http://terminology.hl7.org/CodeSystem/v3-RoleCode`), which Canvas provides for relationships such as mother, father, parent, step parent, grandparent, foster parent, spouse, sibling, and child. Other categories, such as **Emergency Contact** or **Power of Attorney** , describe the contact's role and don't show as the relationship. A category your team adds shows as the relationship only when it uses that same code system.
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fce1c8709-8b9d-48e5-ac25-5e5fc5d3984e-03-contact-edit-categories.png?Expires=253370764800&Signature=Zumx5IZ4gK04qyrYJIjH2n-1eDpz3H5c1Uq8z1NvmWOsprB2DD6sPHbgEHaUuzbaNcMDhWVixV~VwLEu3fpZnSDrizcSqZZjCv289S7tJALl8GDlmOzn3ScyvaNZERy1bES9o0IFvKWuur0A0O-pJkkvtpqQpweGSDiqRYphoc4YVavSUGaNgApYalToFt-dmZOU9lDQaSGVBpBICQaK6TQm8cUEb7-NJ8qQP5zqScdnCX61RXilpl830cLoOi59g84nPHEmwvPyq-clUmaEDfm4TJjjdyZ6HWgkD7kbaa8wtbuzCEqaWXEZRfu-2S7cUZQcoWo7Sl57p1h63sytJg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 2: Give the family member access
+  1. In the patient's **Profile** , open **Portal** and click **Add**.
+  2. In **Contact** , choose the family member. Only contacts without access are listed.
+  3. Choose their access. **Full access** and **View only** set every area at once, or set each area separately.
+  4. Click **Add**.
+![Adding portal access for a contact](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F4c2cb9a8-e112-478a-89d8-36b8a268aaf9-04-add-access-form.png?Expires=253370764800&Signature=KpBmvG~iC~89r6iENrMtW6meIL-71BWIZ49RtvuyKh~Svrq2QTaZkwJRBlQEja5n8zLOdT-siiil94aqHkRFbjytZ~htnTWUIejrhccDRrdAXUk83BleVqvD-LqqO5AG63ZdQAMuK328AtlsP-KINHRu3Hi2Lj4X3pbd-7NAho0z1MddwGjD94A2DXJXJVcJ4JOCMJkL6h9lFc5tNVQYbMI2CpUtoECvKOHYsY645pF8u5p-wo6QK3pbH~ilMxbrF5qenZWMfe15DiwQCmrX-8lp6aM6PdkJqL-qOme5dwjxcviLLdJST1ihz6IPcd4fFI0MGp7fC5Kaq3czxhSPPQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+Access is set separately for four areas of the patient's portal:
+Area| Portal pages| View| Full  
+---|---|---|---  
+**Appointments**|  Appointments| Upcoming and past appointments, and joining a telehealth visit| Also book, reschedule, and cancel appointments  
+**Messaging**|  Messaging| The patient's messages with the care team| Also send messages to the care team  
+**Clinical**|  My Health, Labs, Health Records| Conditions, medications, allergies, lab results, and health records to view and download| Also generate and transmit health records, and upload records when document uploads are on  
+**Billing**|  Payments| Balance, installment plan, and statements| Also pay with a card and manage saved cards  
+With **None** , the area's pages don't appear in the family member's menu. With **View** , the pages show the patient's information with a note that the access is view-only, and their action buttons are turned off.
+A few things the form tells you as you go:
+  - **When the contact isn't your patient** , the note says their email and phone number aren't verified contact points. The first time they open the patient's records, they confirm the patient's date of birth (see Step 4).
+  - **When the contact may already have a login** , for example because they were given access to another patient's chart, the form asks **Is this the same person?** Choose their existing login so they use one login for every chart, or **No, a different person** to create a new one.
+  - **When the contact is linked to a patient who already has a portal login** , there's no invite: adding the access links it to their login right away, and Canvas sends them a notice at the email and phone number on their chart that have consent for messages. The next time they sign in, the patient is in their records switcher.
+## Step 3: Send the invite
+New access appears in **Portal** with **Not invited**. Click **Send invite** to send the family member their invite.
+![Portal section with a new family member not yet invited](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3bf7b3d6-6b93-49db-ace4-b2dfb73c752f-06-access-rows.png?Expires=253370764800&Signature=Usfg7AmsArET44ZZui3QIzFQirDhIbsi5AfCZd4HlUJRZr5-mKFurDudRvWhvnFwcY0LeJ~J4GaOh3r3rn48f6lIhL3JMq6PIx7k88cYLzssFxmMkZWsfs0BVmobTV~HGQayVCO73UdxeC~24y-TuqmDzFE~zbwgEAYaqeTqxGvSTxjySTVEZcM4-N4NQGLMFC0aq6H0KoBh-dT7GmLzlXK6LZAxJGVBrx309Q5bGl~qKOiaJts9qmkeTq470~o8znt5Ib833AogQHCRXh7kNrdU9G70usT1BvmNfkInDv4Zu4MLPxbRcs--ZQ-IYbZ3KgnGcXcoyjwHv9QK3dFKcg__&Key-Pair-Id=K3NV4LZ47N8M46)
+The invite goes to every address on file for them, the contact's email and phone number, with one link that works from either. Hover over **Send invite** to see where it will go. Once it's sent, the row shows **Invite sent**. After they sign up, the button becomes **Reset password**.
+![A family member whose invite was sent](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5991d928-185b-4255-ae54-619016dbce35-07-invite-sent.png?Expires=253370764800&Signature=n3yZinSyMxrqyXxM6aQnF6Xxti2uvhQBzshcd6-hoFi1jB7G17SE6my3iUa6ZLFUkXJgC2ghI9fU2truc3hcwSq23061t5kQXnCH3Zfac91U0J9~U3i6KFAr8w-UnHD3Aarj2keFVw30pUOrBDuel59HB~awMhXvHfdXXvFv6hkT24GeaMgFzOFisa2J9d7zWShc8XDz0n~SZKPQ~oJpMB3yef1kcHVU4D6-IQFKOHWG0bPs3ugUTifG6jc04PZkKGgLH64wbYqNbzIkw8lRU0PgyeDTD57cBc9HcJykYwXors5kdG5VRnnaB0qeB1kJUaIJJbkCWA0cbVhmTj4oLQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+The invite uses Canvas's standard wording. Wording you set for patients' invite emails in Patient Communications applies to patients only.
+## Step 4: What the family member sees
+The family member follows the link, sets a password, and signs in to the portal.
+**Switching records.** A family member who can open more than one chart uses **Switch records** to move between them. **Your record** is their own chart, if they have one, and **Other people's records** lists the charts they were given.
+![Switch records in the patient portal](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F4c322a8f-259a-4714-a95d-3e09df1d2f49-14-portal-switch-records.png?Expires=253370764800&Signature=e4-SJp-dWdyz0dK5NtkuLVxkr736e8POj8NsxPY4dxbAs6dC4iWH-A7nRSD4-3MEIAEzcRdnRDPflERJjTlFHRJLwx1k0981jtQg-tPNxQxjjQKjmeN4nlK9L16Cd9a4QunbMr0dBO3k0DdFNa-h0U36RCLmx3SjJdQGyLwUxUpyfLWMzFJVGige4OsbEzFJ5FIk28jxoeqipmD0W8f1PTXEGtyRb9q6UQOWm-D3d98zzzGdll42QhRmIXcFw-o7YYJYHG9WdJyKlP1JuhyE95uTc2x5-bavthbeY6Lil-gVs7V8B8c8spHYxdj7DiP1gYVTwbvVQg14TZRmazxLIw__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Confirming the patient's date of birth.** The first time they open a patient's records, they enter the patient's date of birth. Until they do, the patient appears by first name only. After 3 wrong dates of birth, that access is locked: the patient's **Portal** section shows **Locked after 3 wrong dates of birth** , and staff click **Unlock** after confirming who the person is.
+![Confirming the patient's date of birth](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F61798c1a-4d74-4ea7-80b8-b5c3434b13e7-15-portal-dob-check.png?Expires=253370764800&Signature=YIq6zRfjC6pH1-Ig-RT--MgkQjR4b2yA8XesTPJ2x-~Nz1Y6lmWS~deHvKaw2LqQ~G7JMmuhTFuxAKdnhUxMEiSNxfYqTjgL00hp4kfl~b~TXG3Po-IL6R~0SDyfmY2XWBwHTSgT~E9bu8ObjQPbYbuUsaifESTOXfVkoHE7apye2wnMehOH101K1Cq-WLUxLAJo2F58f10tL~qxi7cnEX0pr-ZzmgB5pSH1gV~u5xuz1xyVgwGoUGZcpWBml8LPuheuiyLrvZODbjyTPTBpWMT-PwSKdKQI156WteOiGZsh~wTu8MpNeqzRKZWNnQQQGY5UNrFQoeqgRkHM7bJ-1Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+**"I don't know this person."** If the invite reached the wrong person, they click **I don't know this person**. The patient's records are taken off their account, and your team is told (see **Flagged access** below).
+![Confirming they don't know the patient](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fca6151fc-3112-4912-9bde-d9636a3b7403-16-portal-dont-know-confirm.png?Expires=253370764800&Signature=i5PTnsyGfQldDTTurfQBt-QbihEE1WH7CqqZu~uaCi0C8-1XSQHHaRUyjuW7vv6kHM8s3Rl4vs5kiYSYwza95RX8zdXhMmryKl62KXyd2gxmIRRfKpOjc0PzXA0UYchl8UKwGCGkP~Uz9JdXOBctr38tQn4Xhp7WOYalqe20dYu-wI1BQaxVE7jOvGfIdmWuCSzma7BcUkOnHYrlvkt~lATTfZVJ8~HBRlq~c1dce4tsP31n5atmjkm-hzRbJYLxG4Bzn5a~~5tcIdLzAq0G8xoWbFQmZz0Exdo11kLiHrSroJ0N0k8gu-eekhVqmIvaX15tS1E0t-xpXz2-l3742Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Using the patient's records.** A banner shows whose records are open and that anything they do is recorded as them, for the patient. Areas they can only view say so, and their action buttons are turned off.
+![A family member viewing another patient's records](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe765f9af-2b1e-414e-9f77-b02db4347621-17-portal-view-only-home.png?Expires=253370764800&Signature=TitTfgVVqfGszTkyHLjaZff6uG6hLZH3e5LvAcf~bDXbvulIEwvAEt0BcO2zQvnDO1RVvdEaxM-G960rK~0lB6U0AZsi~UhUATwMplnua2gsZiJADcw8HQa1ulmEz1nsbz1Jw85XT-4Bk-UaEuxlmJ0dzd155WhdcPU0M1H3SvR~4-gKb-1dPhXLQh7R2P8j4NvVleMfiyVpo62B0FNF2Hqr2wk~sSRJq9z37~8B-92dCr3tMtpmzc~JKHWXTi0xV7hBbhar3TNdTjwtY9ltc~zod2J7Qf9bfKbf7Q-HD35HdOGMctyfg-CPj0iO7HT8plYCZ7QyAIjgw0EaYCKT6w__&Key-Pair-Id=K3NV4LZ47N8M46)![Messaging with view-only access](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1ba24788-927d-405f-ba29-b47c47f3946c-18-portal-view-only-messaging.png?Expires=253370764800&Signature=jGK3L8yWJQLKR~GBemDBNdHWeJ9oX4H1vpGOoaIoz3S4n78S5ETJjI4qwx-3HoMC~Rh-OnbOIUb8Znb9xzkpA9Er0hSXv2Z2NPL51UOtZ-rmvSXbS-jGCx7iP5Zq3Ox7nETr~N6w7BXD24aKLs58EUKVAJttCEtw-sJEMXqVSaVhhmogDhkXp4U3XcXJdm-Gje6YszI8MT-rETgj6Z7JRoc-61Z1PzYrwYtTtAxeZpV6DhCJw-HAsRDTZJ7pGoHKU1pry1Tnj7~xySX~cXjjLeOhhxkMqQyAvm6C94~c~yNgb42aWIgFgNYXMsgGS076-8Iu4dIMVoOrPp5wTpGBOg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## What the patient sees
+A patient with their own portal login sees **Who can see my record** on their portal home, with each person who has access, their relationship, and their access.
+![Who can see my record in the patient portal](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa02290eb-4c3a-4ba5-8aea-467f03b3d75b-19-portal-who-can-see-my-record.png?Expires=253370764800&Signature=CtZA7UNT2Pzjq5~14ZCqMFL-rupPMHWE0URtnwpMzhu4FuzvK5JYSXoUxB3~oF7eZA-iqCNA6G4BxhqC649tzNYKSD1SscSRzoN8Rr48W6mkxjjHZFH-BffMRzOHFlSQjncV-wQj6G1wevE8MVP160p-NT7~fuM2K51jeDuAdCaHNOl1ZFeZkNHKmjesnmnpV8aNDXFK9Q3ujWXOQLCYbABCwerpPXBMoxEemC-a0z0~5WNkVVZKE0jZS7Ed8VdOSbk~dNR1iUIIImCVL49cOLJT5XG2ePJHl~uSoLbVVY0iFqQSHyYF9EWu27TQ-~8bDWjFqtFVRFSl2Edi1tJE5g__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Managing access
+**See or change access.** Click **Access level** on a row to see the access, or the edit button to change it. The editor also shows who gave the access and the access history: each grant, change, invite, and removal, with who did it and when.
+![A family member's access levels](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F51386f8d-876e-4fc8-9dbd-9c498fe78103-08-access-level-details.png?Expires=253370764800&Signature=nEYrlWlXlkuhPhminqeX3zEBugEHNty3Bumsb66Jbr6NIin5M9FDS~g8tOVJDdN74TI~Usb5iHqDRZB-8-Hup2VuooEAjHALfjiDbKoFS4yYWt-YCE0RzBmc3Ra3mG64Mh3ktLXg9eit52UIKKUM9beBN9Igv8bB8pwOMdskTNhEONllvnQXMavsMB9V0gYDrn2~P-i-kX1X7OB~qD5hrzqeIaVVVoJ-zxnCAYD8a96L4b20LclXH1t3fNyBs-eI-D8sUvGhOywbSTINfaeWyce8TpYF-X-mteOroey6lIL508y9Gc6GwsXF-jplUbpx8pNCMFcEDFLXnnSgkzPlWA__&Key-Pair-Id=K3NV4LZ47N8M46)![Editing access, with the access history](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5cd37eb1-9e58-430e-9106-a779a125d71c-09-access-editor-history.png?Expires=253370764800&Signature=VDUcW1fLcmsrS8wtmiWPCAjUHzGVILY28~fb~k-NbNFZAdg-H1cpdNKe8YLwSEil6kT7BmZWuMSwtvZWsCrL~Ei2bU7i2NyaZdUsSnoovVzMDoJ~PveBx1M6NeaeFgI7-ClDoEdo1-nL3IHChSpZ8QmohQhnpNwRRGn0Wcc2Q-9~1eYEl71hJxb6ZI7h4PBtGp8EEoHO-TwyICrwr5f4u6QB6ona3guQoWdW4S7~GxsDgehsiAwFdzMa6YhghWGxm1vF~ewcuPnRYnQPax06wV27QlwkDylzUBhqb78j7~eJbWfk80l5BGls67xJ68sadBslWaDiS0IOkirL22thog__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Remove access.** In the editor, click **Remove** , give a reason, and click **Remove access**. The family member stays on the patient's contacts, and if they're signed in, the patient disappears from their records switcher right away. Their access to anyone else isn't affected.
+![Removing a family member's access](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa170954b-33c5-463b-9075-b8cfbb99c4c8-10-remove-access-dialog.png?Expires=253370764800&Signature=ETeW3nG8SPceAYOtr55EPcaB6CUzXFITr8ELtGL2QmtmCSXy0QXteEYlvAsUuSyDOP5sqHQfSB1lBcsDj3pyaqXJEnIsZMs9o4t4nRPB7s8PfcDU8oKHW3h9lrHw4R5cmDdORlDjPgM2KfSzeUrF0vymesa~DEjbJkf0eh5Ba6pg1GP~OxqZa7SLjh3zCITblM2nzyYxDeCn3iArg43KrRUsDJr9HcG89vKg2gR43PWswYa2YPh9PeONaQ2IbEfBR7MzL0FQ6vE5qlZ6u8HqHbp5LyEhDoFLcBzGm2ug~UjhF5hSyiht8E6cli9AjeM3Cvhi9JJ84exrdB5mlKQRXw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Removed access stays on the chart as history. Click **Show removed access** to see it, with who gave it, who removed it, and the reason.
+![Removed access kept as history](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F0c520006-30b8-4047-961c-e67c355cbe20-11-removed-access.png?Expires=253370764800&Signature=nJZQV-AieaNszweUFdkpsE-K16BU2GWjkO4cXNJ86pW07rZ0Zq0fsnlNodKD4ugUW5f1mwUmX0wnfgkgJm-PEK6oDjFOZk2n5He60KMtvERIr9CtyYx8WlQBwWgNOs0fWo4vEaOtUIiEZr-nCxWdF1IbPVfwO6aXWtT6PEPhjeX3ZtX0OzJ0jgmzkUX7BTA6Vu94nu6SEPX~EzA-NGwVVFJ-vVwM518KgAGJzmaqSv85EIsWhn3P471I1f0ZZceP1hcyQfSRDVhYspksFq1reV5Tf~H9ahmStfBO2aipnLMGp0teQbsxI8chy7AJ9a1~8V2JIJAg~B7Qw3qormCtKA__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Removing a contact who has access.** In **Contacts** , removing a contact with active access offers **Remove contact and access** , which removes both. A removed contact leaves the patient's contact list, but Canvas keeps its name and relationship with the access history and with anything the family member did on the chart.
+**Charts a patient's login can open.** When a family member is also your patient, their own **Portal** section lists the charts their login can open, with their relationship and access on each.
+![The charts a patient's login can open](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa364f50b-b81c-42b5-834f-8a208c9bad5b-12-parent-other-charts.png?Expires=253370764800&Signature=sTpJYOMhu941hTBWmvDHp9mEspmtwH-OMQ00fzPkMWQp86cJ0gpqV663nLsOVAeDhuMGf1rprlaOJ6JDcyrB1bR74UjO14p-2Z3zSfTFOGVqbrPfs-XVTTdswp00FY~s8FHbosB~encpaWPGvAsTSaq6K5MGUlpPKeDJ4XQrAkhHF7ksldxQ46DVgwTfAj~VFni0mRCjylijJeDFToU9FMZjtVEkmUbE2ifd6oO~2mAXKBlhxtesmGUZeLk2eI2l6F2MV7Ow2AqeF03XdLO9i51TdkI8KoA~1OixguqequycA~uyHGT~0kSnKKIoTOChKA9G~~zgs6-XnSO4-QoAJQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Flagged access
+When a family member clicks **I don't know this person** , Canvas pauses their access, marks it in the patient's **Portal** section, and opens a task for the patient's care team lead, or for the staff member who gave the access when the patient has no care team lead. The task reads, for example, "Pat Lee said they don't know Maya Rivera. Their portal access is paused: correct the contact or remove the access in Profile → Portal."
+![Flagged access in the Portal section](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fed31843a-eaf5-48b8-9c65-92ca59c40fe0-20-flagged-access.png?Expires=253370764800&Signature=loGsRjCdo1K4zHpF7ZOdX5KyrrumXqbiSLFOfrRSwEV7cD6zTEm96L~tTL~AzBsEobBHwq~vraVdSSqGffaeT8J96q8XyQ3UIvxsc8Zgnzxek2cBeVN7N80z1TARs5J1iCCsANRMxHg7zVk-hPswH7HQiPpbGIyCDmQkRdqNWRg3z-r23xTZaOMhN~HcXHxSvqS~knc1OMYF0SR5mCEBdcnmPnwwzGND~eaALlW-fnPmYEHX38ZOnJse4fLh364ufJOr~BCKx7E91pRLWus9RC-zyKm1PZ3o6eI5~yEMP534mL4dLQ0MFC0SOSvmmJ4fGv6X0dnwNCOj1xMhnJ3IMw__&Key-Pair-Id=K3NV4LZ47N8M46)
+To resolve it, either correct the contact's email, phone number, or linked patient in **Contacts** , and the access moves to the corrected person, or remove the access. Either one completes the task.
+## Notifications family members receive
+When family portal access is on, family members are told when there's something new on a patient's chart that their access lets them see:
+  - a new message from the care team (with Messaging access)
+  - lab results released to the patient (with Clinical access)
+  - a new statement, when the portal shows statements (with Billing access)
+  - an appointment reminder (with Appointments access)
+The notice says there's something new for a person whose records they can see and links to the portal's sign-in page. It doesn't name the patient. Only family members who have signed up and confirmed the patient's date of birth get notices.
+Where notices go:
+  - A family member without their own chart gets an email, at the contact's email address.
+  - A family member who is also your patient gets an email, and a text at the phone number on their chart that has consent for messages.
+  - Statement notices are email only.
+  - An address that already got the patient's own notice, such as a parent's phone number listed on the child's chart, isn't notified again.
+## How family members' actions are recorded
+Everything a family member does on a patient's chart is recorded as them, acting for the patient. Staff see them as, for example, "Jordan Rivera, for Leo" on messages and in the chart's history, and Canvas's FHIR API and plugins identify them as the patient's contact. Developers can read more in the Canvas developer documentation on [family portal access](https://docs.canvasmedical.com/sdk/patient-portal/#family-portal-access).
+## Turning family portal access off
+If Canvas turns family portal access off for your instance, family members' access is paused, not removed:
+  - Family members can't open the charts they were given. A family member who is also your patient can still use their own record.
+  - Family members stop getting notices, and the family access controls leave the patient's **Portal** section.
+  - Every family member's access, with its levels and history, is kept. When family portal access is turned back on, family members can open those charts again.
+There's one exception. A family member whose own patient record is inactive keeps a working login only while they have access to someone else's chart, so turning family portal access off turns their login off. Turning it back on doesn't turn that login back on. To reactivate it, open the patient's **Portal** section, remove the family member's access while keeping them as a contact, and then give them access again. You can also ask your Canvas team.
+## Troubleshooting
+What you see| What to check  
+---|---  
+There's no **Portal** section or **Add** button for family access| Family portal access isn't on for your instance, or you don't have permission to change this patient. Ask your Canvas team.  
+The family member isn't listed in **Contact**|  Add them in **Contacts** first. Contacts who already have access aren't listed.  
+**Send invite** is turned off| The contact has no email address or phone number. Add one in **Contacts**.  
+The family member never got the invite| Hover over **Send invite** to check the addresses, correct them in **Contacts** , and send it again.  
+The family member can't open the patient's records| Check whether the access is locked after 3 wrong dates of birth (click **Unlock**), flagged, or removed, and whether the patient is active.  
+The family member sees fewer pages than expected| Their access to that area is **None**. Change it in the editor.  
+A family member without their own chart doesn't get texts| Notices to family members who aren't your patients go by email only, because their phone number has no consent on record for automated texts. Invites still go to their phone.  
+## Related articles
+  - [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)
+  - [Contact Categories](https://help.canvasmedical.com/articles/8258338559-contact-categories)
+  - [Config | Constance Settings](https://help.canvasmedical.com/articles/4646004700-config-constance-settings)
+----- END PAGE https://help.canvasmedical.com/articles/1380397114-family-portal-access
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1392971282-business-lines-customized-patient-communication
 As organizations continue to expand their care modeling, customized patient communication is a critical part of their practice management workflows. Through the `Enable_Business_Lines` constance configuration, customers are able to customize their patient outreach communication, the logo displayed on the patient web portal, the area code from which SMS messages are sent, and the subject line of email communication. This feature empowers organizations to further configure their workflows to better fit their business needs. 
 ## Use Cases
@@ -5886,7 +5990,7 @@ Section| What it controls| Learn more
 **ONC Configuration**  
  _1 setting_|  Whether the Health Records page appears in the patient portal.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)  
 **Patient Portal Beta Features**  
- _4 settings_|  Portal pages still in beta: My Health, self-scheduling, consents, and self-registration.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal)  
+ _5 settings_|  Portal pages still in beta: My Health, self-scheduling, consents, and self-registration, and family portal access, which lets staff give family members and other representatives portal access to a patient's chart.| [Managing the Canvas Patient Portal](https://help.canvasmedical.com/articles/7348270931-managing-the-patient-portal), [Family Portal Access](https://help.canvasmedical.com/articles/1380397114-family-portal-access)  
 **Patient Privacy Link**  
  _1 setting_|  The Privacy & Security link included in patient verification texts and emails.| [Config | Privacy Link](https://help.canvasmedical.com/articles/5488834057-)  
 **Permissions Configuration**  
@@ -6082,6 +6186,42 @@ If patient communications are enabled, the following message will appear when ad
 # Resources
 ### [Video: Disable Patient Communication](https://www.loom.com/share/7dffa9dfb34246bda54c32ed0b487064?sid=a65faa1a-4b4f-4154-8040-0663b1094d23)
 ----- END PAGE https://help.canvasmedical.com/articles/4711229187-admin-disable-patient-communications
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4724162094-designating-test-instances
+A test instance is an instance where your developers can deploy plugin code that is not yet merged to `main`, using `canvas deploy --branch`. Every other instance only takes plugin code that is on `main`. Your organization's Studio instance is always a test instance, and you choose any others from Canvas Platform that meet the requirements.
+💡 The **Deploy manager** or **Organization admin** role is required to add or remove test instances.
+# How to Designate a Test Instance
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1794366996876-image.png?Expires=253370764800&Signature=jYD4wmi6sPFKItUUEymLbHtrVKUmILcSNph0cB8riE2ebI3NKglI~jPUhdxMAQiwRSRJBgs4Yd0-rdPVdHxg27xJ56eK58bUbzMzIFwOBcssUhxgiHGXpXn9bmExQMVl0O~wtjNsS18Xa~Pt~xqzLaHE9CsFbOCAxtUbJlDQZMC5MimMS8DtQS6eAPcSYNBMkIyc7Tm5Iv~GyLB~huG6CGzRk2YZdElsCQaZU-~Zn7I3OYl3q5tvhU-CnORN6rBFDZc62rN996EF3EAsH2OXJr82nKNgAlo2KzV79Lsz5VLQX7eMf6idKixQe4EROdpNs3o8yOZxLT0SqhxaPcu5rw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  1. **Open the instance.** Go to **Canvas Instances** in the sidebar and click the instance.
+  2. **Open Plugin management.** Click the **Plugin management** tab. The **Testing** section holds the **Designate as test instance** switch.
+  3. **Turn it on.** Click the switch, then click **Make test instance** to confirm.
+A flask now marks the instance beside its name and in the **All instances** table. Hover over it to read **Dedicated plugin testing instance**.
+# How to Remove a Test Instance
+  1. Open the instance's **Plugin management** tab.
+  2. Turn off **Designate as test instance**.
+  3. Click **Remove** to confirm.
+Plugin code not yet merged to `main` can no longer be deployed there. Plugins already installed on the instance stay as they are. Every addition and removal is recorded in your organization's audit log.
+# Which Instances Can Be Test Instances
+Instance| Can it be a test instance?  
+---|---  
+Staged **Production** , or marked as production by Canvas| No  
+Holds patient data, as marked by Canvas| No  
+Your organization's Studio instance| Always, and it cannot be removed  
+Any other instance in your organization| Yes, once a Deploy manager or Organization admin turns it on  
+When a test instance is later staged Production or marked as holding patient data, it stops being a test instance automatically. Clearing that mark later does not restore it, so you would have to turn the switch on again.
+# FAQ
+**Why is the switch disabled?**  
+Hover over it for the reason. It is one of these: the instance is staged Production, it holds patient data, it is your Studio instance (which is always a test instance), it belongs to a different organization, or you don't have the Deploy manager or Organization admin role.
+**An instance holds no patient data, but Canvas Platform says it does. What should I do?**  
+Contact your Canvas team. Canvas sets that mark and can clear it once the instance is confirmed to hold none.
+**Does removing a test instance uninstall anything?**  
+No. What is installed there stays. Only new deploys of code not on `main` are refused.
+**Can a branch build be promoted to Production?**  
+No. A build that is not on `main` deploys only to test instances, including through promotions. Merge the change to `main` first.
+### Developer guide: [Designating test instances](https://docs.canvasmedical.com/guides/designating-test-instances/)
+### Next: [📄 Canvas Instances](https://help.canvasmedical.com/articles/8405097946-canvas-instances)
+----- END PAGE https://help.canvasmedical.com/articles/4724162094-designating-test-instances
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4756622202-restrict-free-text
@@ -10709,7 +10849,7 @@ The **Patient App** section contains:
   - `PATIENT_APP_USERS_EMAIL_ONLY` has the portal ask patients for an email address only. See [Require email for patient portal invites and sign-up](https://help.canvasmedical.com/articles/6776168549) before you turn it on.
   - `PATIENT_APP_BANNER` is the message shown above the login card.
   - `ALLOW_PATIENT_DOCUMENT_UPLOADS` lets patients upload documents on the My Health page.
-Portal pages still in beta (My Health, self-scheduling, consents, and self-registration) are in the **Patient Portal Beta Features** section, which Canvas configures for you. Contact Canvas support to turn one on.
+Portal pages and features still in beta (My Health, self-scheduling, consents, self-registration, and family portal access) are in the **Patient Portal Beta Features** section, which Canvas configures for you. Contact Canvas support to turn one on.
 ## Patient Portal URL
 Patients typically access the portal at:
     https://[your-practice-name].canvasmedical.com/app/
@@ -10722,6 +10862,8 @@ To invite a patient:
   4. Send the portal invite by email or phone, depending on your configured workflow.
   5. The patient follows the invite link to create their login credentials.
 If the patient's invite link expires, send a new invite or password reset link from this view at any time.
+## Family portal access
+With family portal access, staff can give a family member or another representative portal access to a patient's chart, such as a parent for their child. Each family member signs in with their own login, sees only the areas of the chart your staff give them, and can switch between their own record and the records they were given. See [Family Portal Access](https://help.canvasmedical.com/articles/1380397114-family-portal-access) for setting it up, the invite, and what family members see.
 ## Patient self-registration
 If self-registration is enabled, patients can register from the portal login page.
 Patients should use the same identifying information your organization has on file. If a patient registers more than once using different contact information, this may create duplicate patient records. Canvas does not automatically merge duplicate charts, so your team should follow your internal duplicate chart process if this happens.
@@ -11295,29 +11437,35 @@ Hand off a document, send it for signature, and read its history.
 With **Gated Release** , Studio prepares your plugin for review, while your technical team controls when it's deployed to Canvas.
 Unlike Direct Release, **promoting a plugin does not automatically install it on your Canvas instance**.
 Before getting started, your Studio Admin must connect your organization's code repository. For setup instructions, see the [Studio Admin Guide](https://help.canvasmedical.com/articles/2234141107-studio-admin-guide).
+# Where Your Plugin Runs
+Your organization has two kinds of Canvas instances:
+  - **Test instance(s):** where Studio deploys your plugin while you build and test it. Work in progress only ever reaches this instance.
+  - **Release instances:** the instances your team uses day to day. Under Gated Release, a plugin reaches these only after your technical team reviews it and deploys it.
 # How Gated Release Works
 After completing testing and Final Review:
-  1. **You Promote (in Studio).** Studio opens a pull request (GitHub) or merge request (GitLab) in your team's repository containing the finished plugin's source. That's where Studio's job ends, it does not install anything on your Canvas instance.
-  2. **Your technical team reviews and merges (in GitHub/GitLab).** A reviewer approves and merges the request on your team's schedule. The plugin's code is now in your repository.
-  3. **Your team installs it on your Canvas instance.** Your developers deploy it with the Canvas CLI (`canvas login`, then `canvas deploy`), by hand or from a pipeline that runs on merge. For technical instructions, see [Moving to Canvas Platform](https://docs.canvasmedical.com/guides/moving-to-canvas-platform/).
-Because that last step is yours, Gated release gives your technical team the final say over what reaches production. If you'd rather Studio install straight to a Canvas instance with no repository step, your Studio Admin can switch you to **Direct** release instead.
+  1. **You Promote (in Studio).** Studio opens a pull request (GitHub) or merge request (GitLab) in your team's repository containing the finished plugin's source. That's where Studio's job ends, it does not install anything on your release instances.
+  2. **Your technical team reviews and merges (in GitHub/GitLab).** A reviewer approves and merges the request on your team's schedule. They can merge it as is or edit it first. The plugin's code is now in your repository.
+  3. **Your team installs it on your Canvas instance.** Your developers deploy it with the Canvas CLI (`canvas login`, then `canvas deploy`), by hand or from a pipeline that runs on merge. For technical instructions, see [Moving to Canvas Platform](https://docs.canvasmedical.com/guides/moving-to-canvas-platform/). If your team keeps several plugins in one repository, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/#with-canvas-studio-and-gated-release).
+  4. **Studio picks up your team's version.** The next time you open the project, Studio brings in what your team deployed, including any edits they made during review. Your next update starts from that version, so their changes are never overwritten.
+Because step 3 is yours, Gated release gives your technical team the final say over what reaches production. If you'd rather Studio install straight to a Canvas instance with no repository step, your Studio Admin can switch you to **Direct** release instead.
 # Updating a Promoted Plugin
 To make changes to a previously promoted plugin:
   1. Open the project and click **Start an Update** , or ask Studio to make a change.
   2. Complete testing and Final Review.
   3. Click **Promote Updates to [repository]**.
   4. Your technical team reviews, merges, and deploys the updated code through its release process
-If your team changes the plugin's code directly in the repository, Studio brings those changes into the project. See **When Code Changes Outside Studio** for details.  
+If your team changes the plugin's code directly in the repository, Studio brings those changes into the project. See [When code changes outside Studio](https://help.canvasmedical.com/articles/4485157203-when-code-changes-outside-studio) for details.  
 **FAQ**
 **Q: I merged the request Studio opened, but the plugin isn't on my Canvas instance. Why?**  
 A: Merging adds the plugin's code to your repository but doesn't necessarily install it.
 Your technical team must deploy the plugin manually or through an automated pipeline. Contact whoever manages your organization's deployments to confirm the next step.
 **Q: Who installs the plugin under Gated release?**  
 A: Under Gated Release, your technical team manages deployment.
+**Q: Can my engineers work on the plugin before I promote it?**  
+A: Yes. Your engineers can send in-progress changes into your Studio project, and they can try changes on your test instance without touching your release instances. See [When code changes outside Studio](https://help.canvasmedical.com/articles/4485157203-when-code-changes-outside-studio).
 **Q: Can we switch from Gated to Direct Release?**  
 A: Yes. Your Studio Admin can change the organization's release strategy to **Direct Release** if you prefer Studio to install plugins without the repository review step.
-### Next: Publishing and Updating Studio Plugins · When Code Changes Outside Studio
-### 
+### Next: [Publishing and Updating Studio Plugins](https://help.canvasmedical.com/articles/6563880190-publishing-and-updating-studio-plugins) · [When Code Changes Outside Studio](https://help.canvasmedical.com/articles/4485157203-when-code-changes-outside-studio)
 ----- END PAGE https://help.canvasmedical.com/articles/7597495196-studio-admin-guide-setting-up-gated-release
 
 
@@ -12186,10 +12334,11 @@ To remove zip code filtering:
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/8258338559-contact-categories
 ## **Introduction**
 Contact Categories provide the ability to create custom contact tags for patient profiles. These tags help organize and categorize patient contacts, making it easier to identify different types of relationships such as emergency contacts, family members, or authorized individuals for various purposes.
-Canvas includes three default contact categories
+Canvas includes default contact categories for a contact's role and for their relationship to the patient. The role categories include three protected ones:
   - Power of Attorney
   - Emergency Contact
   - Authorized for Release of Information
+The relationship categories describe how the contact is related to the patient, such as mother, father, parent, step parent, grandparent, foster parent, spouse, sibling, and child.
 ## **User's Guide**
 Contact Categories appear as dropdown options in the contact section of patient profiles, allowing you to classify each contact according to their relationship or role.
 ### Using Contact Categories
@@ -12197,6 +12346,9 @@ When adding or editing a contact in a patient's profile:
   - Navigate to the contact section of the patient profile
   - Select the appropriate category from the dropdown menu in the categories field
 ![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1749928856609-screenshot-AA%252833F%252906142025000054%25402x.jpg?Expires=253370764800&Signature=lOp-PNQTx15ISdipiirLgLMbuzWJ74RwAMuTMkZ1FTkZ7F47w8zV4sA6n3mz9fIYDZmi3OWS1TDUG8GFWlsxLcuUgz1COBB6~x23MM0DscKzLrdd3Tl26DOKIOijICVhdjAiTypBffRloPNc~FD8flT8JFX6b32C82aGRCQkbOLiiQP7R3QR0K6syfSaEVCL7ddadL4vRIXpJCrvbAnbEmkqeydJORpVkplwjyHMOMUxrlyNGmnhPM5i~G8nMqPWn~3v5zk49UTT~B7ADtkxUQ2lLZ5Ccqkqn5YWqKnuZShR42AnyeTO29Duy9Rw7iyyDhgSUAcN1lawDtawhuz3aw__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Relationship categories
+A contact's relationship to the patient comes from its relationship categories: the categories that use the HL7 relationship codes (`http://terminology.hl7.org/CodeSystem/v3-RoleCode`), such as **mother** or **grandparent**. Choose one in **Categories** when you add or edit the contact. A contact can have more than one category, such as **father** and **emergency contact**.
+[Family portal access](https://help.canvasmedical.com/articles/1380397114-family-portal-access) shows a contact's relationship categories on their portal access row, in the list of contacts to give access, and to the patient under **Who can see my record**. Canvas's FHIR API reports the same categories as the contact's relationship. Role categories, such as **Emergency Contact** or **Power of Attorney** , don't show as the relationship, and neither does a category your team adds unless it uses the HL7 relationship code system.
 ## **Configuration & Set Up**
 ### Adding Contact Categories
   1. Navigate to **Practice: Contact Categories**
@@ -12220,10 +12372,13 @@ When adding or editing a contact in a patient's profile:
 **A:** Power of Attorney, Emergency Contact, and Authorized for Release of Information are default contact categories that are protected and cannot be removed. Additionally, any custom contact categories that have been marked as protected also cannot be deleted.
 **Q: What happens if I delete a contact category that's already in use?**
 **A:** If a contact category is deleted, the user is presented with all of the patient contact points that will be removed along with it.
+**Q: Why doesn't a family member's portal access show a relationship?**
+**A:** Their contact has no relationship category. Edit the contact and choose one of Canvas's relationship categories, such as **mother** or **grandparent** , in **Categories**.
 ## **Related Resources**
   - [Patient Demographics ](/articles/8802451810)
+  - [Family Portal Access](https://help.canvasmedical.com/articles/1380397114-family-portal-access)
 * * *
-**Keywords:** contact categories, patient contacts, practice settings, contact tags, emergency contacts, power of attorney
+**Keywords:** contact categories, patient contacts, practice settings, contact tags, emergency contacts, power of attorney, relationship, family portal access
 **Categories:** Practice Management, Patient Information, Configuration
 ----- END PAGE https://help.canvasmedical.com/articles/8258338559-contact-categories
 

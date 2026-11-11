@@ -125,6 +125,7 @@
     - Changing portal settings
     - Patient Portal URL
     - Inviting a patient to the portal
+    - Family portal access
     - Patient self-registration
     - Logging in
     - Branding the login page
@@ -150,6 +151,20 @@
     - 3. Keep your business details consistent
     - If your campaign is rejected
     - Related
+- [Family Portal Access](https://help.canvasmedical.com/articles/1380397114-family-portal-access)
+    - Before you begin
+    - Step 1: Add the family member as a contact
+    - Step 2: Give the family member access
+    - Step 3: Send the invite
+    - Step 4: What the family member sees
+    - What the patient sees
+    - Managing access
+    - Flagged access
+    - Notifications family members receive
+    - How family members' actions are recorded
+    - Turning family portal access off
+    - Troubleshooting
+    - Related articles
 
 #### New Provider Onboarding
 - [Preparing Provider Profiles for Enrollment](https://help.canvasmedical.com/articles/1422399386-preparing-provider-profiles-for-enrollment)
@@ -419,6 +434,7 @@
     - Introduction
     - User's Guide
         - Using Contact Categories
+        - Relationship categories
     - Configuration & Set Up
         - Adding Contact Categories
         - Updating & Deleting Contact Categories
@@ -1452,7 +1468,7 @@
 
 ### Publish and update
 - [Gated release: from Promote to Production](https://help.canvasmedical.com/articles/7597495196-studio-admin-guide-setting-up-gated-release)
-        - Next: Publishing and Updating Studio Plugins · When Code Changes Outside Studio
+        - Next:Publishing and Updating Studio Plugins·When Code Changes Outside Studio
 - [Publishing and updating Studio Plugins](https://help.canvasmedical.com/articles/6563880190-publishing-and-updating-studio-plugins)
         - Release Strategy
         - How it works
@@ -1778,6 +1794,9 @@
     - Track Instance Promotions
     - Frequently Asked Questions
         - Next:Platform: Users and Roles
+- [Designating test instances](https://help.canvasmedical.com/articles/4724162094-designating-test-instances)
+        - Developer guide:Designating test instances
+        - Next:📄 Canvas Instances
 
 ### Onboarding
 - [Working with the Onboarding Agent](https://help.canvasmedical.com/articles/2941620841-working-with-the-onboarding-agent)
