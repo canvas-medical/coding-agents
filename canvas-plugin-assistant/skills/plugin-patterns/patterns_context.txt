@@ -842,7 +842,7 @@ Always start with `echo "plugin_name" | uv run canvas init` and adapt from there
 
 ---
 
-### Agent Plugins (Agent Runner Framework)
+### Agent Plugins (Agent Development Kit)
 
 **When:** The model decides what to read or do next, such as a chart chat, reconciling outside records, or reviewing a visit against earlier follow-up, or the model writes to the chart. One model call over input the plugin already has stays an LLM-Integrated handler.
 

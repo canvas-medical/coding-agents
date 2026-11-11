@@ -357,7 +357,7 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 7. **Check if client libraries are needed** based on the spec:
    - **S3/file storage/uploads** → Use the Canvas SDK native S3 client (`from canvas_sdk.clients.aws import S3, Credentials`). Do NOT copy a custom client file.
    - **LLM/AI/Claude/OpenAI/Gemini** → Use the Canvas SDK native LLM clients (`from canvas_sdk.clients.llms import LlmAnthropic, LlmOpenai, LlmGoogle`). Do NOT copy a custom client file.
-   - **Agent (Agent Runner Framework)** → No LLM client and no provider keys: the agent reaches Anthropic through `gateway.client()`, and the plugin declares one `INFERENCE_GATEWAY_KEY` variable with `"sensitive": true`. Follow the **agent-patterns** skill for the manifest's `agents` entry and its tool grant.
+   - **Agent (Agent Development Kit)** → No LLM client and no provider keys: the agent reaches Anthropic through `gateway.client()`, and the plugin declares one `INFERENCE_GATEWAY_KEY` variable with `"sensitive": true`. Follow the **agent-patterns** skill for the manifest's `agents` entry and its tool grant.
    - **SMS/text messages/Twilio** → Use the Canvas SDK native Twilio client (`from canvas_sdk.clients.twilio.libraries import SmsClient`). Do NOT copy a custom client file.
    - **Email/SendGrid** → Use the Canvas SDK native SendGrid client (`from canvas_sdk.clients.sendgrid.libraries import EmailClient`). Do NOT copy a custom client file.
    - **Document processing/extraction/classification/splitting** → Use the Canvas SDK native Extend AI client (`from canvas_sdk.clients.extend_ai.libraries import Client`). Do NOT copy a custom client file.

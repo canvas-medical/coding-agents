@@ -1,11 +1,11 @@
 ---
 name: agent-patterns
-description: When and how to build a Canvas plugin as an agent with the Agent Runner Framework (`canvas_sdk.agents`) - choosing an agent over a handler that calls an LLM, the inference gateway key, standard tools before custom tools, rules for custom tools, the manifest's `agents` entry (tool grants, approval, run time, progress), what an agent may write, testing with a fake gateway, and the agent items of a security review. Use whenever a spec involves an LLM, AI, a chat, Claude, or a model reasoning over the chart, and when building, reviewing, or testing any plugin that declares `components.agents`.
+description: When and how to build a Canvas plugin as an agent with the Agent Development Kit (`canvas_sdk.agents`) - choosing an agent over a handler that calls an LLM, the inference gateway key, standard tools before custom tools, rules for custom tools, the manifest's `agents` entry (tool grants, approval, run time, progress), what an agent may write, testing with a fake gateway, and the agent items of a security review. Use whenever a spec involves an LLM, AI, a chat, Claude, or a model reasoning over the chart, and when building, reviewing, or testing any plugin that declares `components.agents`.
 ---
 
-# Agent Runner Framework Patterns
+# Agent Development Kit Patterns
 
-The Agent Runner Framework (ARF) runs LLM-driven agents as Canvas plugins. An agent reads the chart through tools, reasons over what it finds, and returns effects the platform applies: draft commands, protocol cards, tasks, messages. It runs on a background worker, so a run can take seconds or minutes.
+The Agent Development Kit (ADK) runs LLM-driven agents as Canvas plugins. An agent reads the chart through tools, reasons over what it finds, and returns effects the platform applies: draft commands, protocol cards, tasks, messages. It runs on a background worker, so a run can take seconds or minutes.
 
 This skill is the judgment layer: when to build an agent, and the rules that make one safe. The API reference is in the **canvas-sdk** skill's `coding_agent_context.txt`; search it for `BEGIN PAGE https://docs.canvasmedical.com/sdk/agents` (overview, quick start, lifecycle, managing state, tools and the full `standard_tools` catalog, prompts, testing, auditing). If the bundle has no such pages, read them at https://docs.canvasmedical.com/sdk/agents/ instead.
 

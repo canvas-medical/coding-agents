@@ -128,7 +128,7 @@ scanned for secrets) and pushing is confirmed with you first.
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
-- **agent-patterns**: When to build an agent with the Agent Runner Framework instead of a handler that calls a model, standard tools first, tool grants and approval, testing with a fake gateway, and agent security review
+- **agent-patterns**: When to build an agent with the Agent Development Kit instead of a handler that calls a model, standard tools first, tool grants and approval, testing with a fake gateway, and agent security review
 
 ### Slash Commands
 
@@ -322,7 +322,7 @@ automatically.
 │   ├── database-performance/  # N+1 query detection
 │   ├── testing/               # Test authoring & coverage
 │   ├── companion-app-patterns/ # Provider companion (mobile) plugin conventions
-│   └── agent-patterns/        # Agent Runner Framework agents
+│   └── agent-patterns/        # Agent Development Kit agents
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis

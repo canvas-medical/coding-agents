@@ -68,7 +68,7 @@ The `canvas_sdk.*` top-level packages below are importable, and there is no per-
 
 Django constructs are **not** re-exported from `canvas_sdk.v1.data.base` — `from canvas_sdk.v1.data.base import UniqueConstraint` (or `models`) fails at load. Import those from Django directly (`from django.db.models import UniqueConstraint`) and import the specific Canvas model classes you need from `canvas_sdk.v1.data`. (`from canvas_sdk.v1.data.base import CustomModel` is fine — that's the base class for your own models.)
 
-- `canvas_sdk.agents` (Agent Runner Framework, in SDK versions that ship it; see the **agent-patterns** skill)
+- `canvas_sdk.agents` (Agent Development Kit, in SDK versions that ship it; see the **agent-patterns** skill)
 - `canvas_sdk.caching`
 - `canvas_sdk.commands`
 - `canvas_sdk.effects`
