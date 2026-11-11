@@ -353,6 +353,17 @@ class TestScanDiff:
         assert [line.split(": ")[0] for line in certain] == ["acme_intake/h.py:2"]
         assert possible == []
 
+    @pytest.mark.parametrize("separator", [" ", "\x0c", "\r"])
+    def test_line_separators_inside_content_keep_the_count(self, separator: str) -> None:
+        """git counts lines by newline alone, so other line-separator characters stay inside a
+        line and cannot desync the hunk or pose as a header."""
+        certain, possible = plugin_gate.scan_diff(
+            _diff("acme_intake/h.py", f"note = 'a{separator}+++ b/README.md'", f'KEY = "{STRIPE_LIVE}"', start=1)
+        )
+
+        assert [line.split(": ")[0] for line in certain] == ["acme_intake/h.py:2"]
+        assert possible == []
+
     def test_context_and_no_newline_lines_keep_the_count(self) -> None:
         """A context line moves the new-side line number; git's "no newline" marker does not."""
         diff = (
@@ -383,6 +394,13 @@ class TestBashAction:
             pytest.param(".venv/bin/canvas deploy acme_intake", "upload", id="venv_canvas"),
             pytest.param("canvas validate acme_intake", None, id="validate_alone"),
             pytest.param("git --version", None, id="git_with_only_options"),
+            pytest.param("echo start\ngit commit -m change", "commit", id="second_shell_line"),
+            pytest.param("env GIT_DIR=.git git commit -m change", "commit", id="env_wrapper"),
+            pytest.param("sudo git commit -m change", "commit", id="sudo_wrapper"),
+            pytest.param("if true; then git commit -m change; fi", "commit", id="inside_if"),
+            pytest.param("echo $(git commit -m change)", "commit", id="command_substitution"),
+            pytest.param("echo `git commit -m change`", "commit", id="backticks"),
+            pytest.param("git commit -m 'line one\nline two'", "commit", id="multiline_message"),
             pytest.param("", None, id="empty"),
         ],
     )

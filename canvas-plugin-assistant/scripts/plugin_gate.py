@@ -41,7 +41,9 @@ DOCS_OR_TESTS = re.compile(r"\.(?:md|rst|txt)$|(?:^|/)tests?/")
 HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
-SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")", "\n"}
+SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# Words that run the command after them: `env git commit`, `if git commit; then`.
+COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
 WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
@@ -145,7 +147,8 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
     certain: list[str] = []
     possible: list[str] = []
     path, line_number, old_left, new_left = "", 0, 0, 0
-    for line in diff.splitlines():
+    # git counts hunk lines by "\n" alone; splitlines() would also split on "\x0c", " " and others.
+    for line in diff.split("\n"):
         if old_left == 0 and new_left == 0:
             # Between hunks only: inside one, an added line reading "++ b/x" shows as "+++ b/x".
             hunk = HUNK_START.match(line)
@@ -186,18 +189,24 @@ def bash_action(command: str) -> str | None:
     Reads each simple command, skipping `NAME=value` prefixes and git's global options
     (`git -C dir commit`). A git alias for commit is not resolved.
     """
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    # shlex reads a newline as whitespace and a backtick as a word character, which would merge
+    # two commands into one; both start a new command in the shell.
+    lexer = shlex.shlex(command.replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
     try:
         tokens = list(lexer)
     except ValueError:
-        return "commit" if re.search(r"\bgit\b.*\bcommit\b", command) else None
+        return "commit" if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
     words: list[str] = []
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
             continue
-        while words and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0]):
+        while words and (
+            words[0] in COMMAND_PREFIXES
+            or words[0] == ""
+            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
+        ):
             words.pop(0)
         if words[:2] == ["uv", "run"]:
             words = words[2:]
