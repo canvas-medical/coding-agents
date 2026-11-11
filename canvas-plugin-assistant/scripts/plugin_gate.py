@@ -24,9 +24,8 @@ MANIFEST = "CANVAS_MANIFEST.json"
 INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
 PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
 # Shapes that were a live credential in every shipped file they appeared in across installed
-# plugins, so a commit adding one is stopped in `block` mode. In docs or tests they only advise.
+# plugins, so a commit adding one is stopped in `block` mode. In a Markdown or reST doc they advise.
 CERTAIN_SECRETS = {
-    "a private key": re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----"),
     "an Anthropic API key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{80,}"),
     "a Slack token": re.compile(r"\bxox[bp]-\d+-\d+-[A-Za-z0-9-]{20,}"),
     "a Stripe live key": re.compile(r"\b[rs]k_live_[0-9A-Za-z]{24,}"),
@@ -36,8 +35,12 @@ CERTAIN_SECRETS = {
 SECRET_ASSIGNMENT = re.compile(
     r"(?i)(?:api_?key|secret|token|passw(?:or)?d|private_key)\w*[\"']?\s*[:=]\s*[\"']([^\"'\s]{20,})[\"']"
 )
-CREDENTIAL_FILE = re.compile(r"(?:^|/)(?:\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?|[^/]+\.(?:pem|key|p12|pfx))$")
-DOCS_OR_TESTS = re.compile(r"\.(?:md|rst|txt)$|(?:^|/)tests?/")
+# Private keys only advise: a plugin using mutual TLS can load its client key only from a file
+# today, since `requests` takes a path and the sandbox cannot write one.
+PRIVATE_KEY = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")
+ENV_FILE = re.compile(r"(?:^|/)\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?$")
+KEY_FILE = re.compile(r"(?:^|/)[^/]+\.(?:pem|key|p12|pfx)$")
+DOCS = re.compile(r"\.(?:md|rst)$")
 HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
@@ -188,16 +191,19 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
         new_left -= 1
         added, where = line[1:], f"{path}:{line_number}"
         line_number += 1
+        if PRIVATE_KEY.search(added):
+            possible.append(f"{where}: a private key (fine only if it is a mutual-TLS client key)")
+            continue
         for name, pattern in CERTAIN_SECRETS.items():
             match = pattern.search(added)
             if match:
                 found = f"{where}: {name} {mask(match.group(0))}"
-                (possible if DOCS_OR_TESTS.search(path) else certain).append(found)
+                (possible if DOCS.search(path) else certain).append(found)
                 break
         else:
             for match in SECRET_ASSIGNMENT.finditer(added):
                 if looks_random(match.group(1)):
-                    possible.append(f"{where}: a secret-like value {mask(match.group(1))}")
+                    possible.append(f"{where}: a secret-like value ({len(match.group(1))} characters)")
     return certain, possible
 
 
@@ -266,8 +272,10 @@ def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
         check=False,
     )
     for path in added.stdout.splitlines():
-        if CREDENTIAL_FILE.search(path):
-            (possible if DOCS_OR_TESTS.search(path) else certain).append(f"{path}: a credential file")
+        if ENV_FILE.search(path):
+            certain.append(f"{path}: an environment file")
+        elif KEY_FILE.search(path):
+            possible.append(f"{path}: a key file (fine only if it is a mutual-TLS client key)")
     return certain, possible
 
 

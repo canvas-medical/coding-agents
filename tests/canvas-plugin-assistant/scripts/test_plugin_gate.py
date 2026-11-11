@@ -329,7 +329,6 @@ class TestScanDiff:
             pytest.param(f'KEY = "{STRIPE_LIVE}"', "a Stripe live key", id="stripe"),
             pytest.param(f'client = Anthropic(api_key="{ANTHROPIC}")', "an Anthropic API key", id="anthropic"),
             pytest.param(f'SLACK = "{SLACK_BOT}"', "a Slack token", id="slack"),
-            pytest.param(f'"private_key": "{PEM_HEADER}\\nMIIE..."', "a private key", id="pem_in_json"),
         ],
     )
     def test_a_certain_shape_in_shipped_code_is_certain(self, added: str, name: str) -> None:
@@ -340,13 +339,33 @@ class TestScanDiff:
         assert certain[0].startswith(f"acme_intake/handlers/h.py:12: {name} `")
         assert added.split('"')[1] not in certain[0]
 
-    @pytest.mark.parametrize("path", ["README.md", "acme_intake/tests/test_h.py"])
-    def test_a_certain_shape_in_docs_or_tests_only_advises(self, path: str) -> None:
-        """Docs and tests hold example keys, so a shape there is possible, not certain."""
+    @pytest.mark.parametrize("path", ["README.md", "docs/guide.rst"])
+    def test_a_certain_shape_in_a_document_only_advises(self, path: str) -> None:
+        """Markdown and reST documents hold example keys, so a shape there is possible, not certain."""
         assert plugin_gate.scan_diff(_diff(path, f'KEY = "{STRIPE_LIVE}"')) == (
             [],
             [f"{path}:12: a Stripe live key `sk_l…` (35 characters)"],
         )
+
+    @pytest.mark.parametrize("path", ["acme_intake/tests/test_h.py", "acme_intake/notes.txt"])
+    def test_a_certain_shape_under_tests_or_in_text_is_still_certain(self, path: str) -> None:
+        """Files under tests/ and .txt files ship with the plugin, so moving a key there is no way out."""
+        certain, possible = plugin_gate.scan_diff(_diff(path, f'KEY = "{STRIPE_LIVE}"'))
+        assert len(certain) == 1 and possible == []
+
+    def test_a_private_key_only_advises(self) -> None:
+        """A mutual-TLS client key can only be loaded from a file today, so it advises, and no
+        part of it is shown."""
+        added = f'"private_key": "{PEM_HEADER}\\nMIIEvQIBADANBg"'
+        assert plugin_gate.scan_diff(_diff("acme_intake/cert/client.json", added)) == (
+            [],
+            ["acme_intake/cert/client.json:12: a private key (fine only if it is a mutual-TLS client key)"],
+        )
+
+    def test_a_secret_shaped_value_shows_only_its_length(self) -> None:
+        """A value matched only by its shape could be the secret itself, so none of it is shown."""
+        _, possible = plugin_gate.scan_diff(_diff("h.py", 'API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"'))
+        assert possible == ["h.py:12: a secret-like value (20 characters)"]
 
     def test_line_numbers_follow_each_hunk(self) -> None:
         """The second added line of a hunk is reported one past the hunk start."""
@@ -478,7 +497,7 @@ class TestScanCommit:
         assert len(plugin_gate.scan_commit(repo)[0]) == 1
 
     def test_added_credential_files_are_found(self, repo: Path) -> None:
-        """A new `.env` or key file is certain; an example env file is not; one under tests only advises."""
+        """A new `.env` is certain, an example env file is not, and a key file only advises."""
         for name in (".env", ".env.example", "tests/fixture.pem"):
             path = repo / name
             path.parent.mkdir(exist_ok=True)
@@ -487,8 +506,8 @@ class TestScanCommit:
 
         certain, possible = plugin_gate.scan_commit(repo)
 
-        assert certain == ["acme_intake/.env: a credential file"]
-        assert possible == ["acme_intake/tests/fixture.pem: a credential file"]
+        assert certain == ["acme_intake/.env: an environment file"]
+        assert possible == ["acme_intake/tests/fixture.pem: a key file (fine only if it is a mutual-TLS client key)"]
 
 
 @pytest.mark.usefixtures("canvas_on_path")
