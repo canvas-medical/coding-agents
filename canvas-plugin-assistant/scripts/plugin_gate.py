@@ -191,9 +191,9 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
         new_left -= 1
         added, where = line[1:], f"{path}:{line_number}"
         line_number += 1
-        if PRIVATE_KEY.search(added):
+        has_private_key = bool(PRIVATE_KEY.search(added))
+        if has_private_key:
             possible.append(f"{where}: a private key (fine only if it is a mutual-TLS client key)")
-            continue
         for name, pattern in CERTAIN_SECRETS.items():
             match = pattern.search(added)
             if match:
@@ -201,6 +201,8 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
                 (possible if DOCS.search(path) else certain).append(found)
                 break
         else:
+            if has_private_key:
+                continue
             for match in SECRET_ASSIGNMENT.finditer(added):
                 if looks_random(match.group(1)):
                     possible.append(f"{where}: a secret-like value ({len(match.group(1))} characters)")

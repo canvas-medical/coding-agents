@@ -362,6 +362,14 @@ class TestScanDiff:
             ["acme_intake/cert/client.json:12: a private key (fine only if it is a mutual-TLS client key)"],
         )
 
+    def test_a_private_key_does_not_hide_an_api_key_on_the_same_line(self) -> None:
+        """A line holding both still reports the API key as certain."""
+        added = f'{{"private_key": "{PEM_HEADER}", "stripe": "{STRIPE_LIVE}"}}'
+        certain, possible = plugin_gate.scan_diff(_diff("acme_intake/config.json", added))
+
+        assert [line.split(": ")[1] for line in certain] == ["a Stripe live key `sk_l…` (35 characters)"]
+        assert possible == ["acme_intake/config.json:12: a private key (fine only if it is a mutual-TLS client key)"]
+
     def test_a_secret_shaped_value_shows_only_its_length(self) -> None:
         """A value matched only by its shape could be the secret itself, so none of it is shown."""
         _, possible = plugin_gate.scan_diff(_diff("h.py", 'API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"'))
