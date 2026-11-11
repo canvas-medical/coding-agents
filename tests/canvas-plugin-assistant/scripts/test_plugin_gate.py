@@ -275,3 +275,176 @@ class TestMain:
         assert output["hookEventName"] == "PreToolUse"
         assert output["additionalContext"].startswith("CPA plugin gate, advisory only (CPA_PLUGIN_GATE=advise)")
         assert "h.py:1 [type-blocked]" in output["additionalContext"]
+
+
+# Fake credentials, joined at runtime so this public repository never holds one whole.
+STRIPE_LIVE = "sk_" + "live_" + "Ab3" * 9
+ANTHROPIC = "sk-ant-" + "api03-" + "A1b2C3" * 15
+SLACK_BOT = "xox" + "b-" + "123456789012-123456789012-" + "AbCdEf123456" * 2
+PEM_HEADER = "-----BEGIN " + "PRIVATE KEY-----"
+
+
+def _diff(path: str, *added: str, start: int = 12) -> str:
+    lines = [f"diff --git a/{path} b/{path}", f"--- a/{path}", f"+++ b/{path}", f"@@ -0,0 +{start},{len(added)} @@"]
+    return "\n".join(lines + [f"+{line}" for line in added]) + "\n"
+
+
+class TestScanDiff:
+    """Tests for scan_diff."""
+
+    @pytest.mark.parametrize(
+        ("added", "name"),
+        [
+            pytest.param(f'KEY = "{STRIPE_LIVE}"', "a Stripe live key", id="stripe"),
+            pytest.param(f'client = Anthropic(api_key="{ANTHROPIC}")', "an Anthropic API key", id="anthropic"),
+            pytest.param(f'SLACK = "{SLACK_BOT}"', "a Slack token", id="slack"),
+            pytest.param(f'"private_key": "{PEM_HEADER}\\nMIIE..."', "a private key", id="pem_in_json"),
+        ],
+    )
+    def test_a_certain_shape_in_shipped_code_is_certain(self, added: str, name: str) -> None:
+        """Each near-certain shape outside docs and tests is certain, located, and masked."""
+        certain, possible = plugin_gate.scan_diff(_diff("acme_intake/handlers/h.py", added))
+
+        assert len(certain) == 1 and possible == []
+        assert certain[0].startswith(f"acme_intake/handlers/h.py:12: {name} `")
+        assert added.split('"')[1] not in certain[0]
+
+    @pytest.mark.parametrize("path", ["README.md", "acme_intake/tests/test_h.py"])
+    def test_a_certain_shape_in_docs_or_tests_only_advises(self, path: str) -> None:
+        """Docs and tests hold example keys, so a shape there is possible, not certain."""
+        assert plugin_gate.scan_diff(_diff(path, f'KEY = "{STRIPE_LIVE}"')) == (
+            [],
+            [f"{path}:12: a Stripe live key `sk_l…` (35 characters)"],
+        )
+
+    def test_line_numbers_follow_each_hunk(self) -> None:
+        """The second added line of a hunk is reported one past the hunk start."""
+        certain, _ = plugin_gate.scan_diff(_diff("h.py", "x = 1", f'KEY = "{STRIPE_LIVE}"', start=40))
+        assert certain[0].startswith("h.py:41:")
+
+    @pytest.mark.parametrize(
+        ("added", "found"),
+        [
+            pytest.param('API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"', True, id="random_value_on_a_secret_name"),
+            pytest.param('API_KEY_SECRET_NAME = "CANVAS_PLUGIN_SIMPLE_API_KEY"', False, id="a_secret_name"),
+            pytest.param('TOKEN_URL = "https://auth.Example.com/oauth2/Token1"', False, id="a_url"),
+            pytest.param('label = "aB3dE5fG7hJ9kL1mN3pQ"', False, id="not_a_secret_name"),
+        ],
+    )
+    def test_a_secret_shaped_value_only_advises(self, added: str, found: bool) -> None:
+        """A random-looking value on a secret-like name is possible; names, URLs and other fields are not."""
+        certain, possible = plugin_gate.scan_diff(_diff("h.py", added))
+
+        assert certain == []
+        assert bool(possible) is found
+
+    def test_removed_lines_are_ignored(self) -> None:
+        """Deleting a credential is the fix, not a finding."""
+        diff = "--- a/h.py\n+++ b/h.py\n@@ -3 +2,0 @@\n" + f'-KEY = "{STRIPE_LIVE}"\n'
+        assert plugin_gate.scan_diff(diff) == ([], [])
+
+
+def _git(cwd: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True)
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A git repository holding one committed plugin, `acme_intake`."""
+    for variable in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
+        monkeypatch.setenv(variable, "Test")
+    for variable in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
+        monkeypatch.setenv(variable, "test@example.com")
+    plugin = _plugin(tmp_path)
+    (plugin / "h.py").write_text("x = 1\n")
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-q", "-m", "first")
+    return plugin
+
+
+class TestScanCommit:
+    """Tests for scan_commit, against a real git repository."""
+
+    def test_a_staged_credential_is_found(self, repo: Path) -> None:
+        """What `git commit` is about to record is read from the index."""
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        _git(repo, "add", "h.py")
+
+        certain, _ = plugin_gate.scan_commit(repo, "git commit -m change")
+
+        assert [line.split(": ")[1] for line in certain] == ["a Stripe live key `sk_l…` (35 characters)"]
+
+    def test_commit_all_also_reads_unstaged_tracked_changes(self, repo: Path) -> None:
+        """`git commit -am` records tracked changes that were never staged, so they are read too."""
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+
+        assert plugin_gate.scan_commit(repo, "git commit -m change") == ([], [])
+        assert len(plugin_gate.scan_commit(repo, "git commit -am change")[0]) == 1
+
+    def test_added_credential_files_are_found(self, repo: Path) -> None:
+        """A new `.env` or key file is certain; an example env file is not; one under tests only advises."""
+        for name in (".env", ".env.example", "tests/fixture.pem"):
+            path = repo / name
+            path.parent.mkdir(exist_ok=True)
+            path.write_text("A=1\n")
+        _git(repo, "add", "-A")
+
+        certain, possible = plugin_gate.scan_commit(repo, "git commit -m change")
+
+        assert certain == ["acme_intake/.env: a credential file"]
+        assert possible == ["acme_intake/tests/fixture.pem: a credential file"]
+
+
+@pytest.mark.usefixtures("canvas_on_path")
+class TestMainSecretScan:
+    """Tests for main's handling of the commit secret scan."""
+
+    def test_block_mode_stops_a_commit_adding_a_certain_credential(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A certain credential stops the commit even when validate passes, and is never printed whole."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        _git(repo, "add", "h.py")
+        with patch("plugin_gate.run_validate", return_value=(None, [])):
+            assert plugin_gate.main(_bash(repo)) == 2
+
+        err = capsys.readouterr().err
+        assert "this commit adds what look like live credentials" in err
+        assert "acme_intake/h.py:1: a Stripe live key" in err
+        assert STRIPE_LIVE not in err
+
+    def test_advise_mode_reports_a_certain_credential_without_stopping(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """In advise mode the same finding reaches Claude as context."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "advise")
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        _git(repo, "add", "h.py")
+        with patch("plugin_gate.run_validate", return_value=(None, [])):
+            assert plugin_gate.main(_bash(repo)) == 0
+
+        context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
+        assert context.startswith("CPA plugin gate, advisory only (CPA_PLUGIN_GATE=advise)")
+        assert "a Stripe live key" in context
+
+    def test_a_possible_credential_never_stops_a_commit(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """A value matched only by its shape advises, in block mode too."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        (repo / "h.py").write_text('API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"\n')
+        _git(repo, "add", "h.py")
+        with patch("plugin_gate.run_validate", return_value=(None, [])):
+            assert plugin_gate.main(_bash(repo)) == 0
+
+        context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
+        assert context.startswith("CPA plugin gate, for acme_intake: this commit may add credentials.")
+
+    def test_only_a_commit_is_scanned(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An install or deploy uploads the plugin, not a commit, so the commit scan does not run."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        with patch("plugin_gate.run_validate", return_value=(None, [])), patch("plugin_gate.scan_commit") as scan:
+            assert plugin_gate.main(_bash(repo, "canvas deploy acme_intake")) == 0
+        scan.assert_not_called()

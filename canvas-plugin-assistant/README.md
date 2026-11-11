@@ -63,6 +63,7 @@ A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox
 - `advise` hands any failure back to Claude as context and lets the call run.
 - `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
 - Warnings from a passing `canvas validate` go to Claude as context in either mode and never stop the call.
+- On `git commit` it also reads the lines the commit adds (and, for `-a`, tracked changes not yet staged). A private key, an Anthropic, Slack, Stripe live, GitHub or OpenAI project key, or a new `.env`, `.pem`, `.key`, `.p12` or `.pfx` file stops the commit in `block` mode. The same in docs or `tests/`, or a random-looking value on a secret-like name, only advises. Values are shown masked.
 - It runs the project's own `.venv/bin/canvas` (in the plugin folder or the one above it), else `canvas` from `PATH`. It never runs `uv`, since the hook runs before the call is approved and `uv` builds environments.
 - An `installer` call is checked only when its plugin sits inside the session's working directory.
 - The hook is stdlib-only and runs under `python3`.
