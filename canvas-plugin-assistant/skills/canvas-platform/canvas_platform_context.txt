@@ -8,11 +8,13 @@ No. Signing the agreement does not create any charges. Your organization is bill
 ### **Why does my organization need to sign?**
 The existing Canvas Master Subscription Agreement we have on file was drafted before Canvas began offering AI products. These products are not adequately covered under the commercial terms of your MSA. A signed agreement is required to use Canvas AI products, including Studio, the Onboarding Agent, Navigator, and developer-created AI keys. Organizations must sign by **November 15, 2026** , to maintain full access to Studio and the Onboarding Agent. Without a signed agreement, Studio and the Onboarding Agent are read-only products. Signing restores full access.
 ### **How do we sign?**
-You can request a signature directly from Canvas Platform:
-  1. Open Studio or Onboarding in[ _Canvas Platform_](https://platform.canvasmedical.com/).
-  2. Select **Send AI Agreement for Review**.
-  3. Enter the name and email of your organization's authorized signer.
-Your signer will receive a link valid for 7 days.
+Anyone in your organization can send the agreement for signature from Canvas Platform:
+  1. Sign in to [Canvas Platform](https://platform.canvasmedical.com/) and go to Home.
+  1. Select Send AI Agreement for Review on the banner.
+     1. If your organization uses Studio or Onboarding, the same banner also appears there.
+     2. If the banner doesn't appear, go to Inference → Keys & limits and select Create key. Until the agreement is signed, this opens the same window to send it instead of creating a key.
+3\. Enter the name and email of your organization's authorized signer. To read the full agreement before choosing a signer, enter your own name and email.
+Your signer will receive a link to review and sign, valid for 7 days.
 Not on Canvas Platform yet? Reply to our message or email [_contracts@canvasmedical.com_](mailto:contracts@canvasmedical.com) with your signer's name and email, and we'll send the agreement directly.
 ### **Can we get a copy of our signed agreement?**
 Yes. You can download the signed agreement from the signing page for up to 24 hours after signing. If you need a copy later, contact Canvas Support.
@@ -202,6 +204,85 @@ When an individual provider is selected from the Clinician list or by clicking o
 ![schedule week.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1730917885095-scheduleweek.png?Expires=253370764800&Signature=Dz86Pq0XFcp9xNQn-Q7nhEYJv38fkgmYsDpFQFFy9VzHJTxb9CLkPsvlJh4qRLqJzYM-r2~0oQ~TMP4hDl7Ijw7TYZXn-HbrV9cCqTI5-donRm1s3gZFEK3-vw4PbEDKS2RGxTsK5iUF8XN7AXR0RjAqlL7T9e5NBzRJ4arFd20vNfz~-Xnkpz3cCRiYzxbXI0iyfALLOR8Nc7ClkV-8esxc75g6JDm332XC3Lw2y3808HgDPvalJD-HfNqTFuUeyY2u~Z6raBxqZ7SBN9NClDnmSVO-~DTqRXaqg8IcLR5tYY58N-MTSVuHS~WUktBB3Xsd6~atQEEQzp7wXuSpSg__&Key-Pair-Id=K3NV4LZ47N8M46)
 [Managing Appointments](/articles/4617508394) to learn how to schedule appointments
 ----- END PAGE https://help.canvasmedical.com/articles/1131763313-navigate-canvas-home-screen
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/1153816892-security-and-access-in-canvas-platform
+Canvas Platform provides organization-level access controls, authentication, and audit logging. This article explains how administrators manage user access, configure authentication and single sign-on (SSO), provision users, and monitor activity.
+## Organization Membership and Roles
+Access to Canvas Platform is managed through organization membership and role-based permissions.
+  - **Membership and roles:** Each member can have one or more roles. Roles control access to functionality within Canvas Platform.
+  - **Administration:** Canvas creates your organization and invites the initial Organization admin. That administrator can then invite additional members and assign roles from **Users**.
+  - **Role permissions:** Roles are additive, and most do not include one another: Studio admin includes everything Studio user and Onboarding admin can do. Assign only the roles required for each person's responsibilities. The **Read-only** role cannot be combined with other roles.
+  - **Permission scope:** Roles are predefined and apply across the organization. Custom roles, instance-specific roles, and individual permission overrides are not supported.
+For a complete list of roles and their permissions, see [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles).
+## Managing Organization Members
+**Inviting members**
+An Organization admin invites members by entering their email address and assigning roles.
+  - Users with an email address associated with a verified SSO domain authenticate through your organization's identity provider.
+  - Other users receive a one-time password setup link that expires after three days.
+  - Users belonging to multiple organizations share a single account and accept each organization's invitation after signing in.
+**Removing members**
+Removing a member revokes their organization membership and associated roles. Members cannot remove themselves.
+## Authentication and Session Security
+Canvas Platform supports the following authentication controls:
+  - **Password requirements:** Passwords must contain at least 12 characters, cannot consist entirely of numbers, cannot be common passwords, and cannot closely resemble the user's name or email address.
+  - **Multi-factor authentication (MFA):** Supported methods include passkeys, authenticator app codes, and recovery codes. A second factor is required for password sign-ins by default; Organization admins can change this requirement on the **Organization** page. Users who have enrolled a second factor must use it at every sign-in. Users who sign in through SSO use your identity provider's second factor.
+  - **Account lockout:** Repeated failed sign-in attempts trigger temporary account lockouts. The lockout duration increases with subsequent failures, up to a maximum of 24 hours.
+  - **Session expiration:** Sessions expire 12 hours after sign-in or after 15 minutes of inactivity.
+## Single Sign-On (SSO)
+Canvas Platform supports authentication through your organization's OpenID Connect (OIDC) identity provider. SAML is not supported. Organization admins can configure SSO directly from the **Organization** page without assistance from Canvas.
+Authentication for Canvas Platform and the Canvas EMR is managed separately. Organizations that require SSO for both must configure each independently.
+To configure SSO:
+  1. **Verify your domain.** Publish the DNS record provided by Canvas Platform to establish domain ownership.
+  2. **Connect your identity provider.** Enter your OIDC identity provider settings. Canvas Platform validates the configuration before saving.
+  3. **Disable password authentication (optional).** Password authentication can be disabled only after the domain is verified and at least one user has successfully authenticated through the identity provider. This requirement helps prevent administrative lockout.
+**User provisioning through SSO**
+When a user signs in through your identity provider for the first time, Canvas Platform creates their organization membership without assigned roles. An Organization admin must assign roles before the user can access Canvas Platform functionality.
+**Ongoing domain verification**
+Canvas Platform checks your domain's DNS verification record daily. If the record is missing, Organization admins are notified by email. If it remains missing for 14 days, the domain is suspended and admins are notified again. While a domain is suspended, its users no longer sign in through your identity provider, and if your organization has disabled password authentication, they cannot sign in at all.
+To restore a suspended domain, republish the DNS record, then select **Check now** on the **Organization** page.
+For configuration instructions, see [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform).
+## Directory Provisioning (SCIM)
+Canvas Platform supports directory-based user provisioning through SCIM.
+Once your domain is verified and your identity provider is connected, an Organization admin can enable provisioning on the **Organization** page.
+When provisioning is enabled:
+  - Your directory manages member creation and removal.
+  - Directory groups mapped to Canvas Platform roles determine those members' roles. Members who are not in a mapped group have their roles assigned on the **Users** page.
+  - New members can join only through your directory.
+  - Removing a user in your directory removes their organization membership. If they belong to no other organization, their Canvas Platform account is deactivated and their sessions end.
+## Developer and Automation Access
+Canvas Platform supports authenticated access for developers and automated deployment workflows.
+  - **Command-line access:** Developers authenticate to the Canvas CLI through Canvas Platform using their individual accounts and assigned roles.
+  - **Service accounts:** Organization admins, Plugin developers, and Deploy managers can create service accounts under **Credentials** for automated workflows, such as continuous integration (CI) deployments. Service accounts can hold only the **Plugin developer** and **Deploy manager** roles, and members who are not Organization admins can assign only roles they hold themselves.
+## Canvas Staff Access
+Canvas staff access to Canvas Platform is subject to the following controls:
+  - **Authentication:** Canvas staff authenticate through Canvas's own identity provider.
+  - **Network access:** Staff can access Canvas Platform only through Canvas's private network.
+  - **Support activity:** When a Canvas staff member acts as a member of your organization to provide support, the activity is recorded in your organization's audit log.
+  - **Studio access:** When a Canvas staff member opens your organization's Studio, the activity is also recorded in your audit log.
+## Audit Logging and Export
+Canvas Platform maintains an organization-level audit log of authentication, access management, configuration, and deployment activity.
+**Recorded events include:**
+  - User sign-ins
+  - Role changes
+  - Member invitations
+  - SSO configuration steps
+  - Deployments
+Each audit entry records who performed the action, when, from which IP address, and whether a Canvas staff member was acting on the user's behalf.
+**Retention and integrity**
+Audit records are retained for six years and cannot be modified or deleted.
+**SIEM integration**
+Organization admins can configure **Audit export** on the **Organization** page to send audit records to their security information and event management (SIEM) system.
+Once configured, the export includes previously recorded audit events and sends new entries as they are written. Your Canvas team can also assist with configuration.
+**Canvas Platform vs. Canvas EMR audit logs**
+Canvas Platform audit logs cover activity within Canvas Platform. Audit trails for Canvas EMR instances, including patient chart access, are managed separately.
+For EMR audit logging, see [Security Audit Trail and SIEM Export](https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export).
+## Related articles
+  - [Platform: Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles)
+  - [Signing In and Access Help](https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help)
+  - [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
+  - [Security audit trail and SIEM export](https://help.canvasmedical.com/articles/3718661267-security-audit-trail-and-siem-export)
+----- END PAGE https://help.canvasmedical.com/articles/1153816892-security-and-access-in-canvas-platform
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1159009408-
@@ -12580,7 +12661,7 @@ Plugins installed on your Canvas instance fall into three maintenance categories
   3. **Partner-managed**
      1. **Third-party integration vendor-managed:** Maintained by the vendor providing an integration with Canvas.
      2. **Third-party developer-managed:** Maintained by an external developer or development partner.
-In Canvas Platform, each installed plugin is labeled by who maintains it: **Canvas-managed** , **Partner-managed** , **Yours** (customer-managed), or **Another organization**. The Plugin Catalog's **Maintained by** filter calls partner plugins **Partner-maintained**.
+In Canvas Platform, each installed plugin is labeled by who maintains it: **Canvas-managed** , **Partner-managed** , **Yours** (customer-managed), or **Another organization**.
 ## Canvas-managed plugins
 A plugin is **Canvas-managed** when both conditions are met:
   - It is part of the official set of plugins Canvas owns and maintains.
