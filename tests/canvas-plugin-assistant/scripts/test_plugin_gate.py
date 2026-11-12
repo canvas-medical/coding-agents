@@ -155,15 +155,35 @@ class TestCanvasExecutable:
         with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
             assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
 
+    def test_a_bare_repository_layout_in_the_clone_cannot_answer_for_it(self, tmp_path: Path) -> None:
+        """A clone can carry `HEAD`, `objects/`, `refs/` and a `config` that git would discover
+        as a repository with an empty index; the clone's own `.git` answers instead."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = plugin / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("#!/bin/sh\n")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "-f", "."], check=True)
+        (plugin / "HEAD").write_text("ref: refs/heads/main\n")
+        (plugin / "objects").mkdir()
+        (plugin / "refs").mkdir()
+        (plugin / "config").write_text("[core]\n\tbare = false\n\tworktree = .\n")
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
     def test_a_venv_is_not_run_when_git_refuses_the_repository(self, tmp_path: Path) -> None:
-        """Only "not a git repository" means nothing was cloned; any other refusal (a clone
-        another user owns, for one) leaves the `.venv` unvouched for."""
+        """Inside a repository any git failure leaves the `.venv` unvouched for, whatever the
+        message says (it quotes paths a clone can name, such as "not a git repository")."""
         plugin = _plugin(tmp_path)
         venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
         venv_canvas.parent.mkdir(parents=True)
         venv_canvas.write_text("")
+        (tmp_path / ".git").mkdir()
         refused = subprocess.CompletedProcess(
-            ["git"], 128, stdout="", stderr="fatal: detected dubious ownership in repository\n"
+            ["git"],
+            128,
+            stdout="",
+            stderr=f"fatal: detected dubious ownership in repository at '{tmp_path}/not a git repository'\n",
         )
         with (
             patch("plugin_gate.subprocess.run", return_value=refused),
@@ -180,6 +200,7 @@ class TestCanvasExecutable:
         venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
         venv_canvas.parent.mkdir(parents=True)
         venv_canvas.write_text("")
+        (tmp_path / ".git").mkdir()
         with (
             patch("plugin_gate.subprocess.run", side_effect=error),
             patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"),
