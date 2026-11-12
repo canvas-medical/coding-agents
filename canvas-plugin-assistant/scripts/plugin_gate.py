@@ -106,29 +106,39 @@ def canvas_executable(plugin_dir: Path) -> str | None:
     else `canvas` from PATH (Studio's image). Never `uv run`, which builds environments.
     """
     for directory in (plugin_dir, plugin_dir.parent):
-        candidate = directory / ".venv" / "bin" / "canvas"
-        if candidate.is_file() and not venv_is_tracked(directory):
+        venv = directory / ".venv"
+        candidate = venv / "bin" / "canvas"
+        if (
+            candidate.is_file()
+            and candidate.resolve().is_relative_to(venv.resolve())
+            and not venv_is_tracked(directory)
+        ):
             return str(candidate)
     return shutil.which("canvas")
 
 
 def venv_is_tracked(directory: Path) -> bool:
-    """Whether git tracks anything under `directory/.venv`. The gate runs before the tool call
-    is approved, so a `.venv` that arrived with the repository (rather than from `uv sync`, which
-    git ignores) is never executed.
+    """Whether `directory/.venv` may have arrived with the repository rather than from `uv sync`
+    (which git ignores). The gate runs before the tool call is approved, so such a `.venv` is
+    never executed. True when git tracks anything under `.venv` in any spelling (a
+    case-insensitive filesystem opens `.VENV` as `.venv`), and whenever git cannot answer, except
+    outside any repository, where nothing was cloned.
     """
     try:
         result = subprocess.run(
-            ["git", "-c", "core.fsmonitor=false", "-C", str(directory), "ls-files", "-z", "--", ".venv"],
+            ["git", "-c", "core.fsmonitor=false", "-C", str(directory), "ls-files", "-z", "--", ":(icase).venv"],
             capture_output=True,
             encoding="utf-8",
             errors="replace",
+            env={**environ, "LC_ALL": "C"},
             timeout=10,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired):  # the hook runs on any python3, not only 3.14
         return True
-    return result.returncode == 0 and bool(result.stdout)
+    if result.returncode == 0:
+        return bool(result.stdout)
+    return "not a git repository" not in result.stderr
 
 
 def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:

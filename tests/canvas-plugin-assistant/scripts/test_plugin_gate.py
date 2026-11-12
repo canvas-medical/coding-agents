@@ -130,6 +130,47 @@ class TestCanvasExecutable:
         with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
             assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
 
+    def test_a_canvas_committed_under_another_spelling_of_venv_is_never_run(self, tmp_path: Path) -> None:
+        """On a case-insensitive filesystem `.VENV` in the repository is the `.venv` the gate opens."""
+        plugin = _plugin(tmp_path)
+        committed = tmp_path / ".VENV" / "bin" / "canvas"
+        committed.parent.mkdir(parents=True)
+        committed.write_text("#!/bin/sh\n")
+        if not (tmp_path / ".venv" / "bin" / "canvas").is_file():
+            pytest.skip("case-sensitive filesystem: `.VENV` is not `.venv` here")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "-f", ".VENV/bin/canvas"], check=True)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_venv_canvas_that_links_outside_the_venv_is_never_run(self, tmp_path: Path) -> None:
+        """A canvas that resolves outside its `.venv` is a file the repository chose, not uv's."""
+        plugin = _plugin(tmp_path)
+        elsewhere = tmp_path / "tools" / "canvas"
+        elsewhere.parent.mkdir()
+        elsewhere.write_text("#!/bin/sh\n")
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.symlink_to(elsewhere)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_venv_is_not_run_when_git_refuses_the_repository(self, tmp_path: Path) -> None:
+        """Only "not a git repository" means nothing was cloned; any other refusal (a clone
+        another user owns, for one) leaves the `.venv` unvouched for."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("")
+        refused = subprocess.CompletedProcess(
+            ["git"], 128, stdout="", stderr="fatal: detected dubious ownership in repository\n"
+        )
+        with (
+            patch("plugin_gate.subprocess.run", return_value=refused),
+            patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"),
+        ):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
     @pytest.mark.parametrize("error", [OSError("no git"), subprocess.TimeoutExpired("git", 10)])
     def test_a_venv_is_not_run_when_git_cannot_say_it_is_untracked(
         self, tmp_path: Path, error: Exception
