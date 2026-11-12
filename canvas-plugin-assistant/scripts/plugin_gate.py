@@ -45,6 +45,10 @@ HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
+UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
+# `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
+CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch"}
 # Words that run the command after them: `env git commit`, `if git commit; then`.
 COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
@@ -65,23 +69,57 @@ def find_plugin_dir(start: Path) -> Path | None:
 
 
 class OutsideSession(Exception):
-    """An installer target the gate will not check: checking runs code, and the hook runs
-    before the call is approved, so only plugins inside the session's working directory are."""
+    """A target the gate will not check: checking runs code, and the hook runs before the call
+    is approved, so only plugins inside the session's working directory are."""
 
 
-def target_dir(payload: dict) -> Path | None:
-    """The plugin the gated tool call acts on, or None when it acts on no plugin."""
+def inside(path: Path, cwd: Path) -> Path:
+    """``path`` resolved, or OutsideSession when it is not within ``cwd``."""
+    resolved = path.resolve()
+    if resolved != cwd and cwd not in resolved.parents:
+        raise OutsideSession
+    return resolved
+
+
+def commit_plugins(repo: Path) -> list[Path]:
+    """Every plugin holding a file the commit can record (staged or unstaged changes)."""
+    git = ["git", "-c", "core.fsmonitor=false", "-C", str(repo)]
+    top = subprocess.run(git + ["rev-parse", "--show-toplevel"], capture_output=True, encoding="utf-8", check=False)
+    if top.returncode != 0:
+        return []
+    root = Path(top.stdout.strip())
+    changed: set[str] = set()
+    for staged in (["--cached"], []):
+        names = subprocess.run(
+            git + ["diff", "--name-only", "--no-renames", *staged], capture_output=True, encoding="utf-8", check=False
+        )
+        changed.update(names.stdout.splitlines())
+    plugins: set[Path] = set()
+    for name in changed:
+        # Path("a/b/h.py").parents is a/b, a, "." — the folders inside the repo, nearest first.
+        owner = next((root / folder for folder in Path(name).parents if (root / folder / MANIFEST).is_file()), None)
+        if owner is not None:
+            plugins.add(owner)
+    return sorted(plugins)
+
+
+def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
+    """The plugins the gated call acts on (none when it acts on no plugin)."""
     cwd = Path(payload.get("cwd") or ".").resolve()
     tool_input = payload.get("tool_input") or {}
+    kind, detail = action
     if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
         plugin_name = str(tool_input.get("plugin_name", ""))
         if not PLUGIN_NAME.fullmatch(plugin_name):
             raise OutsideSession
-        target = (Path(tool_input.get("cwd") or cwd) / plugin_name).resolve()
-        if target != cwd and cwd not in target.parents:
-            raise OutsideSession
-        return find_plugin_dir(target)
-    return find_plugin_dir(cwd)
+        start = inside(Path(tool_input.get("cwd") or cwd) / plugin_name, cwd)
+    elif kind == "commit":
+        repo = inside(cwd / detail, cwd) if detail else cwd
+        return [inside(plugin, cwd) for plugin in commit_plugins(repo)]
+    else:
+        start = inside(cwd / detail, cwd) if detail else cwd
+    plugin = find_plugin_dir(start)
+    return [plugin] if plugin else []
 
 
 def validate_warnings(stdout: str) -> list[str]:
@@ -209,8 +247,25 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
     return certain, possible
 
 
-def bash_action(command: str) -> str | None:
-    """`commit` for a `git commit`, `upload` for a `canvas install`/`deploy`, else None.
+def joined(base: str | None, path: str) -> str:
+    """``path`` taken relative to ``base`` (an absolute ``path`` stands alone)."""
+    return str(Path(base) / path) if base else path
+
+
+def upload_target(arguments: list[str]) -> str | None:
+    """The plugin path a `canvas install`/`deploy` names: its first positional argument."""
+    words = iter(arguments)
+    for word in words:
+        if word in CANVAS_VALUE_OPTIONS:
+            next(words, None)
+        elif not word.startswith("-"):
+            return word
+    return None
+
+
+def bash_action(command: str) -> tuple[str, str | None] | None:
+    """(`commit`, the `-C` directory) for a `git commit`, (`upload`, the named plugin path) for a
+    `canvas install`/`deploy`, else None.
 
     Reads each simple command, skipping `NAME=value` prefixes and git's global options
     (`git -C dir commit`). A git alias for commit is not resolved.
@@ -222,8 +277,10 @@ def bash_action(command: str) -> str | None:
     try:
         tokens = list(lexer)
     except ValueError:
-        return "commit" if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
+        return ("commit", None) if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
     words: list[str] = []
+    # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.
+    base: str | None = None
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
@@ -234,19 +291,32 @@ def bash_action(command: str) -> str | None:
             or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
         ):
             words.pop(0)
+        if words[:1] == ["cd"] and len(words) == 2:
+            base = joined(base, words[1])
+        run_dir = base
         if words[:2] == ["uv", "run"]:
             words = words[2:]
+            while words and words[0].startswith("-"):
+                option = words.pop(0)
+                if option in UV_RUN_VALUE_OPTIONS and words:
+                    value = words.pop(0)
+                    if option == "--directory":
+                        run_dir = joined(run_dir, value)
         program = Path(words[0]).name if words else ""
         if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
-            return "upload"
+            target = upload_target(words[2:])
+            return ("upload", joined(run_dir, target) if target else run_dir)
         if program == "git":
             rest = iter(words[1:])
+            git_dir = base
             for word in rest:
                 if word in GIT_VALUE_OPTIONS:
-                    next(rest, None)
+                    value = next(rest, None)
+                    if word == "-C" and value:
+                        git_dir = joined(git_dir, value)
                 elif not word.startswith("-"):
                     if word == "commit":
-                        return "commit"
+                        return ("commit", git_dir)
                     break
         words = []
     return None
@@ -299,26 +369,27 @@ def main(stdin: str) -> int:
     if payload.get("tool_name") == "Bash":
         action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
     else:
-        action = "upload"
+        action = ("upload", None)
     if action is None:
         return 0
     try:
-        plugin_dir = target_dir(payload)
+        plugin_dirs = target_dirs(payload, action)
     except OutsideSession:
         if mode == "block":
             print(
                 "CPA plugin gate: it checks only plugins inside the session's working directory, "
-                "so it stopped this install. Run it with a plugin from there.",
+                "so it stopped this call. Run it on a plugin from there.",
                 file=sys.stderr,
             )
             return 2
         return 0
-    if plugin_dir is None:
+    if not plugin_dirs:
         return 0
+    names = ", ".join(plugin.name for plugin in plugin_dirs)
     problems: list[str] = []
     advisories: list[str] = []
-    if action == "commit":
-        certain, possible = scan_commit(plugin_dir)
+    if action[0] == "commit":
+        certain, possible = scan_commit(plugin_dirs[0])
         if certain:
             problems.append(
                 "the changes this commit can record add what look like live credentials. Remove "
@@ -327,28 +398,29 @@ def main(stdin: str) -> int:
             )
         if possible:
             advisories.append(
-                f"CPA plugin gate, for {plugin_dir.name}: the changes this commit can record may add "
+                f"CPA plugin gate, for {names}: the changes this commit can record may add "
                 "credentials. Check each, and move any real one to a manifest secret:\n" + "\n".join(possible)
             )
-    problem, warnings = run_validate(plugin_dir)
-    if problem is not None:
-        problems.append(problem)
+    warning_parts: list[str] = []
+    for plugin in plugin_dirs:
+        problem, warnings = run_validate(plugin)
+        if problem is not None:
+            problems.append(f"{plugin.name}: {problem}" if len(plugin_dirs) > 1 else problem)
+        if warnings:
+            warning_parts.append(
+                f"CPA plugin gate: `canvas validate` passed for {plugin.name} with warnings. They do not "
+                "block; fix them unless the code is intended:\n" + "\n".join(warnings)
+            )
     if problems and mode == "block":
         print(
-            f"CPA plugin gate ({plugin_dir.name}): " + "\n\n".join(problems) + "\n\nFix these, then try again.",
+            f"CPA plugin gate ({names}): " + "\n\n".join(problems) + "\n\nFix these, then try again.",
             file=sys.stderr,
         )
         return 2
     context_parts = [
-        f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {found}"
-        for found in problems
+        f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {names}: {found}" for found in problems
     ]
-    if warnings:
-        context_parts.append(
-            f"CPA plugin gate: `canvas validate` passed for {plugin_dir.name} with warnings. They do not block; "
-            "fix them unless the code is intended:\n" + "\n".join(warnings)
-        )
-    context_parts += advisories
+    context_parts += warning_parts + advisories
     if not context_parts:
         return 0
     context = "\n\n".join(context_parts)

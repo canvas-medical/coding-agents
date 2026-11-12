@@ -6,10 +6,9 @@
         "matcher": "Bash",
         "hooks": [
           {"type": "command", "if": "Bash(git *)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
-          {"type": "command", "if": "Bash(canvas install*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
-          {"type": "command", "if": "Bash(canvas deploy*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
-          {"type": "command", "if": "Bash(uv run canvas install*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
-          {"type": "command", "if": "Bash(uv run canvas deploy*)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180}
+          {"type": "command", "if": "Bash(canvas *)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(uv run *)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180},
+          {"type": "command", "if": "Bash(.venv/bin/canvas *)", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/plugin_gate.py\"", "timeout": 180}
         ]
       },
       {

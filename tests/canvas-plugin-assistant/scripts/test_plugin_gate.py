@@ -17,7 +17,7 @@ def _plugin(root: Path, name: str = "acme_intake") -> Path:
     return plugin
 
 
-def _bash(cwd: Path, command: str = "git commit -m change") -> str:
+def _bash(cwd: Path, command: str = "canvas deploy acme_intake") -> str:
     return json.dumps({"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)})
 
 
@@ -79,7 +79,7 @@ class TestTargetDir:
         plugin = _plugin(container)
         payload = _installer(tmp_path, {"plugin_name": "acme_intake", "cwd": str(container)})
 
-        assert plugin_gate.target_dir(payload) == plugin
+        assert plugin_gate.target_dirs(payload, ("upload", None)) == [plugin]
 
     @pytest.mark.parametrize(
         "tool_input",
@@ -97,13 +97,13 @@ class TestTargetDir:
         _plugin(tmp_path, "outside")
 
         with pytest.raises(plugin_gate.OutsideSession):
-            plugin_gate.target_dir(_installer(session, tool_input))
+            plugin_gate.target_dirs(_installer(session, tool_input), ("upload", None))
 
     def test_a_bash_call_targets_the_plugin_at_its_cwd(self, tmp_path: Path) -> None:
         """A Bash call resolves from the session's cwd."""
         plugin = _plugin(tmp_path)
 
-        assert plugin_gate.target_dir(json.loads(_bash(tmp_path))) == plugin
+        assert plugin_gate.target_dirs(json.loads(_bash(tmp_path)), ("upload", None)) == [plugin]
 
 
 class TestCanvasExecutable:
@@ -464,7 +464,15 @@ class TestBashAction:
     )
     def test_bash_action(self, command: str, action: str | None) -> None:
         """Global options, env prefixes and compound commands do not hide a commit."""
-        assert plugin_gate.bash_action(command) == action
+        result = plugin_gate.bash_action(command)
+        assert (result[0] if result else None) == action
+
+
+def _git_identity(monkeypatch: pytest.MonkeyPatch) -> None:
+    for variable in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
+        monkeypatch.setenv(variable, "Test")
+    for variable in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
+        monkeypatch.setenv(variable, "test@example.com")
 
 
 def _git(cwd: Path, *args: str) -> None:
@@ -530,7 +538,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 2
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 2
 
         err = capsys.readouterr().err
         assert "the changes this commit can record add what look like live credentials" in err
@@ -545,7 +553,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 0
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 0
 
         context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
         assert context.startswith("CPA plugin gate, advisory only (CPA_PLUGIN_GATE=advise)")
@@ -559,7 +567,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text('API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 0
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 0
 
         context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
         assert context.startswith(
@@ -593,3 +601,115 @@ class TestMainSecretScan:
             assert plugin_gate.main(payload) == 0
         validate.assert_called_once_with(repo)
         scan.assert_not_called()
+
+
+class TestNamedTargets:
+    """Tests for finding the plugins a call names or a commit touches."""
+
+    @pytest.mark.parametrize(
+        ("arguments", "target"),
+        [
+            pytest.param(["acme_intake"], "acme_intake", id="positional"),
+            pytest.param(["--instance", "acme-staging", "work/acme_x"], "work/acme_x", id="after_a_value_option"),
+            pytest.param(["acme_intake", "--host", "acme-dev"], "acme_intake", id="before_a_value_option"),
+            pytest.param(["--yes", "acme_intake"], "acme_intake", id="after_a_flag"),
+            pytest.param(["--instance", "acme-staging"], None, id="no_path"),
+        ],
+    )
+    def test_upload_target_is_the_first_positional_argument(self, arguments: list[str], target: str | None) -> None:
+        """Option values are not mistaken for the plugin path."""
+        assert plugin_gate.upload_target(arguments) == target
+
+    @pytest.mark.parametrize(
+        ("command", "action"),
+        [
+            pytest.param("canvas deploy other/acme_x --instance s", ("upload", "other/acme_x"), id="deploy_path"),
+            pytest.param("git -C my-plugin commit -m x", ("commit", "my-plugin"), id="git_dir"),
+            pytest.param("git -C a -C b commit -m x", ("commit", "a/b"), id="git_dir_chained"),
+            pytest.param("git commit -m x", ("commit", None), id="plain_commit"),
+            pytest.param("uv run --with x --frozen canvas deploy acme_x", ("upload", "acme_x"), id="uv_run_options"),
+            pytest.param("uv run --frozen pytest -q", None, id="uv_run_other_command"),
+            pytest.param("cd my-plugin && git commit -am x", ("commit", "my-plugin"), id="cd_then_commit"),
+            pytest.param("cd work && cd sub && canvas deploy acme_x", ("upload", "work/sub/acme_x"), id="cd_twice"),
+            pytest.param("cd work && canvas deploy", ("upload", "work"), id="cd_then_deploy_here"),
+            pytest.param("uv run --directory work canvas deploy acme_x", ("upload", "work/acme_x"), id="uv_directory"),
+        ],
+    )
+    def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
+        """The action names the plugin path a deploy targets, or the directory git runs in."""
+        assert plugin_gate.bash_action(command) == action
+
+    def test_a_commit_validates_the_plugins_it_touches_two_levels_down(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """In CPA's launch layout the session starts at the workspace and the plugin sits two
+        folders below it; the commit's changed files lead to it."""
+        _git_identity(monkeypatch)
+        project = tmp_path / "my-plugin"
+        plugin = _plugin(project, "my_plugin")
+        (plugin / "h.py").write_text("x = 1\n")
+        _git(project, "init", "-q")
+        _git(project, "add", ".")
+        _git(project, "commit", "-q", "-m", "first")
+        (plugin / "h.py").write_text("x = 2\n")
+        payload = json.loads(_bash(tmp_path, "git -C my-plugin commit -am change"))
+
+        assert plugin_gate.target_dirs(payload, ("commit", "my-plugin")) == [plugin.resolve()]
+
+    def test_a_commit_touching_two_plugins_validates_both(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Every plugin with a changed file is checked, and a commit touching none checks nothing."""
+        _git_identity(monkeypatch)
+        first, second = _plugin(tmp_path, "acme_one"), _plugin(tmp_path, "acme_two")
+        (tmp_path / "notes.txt").write_text("a\n")
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        payload = json.loads(_bash(tmp_path, "git commit -am x"))
+
+        (tmp_path / "notes.txt").write_text("b\n")
+        assert plugin_gate.target_dirs(payload, ("commit", None)) == []
+
+        for plugin in (first, second):
+            (plugin / "CANVAS_MANIFEST.json").write_text('{"name": "changed"}')
+        assert plugin_gate.target_dirs(payload, ("commit", None)) == [first.resolve(), second.resolve()]
+
+    def test_commit_plugins_outside_a_repository_is_empty(self, tmp_path: Path) -> None:
+        """A folder git does not know holds no commit to check."""
+        assert plugin_gate.commit_plugins(tmp_path) == []
+
+    def test_a_deploy_validates_the_plugin_it_names(self, tmp_path: Path) -> None:
+        """`canvas deploy <path>` checks that plugin, not the one the session started in."""
+        _plugin(tmp_path, "acme_here")
+        other = _plugin(tmp_path / "work", "acme_other")
+        payload = json.loads(_bash(tmp_path, "canvas deploy work/acme_other"))
+
+        assert plugin_gate.target_dirs(payload, ("upload", "work/acme_other")) == [other.resolve()]
+
+    @pytest.mark.parametrize(
+        "action",
+        [pytest.param(("upload", "../elsewhere/acme_x"), id="deploy"), pytest.param(("commit", ".."), id="commit")],
+    )
+    def test_a_target_outside_the_session_is_refused(self, tmp_path: Path, action: tuple) -> None:
+        """Checking runs code before the call is approved, so a named target outside the session is not checked."""
+        session = tmp_path / "session"
+        _plugin(session, "acme_here")
+        with pytest.raises(plugin_gate.OutsideSession):
+            plugin_gate.target_dirs(json.loads(_bash(session, "x")), action)
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    def test_block_mode_names_each_failing_plugin(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """With several plugins in one commit, each failure is labelled with its plugin."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        plugins = [tmp_path / "acme_one", tmp_path / "acme_two"]
+        results = {plugins[0]: ("bad import", []), plugins[1]: (None, [])}
+        with patch("plugin_gate.target_dirs", return_value=plugins), patch(
+            "plugin_gate.scan_commit", return_value=([], [])
+        ), patch("plugin_gate.run_validate", side_effect=lambda plugin: results[plugin]):
+            assert plugin_gate.main(_bash(tmp_path, "git commit -m x")) == 2
+
+        err = capsys.readouterr().err
+        assert err.startswith("CPA plugin gate (acme_one, acme_two): acme_one: bad import")
