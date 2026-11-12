@@ -13,6 +13,7 @@ import json
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 from os import environ
@@ -54,6 +55,7 @@ COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{",
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
 WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
+MAX_SCAN_BYTES = 1_000_000
 OUTPUT_LIMIT = 3500
 
 
@@ -89,32 +91,42 @@ def inside(path: Path, cwd: Path) -> Path:
     return resolved
 
 
-def untracked_files(repo: Path) -> list[str]:
-    """New, non-ignored files, relative to the repository root. The hook runs before the
-    command, so `git add new.py && git commit` commits a file that is still untracked here."""
-    others = subprocess.run(
-        ["git", "-c", "core.fsmonitor=false", "-C", str(repo), "ls-files", "--others", "--exclude-standard", "--full-name"],
+def git(repo: Path, *args: str) -> str:
+    """Run git in ``repo`` with no fsmonitor command and unquoted paths; its stdout ("" on failure)."""
+    result = subprocess.run(
+        ["git", "-c", "core.fsmonitor=false", "-c", "core.quotePath=false", "-C", str(repo), *args],
         capture_output=True,
         encoding="utf-8",
+        errors="replace",
         check=False,
     )
-    return others.stdout.splitlines()
+    return result.stdout if result.returncode == 0 else ""
+
+
+def repo_root(repo: Path) -> Path | None:
+    top = git(repo, "rev-parse", "--show-toplevel").strip()
+    return Path(top) if top else None
+
+
+def names(root: Path, *args: str) -> list[str]:
+    """File names a git listing prints with `-z`, so no name is quoted or split on a newline."""
+    return [name for name in git(root, *args, "-z").split("\0") if name]
+
+
+def untracked_files(root: Path) -> list[str]:
+    """New, non-ignored files, relative to ``root``. The hook runs before the command, so
+    `git add new.py && git commit` commits a file that is still untracked here."""
+    return names(root, "ls-files", "--others", "--exclude-standard")
 
 
 def commit_plugins(repo: Path) -> list[Path]:
-    """Every plugin holding a file the commit can record (staged or unstaged changes)."""
-    git = ["git", "-c", "core.fsmonitor=false", "-C", str(repo)]
-    top = subprocess.run(git + ["rev-parse", "--show-toplevel"], capture_output=True, encoding="utf-8", check=False)
-    if top.returncode != 0:
+    """Every plugin holding a file the commit can record (staged, unstaged or new)."""
+    root = repo_root(repo)
+    if root is None:
         return []
-    root = Path(top.stdout.strip())
-    changed: set[str] = set()
+    changed = set(untracked_files(root))
     for staged in (["--cached"], []):
-        names = subprocess.run(
-            git + ["diff", "--name-only", "--no-renames", *staged], capture_output=True, encoding="utf-8", check=False
-        )
-        changed.update(names.stdout.splitlines())
-    changed.update(untracked_files(repo))
+        changed.update(names(root, "diff", "--name-only", "--no-renames", *staged))
     plugins: set[Path] = set()
     for name in changed:
         # Path("a/b/h.py").parents is a/b, a, "." — the folders inside the repo, nearest first.
@@ -281,6 +293,13 @@ def joined(base: str | None, path: str) -> str:
     return str(Path(base) / path) if base else path
 
 
+def joined_all(base: str | None, paths: list[str]) -> str | None:
+    """``paths`` applied in turn from ``base``, as chained `-C` or `cd` options are."""
+    for path in paths:
+        base = joined(base, path)
+    return base
+
+
 def upload_target(arguments: list[str]) -> str | None:
     """The plugin path a `canvas install`/`deploy` names: its first positional argument."""
     words = iter(arguments)
@@ -292,12 +311,10 @@ def upload_target(arguments: list[str]) -> str | None:
     return None
 
 
-def literal(word: str) -> str:
-    """``word`` when it names a fixed path, else UnclearTarget: the shell expands `~`, `$`,
-    globs and `cd -` into paths the gate cannot see."""
-    if word == "-" or word.startswith("~") or any(c in word for c in "$*?[{"):
-        raise UnclearTarget
-    return word
+def is_literal(word: str) -> bool:
+    """Whether ``word`` names a fixed path: the shell expands `~`, `$`, globs and `cd -` into
+    paths the gate cannot see."""
+    return not (word == "-" or word.startswith("~") or any(c in word for c in "$*?[{"))
 
 
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
@@ -319,7 +336,9 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     actions: list[tuple[str, str | None]] = []
     words: list[str] = []
     # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.
+    # An expanded `cd` makes it unknown, which matters only if a gated action follows.
     base: str | None = None
+    base_unknown = False
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
@@ -331,10 +350,11 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         ):
             words.pop(0)
         if words[:1] in (["pushd"], ["popd"]) or (words[:1] == ["cd"] and len(words) != 2):
-            raise UnclearTarget
-        if words[:1] == ["cd"]:
-            base = joined(base, literal(words[1]))
-        run_dir = base
+            base_unknown = True
+        elif words[:1] == ["cd"]:
+            base_unknown = base_unknown or not is_literal(words[1])
+            base = joined(base, words[1])
+        run_dirs: list[str] = []
         if words[:2] == ["uv", "run"]:
             words = words[2:]
             while words and words[0].startswith("-"):
@@ -342,63 +362,67 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                 if option in UV_RUN_VALUE_OPTIONS and words:
                     value = words.pop(0)
                     if option == "--directory":
-                        run_dir = joined(run_dir, literal(value))
+                        run_dirs.append(value)
         program = Path(words[0]).name if words else ""
         if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
             target = upload_target(words[2:])
-            actions.append(("upload", joined(run_dir, literal(target)) if target else run_dir))
+            paths = run_dirs + ([target] if target else [])
+            if base_unknown or not all(is_literal(path) for path in paths):
+                raise UnclearTarget
+            actions.append(("upload", joined_all(base, paths)))
         if program == "git":
             rest = iter(words[1:])
-            git_dir = base
+            git_dirs: list[str] = []
             for word in rest:
                 if word in GIT_VALUE_OPTIONS:
                     value = next(rest, None)
                     if word == "-C" and value:
-                        git_dir = joined(git_dir, literal(value))
+                        git_dirs.append(value)
                 elif not word.startswith("-"):
                     if word == "commit":
-                        actions.append(("commit", git_dir))
+                        if base_unknown or not all(is_literal(path) for path in git_dirs):
+                            raise UnclearTarget
+                        actions.append(("commit", joined_all(base, git_dirs)))
                     break
         words = []
     return actions
 
 
-def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
-    """Credentials the commit could record (certain, possible): its added lines and credential files.
+def scan_commit(repo: Path) -> tuple[list[str], list[str]]:
+    """Credentials the commit in ``repo`` could record (certain, possible): its added lines and
+    credential files.
 
     Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them, and
     so are new untracked files, since `git add new.py && git commit` records them.
     """
-    git = ["git", "-c", "core.fsmonitor=false", "-C", str(plugin_dir), "diff", "--no-color", "--no-ext-diff"]
-    diffs = [git + ["--no-textconv", "-U0", "--cached"], git + ["--no-textconv", "-U0"]]
-    texts: list[str] = []
-    for args in diffs:
-        texts.append(subprocess.run(args, capture_output=True, encoding="utf-8", errors="replace", check=False).stdout)
-    untracked = untracked_files(plugin_dir)
-    root = subprocess.run(
-        ["git", "-C", str(plugin_dir), "rev-parse", "--show-toplevel"], capture_output=True, encoding="utf-8", check=False
-    ).stdout.strip()
+    root = repo_root(repo)
+    if root is None:
+        return [], []
+    diff = ("diff", "--no-color", "--no-ext-diff", "--no-textconv", "-U0")
+    texts = [git(root, *diff, "--cached"), git(root, *diff)]
+    certain: list[str] = []
+    possible: list[str] = []
+    untracked = untracked_files(root)
     for name in untracked:
+        path = root / name
+        # A symlink could reach outside the repository, and a huge file would stall the hook.
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode):
+            continue
+        if info.st_size > MAX_SCAN_BYTES:
+            possible.append(f"{name}: a new file too large to scan ({info.st_size} bytes)")
+            continue
         try:
-            lines = (Path(root) / name).read_text(encoding="utf-8").split("\n")
-        except (OSError, UnicodeDecodeError):
+            lines = path.read_text(encoding="utf-8").split("\n")
+        except UnicodeDecodeError:
             continue
         # The whole new file, shaped as the one added hunk git would show for it.
         texts.append(f"+++ b/{name}\n@@ -0,0 +1,{len(lines)} @@\n" + "".join(f"+{line}\n" for line in lines))
-    certain: list[str] = []
-    possible: list[str] = []
     for text in texts:
         found_certain, found_possible = scan_diff(text)
         certain += found_certain
         possible += found_possible
-    added = subprocess.run(
-        git + ["--cached", "--name-only", "--diff-filter=A"],
-        capture_output=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    for path in added.stdout.splitlines() + untracked:
+    for path in names(root, "diff", "--cached", "--name-only", "--diff-filter=A") + untracked:
         if ENV_FILE.search(path):
             certain.append(f"{path}: an environment file")
         elif KEY_FILE.search(path):
@@ -421,16 +445,20 @@ def main(stdin: str) -> int:
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
+    cwd = Path(payload.get("cwd") or ".").resolve()
     plugin_dirs: list[Path] = []
-    commits = False
+    commit_repos: list[Path] = []
     try:
         if payload.get("tool_name") == "Bash":
             actions = bash_actions(str((payload.get("tool_input") or {}).get("command", "")))
         else:
             actions = [("upload", None)]
         for action in actions:
-            commits = commits or action[0] == "commit"
-            plugin_dirs += [plugin for plugin in target_dirs(payload, action) if plugin not in plugin_dirs]
+            touched = target_dirs(payload, action)
+            plugin_dirs += [plugin for plugin in touched if plugin not in plugin_dirs]
+            if action[0] == "commit" and touched:
+                repo = inside(cwd / action[1], cwd) if action[1] else cwd
+                commit_repos += [repo] if repo not in commit_repos else []
     except OutsideSession as refused:
         if mode == "block":
             print(f"CPA plugin gate: {refused.reason}", file=sys.stderr)
@@ -441,8 +469,13 @@ def main(stdin: str) -> int:
     names = ", ".join(plugin.name for plugin in plugin_dirs)
     problems: list[str] = []
     advisories: list[str] = []
-    if commits:
-        certain, possible = scan_commit(plugin_dirs[0])
+    certain: list[str] = []
+    possible: list[str] = []
+    for repo in commit_repos:
+        found_certain, found_possible = scan_commit(repo)
+        certain += found_certain
+        possible += found_possible
+    if commit_repos:
         if certain:
             problems.append(
                 "the changes this commit can record add what look like live credentials. Remove "

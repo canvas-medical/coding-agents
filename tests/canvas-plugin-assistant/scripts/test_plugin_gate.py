@@ -767,6 +767,21 @@ class TestCommandsTheGateMustNotMiss:
         with pytest.raises(plugin_gate.UnclearTarget):
             plugin_gate.bash_actions(command)
 
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("git -C ~/repo log --oneline", id="git_dir_home_log"),
+            pytest.param("cd ~ && git status", id="cd_home_status"),
+            pytest.param("cd && git pull", id="bare_cd_pull"),
+            pytest.param("pushd work && git status && popd", id="pushd_status"),
+            pytest.param("uv run --directory $D pytest -q", id="uv_directory_variable_pytest"),
+            pytest.param("cd $X && canvas validate acme_x", id="cd_variable_validate"),
+        ],
+    )
+    def test_an_expanded_directory_without_a_gated_action_is_ignored(self, command: str) -> None:
+        """Only a commit, install or deploy needs its directory known; other commands pass untouched."""
+        assert plugin_gate.bash_actions(command) == []
+
     def test_a_named_target_never_resolves_to_an_enclosing_plugin(self, tmp_path: Path) -> None:
         """`canvas deploy notes` inside a plugin names a folder that is not a plugin; the enclosing
         plugin is not checked in its place."""
@@ -805,3 +820,49 @@ class TestCommandsTheGateMustNotMiss:
         (repo / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe" + STRIPE_LIVE.encode())
 
         assert plugin_gate.scan_commit(repo) == ([], [])
+
+    def test_a_new_symlink_is_not_followed(self, repo: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
+        """A symlink could point outside the repository, so its target is never read."""
+        outside = tmp_path_factory.mktemp("elsewhere") / "outside.txt"
+        outside.write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        (repo / "link.py").symlink_to(outside)
+
+        assert plugin_gate.scan_commit(repo) == ([], [])
+
+    def test_a_new_file_over_the_cap_is_reported_unread(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A huge file would stall the hook, so it is named as a possible finding instead of read."""
+        monkeypatch.setattr(plugin_gate, "MAX_SCAN_BYTES", 10)
+        content = f'{{"key": "{STRIPE_LIVE}"}}\n'
+        (repo / "dump.json").write_text(content)
+
+        assert plugin_gate.scan_commit(repo) == (
+            [],
+            [f"acme_intake/dump.json: a new file too large to scan ({len(content)} bytes)"],
+        )
+
+    def test_a_non_ascii_file_name_is_read(self, repo: Path) -> None:
+        """git quotes such names unless told not to; the file is still found and read."""
+        (repo / "café.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert certain == ["acme_intake/café.py:1: a Stripe live key `sk_l…` (35 characters)"]
+
+    def test_a_session_in_a_subfolder_sees_new_files_across_the_repository(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """`git ls-files --others` lists only the current folder, so it runs from the repository root."""
+        _git_identity(monkeypatch)
+        plugin = _plugin(tmp_path / "plugins")
+        (tmp_path / "docs").mkdir()
+        (tmp_path / "docs" / "x.md").write_text("x\n")
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        (plugin / "new.py").write_text("x = 1\n")
+
+        assert plugin_gate.commit_plugins(tmp_path / "docs") == [plugin.resolve()]
+
+    def test_scan_commit_outside_a_repository_finds_nothing(self, tmp_path: Path) -> None:
+        """A folder git does not know records no commit."""
+        assert plugin_gate.scan_commit(tmp_path) == ([], [])
