@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -22,6 +23,30 @@ MODES = ("off", "advise", "block")
 MANIFEST = "CANVAS_MANIFEST.json"
 INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
 PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
+# Shapes that were a live credential in every shipped file they appeared in across installed
+# plugins, so a commit adding one is stopped in `block` mode. In a Markdown or reST doc they advise.
+CERTAIN_SECRETS = {
+    "an Anthropic API key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{80,}"),
+    "a Slack token": re.compile(r"\bxox[bp]-\d+-\d+-[A-Za-z0-9-]{20,}"),
+    "a Stripe live key": re.compile(r"\b[rs]k_live_[0-9A-Za-z]{24,}"),
+    "a GitHub token": re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,})"),
+    "an OpenAI key": re.compile(r"\bsk-proj-[A-Za-z0-9_-]{40,}"),
+}
+SECRET_ASSIGNMENT = re.compile(
+    r"(?i)(?:api_?key|secret|token|passw(?:or)?d|private_key)\w*[\"']?\s*[:=]\s*[\"']([^\"'\s]{20,})[\"']"
+)
+# Private keys only advise: a plugin using mutual TLS can load its client key only from a file
+# today, since `requests` takes a path and the sandbox cannot write one.
+PRIVATE_KEY = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")
+ENV_FILE = re.compile(r"(?:^|/)\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?$")
+KEY_FILE = re.compile(r"(?:^|/)[^/]+\.(?:pem|key|p12|pfx)$")
+DOCS = re.compile(r"\.(?:md|rst)$")
+HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+# git's global options that take a separate value: `git -C dir commit` is still a commit.
+GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
+SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# Words that run the command after them: `env git commit`, `if git commit; then`.
+COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
 WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
@@ -123,6 +148,139 @@ def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:
     return problem, []
 
 
+def mask(value: str) -> str:
+    """Enough of a value to find it, never enough to use it."""
+    return f"`{value[:4]}…` ({len(value)} characters)"
+
+
+def looks_random(value: str) -> bool:
+    """A value with lower, upper and digit characters, not a CONSTANT_NAME or a URL."""
+    return (
+        any(c.islower() for c in value)
+        and any(c.isupper() for c in value)
+        and any(c.isdigit() for c in value)
+        and not value.startswith(("http://", "https://"))
+    )
+
+
+def scan_diff(diff: str) -> tuple[list[str], list[str]]:
+    """Credentials on the added lines of a `-U0` diff: (certain, possible), each `path:line: what`."""
+    certain: list[str] = []
+    possible: list[str] = []
+    path, line_number, old_left, new_left = "", 0, 0, 0
+    # git counts hunk lines by "\n" alone; splitlines() would also split on "\x0c", " " and others.
+    for line in diff.split("\n"):
+        if old_left == 0 and new_left == 0:
+            # Between hunks only: inside one, an added line reading "++ b/x" shows as "+++ b/x".
+            hunk = HUNK_START.match(line)
+            if hunk:
+                old_left = int(hunk.group(1) or 1)
+                line_number = int(hunk.group(2))
+                new_left = int(hunk.group(3) or 1)
+            elif line.startswith("+++ "):
+                path = line[6:] if line.startswith("+++ b/") else line[4:]
+            continue
+        if line.startswith("-"):
+            old_left -= 1
+            continue
+        if line.startswith(" "):
+            old_left, new_left, line_number = old_left - 1, new_left - 1, line_number + 1
+            continue
+        if not line.startswith("+"):
+            continue
+        new_left -= 1
+        added, where = line[1:], f"{path}:{line_number}"
+        line_number += 1
+        has_private_key = bool(PRIVATE_KEY.search(added))
+        if has_private_key:
+            possible.append(f"{where}: a private key (fine only if it is a mutual-TLS client key)")
+        for name, pattern in CERTAIN_SECRETS.items():
+            match = pattern.search(added)
+            if match:
+                found = f"{where}: {name} {mask(match.group(0))}"
+                (possible if DOCS.search(path) else certain).append(found)
+                break
+        else:
+            if has_private_key:
+                continue
+            for match in SECRET_ASSIGNMENT.finditer(added):
+                if looks_random(match.group(1)):
+                    possible.append(f"{where}: a secret-like value ({len(match.group(1))} characters)")
+    return certain, possible
+
+
+def bash_action(command: str) -> str | None:
+    """`commit` for a `git commit`, `upload` for a `canvas install`/`deploy`, else None.
+
+    Reads each simple command, skipping `NAME=value` prefixes and git's global options
+    (`git -C dir commit`). A git alias for commit is not resolved.
+    """
+    # shlex reads a newline as whitespace and a backtick as a word character, which would merge
+    # two commands into one; both start a new command in the shell.
+    lexer = shlex.shlex(command.replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        tokens = list(lexer)
+    except ValueError:
+        return "commit" if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
+    words: list[str] = []
+    for token in tokens + [";"]:
+        if token not in SHELL_SEPARATORS:
+            words.append(token)
+            continue
+        while words and (
+            words[0] in COMMAND_PREFIXES
+            or words[0] == ""
+            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
+        ):
+            words.pop(0)
+        if words[:2] == ["uv", "run"]:
+            words = words[2:]
+        program = Path(words[0]).name if words else ""
+        if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
+            return "upload"
+        if program == "git":
+            rest = iter(words[1:])
+            for word in rest:
+                if word in GIT_VALUE_OPTIONS:
+                    next(rest, None)
+                elif not word.startswith("-"):
+                    if word == "commit":
+                        return "commit"
+                    break
+        words = []
+    return None
+
+
+def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
+    """Credentials the commit could record (certain, possible): its added lines and credential files.
+
+    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them.
+    """
+    git = ["git", "-c", "core.fsmonitor=false", "-C", str(plugin_dir), "diff", "--no-color", "--no-ext-diff"]
+    diffs = [git + ["--no-textconv", "-U0", "--cached"], git + ["--no-textconv", "-U0"]]
+    certain: list[str] = []
+    possible: list[str] = []
+    for args in diffs:
+        result = subprocess.run(args, capture_output=True, encoding="utf-8", errors="replace", check=False)
+        found_certain, found_possible = scan_diff(result.stdout)
+        certain += found_certain
+        possible += found_possible
+    added = subprocess.run(
+        git + ["--cached", "--name-only", "--diff-filter=A"],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    for path in added.stdout.splitlines():
+        if ENV_FILE.search(path):
+            certain.append(f"{path}: an environment file")
+        elif KEY_FILE.search(path):
+            possible.append(f"{path}: a key file (fine only if it is a mutual-TLS client key)")
+    return certain, possible
+
+
 def main(stdin: str) -> int:
     """Run the gate for one hook payload and return the hook's exit code."""
     mode = environ.get(MODE_VARIABLE, "off").strip().lower() or "off"
@@ -137,8 +295,15 @@ def main(stdin: str) -> int:
         return 2
     if mode == "off":
         return 0
+    payload = json.loads(stdin or "{}")
+    if payload.get("tool_name") == "Bash":
+        action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
+    else:
+        action = "upload"
+    if action is None:
+        return 0
     try:
-        plugin_dir = target_dir(json.loads(stdin or "{}"))
+        plugin_dir = target_dir(payload)
     except OutsideSession:
         if mode == "block":
             print(
@@ -150,22 +315,43 @@ def main(stdin: str) -> int:
         return 0
     if plugin_dir is None:
         return 0
+    problems: list[str] = []
+    advisories: list[str] = []
+    if action == "commit":
+        certain, possible = scan_commit(plugin_dir)
+        if certain:
+            problems.append(
+                "the changes this commit can record add what look like live credentials. Remove "
+                "each, store it as a manifest secret read with `self.secrets[...]`, and rotate it:\n"
+                + "\n".join(certain)
+            )
+        if possible:
+            advisories.append(
+                f"CPA plugin gate, for {plugin_dir.name}: the changes this commit can record may add "
+                "credentials. Check each, and move any real one to a manifest secret:\n" + "\n".join(possible)
+            )
     problem, warnings = run_validate(plugin_dir)
-    if problem is not None and mode == "block":
+    if problem is not None:
+        problems.append(problem)
+    if problems and mode == "block":
         print(
-            f"CPA plugin gate ({plugin_dir.name}): {problem}\n\nFix these, then try again.",
+            f"CPA plugin gate ({plugin_dir.name}): " + "\n\n".join(problems) + "\n\nFix these, then try again.",
             file=sys.stderr,
         )
         return 2
-    if problem is not None:
-        context = f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {problem}"
-    elif warnings:
-        context = (
+    context_parts = [
+        f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {found}"
+        for found in problems
+    ]
+    if warnings:
+        context_parts.append(
             f"CPA plugin gate: `canvas validate` passed for {plugin_dir.name} with warnings. They do not block; "
             "fix them unless the code is intended:\n" + "\n".join(warnings)
         )
-    else:
+    context_parts += advisories
+    if not context_parts:
         return 0
+    context = "\n\n".join(context_parts)
     print(
         json.dumps(
             {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": context}}
