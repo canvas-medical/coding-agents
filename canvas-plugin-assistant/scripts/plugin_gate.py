@@ -117,28 +117,54 @@ def canvas_executable(plugin_dir: Path) -> str | None:
     return shutil.which("canvas")
 
 
+def repository_root(directory: Path) -> Path | None:
+    """The nearest folder at or above `directory` holding a `.git`. Git refuses to track a
+    `.git` path in any spelling, so a clone cannot plant one, unlike a bare-repository layout
+    (`HEAD`, `objects/`, `refs/`) that git's own discovery would accept.
+    """
+    resolved = directory.resolve()
+    for folder in (resolved, *resolved.parents):
+        if (folder / ".git").exists():
+            return folder
+    return None
+
+
 def venv_is_tracked(directory: Path) -> bool:
     """Whether `directory/.venv` may have arrived with the repository rather than from `uv sync`
     (which git ignores). The gate runs before the tool call is approved, so such a `.venv` is
-    never executed. True when git tracks anything under `.venv` in any spelling (a
-    case-insensitive filesystem opens `.VENV` as `.venv`), and whenever git cannot answer, except
-    outside any repository, where nothing was cloned.
+    never executed. True when git tracks any path the filesystem resolves to `.venv` (a
+    case-insensitive filesystem opens `.VENV` as `.venv`), and whenever git cannot answer inside
+    a repository. Outside any repository nothing was cloned, so it is False.
     """
+    root = repository_root(directory)
+    if root is None:
+        return False
     try:
         result = subprocess.run(
-            ["git", "-c", "core.fsmonitor=false", "-C", str(directory), "ls-files", "-z", "--", ":(icase).venv"],
+            [
+                "git",
+                f"--git-dir={root / '.git'}",
+                f"--work-tree={root}",
+                "-c",
+                "core.fsmonitor=false",
+                "-C",
+                str(directory.resolve()),
+                "ls-files",
+                "-z",
+            ],
             capture_output=True,
             encoding="utf-8",
             errors="replace",
-            env={**environ, "LC_ALL": "C"},
             timeout=10,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired):  # the hook runs on any python3, not only 3.14
         return True
-    if result.returncode == 0:
-        return bool(result.stdout)
-    return "not a git repository" not in result.stderr
+    if result.returncode != 0:
+        return True
+    venv = directory / ".venv"
+    names = {path.split("/", 1)[0] for path in result.stdout.split("\0") if path}
+    return any((directory / name).exists() and (directory / name).samefile(venv) for name in names)
 
 
 def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:
