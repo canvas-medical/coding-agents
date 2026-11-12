@@ -59,7 +59,8 @@ WRAPPER_VALUE_OPTIONS = {"timeout": {"-k", "-s", "--kill-after", "--signal"}, "n
 # git subcommands whose `--continue` commits whatever is staged.
 RECORDS_ON_CONTINUE = {"merge", "rebase", "cherry-pick", "am", "revert"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
-WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
+# The two-space separators anchor it, since a file name can hold a space.
+WARNING_LINE = re.compile(r"^[ \t]*(⚠ .+?  \[[\w-]+\]  .*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
 MAX_SCAN_BYTES = 1_000_000
 OUTPUT_LIMIT = 3500

@@ -156,6 +156,11 @@ class TestRunValidate:
         with patch("plugin_gate.subprocess.run", return_value=warned):
             assert plugin_gate.run_validate(tmp_path) == (None, [WARNING.strip()])
 
+    def test_a_warning_on_a_file_whose_name_has_a_space_is_kept(self) -> None:
+        """The credential lint reads every shipped file, and a file name can hold a space."""
+        line = "⚠ client key.pem:1  [hardcoded-credential]  A private key ships inside the plugin package."
+        assert plugin_gate.validate_warnings(f"  {line}\n") == [line]
+
     def test_warning_blocks_are_returned_with_their_items(self, tmp_path: Path) -> None:
         """Validate also prints `Warning:` blocks, such as handlers the manifest never loads."""
         stdout = (
