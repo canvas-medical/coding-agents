@@ -107,9 +107,28 @@ def canvas_executable(plugin_dir: Path) -> str | None:
     """
     for directory in (plugin_dir, plugin_dir.parent):
         candidate = directory / ".venv" / "bin" / "canvas"
-        if candidate.is_file():
+        if candidate.is_file() and not venv_is_tracked(directory):
             return str(candidate)
     return shutil.which("canvas")
+
+
+def venv_is_tracked(directory: Path) -> bool:
+    """Whether git tracks anything under `directory/.venv`. The gate runs before the tool call
+    is approved, so a `.venv` that arrived with the repository (rather than from `uv sync`, which
+    git ignores) is never executed.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-c", "core.fsmonitor=false", "-C", str(directory), "ls-files", "-z", "--", ".venv"],
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):  # the hook runs on any python3, not only 3.14
+        return True
+    return result.returncode == 0 and bool(result.stdout)
 
 
 def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:
