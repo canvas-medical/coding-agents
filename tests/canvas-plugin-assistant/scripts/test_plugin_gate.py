@@ -866,3 +866,27 @@ class TestCommandsTheGateMustNotMiss:
     def test_scan_commit_outside_a_repository_finds_nothing(self, tmp_path: Path) -> None:
         """A folder git does not know records no commit."""
         assert plugin_gate.scan_commit(tmp_path) == ([], [])
+
+    def test_a_new_file_the_gate_cannot_read_is_reported(self, repo: Path) -> None:
+        """A file left unreadable (a docker-owned 0600 file, say) is named, not a crash that lets the commit through."""
+        (repo / "secret.py").write_text("x = 1\n")
+        with patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+            assert plugin_gate.scan_commit(repo) == ([], ["acme_intake/secret.py: a new file the gate could not read"])
+
+
+@pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0), ("off", 0)])
+def test_a_crash_in_the_gate_fails_closed_only_in_block_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+) -> None:
+    """Claude Code runs the call after an uncaught error, so `run` turns a crash into a stop in block mode."""
+    monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+    with patch("plugin_gate.main", side_effect=FileNotFoundError("gone")):
+        assert plugin_gate.run(_bash(tmp_path)) == code
+    if mode == "block":
+        assert "the check failed (FileNotFoundError: gone)" in capsys.readouterr().err
+
+
+def test_run_passes_main_through() -> None:
+    """Without an error, `run` returns what `main` returns."""
+    with patch("plugin_gate.main", return_value=0):
+        assert plugin_gate.run("{}") == 0

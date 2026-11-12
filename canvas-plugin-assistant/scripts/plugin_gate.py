@@ -406,15 +406,18 @@ def scan_commit(repo: Path) -> tuple[list[str], list[str]]:
     for name in untracked:
         path = root / name
         # A symlink could reach outside the repository, and a huge file would stall the hook.
-        info = path.lstat()
-        if not stat.S_ISREG(info.st_mode):
-            continue
-        if info.st_size > MAX_SCAN_BYTES:
-            possible.append(f"{name}: a new file too large to scan ({info.st_size} bytes)")
-            continue
         try:
+            info = path.lstat()
+            if not stat.S_ISREG(info.st_mode):
+                continue
+            if info.st_size > MAX_SCAN_BYTES:
+                possible.append(f"{name}: a new file too large to scan ({info.st_size} bytes)")
+                continue
             lines = path.read_text(encoding="utf-8").split("\n")
         except UnicodeDecodeError:
+            continue
+        except OSError:
+            possible.append(f"{name}: a new file the gate could not read")
             continue
         # The whole new file, shaped as the one added hunk git would show for it.
         texts.append(f"+++ b/{name}\n@@ -0,0 +1,{len(lines)} @@\n" + "".join(f"+{line}\n" for line in lines))
@@ -518,5 +521,17 @@ def main(stdin: str) -> int:
     return 0
 
 
+def run(stdin: str) -> int:
+    """`main`, failing closed: Claude Code runs the call after an uncaught error (exit 1), so in
+    `block` mode a crash in the gate stops the call instead."""
+    try:
+        return main(stdin)
+    except Exception as error:
+        if environ.get(MODE_VARIABLE, "").strip().lower() != "block":
+            return 0
+        print(f"CPA plugin gate: the check failed ({type(error).__name__}: {error}), so it stopped this call.", file=sys.stderr)
+        return 2
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.stdin.read()))
+    sys.exit(run(sys.stdin.read()))
