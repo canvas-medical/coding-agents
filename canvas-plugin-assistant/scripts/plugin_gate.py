@@ -72,6 +72,14 @@ class OutsideSession(Exception):
     """A target the gate will not check: checking runs code, and the hook runs before the call
     is approved, so only plugins inside the session's working directory are."""
 
+    reason = "it checks only plugins inside the session's working directory, so it stopped this call. Run it on a plugin from there."
+
+
+class UnclearTarget(OutsideSession):
+    """A command whose directory or plugin depends on shell expansion (`cd ~`, `$DIR`, `pushd`)."""
+
+    reason = "it could not tell which plugin this command acts on, so it stopped it. Use a plain relative path, without `~`, variables, `cd -` or `pushd`."
+
 
 def inside(path: Path, cwd: Path) -> Path:
     """``path`` resolved, or OutsideSession when it is not within ``cwd``."""
@@ -79,6 +87,18 @@ def inside(path: Path, cwd: Path) -> Path:
     if resolved != cwd and cwd not in resolved.parents:
         raise OutsideSession
     return resolved
+
+
+def untracked_files(repo: Path) -> list[str]:
+    """New, non-ignored files, relative to the repository root. The hook runs before the
+    command, so `git add new.py && git commit` commits a file that is still untracked here."""
+    others = subprocess.run(
+        ["git", "-c", "core.fsmonitor=false", "-C", str(repo), "ls-files", "--others", "--exclude-standard", "--full-name"],
+        capture_output=True,
+        encoding="utf-8",
+        check=False,
+    )
+    return others.stdout.splitlines()
 
 
 def commit_plugins(repo: Path) -> list[Path]:
@@ -94,6 +114,7 @@ def commit_plugins(repo: Path) -> list[Path]:
             git + ["diff", "--name-only", "--no-renames", *staged], capture_output=True, encoding="utf-8", check=False
         )
         changed.update(names.stdout.splitlines())
+    changed.update(untracked_files(repo))
     plugins: set[Path] = set()
     for name in changed:
         # Path("a/b/h.py").parents is a/b, a, "." — the folders inside the repo, nearest first.
@@ -116,8 +137,16 @@ def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
     elif kind == "commit":
         repo = inside(cwd / detail, cwd) if detail else cwd
         return [inside(plugin, cwd) for plugin in commit_plugins(repo)]
+    elif detail:
+        # A named target is that plugin or the one directly inside it, never an enclosing plugin
+        # the walk up from `find_plugin_dir` would reach.
+        named = inside(cwd / detail, cwd)
+        if (named / MANIFEST).is_file():
+            return [named]
+        children = [child for child in named.iterdir() if (child / MANIFEST).is_file()] if named.is_dir() else []
+        return children if len(children) == 1 else []
     else:
-        start = inside(cwd / detail, cwd) if detail else cwd
+        start = cwd
     plugin = find_plugin_dir(start)
     return [plugin] if plugin else []
 
@@ -263,12 +292,21 @@ def upload_target(arguments: list[str]) -> str | None:
     return None
 
 
-def bash_action(command: str) -> tuple[str, str | None] | None:
-    """(`commit`, the `-C` directory) for a `git commit`, (`upload`, the named plugin path) for a
-    `canvas install`/`deploy`, else None.
+def literal(word: str) -> str:
+    """``word`` when it names a fixed path, else UnclearTarget: the shell expands `~`, `$`,
+    globs and `cd -` into paths the gate cannot see."""
+    if word == "-" or word.startswith("~") or any(c in word for c in "$*?[{"):
+        raise UnclearTarget
+    return word
 
-    Reads each simple command, skipping `NAME=value` prefixes and git's global options
-    (`git -C dir commit`). A git alias for commit is not resolved.
+
+def bash_actions(command: str) -> list[tuple[str, str | None]]:
+    """Every gated action in the command: (`commit`, the directory git runs in) for each
+    `git commit`, (`upload`, the named plugin path) for each `canvas install`/`deploy`.
+
+    Reads each simple command, skipping `NAME=value` prefixes, wrapper words and git's global
+    options, and follows `cd`, `git -C` and `uv run --directory`. Raises UnclearTarget when one of
+    those depends on shell expansion. A git alias for commit is not resolved.
     """
     # shlex reads a newline as whitespace and a backtick as a word character, which would merge
     # two commands into one; both start a new command in the shell.
@@ -277,7 +315,8 @@ def bash_action(command: str) -> tuple[str, str | None] | None:
     try:
         tokens = list(lexer)
     except ValueError:
-        return ("commit", None) if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
+        return [("commit", None)] if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else []
+    actions: list[tuple[str, str | None]] = []
     words: list[str] = []
     # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.
     base: str | None = None
@@ -291,8 +330,10 @@ def bash_action(command: str) -> tuple[str, str | None] | None:
             or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
         ):
             words.pop(0)
-        if words[:1] == ["cd"] and len(words) == 2:
-            base = joined(base, words[1])
+        if words[:1] in (["pushd"], ["popd"]) or (words[:1] == ["cd"] and len(words) != 2):
+            raise UnclearTarget
+        if words[:1] == ["cd"]:
+            base = joined(base, literal(words[1]))
         run_dir = base
         if words[:2] == ["uv", "run"]:
             words = words[2:]
@@ -301,11 +342,11 @@ def bash_action(command: str) -> tuple[str, str | None] | None:
                 if option in UV_RUN_VALUE_OPTIONS and words:
                     value = words.pop(0)
                     if option == "--directory":
-                        run_dir = joined(run_dir, value)
+                        run_dir = joined(run_dir, literal(value))
         program = Path(words[0]).name if words else ""
         if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
             target = upload_target(words[2:])
-            return ("upload", joined(run_dir, target) if target else run_dir)
+            actions.append(("upload", joined(run_dir, literal(target)) if target else run_dir))
         if program == "git":
             rest = iter(words[1:])
             git_dir = base
@@ -313,27 +354,41 @@ def bash_action(command: str) -> tuple[str, str | None] | None:
                 if word in GIT_VALUE_OPTIONS:
                     value = next(rest, None)
                     if word == "-C" and value:
-                        git_dir = joined(git_dir, value)
+                        git_dir = joined(git_dir, literal(value))
                 elif not word.startswith("-"):
                     if word == "commit":
-                        return ("commit", git_dir)
+                        actions.append(("commit", git_dir))
                     break
         words = []
-    return None
+    return actions
 
 
 def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
     """Credentials the commit could record (certain, possible): its added lines and credential files.
 
-    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them.
+    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them, and
+    so are new untracked files, since `git add new.py && git commit` records them.
     """
     git = ["git", "-c", "core.fsmonitor=false", "-C", str(plugin_dir), "diff", "--no-color", "--no-ext-diff"]
     diffs = [git + ["--no-textconv", "-U0", "--cached"], git + ["--no-textconv", "-U0"]]
+    texts: list[str] = []
+    for args in diffs:
+        texts.append(subprocess.run(args, capture_output=True, encoding="utf-8", errors="replace", check=False).stdout)
+    untracked = untracked_files(plugin_dir)
+    root = subprocess.run(
+        ["git", "-C", str(plugin_dir), "rev-parse", "--show-toplevel"], capture_output=True, encoding="utf-8", check=False
+    ).stdout.strip()
+    for name in untracked:
+        try:
+            lines = (Path(root) / name).read_text(encoding="utf-8").split("\n")
+        except (OSError, UnicodeDecodeError):
+            continue
+        # The whole new file, shaped as the one added hunk git would show for it.
+        texts.append(f"+++ b/{name}\n@@ -0,0 +1,{len(lines)} @@\n" + "".join(f"+{line}\n" for line in lines))
     certain: list[str] = []
     possible: list[str] = []
-    for args in diffs:
-        result = subprocess.run(args, capture_output=True, encoding="utf-8", errors="replace", check=False)
-        found_certain, found_possible = scan_diff(result.stdout)
+    for text in texts:
+        found_certain, found_possible = scan_diff(text)
         certain += found_certain
         possible += found_possible
     added = subprocess.run(
@@ -343,7 +398,7 @@ def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
         errors="replace",
         check=False,
     )
-    for path in added.stdout.splitlines():
+    for path in added.stdout.splitlines() + untracked:
         if ENV_FILE.search(path):
             certain.append(f"{path}: an environment file")
         elif KEY_FILE.search(path):
@@ -366,21 +421,19 @@ def main(stdin: str) -> int:
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
-    if payload.get("tool_name") == "Bash":
-        action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
-    else:
-        action = ("upload", None)
-    if action is None:
-        return 0
+    plugin_dirs: list[Path] = []
+    commits = False
     try:
-        plugin_dirs = target_dirs(payload, action)
-    except OutsideSession:
+        if payload.get("tool_name") == "Bash":
+            actions = bash_actions(str((payload.get("tool_input") or {}).get("command", "")))
+        else:
+            actions = [("upload", None)]
+        for action in actions:
+            commits = commits or action[0] == "commit"
+            plugin_dirs += [plugin for plugin in target_dirs(payload, action) if plugin not in plugin_dirs]
+    except OutsideSession as refused:
         if mode == "block":
-            print(
-                "CPA plugin gate: it checks only plugins inside the session's working directory, "
-                "so it stopped this call. Run it on a plugin from there.",
-                file=sys.stderr,
-            )
+            print(f"CPA plugin gate: {refused.reason}", file=sys.stderr)
             return 2
         return 0
     if not plugin_dirs:
@@ -388,7 +441,7 @@ def main(stdin: str) -> int:
     names = ", ".join(plugin.name for plugin in plugin_dirs)
     problems: list[str] = []
     advisories: list[str] = []
-    if action[0] == "commit":
+    if commits:
         certain, possible = scan_commit(plugin_dirs[0])
         if certain:
             problems.append(

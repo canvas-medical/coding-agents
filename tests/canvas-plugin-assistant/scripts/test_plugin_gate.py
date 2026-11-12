@@ -464,8 +464,8 @@ class TestBashAction:
     )
     def test_bash_action(self, command: str, action: str | None) -> None:
         """Global options, env prefixes and compound commands do not hide a commit."""
-        result = plugin_gate.bash_action(command)
-        assert (result[0] if result else None) == action
+        result = plugin_gate.bash_actions(command)
+        assert (result[0][0] if result else None) == action
 
 
 def _git_identity(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -637,7 +637,7 @@ class TestNamedTargets:
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
         """The action names the plugin path a deploy targets, or the directory git runs in."""
-        assert plugin_gate.bash_action(command) == action
+        assert plugin_gate.bash_actions(command) == ([action] if action else [])
 
     def test_a_commit_validates_the_plugins_it_touches_two_levels_down(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -713,3 +713,95 @@ class TestNamedTargets:
 
         err = capsys.readouterr().err
         assert err.startswith("CPA plugin gate (acme_one, acme_two): acme_one: bad import")
+
+
+class TestCommandsTheGateMustNotMiss:
+    """Untracked files, several actions in one command, and targets the gate cannot resolve."""
+
+    def test_a_new_untracked_file_leads_to_its_plugin(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The hook runs before `git add new.py && git commit`, so the new file is still untracked."""
+        _git_identity(monkeypatch)
+        plugin = _plugin(tmp_path)
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        (plugin / "new.py").write_text("x = (\n")
+
+        assert plugin_gate.commit_plugins(tmp_path) == [plugin.resolve()]
+
+    def test_a_credential_in_a_new_untracked_file_is_found(self, repo: Path) -> None:
+        """`git add new.py && git commit` records a file `git diff` never shows, so it is read whole."""
+        (repo / "billing.py").write_text(f'x = 1\nKEY = "{STRIPE_LIVE}"\n')
+        (repo / ".env").write_text("A=1\n")
+
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert sorted(certain) == [
+            "acme_intake/.env: an environment file",
+            "acme_intake/billing.py:2: a Stripe live key `sk_l…` (35 characters)",
+        ]
+
+    def test_every_action_in_a_command_is_returned(self) -> None:
+        """`canvas deploy a && canvas deploy b` deploys both, so both are checked."""
+        assert plugin_gate.bash_actions("canvas deploy a && canvas deploy b; git commit -m x") == [
+            ("upload", "a"),
+            ("upload", "b"),
+            ("commit", None),
+        ]
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("cd ~/work && git commit -m x", id="home"),
+            pytest.param("cd $PLUGIN && git commit -m x", id="variable"),
+            pytest.param("cd - && canvas deploy acme_x", id="previous_dir"),
+            pytest.param("cd && git commit -m x", id="bare_cd"),
+            pytest.param("pushd work && git commit -m x", id="pushd"),
+            pytest.param("git -C $DIR commit -m x", id="git_dir_variable"),
+            pytest.param("canvas deploy acme_*", id="glob_target"),
+            pytest.param("uv run --directory ~/w canvas deploy acme_x", id="uv_directory_home"),
+        ],
+    )
+    def test_a_target_the_shell_expands_is_unclear(self, command: str) -> None:
+        """The gate cannot see what `~`, `$`, globs, `cd -` or `pushd` resolve to, so it refuses."""
+        with pytest.raises(plugin_gate.UnclearTarget):
+            plugin_gate.bash_actions(command)
+
+    def test_a_named_target_never_resolves_to_an_enclosing_plugin(self, tmp_path: Path) -> None:
+        """`canvas deploy notes` inside a plugin names a folder that is not a plugin; the enclosing
+        plugin is not checked in its place."""
+        plugin = _plugin(tmp_path)
+        (plugin / "notes").mkdir()
+        payload = json.loads(_bash(plugin, "canvas deploy notes"))
+
+        assert plugin_gate.target_dirs(payload, ("upload", "notes")) == []
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
+    def test_an_unclear_command_is_stopped_in_block_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+    ) -> None:
+        """Block mode stops a command whose plugin it cannot resolve, and says why."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+        with patch("plugin_gate.subprocess.run") as run:
+            assert plugin_gate.main(_bash(tmp_path, "cd $PLUGIN && git commit -m x")) == code
+        run.assert_not_called()
+        if mode == "block":
+            assert "could not tell which plugin this command acts on" in capsys.readouterr().err
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    def test_both_deploys_in_one_command_are_validated(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Each plugin a compound command deploys is validated once."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        first, second = _plugin(tmp_path, "acme_one"), _plugin(tmp_path, "acme_two")
+        with patch("plugin_gate.run_validate", return_value=(None, [])) as validate:
+            command = "canvas deploy acme_one && canvas deploy acme_two && canvas deploy acme_one"
+            assert plugin_gate.main(_bash(tmp_path, command)) == 0
+
+        assert [call.args[0] for call in validate.call_args_list] == [first.resolve(), second.resolve()]
+
+    def test_a_new_binary_file_is_skipped(self, repo: Path) -> None:
+        """An untracked file that is not UTF-8 text is not scanned."""
+        (repo / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe" + STRIPE_LIVE.encode())
+
+        assert plugin_gate.scan_commit(repo) == ([], [])
