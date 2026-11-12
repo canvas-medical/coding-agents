@@ -789,9 +789,12 @@ class TestCommandsTheGateMustNotMiss:
         assert plugin_gate.commit_plugins(tmp_path) == [plugin.resolve()]
 
     def test_a_credential_in_a_new_untracked_file_is_found(self, repo: Path) -> None:
-        """`git add new.py && git commit` records a file `git diff` never shows, so it is read whole."""
+        """`git add new.py && git commit` records a file `git diff` never shows, so it is read whole.
+        An ignored file is one `git add -A` would not record, so it is skipped."""
         (repo / "billing.py").write_text(f'x = 1\nKEY = "{STRIPE_LIVE}"\n')
         (repo / ".env").write_text("A=1\n")
+        (repo / "ignored.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        (repo / ".gitignore").write_text("ignored.py\n")
 
         certain, _ = plugin_gate.scan_commit(repo)
 
