@@ -1725,6 +1725,16 @@
         - Next:📄 What is Canvas Platform
 - [Signing In and Access Help](https://help.canvasmedical.com/articles/4937024956-signing-in-and-access-help)
         - Next:📄 Platform: Users and Roles
+- [Security and Access in Canvas Platform](https://help.canvasmedical.com/articles/1153816892-security-and-access-in-canvas-platform)
+    - Organization Membership and Roles
+    - Managing Organization Members
+    - Authentication and Session Security
+    - Single Sign-On (SSO)
+    - Directory Provisioning (SCIM)
+    - Developer and Automation Access
+    - Canvas Staff Access
+    - Audit Logging and Export
+    - Related articles
 
 ### Analytics
 - [Platform Analytics](https://help.canvasmedical.com/articles/4401978424-platform-analytics)
