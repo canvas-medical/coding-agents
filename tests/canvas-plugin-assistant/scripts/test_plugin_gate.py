@@ -313,6 +313,8 @@ STRIPE_LIVE = "sk_" + "live_" + "Ab3" * 9
 ANTHROPIC = "sk-ant-" + "api03-" + "A1b2C3" * 15
 SLACK_BOT = "xox" + "b-" + "123456789012-123456789012-" + "AbCdEf123456" * 2
 PEM_HEADER = "-----BEGIN " + "PRIVATE KEY-----"
+HEX_TOKEN = "0123456789abcdef" * 2
+MIXED_TOKEN = "aB3dE5fG7hJ9kL1mN3pQr5s"
 
 
 def _diff(path: str, *added: str, start: int = 12) -> str:
@@ -396,6 +398,23 @@ class TestScanDiff:
         assert certain == []
         assert bool(possible) is found
 
+    @pytest.mark.parametrize(
+        ("path", "value", "found"),
+        [
+            pytest.param("acme_intake/h.py", HEX_TOKEN, True, id="hex_token_in_code"),
+            pytest.param("acme_intake/h.py", MIXED_TOKEN, True, id="mixed_token_in_code"),
+            pytest.param("acme_intake/tests/test_h.py", HEX_TOKEN, False, id="hex_token_in_tests"),
+            pytest.param("acme_intake/tests/test_h.py", MIXED_TOKEN, False, id="mixed_token_in_tests"),
+            pytest.param("acme_intake/test/fixtures.py", MIXED_TOKEN, False, id="mixed_token_in_test"),
+            pytest.param("README.md", MIXED_TOKEN, False, id="mixed_token_in_docs"),
+            pytest.param("docs/GUIDE.RST", MIXED_TOKEN, False, id="mixed_token_in_upper_case_docs"),
+        ],
+    )
+    def test_possible_values_follow_canvas_validate(self, path: str, value: str, found: bool) -> None:
+        """The same values `canvas validate` warns on: a long lowercase hex run counts as random,
+        and tests and docs are skipped, so Claude hears one story from both tools."""
+        assert bool(plugin_gate.scan_diff(_diff(path, f'auth_token = "{value}"'))[1]) is found
+
     def test_removed_lines_are_ignored(self) -> None:
         """Deleting a credential is the fix, not a finding."""
         diff = "--- a/h.py\n+++ b/h.py\n@@ -3 +2,0 @@\n" + f'-KEY = "{STRIPE_LIVE}"\n'
@@ -459,6 +478,22 @@ class TestBashAction:
             pytest.param("echo $(git commit -m change)", "commit", id="command_substitution"),
             pytest.param("echo `git commit -m change`", "commit", id="backticks"),
             pytest.param("git commit -m 'line one\nline two'", "commit", id="multiline_message"),
+            pytest.param("# stage and commit\ngit add a.py && git commit -m x", "commit", id="comment_line_first"),
+            pytest.param("git status\n# now commit\ngit commit -am x", "commit", id="comment_line_between"),
+            pytest.param("echo done#1; git commit -am x", "commit", id="hash_inside_a_word"),
+            pytest.param("# git commit -m change", None, id="commit_in_a_comment"),
+            pytest.param("timeout 60 git commit -am x", "commit", id="timeout_wrapper"),
+            pytest.param("timeout -k 5 --signal TERM 60s git commit -am x", "commit", id="timeout_with_options"),
+            pytest.param("nice git commit -am x", "commit", id="nice_wrapper"),
+            pytest.param("timeout --preserve-status 60 git commit -am x", "commit", id="timeout_flag_without_value"),
+            pytest.param("nice -n 10 timeout 60 git commit -am x", "commit", id="nice_then_timeout"),
+            pytest.param("git merge --continue", "commit", id="merge_continue"),
+            pytest.param("git rebase --continue", "commit", id="rebase_continue"),
+            pytest.param("git -C acme cherry-pick --continue", "commit", id="cherry_pick_continue"),
+            pytest.param("git am --continue", "commit", id="am_continue"),
+            pytest.param("git revert --continue", "commit", id="revert_continue"),
+            pytest.param("git rebase --abort", None, id="rebase_abort"),
+            pytest.param("git merge main", None, id="merge_without_continue"),
             pytest.param("", None, id="empty"),
         ],
     )
@@ -524,6 +559,30 @@ class TestScanCommit:
 
         assert certain == ["acme_intake/.env: an environment file"]
         assert possible == ["acme_intake/tests/fixture.pem: a key file (fine only if it is a mutual-TLS client key)"]
+
+    @pytest.mark.parametrize("command", ["clean", "process"])
+    def test_a_filter_driver_never_runs(self, repo: Path, tmp_path_factory: pytest.TempPathFactory, command: str) -> None:
+        """Reading the worktree runs any filter driver the repository assigns, which is code the
+        hook would run before the call is approved, so every driver is switched off and the diff
+        still reads, even for a driver marked required."""
+        marker = tmp_path_factory.mktemp("probe") / "ran"
+        _git(repo, "config", f"filter.probe.{command}", f"touch {marker}")
+        _git(repo, "config", "filter.probe.required", "true")
+        (repo.parent / ".git" / "info" / "attributes").write_text("*.py filter=probe\n")
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+
+        plugin_gate.commit_plugins(repo)
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert not marker.exists()
+        assert len(certain) == 1
+
+    def test_a_git_read_that_fails_raises(self, repo: Path) -> None:
+        """A diff git cannot produce is not an empty commit."""
+        (repo.parent / ".git" / "index").write_bytes(b"not an index")
+
+        with pytest.raises(plugin_gate.GitFailed, match=r"`git diff` exited \d+"):
+            plugin_gate.scan_commit(repo)
 
 
 @pytest.mark.usefixtures("canvas_on_path")
@@ -884,6 +943,19 @@ def test_a_crash_in_the_gate_fails_closed_only_in_block_mode(
         assert plugin_gate.run(_bash(tmp_path)) == code
     if mode == "block":
         assert "the check failed (FileNotFoundError: gone)" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
+def test_a_commit_whose_changes_cannot_be_read_is_stopped_in_block_mode(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+) -> None:
+    """A broken index leaves the gate unable to see what the commit records, so `block` stops it."""
+    monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+    (repo.parent / ".git" / "index").write_bytes(b"not an index")
+
+    assert plugin_gate.run(_bash(repo, "git commit -am change")) == code
+    if mode == "block":
+        assert "could not read the changes this commit can record (`git " in capsys.readouterr().err
 
 
 def test_run_passes_main_through() -> None:

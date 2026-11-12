@@ -41,7 +41,8 @@ SECRET_ASSIGNMENT = re.compile(
 PRIVATE_KEY = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")
 ENV_FILE = re.compile(r"(?:^|/)\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?$")
 KEY_FILE = re.compile(r"(?:^|/)[^/]+\.(?:pem|key|p12|pfx)$")
-DOCS = re.compile(r"\.(?:md|rst)$")
+DOCS = re.compile(r"(?i)\.(?:md|rst)$")
+HEX_TOKEN = re.compile(r"[0-9a-f]{32,}")
 HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
@@ -52,6 +53,11 @@ UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--pac
 CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch"}
 # Words that run the command after them: `env git commit`, `if git commit; then`.
 COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
+# Words that run the command after their options, with the options that take a value.
+# `timeout` also takes a duration before the command.
+WRAPPER_VALUE_OPTIONS = {"timeout": {"-k", "-s", "--kill-after", "--signal"}, "nice": {"-n", "--adjustment"}}
+# git subcommands whose `--continue` commits whatever is staged.
+RECORDS_ON_CONTINUE = {"merge", "rebase", "cherry-pick", "am", "revert"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
 WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
@@ -91,21 +97,43 @@ def inside(path: Path, cwd: Path) -> Path:
     return resolved
 
 
+class GitFailed(Exception):
+    """A git read exited nonzero, so the gate cannot see what the commit records."""
+
+
 def git(repo: Path, *args: str) -> str:
-    """Run git in ``repo`` with no fsmonitor command and unquoted paths; its stdout ("" on failure)."""
+    """Run git in ``repo`` and return its stdout, with unquoted paths and no fsmonitor command
+    or filter driver, since the hook runs before the call is approved. Raises GitFailed."""
+    base = ["git", "-c", "core.fsmonitor=false", "-c", "core.quotePath=false", "-C", str(repo)]
+    drivers = subprocess.run(
+        base + ["config", "--get-regexp", r"^filter\."],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    ).stdout
+    no_filters: list[str] = []
+    for driver in sorted({line.split(" ", 1)[0].rsplit(".", 1)[0] for line in drivers.splitlines()}):
+        # An empty command makes git skip the driver; `required` would make it fail instead.
+        no_filters += ["-c", f"{driver}.clean=", "-c", f"{driver}.process=", "-c", f"{driver}.required=false"]
     result = subprocess.run(
-        ["git", "-c", "core.fsmonitor=false", "-c", "core.quotePath=false", "-C", str(repo), *args],
+        base + no_filters + list(args),
         capture_output=True,
         encoding="utf-8",
         errors="replace",
         check=False,
     )
-    return result.stdout if result.returncode == 0 else ""
+    if result.returncode != 0:
+        raise GitFailed(f"`git {args[0]}` exited {result.returncode}: {result.stderr.strip()[-300:]}")
+    return result.stdout
 
 
 def repo_root(repo: Path) -> Path | None:
-    top = git(repo, "rev-parse", "--show-toplevel").strip()
-    return Path(top) if top else None
+    """The top of the repository holding ``repo``, or None outside one."""
+    try:
+        return Path(git(repo, "rev-parse", "--show-toplevel").strip())
+    except GitFailed:
+        return None
 
 
 def names(root: Path, *args: str) -> list[str]:
@@ -233,13 +261,18 @@ def mask(value: str) -> str:
 
 
 def looks_random(value: str) -> bool:
-    """A value with lower, upper and digit characters, not a CONSTANT_NAME or a URL."""
-    return (
-        any(c.islower() for c in value)
-        and any(c.isupper() for c in value)
-        and any(c.isdigit() for c in value)
-        and not value.startswith(("http://", "https://"))
+    """A value with lower, upper and digit characters, or a long lowercase hex run (a
+    Twilio-style token), and not a URL: unlike a CONSTANT_NAME or a link."""
+    if value.startswith(("http://", "https://")):
+        return False
+    return bool(HEX_TOKEN.fullmatch(value)) or (
+        any(c.islower() for c in value) and any(c.isupper() for c in value) and any(c.isdigit() for c in value)
     )
+
+
+def is_example(path: str) -> bool:
+    """A doc or a test file, where a secret-like value is usually a sample, as `canvas validate` treats it."""
+    return bool(DOCS.search(path)) or bool({"test", "tests"} & set(Path(path).parts))
 
 
 def scan_diff(diff: str) -> tuple[list[str], list[str]]:
@@ -280,7 +313,7 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
                 (possible if DOCS.search(path) else certain).append(found)
                 break
         else:
-            if has_private_key:
+            if has_private_key or is_example(path):
                 continue
             for match in SECRET_ASSIGNMENT.finditer(added):
                 if looks_random(match.group(1)):
@@ -326,9 +359,11 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     those depends on shell expansion. A git alias for commit is not resolved.
     """
     # shlex reads a newline as whitespace and a backtick as a word character, which would merge
-    # two commands into one; both start a new command in the shell.
+    # two commands into one; both start a new command in the shell. Its `#` comment would run to
+    # the end of the whole command, so a comment is read as words instead, which errs toward checking.
     lexer = shlex.shlex(command.replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
+    lexer.commenters = ""
     try:
         tokens = list(lexer)
     except ValueError:
@@ -343,12 +378,18 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
             continue
-        while words and (
-            words[0] in COMMAND_PREFIXES
-            or words[0] == ""
-            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
-        ):
-            words.pop(0)
+        while words:
+            if words[0] in COMMAND_PREFIXES or words[0] == "" or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0]):
+                words.pop(0)
+            elif words[0] in WRAPPER_VALUE_OPTIONS:
+                wrapper = words.pop(0)
+                while words and words[0].startswith("-"):
+                    if words.pop(0) in WRAPPER_VALUE_OPTIONS[wrapper] and words:
+                        words.pop(0)
+                if wrapper == "timeout" and words:
+                    words.pop(0)
+            else:
+                break
         if words[:1] in (["pushd"], ["popd"]) or (words[:1] == ["cd"] and len(words) != 2):
             base_unknown = True
         elif words[:1] == ["cd"]:
@@ -379,7 +420,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                     if word == "-C" and value:
                         git_dirs.append(value)
                 elif not word.startswith("-"):
-                    if word == "commit":
+                    if word == "commit" or (word in RECORDS_ON_CONTINUE and "--continue" in rest):
                         if base_unknown or not all(is_literal(path) for path in git_dirs):
                             raise UnclearTarget
                         actions.append(("commit", joined_all(base, git_dirs)))
@@ -529,7 +570,11 @@ def run(stdin: str) -> int:
     except Exception as error:
         if environ.get(MODE_VARIABLE, "").strip().lower() != "block":
             return 0
-        print(f"CPA plugin gate: the check failed ({type(error).__name__}: {error}), so it stopped this call.", file=sys.stderr)
+        if isinstance(error, GitFailed):
+            failure = f"it could not read the changes this commit can record ({error})"
+        else:
+            failure = f"the check failed ({type(error).__name__}: {error})"
+        print(f"CPA plugin gate: {failure}, so it stopped this call.", file=sys.stderr)
         return 2
 
 
