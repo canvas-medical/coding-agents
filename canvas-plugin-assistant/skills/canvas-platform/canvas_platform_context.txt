@@ -1715,6 +1715,58 @@ Patients can be added to or removed from this facility list view by adding or re
 ----- END PAGE https://help.canvasmedical.com/articles/2395218732-facility-group-scheduling
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me
+Canvas uses ID.me to confirm your identity before you are enrolled to send prescriptions. You can verify your identity within Canvas in about five minutes.
+## Before you begin
+  - A photo of your driver's license, state ID, passport, or passport card.
+  - A smartphone with a camera and a web browser. ID.me texts you a link to take the photos.
+  - The first name, last name, and date of birth on your Canvas staff record must match your ID.
+If you already have an ID.me account, you may only need to sign in and give permission to share your details.
+## Step 1: Open Identity verification
+  1. In Canvas, click the **menu** icon in the top left corner.
+  2. Click **Identity verification**. It opens in a new browser tab.
+![Canvas main menu with Identity verification highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3a06975f-da32-4ef3-9631-d76b0c358b41-p01-menu.png?Expires=253370764800&Signature=GHX2rUFxO1prFGp-WvM9ecKyupBwqVe4tvi3KhdgLw0N6AsyArj09H6Uamsduf8QQ5SF37gcQXWFGBQTwtsfn~OUtR7U0dRSS9ZxSRFo3kKvXs-g6MmY67ncrRAhdhPbIItm4z-W06c94rcVu6GVobnt85Fz44g~U5PYM~5bvsaW0kDs-dsRJ3CHqRLIWvA47PC7WQHk093YKvGtV9sOu19y9vORNnOZzGZ8v11MQsJg9iqssy3wshELHQ8smshAxSqiGDJS6rJE6a5S5qQmIcRIWs7Gvip1h061xph0qKYkdc~BMa0k~2XQZ-zczxUX89hr~ctS~9sHrBWXuVKxnQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+If you don't see **Identity verification** in the menu, ID.me isn't turned on for your practice yet. Ask your practice administrator.
+## Step 2: Start the verification
+Click **Verify with ID.me**.
+![Verify your identity to prescribe page with the Verify with ID.me button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F93ab8de0-97cb-4cc5-a4ea-f429f6d811ec-p02-start.png?Expires=253370764800&Signature=Kwy3mfS7yVHAkEsf8W3OeHbQGZZBHv-Lx2HzdhGryaeREyfjYPiY-ZaqV8WR3tTaBbxJziM1s52m4Qi-5Rf2It5eVYkmAxpXTjJiRkmRDtt0E3MpEF9rM8~nS7yUSufS-3O1gTSnssUpyXuSaNCwMz~mcJVETu4E5r92k0InOBluG1~ZAldzy6vkOy6cKj-tP6ZAMlJxLdF8Ehdfn8i1Uh~rARLR64TS-x6vJ~d4RdVVUW-iPfKyWX3dXvsbDF9vH1F-0JCHKZLk1N98qjD0DKoMrwEl~6shF0-qIzcLVAFBjLJKfj5hQ42~lFZAAWvdTzJBrZQYKuv682687XT6qg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 3: Sign in to ID.me or create an account
+  1. Enter your email and click **Continue**. If you're new to ID.me, click **Create a wallet** instead.
+  2. Choose how ID.me should send you sign-in codes. **Passkey** and **Text Message or Phone Call** both work.
+  3. Enter the 6-digit code ID.me sends you and click **Continue**.
+![ID.me sign in screen with Continue highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F69c7fbe0-2bcb-4f5d-9f24-a49b37a22581-p03-signin.png?Expires=253370764800&Signature=oBmOJ7zGM-2btmp-oOIa9BeHBAaQb77sbY6t665fkUOO3I4IX3x4K6RjkfROaeemIJJJNX0dQE144Xr7WDfLzBMludXYxpq3spSTDEJveylJZCngd9Gn5vxSnigf6~7L0kuSxHmAdzFEqEtfh9CYqmsrZob-a5IcI09~AIH9mIwJ6r5XXA7MmAgs482f6tx8pkPgu1RPNjpQeh~he8dNxm8tLPz3RoPwfocJaVDBNdHZOGub1lCm2K7OL2bYO0WFZfWFu~fc48wFeplawBb2m8iNY~gSc6BgpYOAA5r5sEhPjh2CuGcoMu9kXTrSFe8Kau6tFD4xxxjNMewdirOGOw__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me multi-factor authentication method choices highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe8cefa3a-6447-4982-a584-35a0ca122b24-p04-mfa.png?Expires=253370764800&Signature=Q1K6qDj3MeRjLXqGbwnHukS7162IhbDqxsjenlrqipYCYlnOkhxaGo5WrB2IHj2~uq4pX4LLVy5WnJaVwSQOAYRNSMIH1jl2SkurLqqZrmJL3~GkTsk~6oaJNlS07jB-GbcFB52~bnCgjoafu-PtZ4MtCcsiN08~sM5G31gg0Zt3F9~Nj9yagXk99eT9g8smHXC2S2FJqFJZeo7LTVkthxJYNGQehjKTZsLrDudL586PHqlMtHyUKCL0yawUy3c8Fg3n18gqbalex-BZvvyKvSLMyZL7kspVRb6~IlNexrb7LdpJOthgeMel8jINLSID3imVKJ4JvFc-LDUFSka-pA__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me screen to enter the 6-digit code](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F2693b0cb-e3ea-4b2c-8a7f-650c4e316da2-p05-code.png?Expires=253370764800&Signature=u94qTXn7KpMZFKH78jysgY-tnT4D6WFNO4uH1G-LFAL~bR-PW7VTNxfTfLyvBCZaYQnontQevm001OXX2ZwnqiliZKoYKj5v7jUhuR~wm~~KX68-G99D4jOYK0eNGSr26Ol-LQg2LGeFHjMXdi3klBM8Q01~Oe8fgPXEBRWvTecHaZm6hefOwB996VZtOx1tFPI9DOGjFWV3iXtI5GthK8oH2oUgYQ~OmfRK3z4DTrT4j6pKZQzldaW5IdXcG1tHW8j0ij~bBuSq~PqvaWeJQwLQLVAou8SKQ571560~Q-wvn0BE1J2ChNir7DaEdIayFFLAVlZxkxSUfEvCtg3Eug__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 4: Photograph your ID on your phone
+  1. Choose your type of ID.
+  2. Enter your mobile number and click **Continue**. ID.me texts you a link that says **Continue verifying for Canvas Medical**.
+  3. Open the link on your phone, confirm your email, and take photos of your ID.
+  4. Check the details ID.me read from your ID, then click **Confirm** , or **Retake photo** if anything is wrong.
+  5. Click **Open camera** and take the video selfie. Keep your computer's browser tab open while you do this; it moves on by itself when your phone is done.
+![ID.me verification method choices with license or state ID highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb570b713-1fb9-4f11-81c4-0fc9b2b75bd9-p06-method.png?Expires=253370764800&Signature=P~Xn~myrVk61F3EsPZVNGVg08TzhJ2JZRYFavbOb-4PVbYpbzjxUAmWaIzVJ0znVMPs09gGPLWyfPhyd~v2Khb13SwGjzfOT48B9JtI8bFOiEhcD3xEEw~f18G9wyZXx9lCDGSOVE4KCK58b-B2GeKA8nPjLmqxcorFJha-FXRwtc4I5i3kIDmc9IhQy6frnxQqRnoQiaKtSc6NRcOgWDfau9JDpYNab2aRAxWPvW2eSWZ0hWNPFfnQrcWWXB2Mb58LwjrYtx1GVOcnkKxFa9at81bAH1WrjnnWPF2lkcnTj~0t3BbtE0z1LxMIdRlLfTW165Fqy1KmWK2bvdywarA__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me screen to enter a mobile number, with Continue highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F763a2ed7-b72d-4586-96c9-ba4dd6f586f2-p07-phone-link.png?Expires=253370764800&Signature=AS3uto072HOi-svP9U1Layu6i~EfUBVGNKvl4R7x8wFIuoykN9fPXR46al2rSYC1v1dB7~iWYqCBpbZKviiD0NU06deH~lMcOH9xvBZEndO5X9tL3tnhcvU6Duts5vK2-vomeRhtVaZvIGD-tSd0uWVpRgin-OZ7ChHgg99ogEPVN-deR~ly1Z-G15ng9RX61Ijowpq7frMk1OhaM8Ky57gWebLYOjztKpmr9n-kh~f8XoTMgRHnawiwciiNlROnycqf8v8RlFZvZARRuLOqxjS~S98CIL4zjRnCX0lbev4LNYpP7zN6RQKHrKSEp-8iAQLKB50JpayMK-ZQfidZqQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Text message from ID.me with the link to continue verifying for Canvas Medical](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F15b897f6-2600-44d6-8466-ba1ee4ca9c2f-p08-sms.png?Expires=253370764800&Signature=WanuWXPPXXvi50r6Y~VwD2asP3kQeBSzOj~~76WFXSuOBbwRfJWOhY-Ws3T~CefKtZJNCa9xRG4K4-Y3FByvTSpIXgzcSlo8In-j8DGPkGQ6NmTu5Sm7r8880VdmuTd3RrUsjct5zeZPnUKG5MaJeNjtUDNSkoa4ckxPYGobb49GgswL7CQhnLIHg4CEAKmeXbYBF-k992rC9Cap3bwnzTOahjbUVfZHIh6Qt7IljTIq1ZhyDXQ5UcpFBgALSijgTbkNCnzcCYJsz2R1SUE8eDFwjvzGNiLWoowxuxVh8yc7uEXojrwi2y38~r2sFMy~02OliMGDSGD0UA1r2vGo7w__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone asking to confirm your email address](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fcfbb8771-d8f6-4737-9733-d13ede2b12e7-p09-phone-email.png?Expires=253370764800&Signature=OZE5mYVYCVNOj5DPEK1m2Wq23fB7oX-~F5~L7t1OMKn3jPdD3gG2ljKja2mjxhHJ1myr0YQurajWU0nwlYQi05-bbg2CxWYrJFe8JbzoJk2sbBylDs9i8HwnIwHy03RYbCqbGVXxOfH16BPXP~J6Wh0fETXXNMnN0PhzDL-bJb3jHyBHoqXwJz78rNE9bK0fTmhFPogV5omHmrjsQnjOO9BtUwYEiLvnKqmt6WdUy0W4eCLz7BWa4HFysrWf694IjilWId1ifhLAbelPJ23cBFW5aO7bzpFyOp-1BTf2RDbFyhSfY1PheE79S6SZ0b1hVhK5oCKfT0ewiQ9bNQEzRQ__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone showing Review your details with Confirm and Retake photo](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5a23ad44-b654-4f09-9be9-7fe8228d1eeb-p10-phone-review.png?Expires=253370764800&Signature=FrUZudXjQGKGa5goRgel4Efg-7OGHvPTUioeXQDXZvzfezQg64bdj6T3xjPF6S0wCDAJ0935nEuy0lNeiUP2gY9Q7U6LVU1NVpmO9j0798wpE8~hs4QYD~jDLImyiRxki4S0no~GRgHk~Rr7jDfvyweZBeeDIpDAyPDc0-7iPYQNu1Z5XXR5x3Pojp5IbpCo2QrriRFxXU0Bab~GgP9Utfl9JFGEF~LslfJlEXEdyr2pgPgwv2avMcKVdMd2464-HWYI5xEipfZxuVLZqyVIEtKFSPBFCM8qcHpZLoIeP2WuWkARux9sa7gBp-xywzpwIGK0OmpXD4asOgsyOU0N6Q__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone asking for a video selfie, with Open camera highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F442d5d32-b372-4d40-aeef-b149975893ee-p11-phone-selfie.png?Expires=253370764800&Signature=RNlxxACO596T13qRdKnUcyon-6ihgmtEuP~tzU4i0Yw-OnO~WjpTzcLWxGiz74N~GIyZBgGI8ZZPBV8nwJgKmlsNfpkudVFlDud~soCMXI40qAB5Hw6Q2WvvcB1yhABy0x-SHJVuBXvqsEujY3EgMOeOGw3QJ-gxwX-hw0mhxLI8AToWSMlQHjxB1fF4AGYVjMC-~zItZ-Y7rdIovkHo7OESGaJKxIwRc7g1e0OInpfxfOiidFNBahOtrOHYpEhKk1S1DAiAWKv3q4HpxUWiCGvq2LZF6YB7gMaYKbHiVpBx3RKtSw5sIBE21gJRvJVNPQC0P-skgrNgxdw1w9kBQw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Back on your computer, ID.me compares your selfie to your ID. This takes a few seconds.
+![ID.me comparing the selfie to the ID document](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F16164f14-0702-4136-83a9-82cd98cc8b1d-p12-selfie-compare.png?Expires=253370764800&Signature=LHryTh4x5ngEKP99gQeajIRn6JS5XGo-30wgnTNw~pkcnINRCqT10n6mG1JEa5pDQ6Z7F9PVSLpnNjBr94VlqgTlTKKX1DIUkXCU1pjbHaZcmdRUBGxY0fqlOtgWyNl1dZIlJrtU01W-tbAAYgwKMMGBlX8c3xyTp~EOUj6iR61BqYp-Z8WLDIVToyJNvr776fU-unAeeKa5BWDsL9EfNqdfiNNGsOfDPaqXJZPk3tc0sMujKqIvi-4lb1M5BBnRXuZ3c9W6PhrbIp~v4jDgRUYjrG4~dRZJjXlzDcDPjtmMv0q9jwbPbY6A~VHMSwQBgV8PTbICd2hckSyB7hp8EA__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 5: Finish the ID.me checks
+  1. Enter your Social Security number twice and click **Continue**.
+  2. Check that your name, date of birth, address, and phone are correct. Check the box agreeing to the Fair Credit Reporting Act check and click **Yes**. ID.me states this does not affect your credit score.
+![ID.me Social Security number entry](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F85724333-767c-4756-9c8f-386fbf8ee94b-p13-ssn.png?Expires=253370764800&Signature=ibf5a~iwLEBAfCHuVpIczgTDyzjKF4XbmnlzEEsuYB2dQJPHsrws9BhTcB7VK~55WjK-F7CDYzzGeMgRoH~36Hko0PikXd5yUxxY9k1e096ipm1ukvDq17dwTWiI4tEfXLepLkocZKIxG4ORdyn~BzPgE5ZiPJyWxj~fNk6ERIlVzPZ9fPoX9qxD4DpJf9RImk-K77CKp08CBV29NX6ElWG5yKTAi9pb81pENbtzqAJ45n6nYPx2ulr0EU2cMLhZbj6lP7KR1k4BYWuQsgQkQjKBWze~mf8Z6feWFLa7oC7DEqkQREZTU5smKRK95CYmMt0gozR2GQcob7j48FZ2ew__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me Is your information displayed correctly screen with the consent checkbox and Yes highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F121609b9-1353-4650-956d-bf2649bd87db-p14-confirm.png?Expires=253370764800&Signature=pFCTWCocF7W3sS9wVbmMqwyGiiR~tmWKDVJhi~9g~xYZiUtdwg~yco7aY~8Cg0-qebCpohD6D8KBdIIBjBUqH1b23Uw~D1jsRpxOuyrpeUMGukR0imTHyGhILKw-5K41z1E41wyMHxcoqN56SuJ4ZsUJ0z2YJBiz-bPc4D2Ysd8n5TFWKcq3aoxLNHnv8U6T29lLLVV4DiRb4uIgtwLQKsKdXPftm6Q8TeWBtEYfy1pvaHPE84a1465ncPQ-qDT6deY0B-FZGndb3YbDFPoBr9p8RQ78MuTNMDgrrLXP8M4v17C3eX2F9CESxisbn3qLaxP1vxmOrKlww5TvwEKzfQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 6: Allow ID.me to share your details with Canvas
+ID.me shows **We've verified your identity!** and lists what Canvas Medical will receive: email, first name, last name, birth date, and addresses. Click **Allow**.
+![ID.me Authorize Canvas Medical screen with Allow highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff9359716-c686-4a9c-aef1-29bca788502b-p15-allow.png?Expires=253370764800&Signature=i8p~1WJrEjuKxS2zWQdu7h~8TJObl6Z0TasxqCELn7oMZMQcU8UATmaIevpx3tkw7U~cb4x3y-nv-dg78hRHCRHVUQwa0GKp08V1LiHduAf-ow0vCJkQCZRYzr0LeCRucyF3L9jJvKxLGjxOpaINKoRmh7w~UjKqkvYe3TYZHMESUkINsvN6B7Gwsg~EWzqtC3nuomeDLzZJ5YQAb61BUZ0g29aXiEuHhS1QN3rMiDin4wi2xQfEKraROo~DQ6sgfJpTeQpvqkYdVUUOtK4um94AwmzT-Mg3wm1C8Kty5r9BWw6a66sZchENakmAGfaylVLjnk-l605XiOlGHJfKPA__&Key-Pair-Id=K3NV4LZ47N8M46)
+If you click **Deny** , ID.me does not send your verification to Canvas and nothing is recorded. Canvas shows **You chose not to share your details** with a **Try again** button.
+## Step 7: Confirm you're verified
+Canvas shows **You're verified**. Click **Done** to return to the Identity verification page, which now shows **Your identity is verified** with the date. Nothing else is needed from you. You can return to this page from **Identity verification** in the menu at any time.
+![Canvas page showing Your identity is verified](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa1b1cab5-fd6f-4f13-8bd3-f712c79d433e-p16-verified.png?Expires=253370764800&Signature=k2HK5rsJGWd~d4rc5-Tui25UsfAYZ68xeHmArk4TqHVOQrdUi6ZJlZJuJbm-Nr2Ps8QPr~~iBMBXupZJhXR3qOaIQhTyCAzRlqvfGn-SjJrJujSLcw7xYTaF3ybdLZEkfCHDZpqSa8GoxDtLdF~GGh4sbbg118d8XrsX51K7EbgFNTVzI3aGjrLRZRGqCKlO9MKAh205vv~moBke4xPEULbL87B8rcK6fjScZTcbpsL4hjPRibevZZd0EXRMbTi3G5Oa1NbRC1GjTDfxXni1bvK3hFxWb-KZNZJ2SzDf~CmS3mKiCT6xmgdbqGfwLSJu5iDE-mjwsz6Df0EsxoL7yQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## If verification did not finish
+If Canvas shows **Verification did not finish** , click **Error details** to see why.
+![Verification did not finish page with Error details and Try again highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ffe82aa01-a220-4de0-98d3-c1d0060f59b4-p17-failed.png?Expires=253370764800&Signature=Gq6LQ8NJVqyiNrvgZXsxXA364H1~Gej3V-GZUwND3ebneoUtaAe4QoOP-CbmDHvlPTYdOZPLxqdZ76~dFkrOTNLs~-rh2TVwcqqj6D1GSxRqk~rRwraQukpIhpgVxUMFBzJKol6~7tjF4qwylBDlf7DfUKV2OXQnRU8vhIbHqwaMzDt8z6GZUG03R1l2nKuW8gClGstrBP7AMfBs2x60GKwxluggw8e2tVNZaj3mk28pZqo-j6zvvLz7yBsh8xGZPbJXMbD4JwX9sIgOfjxiXNWPOIowjG1aOapwEovBZMgQkxWNFDD8137-lvkURiI-hn8msxiQXK6EC6YGC-mYKw__&Key-Pair-Id=K3NV4LZ47N8M46)![Expanded error details showing a date of birth mismatch](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F80397710-ae2f-44df-a364-092ac3a6b6e3-p18-failed-details.png?Expires=253370764800&Signature=An055STU8VH72dsqQiSe1S8jeTh1H2IMZJ3lw8qXEyssrtM2BiqtF75SJaZiKexDK6kLART2aez4KPktiZwy8mjAMMK0cCoGevb2-Xb6zSLiqGKAHa8-dquDzxAZu2KuLne9rqV37Mlp03zNcB-UrbMIhylMnZnEVXAGRpLyP84SBcJ~jNqffJ6XhwpQHdgobthuBVP7ECdQoJvXc79-zqKFhJ~OffL7xTDGgpKJWeQC3tCmeLZ6N1xYrmmnjulXCxN0S7KqMOirf0OjG3VfWRF41xfzc2u-bn3ZiEkXT~aeyRSL8VN07HgsrkdPoAO53SfyFsZTVT7voufJ22jo2A__&Key-Pair-Id=K3NV4LZ47N8M46)
+  - **The identity ID.me verified does not match this staff record.** ID.me verified you, but your name or date of birth differs from your Canvas staff record, so Canvas did not record it. The details below that message say which one: date of birth, first name, or last name. Ask your practice administrator to correct your staff record, then click **Try again**.
+  - **A date of birth is required on both sides** (or a first or last name). Your staff record is missing that detail. Ask your administrator to add it, then try again.
+  - **ID.me could not be reached.** Wait a few minutes and try again.
+  - **That verification link has already been used or has expired.** Start again from **Identity verification**.
+  - **ID.me verified your identity, but Canvas could not record it.** Contact Canvas support before trying again.
+If you contact Canvas support, include the **Reference** shown under Error details.
+----- END PAGE https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2428914045-patients-module
 ## Introduction
 The Patient Module is a top-level view in Canvas that displays all patients in a table format. This list can be filtered by care team, so that each care team member can easily access a list of all patients they are responsible for. It can also be filtered by name and facility (if relevant).
@@ -2911,6 +2963,9 @@ Each queue is divided into columns with key data. Users can filter and sort clai
 **Labels**
   - Either the pre-configured or [**custom labels**](https://canvas-medical.help.usepylon.com/articles/7708474806-task-claim-labels) associated to the claim
   - This column can be filtered to a specific label or a set of labels
+**Assignee**
+  - The staff member or team the claim is assigned to. To show it, go to **Settings > Quality & Revenue > Queues**, open the queue, add **Assignee** to its **Visible Columns** , and click **Save**.
+  - Users can filter claims to one or more staff members or teams, or to **Unassigned** , and sort by staff name, then team name.
 ![Jess Screenshot from Google Chrome on2024-11-07 5.jpg](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fc2d4acdc-9881-472c-bda9-5b7d4281eadd-1730991621591-JessScreenshotfromGoogleChromeon2024-11-075.jpg-285a90d3-8908-4231-86a3-8b74d0a7a296?Expires=253370764800&Signature=VsAheYQk~Rq7f8ekZtSQ0epnnHB2YmCg2xNvPkOyqq2IsZVDnZcQkzrhHRHEVbZhw~~xo1ZN2wbRI-t1JDxxhGyg8Pd4uwd-Jz3xuj5tVBC6nh~5br1AGCpYFuzvli13xru4tZGTSdopyFrmClrlq7f2AVQn3YJpWptJYwEBxPdp4v7AgiG1gq1wtmUBYx1c6De4QhR65CzzBaT4FHaXFrgdkwbL5~n~99IKaiaV8OaWiW3ThjZY5AprStvCjWxgt8H-gqm~F57DJ2CtAh47QqXv8rkTqlQdgGcqtkzwOMBHvfSG~8AcpzSXEG-Y02S08-RC1hRSp-6BPB2ii5Vhcw__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Manually Moving Claims to a New Revenue Queue
 Users can transfer claims between queues manually when necessary
@@ -10643,6 +10698,111 @@ A: Yes, simply use **Create or update an automation** and select the existing au
 ----- END PAGE https://help.canvasmedical.com/articles/7126006931-automations
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/7157688655-public-booking-plugin
+## Overview
+The Public Booking plugin lets new leads and patients book an appointment from a public link, with no portal account. The visitor picks a service, a location, and a time, then enters their name, date of birth, phone, and email. The plugin books against the same provider and room availability that the Scheduling with Rooms modal offers staff, matches the visitor to an existing chart or creates a new one, holds the room, sends a portal invite, and creates a staff task.
+Booking page:
+    https://<your-instance>.canvasmedical.com/plugin-io/api/public_scheduling/booking
+## Who should use this plugin
+Practices that want new patients to book themselves from a link or a "Book now" button on their website, including practices whose visits need both a provider and a room.
+## Problem it solves
+Canvas's native self-scheduling lives in the patient portal and requires a login, and visits that need a room are coordinated by the Scheduling with Rooms plugin. The Public Booking plugin gives prospective patients a public page that books against provider and room availability together, and hands the booking to staff with a task.
+## Before you begin
+  - Install the Scheduling with Rooms plugin first. Public Booking reads its room configuration and stores its own settings in the same Custom Data namespace.
+  - In Scheduling Admin, set up the visit types, durations, and room mappings you want to offer.
+  - Make sure each bookable provider has Clinic availability events at the locations where they see patients. An event with no allowed note types allows every visit type.
+  - To text booking confirmations, install the Patient Communications plugin and turn on its confirmation SMS channel in Notifications Admin.
+## Install the plugin
+    canvas install public_scheduling --host <your-instance> \
+      --secret namespace_read_write_access_key=<Scheduling with Rooms read_write key>
+The `namespace_read_write_access_key` value is the same key set on the Scheduling with Rooms plugin. After installing, open **Online Booking Admin** from the provider menu to choose the bookable services and providers.
+## Configure the booking page
+Open **Online Booking Admin** from the provider menu. Any signed-in staff member can open it, and changes apply to the booking page as soon as they are saved.
+Tab| What it sets  
+---|---  
+General| Organization name, logo, booking window, and minimum notice  
+Booking flow| Step order, the patient time zone picker, provider cards or a dropdown, and add-to-calendar buttons  
+Services| Which visit types are bookable and in what order, the name and description patients see, and the visit length  
+Locations| Which locations are offered, the address and description shown, and a photo  
+Providers| Which staff patients can book, with photo, credentials, a one-line bio, and a full bio  
+Pages| The text on every page of the flow, the practice phone number, whether email and a reason for visit are asked, and up to 10 booking questions  
+Branding| Colors, font, and an optional faded background image  
+Links| A builder for links that open the page with a service, a location, or both already chosen  
+Each Pages section has a **Preview** button that shows unsaved changes against live services, locations, and times. A preview cannot book.
+## How patients book
+  1. **Service.** The patient picks a visit type.
+  2. **Location.** Only locations that offer the chosen visit type are listed. A location qualifies when a provider has availability there for that visit type and, for a visit type mapped to rooms, one of its rooms does too. The step is skipped when only one location qualifies.
+  3. **Time.** A month calendar highlights dates with openings. Picking a date lists its times grouped into morning, afternoon, and evening.
+  4. **Details.** The patient enters their name, date of birth, phone, email, and any reason for visit or booking questions you turned on.
+  5. **Review.** The patient checks the appointment and their details. Nothing is booked until they confirm.
+  6. **Confirmation.** The page offers an "Add to Google Calendar" link and an `.ics` download for Apple Calendar and Outlook.
+If Location is placed before Service in Booking flow, the same rules run the other way: a location lists only the services it offers.
+## What happens after a booking
+  - **Chart.** The booking attaches to an existing chart only when exactly one active patient has the same first name, last name, and date of birth and a matching phone or email. Otherwise a new chart is created. A name and birthdate collision flags the task for staff review.
+  - **Appointment and room.** The appointment is booked on the provider's calendar, and when the visit type uses a room, the room event is created and linked the same way Scheduling with Rooms links it. Canceling or rescheduling in Scheduling with Rooms releases or moves the room as usual.
+  - **Reason for visit.** A reason the patient entered is added to the visit note as a Reason for Visit command, left uncommitted for the provider.
+  - **Portal invite.** A portal invite is sent when the patient has an email and has not registered.
+  - **Staff task.** Each booking creates a task titled "Online booking: ..." with the reason, booking question answers, and any review note.
+  - **If the time was taken.** When a new chart's time is taken before the appointment is booked, staff get a task to call the patient instead.
+## Booking links for a specific service or location
+A link can choose the service, the location, or both for the patient:
+    https://<your-instance>.canvasmedical.com/plugin-io/api/public_scheduling/booking?appointment_type=<note type code>&location=<practice location id>
+  - `appointment_type` is the visit type's note type code, as listed on the Services tab.
+  - `location` is the practice location id, with or without dashes.
+  - A value set by the link is chosen for the patient, and that step leaves the flow, so the patient cannot change it. The other steps run as usual.
+  - A value that is not offered online (unknown, hidden on the Services or Locations tab, or not a scheduleable visit type) is ignored, and so is a location that does not offer the chosen service. The patient then chooses that step as usual.
+  - A link with neither parameter opens the full flow.
+### Build a link
+  1. Open **Online Booking Admin** and go to the **Links** tab.
+  2. Pick a service, a location, or both.
+  3. Click **Copy** , or **Open** to try the link in a new tab.
+Links are built from saved settings. A link built from unsaved changes works once they are saved.
+### Add booking to your website
+Add a "Book now" button or link on your website that opens the booking link in a new tab. The booking page cannot be shown in an iframe on another website: Canvas only allows its own pages to frame plugin pages.
+## Protections on the public page
+  - An hourly limit on bookings per IP address, set by `RATE_LIMIT_PER_HOUR`, and a higher limit on page reads.
+  - Optional CAPTCHA with Cloudflare Turnstile or Google reCAPTCHA.
+  - A hidden honeypot field that silently discards automated submissions.
+  - Every input is validated, and the chosen time is rechecked before booking.
+  - Booking stays closed until at least one visit type is offered and at least one provider is bookable.
+  - The admin pages require a staff session. The public page never changes settings.
+## Plugin variables
+Variables marked * can also be set in Online Booking Admin, which takes precedence when its field is filled in.
+Variable| Meaning  
+---|---  
+`PUBLIC_VISIT_TYPE_CODES`*| Note type codes bookable online, comma-separated, in display order. Each entry is `code`, `code:minutes`, `code:description`, or `code:minutes:description`. Without a number, the shortest duration set in Scheduling Admin is used.  
+`PUBLIC_LOCATION_IDS`| Optional comma-separated practice location ids to limit the page to.  
+`SCHEDULABLE_STAFF_ROLES`| Role codes whose staff are bookable until a provider list is saved on the Providers tab.  
+`ALLOW_INTERVALS`| `true` for quarter-hour start times. Use the same value as Scheduling with Rooms.  
+`BOOKING_WINDOW_DAYS`*| How far ahead times are offered. Default 60.  
+`MIN_NOTICE_HOURS`*| Minimum hours between now and a bookable start. Default 24.  
+`RATE_LIMIT_PER_HOUR`| Bookings per IP address per hour. Default 10.  
+`CAPTCHA_PROVIDER`| `turnstile` or `recaptcha`.  
+`CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY`| The CAPTCHA provider's keys. CAPTCHA turns on once all three CAPTCHA variables are set.  
+`BOOKING_TASK_TEAM_ID`*| Optional team id for the staff tasks.  
+`SEND_PORTAL_INVITE`*| `true` (default) to send portal invites.  
+`ORGANIZATION_NAME`*| Shown on the first page as "Welcome to" followed by the name. Unset, the page reads "Book an appointment".  
+`PRACTICE_PHONE`*| Tap-to-call number shown when booking is closed or no location offers the chosen service.  
+`BOOKING_PAGE_LOGO_URL`*| An `https` image URL shown above the title.  
+`BRAND_PRIMARY`, `BRAND_PRIMARY_HOVER`, `BRAND_PRIMARY_TINT_BG`, `BRAND_PRIMARY_TINT_TEXT`*| Hex colors for buttons, their hover state, and highlighted backgrounds and their text.  
+`BRAND_FONT_STACK`*| CSS font-family list.  
+`BRAND_FONT_URL`*| A Google Fonts CSS URL that loads the font in `BRAND_FONT_STACK`.  
+`namespace_read_write_access_key`| The Scheduling with Rooms namespace read_write key.  
+## Troubleshooting
+Issue| What to check  
+---|---  
+The page says online booking is unavailable.| At least one service must be selected on the Services tab and at least one provider on the Providers tab.  
+A service has no locations.| A provider needs a Clinic availability event at that location that allows the visit type and occurs within the booking window. For a visit type mapped to rooms, one of its rooms needs availability at that location too.  
+A location shows no times.| Check provider and room availability, existing appointments, minimum notice, and the booking window.  
+A booking link still shows the service or location step.| The value in the link is not offered online, or the location does not offer the chosen service. Rebuild the link from the Links tab.  
+A location shows no address.| Billing addresses are never shown. Add an address on the Locations tab.  
+The booking page does not load inside our website.| The page cannot be framed by another site. Use a button or link that opens it in a new tab.  
+Patients are not receiving confirmation texts.| Turn on the confirmation SMS channel in the Patient Communications plugin's Notifications Admin.  
+## Related articles
+  - [Managing Provider Availability](https://help.canvasmedical.com/articles/6105998178-managing-provider-availability)
+----- END PAGE https://help.canvasmedical.com/articles/7157688655-public-booking-plugin
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale
 ## Introduction
 Patient safety issues are those that interfere with the process of health care and could lead to diagnostic errors, medical errors, injury, or other preventable harm to a patient during the process of health care (AHRQ).
@@ -10769,6 +10929,30 @@ A: Reports typically take 1-5 minutes to generate.
 **Keywords:** Report Jobs, Billing Reports, Financial Summaries, Revenue Management, Data Analysis, Practice Analytics, Canvas Reporting, Healthcare Metrics
 **Categories:** Practice Management, Billing, Operational Analytics, Financial Reporting
 ----- END PAGE https://help.canvasmedical.com/articles/7194605474-report-jobs
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators
+Prescribers at your practice confirm their identity with ID.me before they are enrolled to send prescriptions. For the prescriber's enrollment steps, see [Verifying Your Identity with ID.me: Step-by-Step Guide for Prescribers](/articles/2418476962).
+## Before you begin
+  - Make sure identity verification is enabled. If prescribers don't see **Identity verification** in the left hand menu, contact Canvas support.
+  - Only staff with the **EPCS Administrator** role see the list of prescribers and their verification status. Give this role only to the people who manage prescriber enrollment.
+## Update staff profiles with names and birth dates
+Before a prescriber starts identity proofing, make sure the **First name** , **Last name** , and **Birth date** on their Canvas staff record match their government-issued ID. Canvas compares these three fields with what ID.me verifies, and if any of them differs or is blank, the verification is not recorded.
+  1. In **Settings** , go to **Practice** > **Staff** and open the prescriber's record.
+  2. Check **First name** , **Last name** , and **Birth date** against the prescriber's ID, and fill in **Birth date** if it is blank.
+  3. Click **Save**.
+![Staff record with First name, Last name, and Birth date highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F6befdfeb-8a53-4718-8fe4-d8aa7353bb25-a04-identity-fields.png?Expires=253370764800&Signature=e1Kk8~IFM~~Ktd5GarVMR~YjmyJP9U5-W6B5-Um7wHLuHACJRQcDxiztmsWGfReZb0CC7pLKXEdP2XexXY8etdlJQDfjGWRvSKGjqAgla7mi58Puj0wm507SuKOlzaxKictoUDPdnH8SV0wl2nFq2XthkrlDtsCgNRV2HIzuAa~LZb3ZXYiK9aISxMnxedFIa3JemggDkhy7wygHcYzLwooeRP2dgX4jhoxF4bTWFU~-XRoC9Ry2EyAxGS62hYRVLENLkDVvrH2zelrXRWhOWajhomdeSdKEuB9lyySiKpKwLUKqwRzc3-0NdHVS4ZNJcPDU78ZYyjPsESkhaGvP6Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Give the staff member that is tracking Identity Verification the EPCS Administrator role
+  1. In Canvas, open the menu and click **Settings**.
+  2. Go to **Practice** > **Staff** , search for the staff member, and click their name.
+  3. Scroll to **Staff roles** and click **Add another Staff role**.
+  4. In the new **Role** field, choose **EPCS Administrator - EP role**.
+  5. Click **Save** at the bottom of the page.
+![Staff list in Settings with the search box and a staff name highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F60cddf13-0ece-43c8-879b-1558f34bed86-a01-staff-list.png?Expires=253370764800&Signature=b5w8gWajuumWcK7QjYyYTVkTan1cpApjLBlhOjmaSndROCWXdUiEt6acVucNIO7ZiINCY0y2Bwv6UyTTy2t1j2JfxdMLamEKYIJmjWnwl2mYS54I73baSW0VNFFlr8hT49WdpsfVy8y2exyZTl7T3m~rqg7KF2wl27LTJvfWbPWSlsq0W5846OqLp4tdbPRmfg3wkwAsljatwNgWNJGaIIuujk5icoR1Ea~xU6P46nudDC7ddZrtTSmGegIQ7thrDy~1OQsm1q1WsPatMY42TZcLchowcz6S00Dp~AaKZ5hk0BNVqocYk0RyZW8xLbqbmCP94b8DGpJVwPjZL5ZAxw__&Key-Pair-Id=K3NV4LZ47N8M46)![Staff roles section with Add another Staff role and the EPCS Administrator role highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe37167db-6167-4990-9a31-00626f5dab7a-a02-role.png?Expires=253370764800&Signature=Hy5TgFl8F7VvBHBA9RMT2qnn-F3eE9MW0OG2~7FoiAW7WmlKyGTGYUDas68WKP-OEP-QWfG0ij8sFh4BelZ1hDVg1sp3u5tChI8A7x-aDKW4dcHsSIGfwcOQWh~M0pXzOmFU1S-O6~8efjSVhWiafZxFk3QNT1EVciGXqQ9yGupn~bcKBRsN-zT14~jDA43iJNEuihwB5wajYg5aNtEKinVMmAEFF7RDe1h60F~AzMKXlvkcYBzQjAN6z4WHg9N8T3lxwahOnmeqKyywkHSKGtaolRO9vWiyTALdpSnbIp0Jb6Nbfmyj7IK6GE0q1h--eFDZZQBfMf0sJuBksyt82g__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Open the Identity Verification Dashboard
+Open **Identity verification** from the left hand menu. Below your own status, the **Prescribers** table lists every active staff member with their NPI, whether they have verified (**Yes** or **Not yet**), and the date.
+![Canvas main menu with Identity verification highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3a06975f-da32-4ef3-9631-d76b0c358b41-p01-menu.png?Expires=253370764800&Signature=GHX2rUFxO1prFGp-WvM9ecKyupBwqVe4tvi3KhdgLw0N6AsyArj09H6Uamsduf8QQ5SF37gcQXWFGBQTwtsfn~OUtR7U0dRSS9ZxSRFo3kKvXs-g6MmY67ncrRAhdhPbIItm4z-W06c94rcVu6GVobnt85Fz44g~U5PYM~5bvsaW0kDs-dsRJ3CHqRLIWvA47PC7WQHk093YKvGtV9sOu19y9vORNnOZzGZ8v11MQsJg9iqssy3wshELHQ8smshAxSqiGDJS6rJE6a5S5qQmIcRIWs7Gvip1h061xph0qKYkdc~BMa0k~2XQZ-zczxUX89hr~ctS~9sHrBWXuVKxnQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Prescribers table showing verification status for each staff member](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb154a366-c105-4426-bf26-d6a084752809-a03-prescribers.png?Expires=253370764800&Signature=s858ebWZ1bHo4VOKE7016lTjr-Nqrk1gFkU~fwuGk7ft4XwNWytkSYZ6GvFc2b~SVY06JbyKIPMFyhP7-URZ9CrYDO96plp~pFXzo0NO6xMuXF6wiPV0ObAh~~~tvxcavaBC7GCWQJb9D-ZnT8aBGb4lnyJLY9K2Z4k0mO5ORSDp~zgEug6xeqeKVc9pjgty-ZrNIfUxR5Zc1J5WNgYb01uPuI8wV1VvVfIFvsj4ziAtGaD0InlKrSoIsJmg8nVfNQa761h3g0L164dJ1gChOqv-GSfOvW2ZE5ouaDU-O0fBX2zC3apY3gww3L4mb6HF0GRGt2TfCVV7dEMtFOkZTw__&Key-Pair-Id=K3NV4LZ47N8M46)
+----- END PAGE https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7271273093-training-clinical
@@ -14499,6 +14683,11 @@ Allows users to temporarily hide a claim from the primary outstanding claims que
     - Confirm the snooze action to hide the claim from the default queue view.
   - Once the snooze period ends, the claim automatically reappears in the queue for follow-up.
 ![2025-01-23_15-47-52.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1737665283982-2025-01-23_15-47-52.png?Expires=253370764800&Signature=CTQ~A6hwLW1B9CnC0GdY4wSJGCr6vfEGsd2YotnqsPc77w~tKv7iecSyNbXENB0iKozPLhX5m9NvkIj5Bj18p8a6mQ1Tx-grBuXAodcRzxSlqASqOSQq1hBdIbkGZxvDga8NuS0PBAYhx3vA7ZEo3UVDr5Z6mVybKDqTbgWrFJkbhRQ2XenY1rw4-gtxFy8LoCqgbemiEOVsLK0j6cpE2lCyb2KZwq1Rg5AXZX9E3l~JJJIy7WqBw6tKlVJeE9StanuxZImIxW7Fq9YlWzKS9Y0IHMeO3FHrE9sp8Wevn4xf7diAfHKljlZ8LYshzXXA8O~FC1e6KdyKS6zWIc08aA__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Assign a Claim
+Assign a claim to a staff member or a team so everyone knows who owns it.
+  - In the claim header, choose an owner in **Assignee**. Choose **Unassigned** to clear it.
+  - Every change of owner shows in the claim's **Activity Log** , including changes a plugin makes.
+  - To see owners in a revenue queue, go to **Settings > Quality & Revenue > Queues**, open the queue, add **Assignee** to its **Visible Columns** , and click **Save**. See [Revenue Queues](https://help.canvasmedical.com/articles/3240845520-queues).
 ## Claim Data
 Now that we know how a claim is structured, lets review where data on the claim originates. Each claim has an associated note which has a patient, staff and practice location. This information populates the associated claim.
 ### Patient Information

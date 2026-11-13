@@ -291,6 +291,16 @@
     - Passphrase and sign-in
     - Getting help
     - Related articles
+- [Verifying Your Identity with ID.me: Step-by-Step Guide for Prescribers](https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me)
+    - Before you begin
+    - Step 1: Open Identity verification
+    - Step 2: Start the verification
+    - Step 3: Sign in to ID.me or create an account
+    - Step 4: Photograph your ID on your phone
+    - Step 5: Finish the ID.me checks
+    - Step 6: Allow ID.me to share your details with Canvas
+    - Step 7: Confirm you're verified
+    - If verification did not finish
 
 ### Support & FAQs
 - [Canvas Support Resources](https://help.canvasmedical.com/articles/5542576212-canvas-support-resources)
@@ -648,6 +658,11 @@
     - Things to know
     - Troubleshooting
     - Related Resources
+- [Verifying Prescriber Identity with ID.me: Guide for Administrators](https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators)
+    - Before you begin
+    - Update staff profiles with names and birth dates
+    - Give the staff member that is tracking Identity Verification the EPCS Administrator role
+    - Open the Identity Verification Dashboard
 
 ## Charting & Documentation
 
@@ -1257,6 +1272,7 @@
         - Data Table
         - Activity Log
         - Snooze a Claim
+        - Assign a Claim
     - Claim Data
         - Patient Information
         - Staff Information
@@ -1580,6 +1596,22 @@
     - Troubleshooting
     - Install the Plugin
         - Plugin secrets
+- [Public Booking Plugin](https://help.canvasmedical.com/articles/7157688655-public-booking-plugin)
+    - Overview
+    - Who should use this plugin
+    - Problem it solves
+    - Before you begin
+    - Install the plugin
+    - Configure the booking page
+    - How patients book
+    - What happens after a booking
+    - Booking links for a specific service or location
+        - Build a link
+        - Add booking to your website
+    - Protections on the public page
+    - Plugin variables
+    - Troubleshooting
+    - Related articles
 
 ### Patient Communications
 - [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications)
