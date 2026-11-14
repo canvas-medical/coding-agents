@@ -19,6 +19,8 @@ uv run python -c "import canvas_sdk.agents"
 
 If that fails, or the target instance runs a Canvas release without the framework, build the handler pattern in the next section instead and tell the user why.
 
+Agent runs are also off on an instance until Canvas turns them on for it. On an instance with them off, every run is recorded as refused with "Agent runs are off on this instance.", so when a deployed agent never runs, check its run record for that reason before debugging the plugin, and tell the user to ask their Canvas team to turn agent runs on for the instance.
+
 ## Agent, or a handler that calls a model?
 
 | The spec... | Build |
