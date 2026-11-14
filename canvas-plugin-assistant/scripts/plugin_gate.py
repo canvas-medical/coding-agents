@@ -13,6 +13,7 @@ import json
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 from os import environ
@@ -40,16 +41,28 @@ SECRET_ASSIGNMENT = re.compile(
 PRIVATE_KEY = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")
 ENV_FILE = re.compile(r"(?:^|/)\.env(?:\.(?!example$|sample$|template$)[\w.-]+)?$")
 KEY_FILE = re.compile(r"(?:^|/)[^/]+\.(?:pem|key|p12|pfx)$")
-DOCS = re.compile(r"\.(?:md|rst)$")
+DOCS = re.compile(r"(?i)\.(?:md|rst)$")
+HEX_TOKEN = re.compile(r"[0-9a-f]{32,}")
 HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
+UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
+# `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
+CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch"}
 # Words that run the command after them: `env git commit`, `if git commit; then`.
 COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
+# Words that run the command after their options, with the options that take a value.
+# `timeout` also takes a duration before the command.
+WRAPPER_VALUE_OPTIONS = {"timeout": {"-k", "-s", "--kill-after", "--signal"}, "nice": {"-n", "--adjustment"}}
+# git subcommands whose `--continue` commits whatever is staged.
+RECORDS_ON_CONTINUE = {"merge", "rebase", "cherry-pick", "am", "revert"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
-WARNING_LINE = re.compile(r"^[ \t]*(⚠ \S+[ \t]+\[[\w-]+\].*)$", re.MULTILINE)
+# The two-space separators anchor it, since a file name can hold a space.
+WARNING_LINE = re.compile(r"^[ \t]*(⚠ .+?  \[[\w-]+\]  .*)$", re.MULTILINE)
 VALIDATE_TIMEOUT_SECONDS = 120
+MAX_SCAN_BYTES = 1_000_000
 OUTPUT_LIMIT = 3500
 
 
@@ -65,23 +78,118 @@ def find_plugin_dir(start: Path) -> Path | None:
 
 
 class OutsideSession(Exception):
-    """An installer target the gate will not check: checking runs code, and the hook runs
-    before the call is approved, so only plugins inside the session's working directory are."""
+    """A target the gate will not check: checking runs code, and the hook runs before the call
+    is approved, so only plugins inside the session's working directory are."""
+
+    reason = "it checks only plugins inside the session's working directory, so it stopped this call. Run it on a plugin from there."
 
 
-def target_dir(payload: dict) -> Path | None:
-    """The plugin the gated tool call acts on, or None when it acts on no plugin."""
+class UnclearTarget(OutsideSession):
+    """A command whose directory or plugin depends on shell expansion (`cd ~`, `$DIR`, `pushd`)."""
+
+    reason = "it could not tell which plugin this command acts on, so it stopped it. Use a plain relative path, without `~`, variables, `cd -` or `pushd`."
+
+
+def inside(path: Path, cwd: Path) -> Path:
+    """``path`` resolved, or OutsideSession when it is not within ``cwd``."""
+    resolved = path.resolve()
+    if resolved != cwd and cwd not in resolved.parents:
+        raise OutsideSession
+    return resolved
+
+
+class GitFailed(Exception):
+    """A git read exited nonzero, so the gate cannot see what the commit records."""
+
+
+def git(repo: Path, *args: str) -> str:
+    """Run git in ``repo`` and return its stdout, with unquoted paths and no fsmonitor command
+    or filter driver, since the hook runs before the call is approved. Raises GitFailed."""
+    base = ["git", "-c", "core.fsmonitor=false", "-c", "core.quotePath=false", "-C", str(repo)]
+    drivers = subprocess.run(
+        base + ["config", "--get-regexp", r"^filter\."],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    ).stdout
+    no_filters: list[str] = []
+    for driver in sorted({line.split(" ", 1)[0].rsplit(".", 1)[0] for line in drivers.splitlines()}):
+        # An empty command makes git skip the driver; `required` would make it fail instead.
+        no_filters += ["-c", f"{driver}.clean=", "-c", f"{driver}.process=", "-c", f"{driver}.required=false"]
+    result = subprocess.run(
+        base + no_filters + list(args),
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if result.returncode != 0:
+        raise GitFailed(f"`git {args[0]}` exited {result.returncode}: {result.stderr.strip()[-300:]}")
+    return result.stdout
+
+
+def repo_root(repo: Path) -> Path | None:
+    """The top of the repository holding ``repo``, or None outside one."""
+    try:
+        return Path(git(repo, "rev-parse", "--show-toplevel").strip())
+    except GitFailed:
+        return None
+
+
+def names(root: Path, *args: str) -> list[str]:
+    """File names a git listing prints with `-z`, so no name is quoted or split on a newline."""
+    return [name for name in git(root, *args, "-z").split("\0") if name]
+
+
+def untracked_files(root: Path) -> list[str]:
+    """New, non-ignored files, relative to ``root``. The hook runs before the command, so
+    `git add new.py && git commit` commits a file that is still untracked here."""
+    return names(root, "ls-files", "--others", "--exclude-standard")
+
+
+def commit_plugins(repo: Path) -> list[Path]:
+    """Every plugin holding a file the commit can record (staged, unstaged or new)."""
+    root = repo_root(repo)
+    if root is None:
+        return []
+    changed = set(untracked_files(root))
+    for staged in (["--cached"], []):
+        changed.update(names(root, "diff", "--name-only", "--no-renames", *staged))
+    plugins: set[Path] = set()
+    for name in changed:
+        # Path("a/b/h.py").parents is a/b, a, "." — the folders inside the repo, nearest first.
+        owner = next((root / folder for folder in Path(name).parents if (root / folder / MANIFEST).is_file()), None)
+        if owner is not None:
+            plugins.add(owner)
+    return sorted(plugins)
+
+
+def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
+    """The plugins the gated call acts on (none when it acts on no plugin)."""
     cwd = Path(payload.get("cwd") or ".").resolve()
     tool_input = payload.get("tool_input") or {}
+    kind, detail = action
     if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
         plugin_name = str(tool_input.get("plugin_name", ""))
         if not PLUGIN_NAME.fullmatch(plugin_name):
             raise OutsideSession
-        target = (Path(tool_input.get("cwd") or cwd) / plugin_name).resolve()
-        if target != cwd and cwd not in target.parents:
-            raise OutsideSession
-        return find_plugin_dir(target)
-    return find_plugin_dir(cwd)
+        start = inside(Path(tool_input.get("cwd") or cwd) / plugin_name, cwd)
+    elif kind == "commit":
+        repo = inside(cwd / detail, cwd) if detail else cwd
+        return [inside(plugin, cwd) for plugin in commit_plugins(repo)]
+    elif detail:
+        # A named target is that plugin or the one directly inside it, never an enclosing plugin
+        # the walk up from `find_plugin_dir` would reach.
+        named = inside(cwd / detail, cwd)
+        if (named / MANIFEST).is_file():
+            return [named]
+        children = [child for child in named.iterdir() if (child / MANIFEST).is_file()] if named.is_dir() else []
+        return children if len(children) == 1 else []
+    else:
+        start = cwd
+    plugin = find_plugin_dir(start)
+    return [plugin] if plugin else []
 
 
 def validate_warnings(stdout: str) -> list[str]:
@@ -154,13 +262,18 @@ def mask(value: str) -> str:
 
 
 def looks_random(value: str) -> bool:
-    """A value with lower, upper and digit characters, not a CONSTANT_NAME or a URL."""
-    return (
-        any(c.islower() for c in value)
-        and any(c.isupper() for c in value)
-        and any(c.isdigit() for c in value)
-        and not value.startswith(("http://", "https://"))
+    """A value with lower, upper and digit characters, or a long lowercase hex run (a
+    Twilio-style token), and not a URL: unlike a CONSTANT_NAME or a link."""
+    if value.startswith(("http://", "https://")):
+        return False
+    return bool(HEX_TOKEN.fullmatch(value)) or (
+        any(c.islower() for c in value) and any(c.isupper() for c in value) and any(c.isdigit() for c in value)
     )
+
+
+def is_example(path: str) -> bool:
+    """A doc or a test file, where a secret-like value is usually a sample, as `canvas validate` treats it."""
+    return bool(DOCS.search(path)) or bool({"test", "tests"} & set(Path(path).parts))
 
 
 def scan_diff(diff: str) -> tuple[list[str], list[str]]:
@@ -201,7 +314,7 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
                 (possible if DOCS.search(path) else certain).append(found)
                 break
         else:
-            if has_private_key:
+            if has_private_key or is_example(path):
                 continue
             for match in SECRET_ASSIGNMENT.finditer(added):
                 if looks_random(match.group(1)):
@@ -209,71 +322,152 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
     return certain, possible
 
 
-def bash_action(command: str) -> str | None:
-    """`commit` for a `git commit`, `upload` for a `canvas install`/`deploy`, else None.
+def joined(base: str | None, path: str) -> str:
+    """``path`` taken relative to ``base`` (an absolute ``path`` stands alone)."""
+    return str(Path(base) / path) if base else path
 
-    Reads each simple command, skipping `NAME=value` prefixes and git's global options
-    (`git -C dir commit`). A git alias for commit is not resolved.
+
+def joined_all(base: str | None, paths: list[str]) -> str | None:
+    """``paths`` applied in turn from ``base``, as chained `-C` or `cd` options are."""
+    for path in paths:
+        base = joined(base, path)
+    return base
+
+
+def upload_target(arguments: list[str]) -> str | None:
+    """The plugin path a `canvas install`/`deploy` names: its first positional argument."""
+    words = iter(arguments)
+    for word in words:
+        if word in CANVAS_VALUE_OPTIONS:
+            next(words, None)
+        elif not word.startswith("-"):
+            return word
+    return None
+
+
+def is_literal(word: str) -> bool:
+    """Whether ``word`` names a fixed path: the shell expands `~`, `$`, globs and `cd -` into
+    paths the gate cannot see."""
+    return not (word == "-" or word.startswith("~") or any(c in word for c in "$*?[{"))
+
+
+def bash_actions(command: str) -> list[tuple[str, str | None]]:
+    """Every gated action in the command: (`commit`, the directory git runs in) for each
+    `git commit`, (`upload`, the named plugin path) for each `canvas install`/`deploy`.
+
+    Reads each simple command, skipping `NAME=value` prefixes, wrapper words and git's global
+    options, and follows `cd`, `git -C` and `uv run --directory`. Raises UnclearTarget when one of
+    those depends on shell expansion. A git alias for commit is not resolved.
     """
     # shlex reads a newline as whitespace and a backtick as a word character, which would merge
-    # two commands into one; both start a new command in the shell.
+    # two commands into one; both start a new command in the shell. Its `#` comment would run to
+    # the end of the whole command, so a comment is read as words instead, which errs toward checking.
     lexer = shlex.shlex(command.replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
+    lexer.commenters = ""
     try:
         tokens = list(lexer)
     except ValueError:
-        return "commit" if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else None
+        return [("commit", None)] if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else []
+    actions: list[tuple[str, str | None]] = []
     words: list[str] = []
+    # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.
+    # An expanded `cd` makes it unknown, which matters only if a gated action follows.
+    base: str | None = None
+    base_unknown = False
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
             continue
-        while words and (
-            words[0] in COMMAND_PREFIXES
-            or words[0] == ""
-            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0])
-        ):
-            words.pop(0)
+        while words:
+            if words[0] in COMMAND_PREFIXES or words[0] == "" or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0]):
+                words.pop(0)
+            elif words[0] in WRAPPER_VALUE_OPTIONS:
+                wrapper = words.pop(0)
+                while words and words[0].startswith("-"):
+                    if words.pop(0) in WRAPPER_VALUE_OPTIONS[wrapper] and words:
+                        words.pop(0)
+                if wrapper == "timeout" and words:
+                    words.pop(0)
+            else:
+                break
+        if words[:1] in (["pushd"], ["popd"]) or (words[:1] == ["cd"] and len(words) != 2):
+            base_unknown = True
+        elif words[:1] == ["cd"]:
+            base_unknown = base_unknown or not is_literal(words[1])
+            base = joined(base, words[1])
+        run_dirs: list[str] = []
         if words[:2] == ["uv", "run"]:
             words = words[2:]
+            while words and words[0].startswith("-"):
+                option = words.pop(0)
+                if option in UV_RUN_VALUE_OPTIONS and words:
+                    value = words.pop(0)
+                    if option == "--directory":
+                        run_dirs.append(value)
         program = Path(words[0]).name if words else ""
         if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
-            return "upload"
+            target = upload_target(words[2:])
+            paths = run_dirs + ([target] if target else [])
+            if base_unknown or not all(is_literal(path) for path in paths):
+                raise UnclearTarget
+            actions.append(("upload", joined_all(base, paths)))
         if program == "git":
             rest = iter(words[1:])
+            git_dirs: list[str] = []
             for word in rest:
                 if word in GIT_VALUE_OPTIONS:
-                    next(rest, None)
+                    value = next(rest, None)
+                    if word == "-C" and value:
+                        git_dirs.append(value)
                 elif not word.startswith("-"):
-                    if word == "commit":
-                        return "commit"
+                    if word == "commit" or (word in RECORDS_ON_CONTINUE and "--continue" in rest):
+                        if base_unknown or not all(is_literal(path) for path in git_dirs):
+                            raise UnclearTarget
+                        actions.append(("commit", joined_all(base, git_dirs)))
                     break
         words = []
-    return None
+    return actions
 
 
-def scan_commit(plugin_dir: Path) -> tuple[list[str], list[str]]:
-    """Credentials the commit could record (certain, possible): its added lines and credential files.
+def scan_commit(repo: Path) -> tuple[list[str], list[str]]:
+    """Credentials the commit in ``repo`` could record (certain, possible): its added lines and
+    credential files.
 
-    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them.
+    Unstaged changes are read too, since `git commit -a` and `git commit <path>` record them, and
+    so are new untracked files, since `git add new.py && git commit` records them.
     """
-    git = ["git", "-c", "core.fsmonitor=false", "-C", str(plugin_dir), "diff", "--no-color", "--no-ext-diff"]
-    diffs = [git + ["--no-textconv", "-U0", "--cached"], git + ["--no-textconv", "-U0"]]
+    root = repo_root(repo)
+    if root is None:
+        return [], []
+    diff = ("diff", "--no-color", "--no-ext-diff", "--no-textconv", "-U0")
+    texts = [git(root, *diff, "--cached"), git(root, *diff)]
     certain: list[str] = []
     possible: list[str] = []
-    for args in diffs:
-        result = subprocess.run(args, capture_output=True, encoding="utf-8", errors="replace", check=False)
-        found_certain, found_possible = scan_diff(result.stdout)
+    untracked = untracked_files(root)
+    for name in untracked:
+        path = root / name
+        # A symlink could reach outside the repository, and a huge file would stall the hook.
+        try:
+            info = path.lstat()
+            if not stat.S_ISREG(info.st_mode):
+                continue
+            if info.st_size > MAX_SCAN_BYTES:
+                possible.append(f"{name}: a new file too large to scan ({info.st_size} bytes)")
+                continue
+            lines = path.read_text(encoding="utf-8").split("\n")
+        except UnicodeDecodeError:
+            continue
+        except OSError:
+            possible.append(f"{name}: a new file the gate could not read")
+            continue
+        # The whole new file, shaped as the one added hunk git would show for it.
+        texts.append(f"+++ b/{name}\n@@ -0,0 +1,{len(lines)} @@\n" + "".join(f"+{line}\n" for line in lines))
+    for text in texts:
+        found_certain, found_possible = scan_diff(text)
         certain += found_certain
         possible += found_possible
-    added = subprocess.run(
-        git + ["--cached", "--name-only", "--diff-filter=A"],
-        capture_output=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    for path in added.stdout.splitlines():
+    for path in names(root, "diff", "--cached", "--name-only", "--diff-filter=A") + untracked:
         if ENV_FILE.search(path):
             certain.append(f"{path}: an environment file")
         elif KEY_FILE.search(path):
@@ -296,29 +490,37 @@ def main(stdin: str) -> int:
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
-    if payload.get("tool_name") == "Bash":
-        action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
-    else:
-        action = "upload"
-    if action is None:
-        return 0
+    cwd = Path(payload.get("cwd") or ".").resolve()
+    plugin_dirs: list[Path] = []
+    commit_repos: list[Path] = []
     try:
-        plugin_dir = target_dir(payload)
-    except OutsideSession:
+        if payload.get("tool_name") == "Bash":
+            actions = bash_actions(str((payload.get("tool_input") or {}).get("command", "")))
+        else:
+            actions = [("upload", None)]
+        for action in actions:
+            touched = target_dirs(payload, action)
+            plugin_dirs += [plugin for plugin in touched if plugin not in plugin_dirs]
+            if action[0] == "commit" and touched:
+                repo = inside(cwd / action[1], cwd) if action[1] else cwd
+                commit_repos += [repo] if repo not in commit_repos else []
+    except OutsideSession as refused:
         if mode == "block":
-            print(
-                "CPA plugin gate: it checks only plugins inside the session's working directory, "
-                "so it stopped this install. Run it with a plugin from there.",
-                file=sys.stderr,
-            )
+            print(f"CPA plugin gate: {refused.reason}", file=sys.stderr)
             return 2
         return 0
-    if plugin_dir is None:
+    if not plugin_dirs:
         return 0
+    names = ", ".join(plugin.name for plugin in plugin_dirs)
     problems: list[str] = []
     advisories: list[str] = []
-    if action == "commit":
-        certain, possible = scan_commit(plugin_dir)
+    certain: list[str] = []
+    possible: list[str] = []
+    for repo in commit_repos:
+        found_certain, found_possible = scan_commit(repo)
+        certain += found_certain
+        possible += found_possible
+    if commit_repos:
         if certain:
             problems.append(
                 "the changes this commit can record add what look like live credentials. Remove "
@@ -327,28 +529,29 @@ def main(stdin: str) -> int:
             )
         if possible:
             advisories.append(
-                f"CPA plugin gate, for {plugin_dir.name}: the changes this commit can record may add "
+                f"CPA plugin gate, for {names}: the changes this commit can record may add "
                 "credentials. Check each, and move any real one to a manifest secret:\n" + "\n".join(possible)
             )
-    problem, warnings = run_validate(plugin_dir)
-    if problem is not None:
-        problems.append(problem)
+    warning_parts: list[str] = []
+    for plugin in plugin_dirs:
+        problem, warnings = run_validate(plugin)
+        if problem is not None:
+            problems.append(f"{plugin.name}: {problem}" if len(plugin_dirs) > 1 else problem)
+        if warnings:
+            warning_parts.append(
+                f"CPA plugin gate: `canvas validate` passed for {plugin.name} with warnings. They do not "
+                "block; fix them unless the code is intended:\n" + "\n".join(warnings)
+            )
     if problems and mode == "block":
         print(
-            f"CPA plugin gate ({plugin_dir.name}): " + "\n\n".join(problems) + "\n\nFix these, then try again.",
+            f"CPA plugin gate ({names}): " + "\n\n".join(problems) + "\n\nFix these, then try again.",
             file=sys.stderr,
         )
         return 2
     context_parts = [
-        f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {plugin_dir.name}: {found}"
-        for found in problems
+        f"CPA plugin gate, advisory only ({MODE_VARIABLE}=advise), for {names}: {found}" for found in problems
     ]
-    if warnings:
-        context_parts.append(
-            f"CPA plugin gate: `canvas validate` passed for {plugin_dir.name} with warnings. They do not block; "
-            "fix them unless the code is intended:\n" + "\n".join(warnings)
-        )
-    context_parts += advisories
+    context_parts += warning_parts + advisories
     if not context_parts:
         return 0
     context = "\n\n".join(context_parts)
@@ -360,5 +563,21 @@ def main(stdin: str) -> int:
     return 0
 
 
+def run(stdin: str) -> int:
+    """`main`, failing closed: Claude Code runs the call after an uncaught error (exit 1), so in
+    `block` mode a crash in the gate stops the call instead."""
+    try:
+        return main(stdin)
+    except Exception as error:
+        if environ.get(MODE_VARIABLE, "").strip().lower() != "block":
+            return 0
+        if isinstance(error, GitFailed):
+            failure = f"it could not read the changes this commit can record ({error})"
+        else:
+            failure = f"the check failed ({type(error).__name__}: {error})"
+        print(f"CPA plugin gate: {failure}, so it stopped this call.", file=sys.stderr)
+        return 2
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.stdin.read()))
+    sys.exit(run(sys.stdin.read()))

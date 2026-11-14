@@ -58,15 +58,18 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 
 ### Plugin Gate
 
-A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) on the plugin before `git commit`, `canvas install`, `canvas deploy` (bare or through `uv run`) and the `installer` MCP tool. It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
+A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) before `git commit`, `canvas install`, `canvas deploy` (bare, through `uv run`, or `.venv/bin/canvas`) and the `installer` MCP tool. It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
+
+- Which plugin: for a commit, every plugin holding a file the commit can record; for an install or deploy, the plugin it names. A `cd`, `git -C` or `uv run --directory` earlier in the command is followed, so the workspace layout above (`my-plugin/my_plugin/`) is found from the workspace.
 
 - `advise` hands any failure back to Claude as context and lets the call run.
 - `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
 - Warnings from a passing `canvas validate` (lint `⚠` lines and `Warning:` blocks such as handlers the manifest never loads) go to Claude as context in either mode and never stop the call.
 - Any other `CPA_PLUGIN_GATE` value stops every covered call with a message naming the setting, so a typo is seen at once.
-- On `git commit` (including `git -C <dir> commit` and other global options; a git alias for commit is not resolved) it also reads the lines the commit can record: staged and unstaged changes, since `-a` and `git commit <path>` record unstaged ones. An Anthropic, Slack, Stripe live, GitHub or OpenAI project key, or a new `.env` file, stops the commit in `block` mode. The same key in a `.md` or `.rst` document, a private key or a new `.pem`, `.key`, `.p12` or `.pfx` file (a mutual-TLS client key can only be loaded from a file today), or a random-looking value on a secret-like name only advises. No message shows more than a vendor prefix.
+- On `git commit`, and on `git merge`, `rebase`, `cherry-pick`, `am` or `revert` with `--continue` (including `git -C <dir>` and other global options, and behind `env`, `sudo`, `nohup`, `timeout` or `nice`), it also reads the lines the commit can record: staged and unstaged changes, since `-a` and `git commit <path>` record unstaged ones, and new files that are not ignored, since `git add new.py && git commit` records them. A git alias for commit, and a commit run through `sh -c`, `eval` or `xargs`, is not seen. An Anthropic, Slack, Stripe live, GitHub or OpenAI project key, or a new `.env` file, stops the commit in `block` mode. The same key in a `.md` or `.rst` document, a private key or a new `.pem`, `.key`, `.p12` or `.pfx` file (a mutual-TLS client key can only be loaded from a file today), or a random-looking value on a secret-like name outside tests and docs only advises. No message shows more than a vendor prefix.
+- It reads the repository with git's filter drivers and fsmonitor switched off, so no repository-configured command runs. A git read that fails stops the commit in `block` mode.
 - It runs the project's own `.venv/bin/canvas` (in the plugin folder or the one above it), else `canvas` from `PATH`. It never runs `uv`, since the hook runs before the call is approved and `uv` builds environments.
-- An `installer` call is checked only when its plugin sits inside the session's working directory. In `block` mode one targeting a plugin elsewhere is stopped; in `advise` mode it runs.
+- A plugin is checked only when it sits inside the session's working directory, since checking runs its code before the call is approved. In `block` mode a call on a plugin elsewhere is stopped; in `advise` mode it runs.
 - The hook is stdlib-only and runs under `python3`.
 
 ### Command Requirements
