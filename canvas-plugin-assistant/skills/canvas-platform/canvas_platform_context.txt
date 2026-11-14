@@ -7331,8 +7331,9 @@ Vitals| Optionally enters height and weight
 For conditions, surgeries, medications, allergies, goals, and vitals, the patient also sees what is **already on file** , read-only, so they only add what's missing.
 ## Assign forms from the chart
   1. Open the patient's chart, then **Patient Communications** > **Forms**.
-  2. To send questionnaires, use **Assign Forms** : move them from **Available** to **Selected** , set the **Due Date** (a week from today by default), and click **Assign**. Choosing **Patient Intake** sends every intake section.
-  3. To send only some intake sections, use **Assign Intake** : move the sections to **Selected** , set a **Due Date** , and click **Assign Intake**. The sections appear to the patient in alphabetical order.
+  2. To send questionnaires, use **Assign Forms** : move them from **Available** to **Selected (in order)** , use ▲ ▼ to set the order the patient sees them, set the **Due Date** (a week from today by default), and click **Assign**. Choosing **Patient Intake** sends every intake section.
+  3. To send only some intake sections, use **Assign Intake** : move the sections to **Selected (in order)** , use ▲ ▼ to set the order the patient sees them, set a **Due Date** , and click **Assign Intake**.
+In both, an item you add goes to the end of **Selected (in order)**. To move items, highlight them and click ▲ or ▼. **Available** stays in alphabetical order.
 **Assigned Forms** lists what the patient still has to do, grouped by visit or due date, with their progress once they start. **History** lists what they completed or what expired.
   - To remove a questionnaire, click **×** next to it. This removes every assignment of that questionnaire for the patient, including ones sent for a visit.
   - A patient can have one intake assigned outside a visit at a time.
