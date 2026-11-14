@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Conversation</title>
+  </head>
+  <body>
+    <ul class="conversation">
+      {% for msg in messages %}
+        <li class="message">
+          <span class="message-time">{{ msg.created|date:"M j, g:i a" }}</span>
+          <span class="message-text-content">{{ msg.text|safe }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

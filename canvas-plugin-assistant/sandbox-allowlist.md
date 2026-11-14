@@ -23,6 +23,7 @@ Only the names listed under each module are importable.
 | `functools` | `reduce`, `wraps` |
 | `hashlib` | `sha256` |
 | `hmac` | `compare_digest`, `new` |
+| `html` | `escape`, `unescape` |
 | `http` | `HTTPStatus` |
 | `json` | `dumps`, `loads` |
 | `operator` | `and_` |

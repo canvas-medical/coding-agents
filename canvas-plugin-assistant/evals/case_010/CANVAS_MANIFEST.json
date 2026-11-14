@@ -1,0 +1,29 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-010",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.evidence:EvidenceAPI",
+        "description": "Evidence view endpoint"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.evidence:EvidenceApp",
+        "name": "Evidence",
+        "description": "Guideline evidence summary",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [
+    {
+      "name": "SUMMARY_API_KEY",
+      "sensitive": true
+    }
+  ],
+  "readme": "./README.md"
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Problem Notes</title>
+  </head>
+  <body>
+    <ul class="problems">
+      {% for condition in conditions %}
+        <li>
+          <span class="icon">{{ icon|safe }}</span>
+          <span class="onset">{{ condition.onset_date|date:"M j, Y" }}</span>
+          <div class="notes">{{ condition.notes|safe }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
