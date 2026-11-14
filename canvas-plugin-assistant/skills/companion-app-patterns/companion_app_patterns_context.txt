@@ -23,7 +23,7 @@ Do NOT document scopes a plugin doesn't use in that plugin's README.
 
 ```
 extensions/<plugin_name>/
-├── <plugin_name>/                  # inner package (snake_case, matches manifest name)
+├── <plugin_name>/                  # inner package folder (matches manifest name)
 │   ├── CANVAS_MANIFEST.json
 │   ├── README.md                   # leads with end-user usage, then dev content
 │   ├── LICENSE                     # MIT (or matching the target repo)
