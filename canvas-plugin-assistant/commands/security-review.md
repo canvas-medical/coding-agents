@@ -114,7 +114,32 @@ grep -rn "eyJ\|['\"][A-Za-z0-9_-]\{30,\}['\"]" --include="*.py" .
 
 ---
 
-### 5. Generate Security Report
+### 5. Agent Review
+
+Check whether the plugin declares an agent:
+
+```bash
+grep -nE '"agents"' */CANVAS_MANIFEST.json 2>/dev/null || grep -nE '"agents"' CANVAS_MANIFEST.json 2>/dev/null
+grep -rn "AgentPlugin\|RunAgentEffect\|ToolRegistry" --include="*.py" .
+```
+
+**If it declares an agent:** invoke the **agent-patterns** skill and review against its "Security and compliance" section and its rules for a custom tool:
+- `tools.allowed` grants no more than the spec needs, and any tool that commits is under `tools.approve`
+- every custom tool takes the patient and note from `ctx`, checks each id the model passes belongs to the patient, and declares its `effect_types` and `required_permissions`, with a test that another patient's id is refused
+- each `RunAgentEffect` names a patient and note the trigger's own context vouches for, never one taken from an unauthenticated request body
+- the chat route authenticates the staff member, and nothing broadcasts to an `agent-run-` channel
+- `DecideAgentProposal` is returned only from the route the requester's own approve or deny control calls; no code path decides a proposal for them, such as the chat route approving in the same request
+- a tool over the plugin's Custom Data filters by the run's patient and, for a table spanning many patients, the requester's visibility; any `CustomModel` write happens in `save_state` or is idempotent bookkeeping, never something a person should approve
+- `INFERENCE_GATEWAY_KEY` is declared `"sensitive": true`, and no other LLM provider key or client is present
+- if the agent's output lands in the chart or is shown to a clinician as a suggestion, flag it for Canvas security and compliance review
+
+Document findings with file:line references.
+
+**If no agent:** Mark as N/A
+
+---
+
+### 6. Generate Security Report
 
 Get the workspace directory:
 ```bash
@@ -137,6 +162,7 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/security-review.md`, over
 | FHIR API Client Security | ✅ Pass / ⚠️ X issues / N/A | ... |
 | Application Scope | ✅ Pass / ⚠️ X issues / N/A | ... |
 | Secrets Declaration | ✅ Pass / ⚠️ X issues / N/A | ... |
+| Agent | ✅ Pass / ⚠️ X issues / N/A | ... |
 
 ## Detailed Findings
 
@@ -155,6 +181,10 @@ Save report to `$WORKSPACE_DIR/.cpa-workflow-artifacts/security-review.md`, over
 ### Secrets Declaration
 
 [Secrets audit findings]
+
+### Agent
+
+[Agent review findings from the agent-patterns skill]
 
 ## Recommendations
 
@@ -177,7 +207,7 @@ Tell the user the report path.
 
 ---
 
-### 6. Offer to Fix Issues
+### 7. Offer to Fix Issues
 
 If issues were found, use AskUserQuestion:
 

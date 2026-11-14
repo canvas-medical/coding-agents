@@ -103,6 +103,7 @@ Full worked client code (backoff/jitter, `online` handling, half-open heartbeat,
   - Anthropic Claude, 
   - OpenAI ChatGPT, 
   - Google Gemini
+- Agents (Agent Development Kit, `canvas_sdk.agents`): search for `BEGIN PAGE https://docs.canvasmedical.com/sdk/agents`; the **agent-patterns** skill covers when to build one
 - Twilio
 - SendGrid
 - Extend.ai
