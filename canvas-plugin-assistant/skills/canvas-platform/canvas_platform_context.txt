@@ -4060,6 +4060,45 @@ Set `AUTOMATED_INVOICING` to **False** in Constance: Config and save. No further
 ----- END PAGE https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code
+Your organization's plugins now live on Canvas Platform, including the ones built in Studio. These are the questions developers ask most once their organization is upgraded.
+# Getting Your Plugin Code
+**How do I get a copy of my plugins' code?**  
+Use `canvas clone` with the Canvas CLI:
+  1. Upgrade the CLI: `pip install --upgrade canvas` (or `uv tool upgrade canvas`).
+  2. Sign in once with `canvas login`, which opens your browser, then run `canvas whoami`. Your organization should be listed with "can push, deploy".
+  3. Clone each plugin by name: `canvas clone acme__intake`. This creates an `acme__intake` folder with the plugin's code, ready to deploy.
+Run `canvas clone` once for each plugin you want a copy of.
+**Which plugin names do I use?**  
+The names your plugins have in Canvas, such as `acme__intake`. `canvas list --host <instance>` lists every plugin on an instance.
+**My clone has two branches. Which one has the newest code?**  
+`main` holds released versions. Studio keeps its in-progress work on a `canvas-studio` branch. Run `git branch -a`, and if `canvas-studio` is there, compare `plugin_version` in `CANVAS_MANIFEST.json` on each branch (`git checkout canvas-studio` to switch). Use whichever is newer.
+**What roles do I need?**  
+**Plugin developer** to clone and push plugin code, and **Deploy manager** to deploy it to your instances. An Organization admin on your team can grant both. See [Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles).
+**`canvas clone` says it can't find my plugin.**  
+Your organization's plugins may not be upgraded yet. Everyone with the Organization admin, Plugin developer or Deploy manager role gets an email when the upgrade starts and another when it is complete. If you have the second email and clone still can't find the plugin, contact your Canvas team.
+# Keeping Plugins in Your Own Repository
+**Can I keep my plugins in my own GitHub repository?**  
+Yes. Copy the folder that holds `CANVAS_MANIFEST.json` into your repository, for example at `plugins/acme__intake/`, leaving out the `.git` folder, and commit. Then deploy from your repository with `--snapshot`:
+`canvas deploy plugins/acme__intake --snapshot --instance acme-staging`
+See [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+**Deploy listed some files and asked whether to replace them. What does that mean?**  
+Your copy differs from the code on Canvas Platform. Answer no, check that you copied from the right branch, and deploy again.
+# Deploying
+**Do I still use`canvas install`?**  
+No. Use `canvas deploy` in its place. `canvas install` stops working on December 14, 2026. See [Upgrading to Canvas Platform](https://docs.canvasmedical.com/guides/upgrading-to-canvas-platform/) for the full switch, including CI pipelines.
+# Working With Studio
+**If I change a Studio plugin's code myself, does Studio overwrite it?**  
+No. The next time the plugin's project opens in Studio, Studio brings your change in, and it holds Studio's next deploy until someone reviews the change in Studio. See [When code changes outside Studio](https://help.canvasmedical.com/articles/4485157203-When-code-changes-outside-Studio).
+**Can Studio send its work to our repository for review?**  
+Yes. A Studio admin can connect your repository under **Studio** → **Studio settings** → **Release strategy** → **Gated**. Studio then sends finished work to your repository as pull requests. See the [Studio Admin Guide](https://help.canvasmedical.com/articles/2234141107-Studio-Admin-Guide) and [Gated release: from Promote to Production](https://help.canvasmedical.com/articles/7597495196-Gated-release:-from-Promote-to-Production).
+# More Help
+  - [Canvas CLI reference](https://docs.canvasmedical.com/sdk/canvas_cli/), including `canvas clone` and `canvas deploy`
+  - [Upgrading to Canvas Platform](https://docs.canvasmedical.com/guides/upgrading-to-canvas-platform/)
+  - Questions? Message us in your organization's shared Slack channel, or submit a ticket with the [Canvas Platform support form](https://canvas-medical.portal.usepylon.com/forms/platform-support).
+----- END PAGE https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4083957452-print-batch-statement
 ## Introduction
 Users have the ability to generate and print batch statements. 

@@ -1744,6 +1744,7 @@
 - [What is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
     - The Sidebar
     - The Account Menu
+- [Canvas Platform FAQ: Getting and Deploying Your Plugin Code](https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code)
 
 ### Users and access
 - [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)
