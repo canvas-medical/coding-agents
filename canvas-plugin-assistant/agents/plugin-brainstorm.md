@@ -144,7 +144,8 @@ Once you have answers from AskUserQuestion:
    - For every read and write, choose **SDK vs FHIR** — default to the SDK, use FHIR only when the SDK can't do it (data not in the data module, or a write with no matching Effect).
    - Choose **existing Canvas models vs Custom Data** — default to existing models, add Custom Data only when nothing in Canvas represents the data.
    - Record the choices **and the reason** for the spec's `Data Access Strategy` section.
-4. **Write the spec file immediately** - don't ask more questions
+4. **If the ask involves an LLM, AI, a chat, or a model reasoning over the chart**, read the **agent-patterns** skill and decide agent vs a handler that calls a model. For an agent, fill the spec's `Agent` section: the trigger and scope, the `standard_tools` it uses before any custom tool, the tool grant, which writes need approval, and the gateway key.
+5. **Write the spec file immediately** - don't ask more questions
 
 ## Specification Format
 
@@ -197,8 +198,15 @@ Write this to `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (create t
 - **Components**: [List what's needed]
 - **Rationale**: [Why this fits]
 
+## Agent (only when the plugin runs an agent)
+- **Why an agent**: [What the model decides that a handler could not]
+- **Trigger and scope**: [Event handler, CronTask, or SimpleAPI POST returning 202; `RunAgentEffect` scope]
+- **Tools**: [`standard_tools` categories granted; any custom tool and the standard tool it wraps]
+- **Writes and approval**: [What it drafts; anything under `tools.approve`]
+- **Run time and progress**: [`run_seconds` if above the default 600, and why; `progress` level]
+
 ## Secrets/Configuration
-- [Any secrets needed, or "None"]
+- [Any secrets needed, or "None". An agent needs `INFERENCE_GATEWAY_KEY` (sensitive).]
 
 ## Open Questions
 - [Any unresolved items]
@@ -287,7 +295,8 @@ Read the **plugin-patterns skill** and match the spec to a pattern:
 | Scheduled/periodic | Single Handler | 1 CronTask |
 | Multiple events | Multi-Handler | 2-5 BaseHandler |
 | Interactive UI | Application | Application + SimpleAPI |
-| LLM/AI processing | LLM-Integrated | Multiple + llms/ |
+| One model call over input the plugin already has (extract, classify, summarize) | LLM-Integrated | Multiple + `canvas_sdk.clients.llms` |
+| A model that decides what to read or do next (chart chat, reconciliation, visit review), or writes to the chart | Agent (read the **agent-patterns** skill) | Trigger handler + `AgentPlugin` |
 | Custom chart summary section | Chart Summary Section | `PatientChartSummaryCustomSectionHandler` + `PatientChartSummaryConfiguration` BaseHandler (+ optional WebSocketAPI for real-time, see Step 2.5) |
 
 ### Step 2.5: Real-time Decision (Chart Summary Sections only)
@@ -348,6 +357,7 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 7. **Check if client libraries are needed** based on the spec:
    - **S3/file storage/uploads** → Use the Canvas SDK native S3 client (`from canvas_sdk.clients.aws import S3, Credentials`). Do NOT copy a custom client file.
    - **LLM/AI/Claude/OpenAI/Gemini** → Use the Canvas SDK native LLM clients (`from canvas_sdk.clients.llms import LlmAnthropic, LlmOpenai, LlmGoogle`). Do NOT copy a custom client file.
+   - **Agent (Agent Development Kit)** → No LLM client and no provider keys: the agent reaches Anthropic through `gateway.client()`, and the plugin declares one `INFERENCE_GATEWAY_KEY` variable with `"sensitive": true`. Follow the **agent-patterns** skill for the manifest's `agents` entry and its tool grant.
    - **SMS/text messages/Twilio** → Use the Canvas SDK native Twilio client (`from canvas_sdk.clients.twilio.libraries import SmsClient`). Do NOT copy a custom client file.
    - **Email/SendGrid** → Use the Canvas SDK native SendGrid client (`from canvas_sdk.clients.sendgrid.libraries import EmailClient`). Do NOT copy a custom client file.
    - **Document processing/extraction/classification/splitting** → Use the Canvas SDK native Extend AI client (`from canvas_sdk.clients.extend_ai.libraries import Client`). Do NOT copy a custom client file.
