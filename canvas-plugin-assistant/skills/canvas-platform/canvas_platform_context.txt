@@ -1037,12 +1037,12 @@ Hand off a document, send it for signature, and read its history.
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1662279684-patient-communications
 The Patient Communications plugin handles how your practice reaches patients outside the visit: appointment texts and emails, forms and intake patients complete in the portal before a visit, consents they review and sign, secure messages with staff, and the tasks that tell staff when a patient has done something. Admins set it up in one place, **Notifications Admin** , and staff work with it from a panel in the patient's chart.
-This guide describes Patient Communications 0.19.10. Your Canvas team can tell you which version your practice runs.
+This guide describes Patient Communications 0.19.14. Your Canvas team can tell you which version your practice runs.
 ## What's included
 Feature| What it does| Guide  
 ---|---|---  
 Appointment notifications| Texts and emails for confirmations, reminders, telehealth join links, no-shows, and cancellations| [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
-Forms and intake| Questionnaires and intake sections patients complete in the portal, assigned by staff or automatically before a visit| [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)  
+Forms and intake| Questionnaires and intake sections patients complete in the portal, assigned by staff, automatically before a visit, or to every new patient| [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)  
 Consents| Consents patients sign on the portal or in DocuSign, including consents a provider countersigns| [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents)  
 Messaging and tasks| Secure messages with patients, message notifications, and tasks for patient messages and completed paperwork| [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks)  
 Portal invite and password reset emails| Your own wording for the emails Canvas sends with a portal login link| [Portal Invite and Password Reset Emails](https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails)  
@@ -1057,7 +1057,7 @@ Patients| Patient portal home| A welcome banner, plus an **Action Required** ban
 **Notifications Admin** opens a full page with four tabs:
   - **Campaigns** : every message the plugin sends, each as a card you turn on or off and edit. Also holds the **Completed Paperwork Notifications** and **Patient Message Tasks** settings.
   - **Visit Type Overrides** : turn appointment messages off for a visit type, or give a visit type its own wording, channels, and timing.
-  - **Pre-Visit Forms** : choose the intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Pre-Visit Forms** : choose the intake sections, questionnaires, and consents each visit type sends before the visit, and the intake sections and questionnaires every new patient gets.
   - **Consents** : link consents to DocuSign, choose which consents every new patient gets, and set up provider countersignature.
 One **Save** button, in the tab bar, saves every tab at once. Nothing changes until you click it.
 The top of the **Campaigns** tab shows **Integration Status** : whether **Twilio SMS** and **SendGrid Email** are **Configured**. This only checks that the settings are filled in, not that the accounts work.
@@ -1458,9 +1458,9 @@ Patient Communications sends consents to patients to review and sign in the pati
 How the consent is set up| How the patient signs  
 ---|---  
 No DocuSign template| On the portal signature pad  
-DocuSign template, patient signs alone, assigned by staff from the chart| In DocuSign, inside the portal  
-DocuSign template, patient signs alone, sent automatically to new patients or before a visit| On the portal signature pad  
+DocuSign template, patient signs alone| In DocuSign, inside the portal  
 **Requires provider countersignature**|  In DocuSign, then the provider countersigns  
+A consent assigned from the chart gets its DocuSign document when it is assigned. A consent sent automatically, to new patients or before a visit, gets its DocuSign document when the patient first opens it. If the DocuSign secrets aren't set, or DocuSign can't create the document, the patient signs on the portal signature pad instead.
 ## Set up consents
   1. In **Notifications Admin** , open the **Consents** tab. Each consent shows its name and code.
   2. Under **DocuSign template** , pick the template the consent is signed with, or **No template (portal signature pad)**.
@@ -1472,7 +1472,7 @@ DocuSign template, patient signs alone, sent automatically to new patients or be
 ### Consents for new patients
 Consents checked **Assign to new patients** go to each new patient when they are created. Patients created before you checked the box don't get them, and a patient who already has the consent assigned or accepted isn't sent it again.
 **New patient consents order** lists these consents. Use **Move up** and **Move down** to set the order they are sent in.
-To text or email new patients about their consents, turn on **New Patient Consent Notifications** on the **Campaigns** tab. It goes out once, within about 5 minutes of the patient being created, after their phone number and email are saved, and links to their portal **Forms** page. It doesn't name the consents. Patients created more than a day before are skipped.
+To text or email new patients about their consents and forms, turn on **New Patient Forms Notifications** on the **Campaigns** tab. It goes out once to a new patient who still has a consent from **Assign to new patients** , or a form from the **New Patients** row on **Pre-Visit Forms** , to complete. It is sent within about 5 minutes of the patient being created, after their phone number and email are saved, and links to their portal **Forms** page. It doesn't name the consents or forms. Patients created more than a day before are skipped. See [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake) for forms sent to new patients.
 ### Consents before a visit
 On the **Pre-Visit Forms** tab, each visit type has a **Consents** list. Those consents are sent with the visit's forms, within the visit type's lead time. A patient who already has the consent assigned or accepted isn't sent it again. See [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake).
 ### Assign a consent from the chart
@@ -1511,10 +1511,10 @@ What you see| What to check
 A consent isn't on the **Consents** tab or in **Assign Consent**|  Its coding system isn't offered, or it isn't set to show in the patient portal.  
 **Requires provider countersignature** is grayed out| The consent has no DocuSign template yet.  
 "DocuSign secrets are not configured, so dual-signature consents cannot be enabled."| The DocuSign connection secrets aren't set.  
-A consent with a DocuSign template opened the signature pad| It was sent automatically to a new patient or before a visit, which uses the signature pad for consents the patient signs alone.  
+A consent with a DocuSign template opened the signature pad| The DocuSign secrets aren't set, or DocuSign couldn't create the document when the consent was assigned or first opened.  
 "This document is not ready to sign yet. Please contact your care team."| A dual-signature consent couldn't be sent to DocuSign. Look for a task starting "Consent not sent".  
 A new patient didn't get a consent| **Assign to new patients** was checked after the patient was created.  
-No new-patient consent text or email| **New Patient Consent Notifications** is off, the patient was created more than a day before it was turned on, or they had no phone or email when it ran.  
+No new-patient text or email| **New Patient Forms Notifications** is off, the patient was created more than a day before it was turned on, or they had no phone or email when it ran.  
 Consents appear in a different order on the portal| The portal lists the most recently sent consent first.  
 No **Countersign** button| You aren't the countersigner or on the countersigner team, or the consent is waiting for an appointment to be booked.  
 A countersignature shows up late| The webhook secrets aren't set or DocuSign couldn't reach Canvas. A check every 15 minutes catches up.  
@@ -7343,7 +7343,7 @@ Due to the ever evolving nature of our product, recorded videos may be slightly 
 Patient Communications lets patients complete questionnaires and intake in the patient portal before a visit. Staff assign forms from the patient's chart, or each visit type sends its own set automatically before the appointment. Patients work through everything in one guided form, their progress saves as they go, and their answers land in the chart when they submit. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
 ## Overview
   - **Staff** assign questionnaires and intake sections from the **Forms** tab of the **Patient Communications** panel in the chart.
-  - **Admins** choose, on the **Pre-Visit Forms** tab of **Notifications Admin** , which intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Admins** choose, on the **Pre-Visit Forms** tab of **Notifications Admin** , which intake sections, questionnaires, and consents each visit type sends before the visit, and which intake sections and questionnaires every new patient gets.
   - **Patients** open **Forms** in the portal menu, or a link in a text or email, and complete everything in one step-by-step form.
   - **Answers** go into the chart: questionnaires into the visit note, patient-reported history as draft entries for a provider to review, and demographics into the patient's profile.
   - **Staff are told** when a patient submits, with a task and an optional email. See [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks).
@@ -7390,8 +7390,18 @@ When a patient has a booked appointment of that visit type within the lead time,
   - Each appointment gets its forms once. Changes to a visit type's forms apply to appointments that haven't been processed yet.
   - A form you remove from a patient's visit is not sent again for that visit.
   - Forms for a visit stay on the patient's list until the end of the visit day, then show as **Expired** , including when the appointment is canceled or rescheduled.
+## Send forms to new patients
+The **New Patients** row at the top of the **Pre-Visit Forms** tab chooses the intake sections and questionnaires every new patient gets. It has the same pickers as a visit type, without consents or a lead time. Consents for new patients are chosen on the **Consents** tab; see [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents).
+  1. In **Notifications Admin** , open the **Pre-Visit Forms** tab.
+  2. In the **New Patients** row, move intake sections and questionnaires to **Selected (in order)** and use ▲ ▼ to set the order the patient sees them.
+  3. Click **Save**.
+  - The forms are assigned when a patient is created, with no visit and no due date. Patients created before you set them up don't get them.
+  - When the patient books a visit, the forms they haven't submitted move to it: they are due on the visit date, are grouped with the visit's forms on the portal, and file into its note. Answers the patient has already saved move with them.
+  - If that visit is canceled or marked no-show, the forms they haven't submitted move off it and go to the next visit the patient books.
+  - A visit type that sends the same questionnaire or intake section skips it for that visit.
+  - Intake history submitted before any visit is booked goes into a new Chart Review note.
 ## Text and email the patient
-Two cards on the **Campaigns** tab tell patients they have forms. Both are off by default.
+Three cards on the **Campaigns** tab tell patients they have forms. All are off by default.
 **Form Assignment Notifications** sends one text or email each time staff assign forms from the chart.
 Field| Shows  
 ---|---  
@@ -7406,6 +7416,7 @@ Field| Shows
 `{{form_names}}`| The questionnaires, "Patient intake", and consents that were assigned  
 `{{forms_link}}`| A link to the patient's portal **Forms** page  
 Patient, appointment, location, and organization fields| As in [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
+**New Patient Forms Notifications** sends one text or email to a new patient who still has a form from the **New Patients** row, or a new patient consent, to complete. See [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents).
 **Appointment Reminders** can also remind patients about unfinished forms with `{{form_reminder}}`. See [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications).
 ## What the patient sees
   1. The patient opens **Forms** from the portal menu, or the link in a text or email. If they aren't signed in, the portal asks them to sign in first.
@@ -7419,7 +7430,7 @@ After submitting, the patient cannot open or change their answers. The portal ho
 ## Where answers go
 What the patient submits| Where it lands  
 ---|---  
-Questionnaires| Completed in the visit's note. Forms not tied to a visit go into a new Chart Review note.  
+Questionnaires| Completed in the visit's note. When that note is canceled, deleted, locked, or signed, they go into a new note of the visit's note type. Forms not tied to a visit go into a new Chart Review note.  
 Conditions, medications, allergies, surgeries, family history, goals, vitals, and the mental health sections| Draft entries for a provider to review and sign, in the visit's note or the separate note chosen on **Pre-Visit Forms**. The note is titled "Patient Intake — self-reported history (review & sign)".  
 Address, phone, email, preferred name, suffix, contact preference| Saved straight to the patient's profile. A blank answer never clears what's there.  
 Name, date of birth, sex at birth| Saved only when the chart has no value. If the patient's answer differs from the chart, a task "Reconcile patient intake" is created instead, labeled **intake-reconcile**.  
@@ -7429,11 +7440,13 @@ Preferred pharmacy| Saved to the patient's preferred pharmacies
 What you see| What to check  
 ---|---  
 The patient sees "Uh-oh! We couldn't find that." when opening forms| The visit day has passed, the forms were already submitted, or there was nothing to fill out.  
+The patient sees "Something went wrong submitting your forms. Please try again."| The submit didn't go through, for example because the visit day had passed or no note could be found for the questionnaires. The patient's answers stay saved and the forms stay assigned, so they can submit again. If it keeps happening, contact your Canvas team.  
 The link in a message is blank| Contact your Canvas team; the link needs your instance's address set up with the plugin.  
 A form assignment message has no link| The default templates leave out `{{forms_link}}`. Add it to **Form Assignment Notifications**.  
 "Patient has been notified" but no message went out| **Form Assignment Notifications** is off.  
 Pre-visit forms weren't assigned| The visit type has no forms on **Pre-Visit Forms** , the appointment is outside the lead time, or the appointment was processed before the forms were added.  
 No pre-visit text or email| **Pre-Visit Forms Notifications** is off, the appointment isn't booked, or the patient was already notified for this appointment.  
+A new patient didn't get forms| The **New Patients** row had no forms when the patient was created.  
 History answers aren't in the chart| They are draft entries waiting for a provider to review in the visit's note or the separate note. If no note could be found, a task "Patient Intake: self-reported history not filed" is created.  
 A demographic change didn't save| Check for an **intake-reconcile** task, or ask your Canvas team whether the `FHIR_*` secrets are set.  
 Removing one questionnaire removed others| **×** removes every assignment of that questionnaire for the patient. Assign it again if needed.  
@@ -9379,6 +9392,72 @@ A: Yes. Follow the deactivation process. To reactivate, you'll need to complete 
 ----- END PAGE https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin
+The Patient Numbering plugin gives every patient a short Patient ID in addition to the Canvas MRN. Staff see the Patient ID in the patient's profile and can find a patient by it from the patient search bar. New patients get the next Patient ID automatically, and no two patients ever share one.
+## Overview
+  - **A Patient ID for every patient** , such as 1, 2, 3, or a formatted ID such as PAT0001, shown as a read-only **Patient ID** field in the **Patient demographics** section of the profile.
+  - **Search by Patient ID** from the patient search bar by typing `!` followed by the Patient ID.
+  - **Keep IDs from a previous system.** When patients are imported with an ID from the system you used before (for example `PAT0102`), each patient keeps that number, and new patients continue after the highest one in use.
+  - **A Patient Numbering app** for administrators, to number existing patients once and check progress.
+The MRN does not change. The Patient ID sits alongside it.
+## Before you begin
+  - The plugin must be installed on your Canvas instance. See **Install the Plugin** below.
+  - Only staff listed in the plugin's `ADMIN_STAFF_IDS` setting can open the Patient Numbering app. Everyone can see the Patient ID in the profile and search by it.
+  - Decide on the ID format before you number anyone: plain numbers, or a prefix and fixed width such as PAT0001. If you are bringing patients over from a previous system, set the plugin to read their old IDs first. See **Plugin settings** below.
+  - If patients are being imported, finish the import before numbering existing patients, so imported patients keep their old IDs.
+## Number existing patients
+This is a one-time step an administrator runs after installing the plugin. Until it finishes, new patients are not numbered, so existing patients always get the lowest numbers.
+  1. Click the app menu (the grid icon in the top right of Canvas) and select **Patient Numbering**.
+![Patient Numbering in the Canvas app menu](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F35ee9301-ce4a-4ed0-8936-192d926093cc-01-app-menu.png?Expires=253370764800&Signature=LYPhU7661LwvAbClEBHyKeDaKvGiBTbianYbWNQ9sKAWDTCk1DLEKbFlJKBCPn~dnDPUwn5P1ljvGlsYmpf7h3OQNQI~HXWbgwHxnGoTvYLffWBTQcGeF3X29ba2w88VKhtbypmd6yM~lcYjyUpGfNqRkPRhUanqQ6YIVz7FLz7hVwpt4fDXWGkGw5MIIxOte0Di2vrXigXK6TEme5Eb9gydNI1sAy1yexl1M0yHL3P6dQfWwLL0KCXZnICzwcIPqFDfO3sO~4M66GvZkkimfsdvqhDzC5O7UJPFAHmgfl6UABpiW3VtDhrEfhl2RN~HjWgM~dOBJICLXl8kLt1btw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  2. Review the summary. **Patients** is how many patients are in Canvas, **Remaining** is how many still need a Patient ID, and **Next Patient ID** shows the format the next number will use.
+  3. Click **Number existing patients**.
+![Patient Numbering app before numbering existing patients](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F2dc8be4d-e095-4e01-b6f9-bf6cd55a8a63-02-admin-before.png?Expires=253370764800&Signature=SW9XUWGDwtE5e0NCeqIm2ZaypWDeOIHmX~~XziwZhK0gp2xZ8TXfF~8Wvdgf9obzEuuO7wl21C4zXWWs2Pvyf1KV6mWXT4F0WPvQ78XI~6WQESHEAC9vFEe4pS9qtcHkDkZtxnhCxQdlKvV3cxqy99DNBzZDrGy-FWuYNziTPWTJhdrd7psBRvhhIYYUS48wWeR0kvDqCJ0qs3d2En2kUE4hqn3DxJ59RLdw7UHCHSd5-PycdXbnprcFeKbYB4FuLYZxy2UAnamYyeHDrtRTHyWCUAy~AHXFusaiB2RQegsIqKjCx03RHDmFp-ru5HdKPWoGO0xLtrfBuLWTIh6JbQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+The app numbers patients in batches of 100 and shows progress below the button ("Numbered through ... remaining"). When it finishes, the message reads **Done. Every patient has a Patient ID.** , the summary updates, and the button is grayed out.
+![Patient Numbering app after numbering existing patients](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe1b2214f-5a3a-4f9d-97a7-76bdaf6b6c04-03-admin-after.png?Expires=253370764800&Signature=dD0XwPkZCUz9fXNN5MvJq5YpKQCMAlB97-T4usi8H2cdW~fwmFuxbGhrlu5xuu7eTQIvE0R9fWa6qO1a8vE~Pk40e0SjJjWpWwOz-YNrhiLF8K8oh6Oy9wt5a8xvhwojGnZwDSYWfIqVInSEBiDrzAfwiWawpjXIf2awKA3WhV4qD5-fszsz2kZSpkqJ6WtZdn~X7yaHjPKKmicpIBsq8z4AUIZ~7i7Wih57Hab1Oc4LpeqcxHjasgbFauLh843Uu0X2erKH0IPVf1iiWcheE3-5kKVbg1iI-hYWbe7-QjHOnHiXYBhq2HbENviuyvod3TX0BjVkI1B3ez9Q5-~i2w__&Key-Pair-Id=K3NV4LZ47N8M46)
+How the numbers are assigned:
+  - Patients who have an ID from your previous system keep the number in that ID. The app shows how many under **Kept from <system>**.
+  - Everyone else is numbered after the highest number in use, oldest patient first, in the order they were added to Canvas.
+  - **New patients numbered automatically** changes to **Yes**. From then on, each new patient gets the next Patient ID the moment they are created.
+Leave the page open until you see "Done." If you close it or the connection drops partway through, open the app again and click **Number existing patients**. It continues where it stopped, and patients who already have a Patient ID keep it.
+## Find a patient's Patient ID
+  1. Open the patient's chart and click the **Profile** tab under the patient's name.
+![Profile tab on the patient chart](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3b92f67f-2f30-403e-b73f-6dc3dfcef64a-04-chart-profile-tab.png?Expires=253370764800&Signature=YxaoThepuYe4WbrEF0k3TwGgAGg7jnXKXxwGagr4jw1emaOQ4eAICh8y4Uqh6kq43kKJ-ypyjZW5bKJtG1PNR0nGnrjifC3lVufKkY5desZgjs1yjETpQ0sWtZ08BUayVC5pZxnXWrRUIHne7~qAHXbx9fDBLzwfeQnJU50EUPftDDwZTcGoNoALFkC7vvvHnqKXHeFVTpU6BeSUWkzqb9Kk~~UD3X1lY0-VDW40GCHmby2yjRosbRu-RDh0-ZIl4BOKslkjlVvyeXKeABgkxP0GygoxVkL03lac3faCstpkb0OrxHSrSYChIoklWc-sRugegwBlfcrrGj7aC0JchQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+  2. In **Patient demographics** , the **Patient ID** field shows the patient's number.
+![Patient ID in Patient demographics](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F75e52289-45f2-4b68-b50d-d20d129c10a6-05-profile-patient-id.png?Expires=253370764800&Signature=HyDpCLDNgX23vxIh3dVyCfb~0tuewg9IzOUmTfx5iV~5i8fDW1gXvh5BtrlkuxeooNVl0-Et7UL0oPgcrKP3ZTMd3rm-kwNBKa3KBPhTINyDQtPhK~~O4AhcA8EyNH4CfqIx5d3XoMyEFkm-5YBcX8ps709BSLYcnnk1CiQVtIqit0l92waqKLJAD5xPUDlJTUvqj4DhTzh5NSrI-9pGK7-R8vyIBOxMNl9V3IMj0mzssNH87MDFzKByGn~4A9-mV4uVcYg~84OOlzDlzlYA0iDo3KvbtX9DSOuIYVDqq5GncyXMvh3HUE1l-t-Wen7p8t5FkeHi1hDFiEUXvU9JLg__&Key-Pair-Id=K3NV4LZ47N8M46)
+The Patient ID is read-only. Clicking **Edit** on the demographics section does not change it.
+## Search for a patient by Patient ID
+  1. Click the patient search bar at the top of Canvas.
+  2. Type `!` followed by the Patient ID exactly as it appears in the profile, for example `!42` or `!PAT0102`.
+  3. Select the patient from the results.
+![Searching by Patient ID from the patient search bar](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F44ab9ff2-a5b8-40d5-abc6-6e81334ae168-06-search.png?Expires=253370764800&Signature=FkCDWIAdInk4fmHCYGPeySg6MVBitbwIoeQMFLaaaFpnQW7DGdHtSTUm7VJLCpuLtSUkqnuI4ukQQT9RDbcxqTPysJNMDFoJJNS-oqYtjuvDcS8SeLR2NrR6FdJxKRsvet7P-KukHTYivcWfyXg5o4SEI9f~rEpg8RNnrjs9Y5ofEHSiHICe9m-fftFrvU3wU3wbgP-SP9sVtKpqXBqAafX3H0jtOAtzOu5UyOGwGLycy1pLj59FaJmWwmy0pYCjkTCaL562OF-FBdBzyAp4k4av0BnzTGsj1RKvPhTUgnAnU5Q-dNzNEXqF97JzP87YbiiSPerA8l925DWnER~dGw__&Key-Pair-Id=K3NV4LZ47N8M46)
+The `!` tells the search bar to look up patient identifiers instead of names.
+## Troubleshooting
+**What you see**| **What to do**  
+---|---  
+The Patient Numbering app says **Not authorized**|  Your staff ID is not in the plugin's `ADMIN_STAFF_IDS` setting. Ask an administrator to add it. If the setting is empty, nobody can open the app.  
+A new patient has no Patient ID| Existing patients have not been numbered yet. Open the Patient Numbering app. If **New patients numbered automatically** says **No, number existing patients first** , click **Number existing patients**. The new patient is numbered in the same run.  
+An error appears under the button, ending in "Click again to continue where it stopped."| Click **Number existing patients** again. Patients numbered before the error keep their Patient IDs.  
+"Done" says some patients had a source ID whose number was already taken| Two or more patients had the same ID in your previous system. The patient added to Canvas first keeps the number, and the others get the next free number instead. Check those patients' records to see which IDs were duplicated.  
+A patient did not keep their old ID| The old ID must start with the `NUMBER_PREFIX` and be followed only by digits. For example, with the prefix `PAT`, `PAT0102` is kept as 102, but `P-102` is not. Patients whose ID does not match are numbered after the highest number in use.  
+Searching by number finds no one| Type `!` before the Patient ID, and include the prefix and any leading zeros exactly as shown in the profile.  
+## Install the Plugin
+Find the plugin to install at [Medical-Software-Foundation/canvas: extensions/patient-numbering](https://github.com/Medical-Software-Foundation/canvas/tree/main/extensions/patient-numbering).
+After installing:
+  1. Copy the generated `namespace_read_write_access_key` and `namespace_read_access_key` from the plugin's settings and store them somewhere safe. Canvas creates them only on the first install, and reinstalling the plugin later needs them.
+  2. Have one of the listed administrators open the Patient Numbering app and click **Number existing patients**.
+## Plugin settings
+Administrators set these in Canvas admin settings under **Plugin_Io > Plugins > patient_numbering**. Set them before numbering existing patients.
+**Setting**| **Required**| **What it does**  
+---|---|---  
+`ADMIN_STAFF_IDS`| Yes| Staff IDs allowed to open the Patient Numbering app, separated by commas. Each one is the staff member's 32-character staff key. If it is empty, nobody can open the app.  
+`SOURCE_IDENTIFIER_SYSTEM`| No| The identifier system that holds each patient's ID from your previous system, matched exactly. Leave it empty to number every patient from 1.  
+`NUMBER_PREFIX`| No| Letters shown before the number, for example `PAT`. When keeping old IDs, they must start with this prefix to be kept.  
+`NUMBER_WIDTH`| No| Pads the number with leading zeros to this many digits. For example, `4` shows 42 as `0042`. Leave it empty for no padding. A value that is not a whole number is ignored.  
+`namespace_read_write_access_key`| Generated| Created on the first install. Keep a copy for reinstalls.  
+Choose the prefix and width before numbering anyone. Each patient's displayed Patient ID is written when they are numbered, so changing the prefix or width later applies only to patients numbered afterward.
+----- END PAGE https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6442909989-vaccines-vaccine-lots
 Effective vaccine inventory management is essential for ensuring availability, reducing waste, and maintaining compliance with healthcare regulations. Canvas simplifies this process with an integrated inventory system that allows providers to track stock levels, monitor expiration dates, and document administration in real time.
 # Documenting Vaccines and Vaccine Lots
@@ -10751,6 +10830,7 @@ Canvas's native self-scheduling lives in the patient portal and requires a login
   - Install the Scheduling with Rooms plugin first. Public Booking reads its room configuration and stores its own settings in the same Custom Data namespace.
   - In Scheduling Admin, set up the visit types, durations, and room mappings you want to offer.
   - Make sure each bookable provider has Clinic availability events at the locations where they see patients. An event with no allowed note types allows every visit type.
+  - For visit types mapped to rooms, give each room Clinic availability events at the locations where it is used. A room's calendar that names a location counts at that location; one that names no location counts only at the room's primary practice location.
   - To text booking confirmations, install the Patient Communications plugin and turn on its confirmation SMS channel in Notifications Admin.
 ## Install the plugin
     canvas install public_scheduling --host <your-instance> \
@@ -10771,7 +10851,7 @@ Links| A builder for links that open the page with a service, a location, or bot
 Each Pages section has a **Preview** button that shows unsaved changes against live services, locations, and times. A preview cannot book.
 ## How patients book
   1. **Service.** The patient picks a visit type.
-  2. **Location.** Only locations that offer the chosen visit type are listed. A location qualifies when a provider has availability there for that visit type and, for a visit type mapped to rooms, one of its rooms does too. The step is skipped when only one location qualifies.
+  2. **Location.** Only locations that offer the chosen visit type are listed. A location qualifies when a provider has availability there for that visit type and, for a visit type mapped to rooms, one of the rooms the booking would hold has availability there that allows the visit type too. A telehealth-only visit type is therefore listed only where its telehealth rooms are, and a visit type whose rooms are all in clinics is never listed at a Telehealth location. When no location qualifies, the service has no locations, and the page does not fall back to every location. The step is skipped when only one location qualifies.
   3. **Time.** A month calendar highlights dates with openings. Picking a date lists its times grouped into morning, afternoon, and evening.
   4. **Details.** The patient enters their name, date of birth, phone, email, and any reason for visit or booking questions you turned on.
   5. **Review.** The patient checks the appointment and their details. Nothing is booked until they confirm.
@@ -10833,6 +10913,7 @@ Issue| What to check
 ---|---  
 The page says online booking is unavailable.| At least one service must be selected on the Services tab and at least one provider on the Providers tab.  
 A service has no locations.| A provider needs a Clinic availability event at that location that allows the visit type and occurs within the booking window. For a visit type mapped to rooms, one of its rooms needs availability at that location too.  
+A service is offered at some locations but missing at one you expect.| At that location, a provider and, for a visit type mapped to rooms, one of its rooms both need a Clinic availability event that allows the visit type within the booking window. A room calendar that names no location counts only at the room's primary practice location, so add an event on a calendar for that location.  
 A location shows no times.| Check provider and room availability, existing appointments, minimum notice, and the booking window.  
 A booking link still shows the service or location step.| The value in the link is not offered online, or the location does not offer the chosen service. Rebuild the link from the Links tab.  
 A location shows no address.| Billing addresses are never shown. Add an address on the Locations tab.  

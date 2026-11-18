@@ -1612,6 +1612,15 @@
     - Plugin variables
     - Troubleshooting
     - Related articles
+- [Patient Numbering Plugin](https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin)
+    - Overview
+    - Before you begin
+    - Number existing patients
+    - Find a patient's Patient ID
+    - Search for a patient by Patient ID
+    - Troubleshooting
+    - Install the Plugin
+    - Plugin settings
 
 ### Patient Communications
 - [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications)
@@ -1639,6 +1648,7 @@
     - Intake sections
     - Assign forms from the chart
     - Send forms before each visit
+    - Send forms to new patients
     - Text and email the patient
     - What the patient sees
     - Where answers go
