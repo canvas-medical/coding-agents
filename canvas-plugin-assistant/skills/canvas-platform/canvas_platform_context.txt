@@ -1037,7 +1037,7 @@ Hand off a document, send it for signature, and read its history.
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1662279684-patient-communications
 The Patient Communications plugin handles how your practice reaches patients outside the visit: appointment texts and emails, forms and intake patients complete in the portal before a visit, consents they review and sign, secure messages with staff, and the tasks that tell staff when a patient has done something. Admins set it up in one place, **Notifications Admin** , and staff work with it from a panel in the patient's chart.
-This guide describes Patient Communications 0.19.14. Your Canvas team can tell you which version your practice runs.
+This guide describes Patient Communications 0.19.15. Your Canvas team can tell you which version your practice runs.
 ## What's included
 Feature| What it does| Guide  
 ---|---|---  
@@ -1465,10 +1465,10 @@ A consent assigned from the chart gets its DocuSign document when it is assigned
   1. In **Notifications Admin** , open the **Consents** tab. Each consent shows its name and code.
   2. Under **DocuSign template** , pick the template the consent is signed with, or **No template (portal signature pad)**.
      - If the list doesn't load, paste the template ID from DocuSign instead.
-     - To create a new template, drop the consent PDF on the row, or click to choose it. The plugin creates a template named after the consent and opens DocuSign's editor in a pop-up. Place the signature fields, then click **Save and Close** in DocuSign. Allow pop-ups for Canvas if the editor doesn't open.
+     - To create a new template, drop the consent PDF on the row, or click to choose it, and click **Create template**. The plugin creates a template named after the consent, saves it as the consent's template, and opens DocuSign's editor in a pop-up. Place the signature fields, then click **Save and Close** in DocuSign. Allow pop-ups for Canvas if the editor doesn't open.
   3. Check **Assign to new patients** to send the consent to every patient created from now on.
   4. Check **Requires provider countersignature** if a provider signs after the patient. See Dual-signature consents below.
-  5. Click **Save** in the tab bar. Each row confirms what was saved.
+  5. Click **Save** in the tab bar. Each row confirms what was saved. Leaving or reloading the page with unsaved changes on this tab asks first.
 ### Consents for new patients
 Consents checked **Assign to new patients** go to each new patient when they are created. Patients created before you checked the box don't get them, and a patient who already has the consent assigned or accepted isn't sent it again.
 **New patient consents order** lists these consents. Use **Move up** and **Move down** to set the order they are sent in.
@@ -12146,7 +12146,7 @@ Add the **Assess Condition** command to a new or existing note through one of th
   - Add the **Assess Condition** command directly to a new or existing note
   - Hover over the condition in the Patient Summary and click **Assess**
   - Click the **+** button on the Conditions section of the Patient Summary to add an empty Assess Condition command, then search for the condition, new or already on the chart
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1791945421583-image.png?Expires=253370764800&Signature=IoFojFAkw6QrvmBRkdid~~I~krhS1wS4hcgyYqTO2HcqBMzRLF4Ny0ebqYwrlWYrUf8rJcrTa2J9U9XDzwhONR7KmSLymJVVwlHxguJvAUEI9Ye1Q4JU0CX2TKtWSuMkWjmKXyXvlMR8JYfWhpt9dLwQN2YQxFD9TmioEXm-UClxB~hnRY8cDKfRNFkHOQoAkbzq0LQxhe8QFgwEPnxQguNdj4LKuhh7OkZws2thW-RaQRck3EakHtuEl--oDwaiZX5Ur3k2jg4OcfYWPagVnfjsEC3HSmGAe3bdECpBubjOnD4flA8zumufgB6BbBSK6m9OskFjAKPLTz-wFcuFzw__&Key-Pair-Id=K3NV4LZ47N8M46)
+![An Assess Condition command added from the Conditions section of the Patient Summary](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fc5143ddb-81e1-4057-bbdf-ebade04cbb0a-assess-from-patient-summary.png?Expires=253370764800&Signature=oYaYE3hU~rRcrGMVowk8qp-ZjGSUrEqFEePlmPsYDcoxYewrmf6GYtdjZ~xmWabw0iU13iPodajq4Dracpnh0it-9KFtNWte~xHTtbambt31HS9nyq8hBD5ewrONTlmWsUBWCzcd~RqFmquJ7KOBSV3hw-SDOJddsPGfLzazXSlb512KvSOVtG17HLHJutSYbkuit6pFuYXu7fOmbIMoNukKC7mDfTiDHGySGhZ2TrRLWDQo7CnrPF38YT2pXcO2UYYl5NDbUbh~autvQgXu35XCBF3XEfU5Q9pT-i9XFiftJE5C5B3hkRxmsDBl3Uyv2aTVWIFxD4rd5LWIyzHjvw__&Key-Pair-Id=K3NV4LZ47N8M46)
 If the cursor is not positioned in a note before clicking **Assess** or **+** , a Chart Review note will be created to store the command.
 Complete the fields within the command
   - **Background** : Carries forward automatically from the condition's current background. Update if necessary.
@@ -12157,6 +12157,14 @@ Complete the fields within the command
   - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015"). Optional.
     - For a condition already on the chart, this fills in from the condition and can be updated.
   - **Today's Assessment** : Update observations made at the current visit based on condition status
+  - **Show in problem list** : On by default. Leave it on to keep the condition on the patient's problem list. Turn it off to record the condition as an encounter diagnosis for this visit only, such as a sore throat that doesn't need tracking.
+  - **Category Domain** : Optional. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
+    - For a condition already on the chart, this fills in from the condition and can be changed.
+    - A domain can be set only while **Show in problem list** is on. An encounter diagnosis has no domain, so turning **Show in problem list** off clears it, and picking a domain while it's off shows "A category domain needs Show in problem list switched on."
+**Show in problem list on, with Category Domain**
+![Assess Condition command with Show in problem list turned on and the Category Domain field](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F7f79f322-f5ba-4815-a1ce-382447c2907e-assess-condition-card.png?Expires=253370764800&Signature=Crk2lUCRo0Ldg3NQwSRNYQVHAyR3bs~NgAFmr2TtlOYMHEl35Uq7jIoAA9rJzuTertUXZj9ey1DWQTJTD10Jz7e2WQokag5ltSqmSK4olOv9-BA5Slb~o-46qO2GLfsxF8hAlpIn5ibt01mQGrcGOp56fau2Qxrn5jqCLUXwHvL5bmUr6nSUsaO2I7Iz-rUdBC9ODOyxO-zwPbVJF0LAaC8ZveHo7fnNNjYZ3kdEx4i0aTkEOYfqkbxiDZPyICye1q3H2VDUjh9rU9LHobzYYviilBNDqeFKrJQ9oZutSrtEb2KIdb6yiCpLFDPI9rUZe1mJy4MXaTwV5~9DOvchJQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Category Domain list showing SDOH, Functional Status, Disability Status, and Cognitive Status](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F0353402f-9926-493e-af55-d982851bafd9-assess-category-domain-open.png?Expires=253370764800&Signature=A~mYtNCsaIxvfedHQHTiWbi82ii-ZYU4VZKLenma95PCkRwqZTKZMxnvtZZBORNRkWVLSndMgZNp8lmdyClolEsPOr99y~9wEu-bLygll6Wjk8udv1wM0OmhdYSTUkZVq0VbTNI5W4pjQXwuIEEUgse-I2T3dkYjgegLiCZr~LZei2CpIhfIlfbWBLoiHVIwqswspxK5USt-ajdV1nfw1jfZSm7Gfag2MkcxkXFvdCgM9eyjEbhsrzRe7lAHG9iOHyjimhWo7rHcbG3DTBDBuCoySDpOQwtsI0Hf2v5lqLXaoOirvleRNMyKOlEhHBdyKzCvLnmOr2-41Z9Vi4xHNw__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Show in problem list off, records as an encounter diagnosis. But does not allow you to record a domain**
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1795058660709-Screenshot2026-11-18at10.23.38PM.png?Expires=253370764800&Signature=TYghsB0XiIBmooatskrHQqGEJpnQJVDSls28DP253LVRGGfBoniB9hM4WSXRQqp-YTL5D9mK5ZZEhDFIP5nTffItoAMPpKrRFbnAYonaRcTqHSVuX-FdR7GLsXbvk9QiYa9Q0wEvfwQr3o6xHWle2LsNydhZ2j2N2E~sOsJBNPZPuCkJypVYYOeN3GeZNM~-DjIncgNPVpyatlD8pADBUhv1IVJWKLA1AbcCsxjtMtynyZxKERZ~tlGfGzsBGs6cVXImOPGRSGyeHqxKEhYlS9EfdSdDQkTQ5oIBuf8TYmdOiN-pzFYmIYQzLDYrlpyuoWV2puPOPY4~eyfn5-TTrg__&Key-Pair-Id=K3NV4LZ47N8M46)
 Click **Record** to update the patient's record.
 ### Selecting a Condition
 The condition search lists the patient's charted conditions first, active ones at the top, followed by resolved ones. Typing a name or ICD-10 code narrows the list and then shows matching codes from the full ICD-10 list beneath the patient's conditions. Each charted condition shows its ICD-10 code and its status.
@@ -12212,6 +12220,10 @@ A: Click on any condition in the Patient Summary to open a modal that displays t
 A: Background carries forward from the condition's current background, which follows the most recent assessment of it. If nothing appears, neither the command that recorded the condition nor any assessment since included background details.
 **Q: What happens to the background if I enter an assessment in error?**
 A: The condition's background steps back to the assessment before the one entered in error. If it was the only assessment, the background returns to what the condition was recorded with.
+**Q: Why do I see "A category domain needs Show in problem list switched on"?**
+A: A domain was picked while **Show in problem list** is off. Encounter diagnoses don't have a domain, so either turn **Show in problem list** on or clear the domain.
+**Q: What happens to Show in problem list and Category Domain if I enter an assessment in error?**
+A: The condition goes back to the problem list setting and domain it had before that assessment. If the condition was assessed again afterward, or its category was changed some other way since, it keeps its current setting.
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
 **Q: Should I use Assess Condition or Diagnose for a new condition?**
@@ -12225,7 +12237,7 @@ A: When the patient has an active condition with the same ICD-10 code, the searc
 ## Related Resources
   - [Diagnosing a New Condition](/articles/9221634314)
   - [Managing Historical Conditions](/articles/3935780129)
-**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background, conditions plus button
+**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background, conditions plus button, show in problem list, problem list, encounter diagnosis, category domain, SDOH
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions
 
@@ -14419,6 +14431,7 @@ Electronic refill requests allow pharmacies to request medication refills direct
   - When to approve, deny, or ignore a request
   - How duplicate refill requests should be handled
   - What to do when a request remains in the queue
+  - How to send a refill response a plugin prepared
 ## Available Actions
 Electronic refill requests may include the following actions:
   - **Approve** — Approves the refill request and sends an approval response back to the pharmacy.
@@ -14463,6 +14476,14 @@ This is most useful for duplicate refill requests or requests that no longer req
   - No response is sent back to the pharmacy.
   - The request no longer requires action in Canvas.
 > **Don't see Ignore?** The **Ignore** option may not appear for every refill request. If **Ignore** is not available, review the request and choose the appropriate available action, such as approving or denying the request.
+## Refill Responses Prepared by a Plugin
+If your organization uses a plugin to help manage refill requests, the plugin can add an **Approve Refill** or **Deny Refill** command to a note in the patient's chart, ready for review. The command is marked **Plugin Generated**.
+A plugin can only prepare the response. It can't send it to the pharmacy.
+### Send a prepared response
+  1. Open the note in the patient's chart that holds the **Approve Refill** or **Deny Refill** command.
+  2. Review the command, and update the note to the pharmacist or the denial reason if needed.
+  3. Send the response from the command.
+After you send it, Canvas sends the approval or denial back to the pharmacy. Each refill request can only be answered once.
 ## Duplicate Refill Requests
 Duplicate refill requests can occur when a pharmacy sends the same request more than once, or when a medication has already been refilled through another workflow while the original pharmacy-initiated request remains pending.
 If the request is a duplicate and does not require a response to the pharmacy, select **Ignore** when that option is available.
@@ -14487,8 +14508,11 @@ A: **Ignore** may only appear when Canvas determines the request can be dismisse
 ### Duplicate requests
 **Q: I received multiple requests for the same medication. Which one should I use?**
 A: Review the request details to confirm whether the requests are duplicates. If a duplicate request does not need a pharmacy response, select **Ignore** when available.
+### Responses prepared by a plugin
+**Q: A plugin added an Approve Refill command to a note. Has the pharmacy been notified?**
+A: No. A plugin can only prepare the response. The pharmacy gets it only after someone opens the command in the patient's chart and sends it.
 * * *
-**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill
+**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill, plugin generated, refill dashboard
 **Categories:** Clinical Documentation & Commands, Medications, ePrescribing
 **Roles:** Providers, Clinical Staff
 ----- END PAGE https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore

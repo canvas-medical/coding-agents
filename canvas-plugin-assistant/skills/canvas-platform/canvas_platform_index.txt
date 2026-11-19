@@ -1222,12 +1222,15 @@
     - Ignore a Refill Request
         - When to use Ignore
         - What happens when you ignore a request
+    - Refill Responses Prepared by a Plugin
+        - Send a prepared response
     - Duplicate Refill Requests
     - Choosing the Right Action
     - Frequently Asked Questions
         - Requests remaining in the queue
         - Ignore option
         - Duplicate requests
+        - Responses prepared by a plugin
 
 ## Revenue & Billing
 - [Posting Ruleset](https://help.canvasmedical.com/articles/5196278579-posting-ruleset)
