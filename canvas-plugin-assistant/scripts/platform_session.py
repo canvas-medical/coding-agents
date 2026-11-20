@@ -148,6 +148,9 @@ class PlatformSession:
         """
         Print one `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>` line per deployable instance.
 
+        `production` is true when the row's `production` flag is set or its `stage` is "production",
+        because Canvas Platform's own unsafe-instance rule counts both.
+
         `logs` is true when the row's capabilities include `read_plugin_logs`. Deployable rows always
         carry `capabilities`, since `deployable_instances` selects on `deploy_plugin` in it.
 
@@ -173,7 +176,7 @@ class PlatformSession:
         print(
             "\n".join(
                 f"{instance['slug']} test_instance={str(bool(instance['test_instance'])).lower()} "
-                f"production={str(bool(instance['production'])).lower()} "
+                f"production={str(bool(instance['production']) or instance.get('stage') == 'production').lower()} "
                 f"logs={str('read_plugin_logs' in instance['capabilities']).lower()}"
                 for instance in instances
             )
