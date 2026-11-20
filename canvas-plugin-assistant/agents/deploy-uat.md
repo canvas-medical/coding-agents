@@ -368,7 +368,7 @@ import thresholds
 from models.cache import get
 from .handler import MyHandler
 
-# GOOD — full plugin-namespace path (matches the inner package folder name, `<prefix>__<name>`)
+# GOOD: full plugin-namespace path (matches the inner package folder name, `<prefix>__<name>`)
 from acme__my_plugin.thresholds import HIGH_BP
 from acme__my_plugin.models.cache import get
 from acme__my_plugin.handler import MyHandler

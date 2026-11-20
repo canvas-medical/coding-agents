@@ -335,7 +335,7 @@ Before scaffolding, ask the user whether the section needs to refresh while the 
 
 **If the user picks "Yes":**
 - Add a `WebSocketAPI` handler and a broadcaster `BaseHandler` to the spec's component list.
-- **Patient-scope the channel name.** The channel string MUST include the patient id (e.g. `chart-summary-{package}-{patient_id}`). Never broadcast on a global channel — it leaks PHI across charts and causes spurious re-renders for every connected client.
+- **Patient-scope the channel name.** The channel string MUST include the patient id (e.g. `chart-summary-{package}-{patient_id}`). Never broadcast on a global channel: it leaks PHI across charts and causes spurious re-renders for every connected client.
 - Use the canvas-sdk skill's "Real-Time Updates for Custom Sections" page for the canonical implementation (broadcaster pattern, WebSocket auth, template subscription).
 
 **If the user picks "No":** scaffold a plain `PatientChartSummaryCustomSectionHandler` with no WebSocket plumbing.

@@ -254,7 +254,7 @@ After the deploy completes, report the result. Do NOT attempt to fix any errors.
 - **Log stream started:**
   1. Wait 5 seconds for logs to accumulate (`sleep 5`)
   2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
-  3. **If the background shell is no longer running:** the stream did not start or has dropped (for example Canvas Platform refused the log token). Show its output, tell the user the deployment completed but Canvas logs are unavailable, ask them to test in Canvas, and stop.
+  3. **If the background shell has exited:** the stream did not start or has dropped (for example Canvas Platform refused the log token). Show its output, tell the user the deployment completed but Canvas logs are unavailable, ask them to test in Canvas, and stop.
   4. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
   5. Stop log monitoring (KillShell): always stop regardless of outcome
   6. **If errors are found:** show the errors to the user. Do NOT offer to fix them or re-deploy. Just report the errors and stop.

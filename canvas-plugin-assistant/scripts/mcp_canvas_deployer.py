@@ -122,7 +122,7 @@ class CanvasDeployerMcp:
 
         Reads the modern `variables: [{name, sensitive?, default?}, ...]`
         schema. Falls back to the legacy `secrets: [name, ...]` array
-        for unmigrated plugins, but emits no values for it — always use
+        for unmigrated plugins, but emits no values for it; always use
         `variables` (`canvas validate` warns on a legacy `secrets`-only
         manifest).
         """

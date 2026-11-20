@@ -148,7 +148,7 @@ After the agent returns and the deploy is complete, check the logs **in the pare
 
 1. Wait 5 seconds for logs to accumulate (`sleep 5`)
 2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
-3. **If the background shell is no longer running:** the stream did not start or has dropped (for example Canvas Platform refused the log token), so there are no logs to check. Show its output to the user, say logs are unavailable for this deploy, and treat logs as unavailable for the rest of this command.
+3. **If the background shell has exited:** the stream did not start or has dropped (for example Canvas Platform refused the log token), so there are no logs to check. Show its output to the user, say logs are unavailable for this deploy, and treat logs as unavailable for the rest of this command.
 4. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
 5. **If errors are found:**
    1. Stop log monitoring (KillShell)
@@ -160,7 +160,7 @@ After the agent returns and the deploy is complete, check the logs **in the pare
 ### Step 6: UAT
 
 - **Log stream running:** tell the user: "Plugin deployed to {instance}, and no errors detected in logs. Log monitoring is running: go ahead and test in Canvas. Tell me to 'check the logs' when you want to see what happened."
-  - When the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries. If the background shell is no longer running, say the stream has ended and logs are unavailable.
+  - When the user says "check the logs": use BashOutput with the saved bash_id to retrieve and analyze log entries. If the background shell has exited, say the stream has ended and logs are unavailable.
   - When testing is complete: use KillShell to stop the background log stream
 - **No log stream:** tell the user: "Plugin deployed to {instance}. Canvas logs are unavailable for this deploy, so I can't confirm it loaded: go ahead and test in Canvas, and tell me what you see."
   - When the user reports a problem: work from what they describe and the plugin's tests, fix the code, and deploy again with this command.
