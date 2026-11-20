@@ -2,9 +2,9 @@
 Reports the Canvas Platform sign-in, the organizations that can publish plugins, and the deployable instances.
 
 Usage:
-    uv run --with 'canvas>=0.263.0' python platform_session.py whoami
-    uv run --with 'canvas>=0.263.0' python platform_session.py instances
-    uv run --with 'canvas>=0.263.0' python platform_session.py publishers
+    uv run --with 'canvas>=1.2.0' python platform_session.py whoami
+    uv run --with 'canvas>=1.2.0' python platform_session.py instances
+    uv run --with 'canvas>=1.2.0' python platform_session.py publishers
 """
 
 import argparse
@@ -25,14 +25,14 @@ class PlatformSession:
         Print the requested view of the Platform session, or exit 1 when it cannot be shown.
 
         Args:
-            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance and production flags, "publishers" for publishing organization slugs and prefixes.
+            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance, production, and logs flags, "publishers" for publishing organization slugs and prefixes.
         """
         try:
             platform: str = auth.resolve_platform_url()
             if auth.stored_tokens(platform) is None:
                 cls.exit_with_error(
                     f"Not signed in to Canvas Platform at {platform}. "
-                    "Run `uv run --with 'canvas>=0.263.0' canvas login` in your terminal "
+                    "Run `uv run --with 'canvas>=1.2.0' canvas login` in your terminal "
                     "(it opens a browser), then try again."
                 )
 
@@ -128,7 +128,10 @@ class PlatformSession:
     @classmethod
     def print_instances(cls, instances: list[dict[str, Any]]) -> None:
         """
-        Print one `<slug> test_instance=<true|false> production=<true|false>` line per deployable instance.
+        Print one `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>` line per deployable instance.
+
+        `logs` is true when the row's capabilities include `read_plugin_logs`. Deployable rows always
+        carry `capabilities`, since `deployable_instances` selects on `deploy_plugin` in it.
 
         Exits 1 when there are none, or when a row lacks `test_instance` or `production` (a Canvas
         Platform that does not report it), since guessing would offer or hide every instance for
@@ -152,7 +155,8 @@ class PlatformSession:
         print(
             "\n".join(
                 f"{instance['slug']} test_instance={str(bool(instance['test_instance'])).lower()} "
-                f"production={str(bool(instance['production'])).lower()}"
+                f"production={str(bool(instance['production'])).lower()} "
+                f"logs={str('read_plugin_logs' in instance['capabilities']).lower()}"
                 for instance in instances
             )
         )

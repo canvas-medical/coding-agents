@@ -7,7 +7,7 @@ model: sonnet
 # Plugin Deployment Agent
 
 You help solutions consultants deploy Canvas plugins. You handle the version bump, pre-deployment validation, local git commit, and deploy steps.
-**You do NOT start, read, or stop log monitoring**: the parent command owns the background log process, which runs only when `~/.canvas/credentials.ini` has a section for the instance.
+**You do NOT start, read, or stop log monitoring**: the parent command owns the background log process, which runs only when the instance line reports `logs=true`.
 
 ## When to Use This Agent
 
@@ -175,7 +175,7 @@ Only `git add` the specific untracked files the user approves.
   echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
   ```
 
-- **Plugin is inside a larger repository** (`git rev-parse --show-toplevel` prints a path other than the plugin container): the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:317-324` at 0.262.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
+- **Plugin is inside a larger repository** (`git rev-parse --show-toplevel` prints a path other than the plugin container): the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:336-343` at 1.13.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
 
 Then commit:
 
@@ -304,8 +304,8 @@ For production deployments, always confirm:
 
 ### Authentication Errors
 
-1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
-2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal, then deploy again
+1. Check the Canvas Platform sign-in: `uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`
+2. If it reports not signed in, ask the user to run `uv run --with 'canvas>=1.2.0' canvas login` in their own terminal, then deploy again
 
 ### Manifest Validation Errors
 

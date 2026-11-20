@@ -70,7 +70,7 @@ INSTANCES = [
     {
         "slug": "acme-staging",
         "managed": True,
-        "capabilities": ["deploy_plugin"],
+        "capabilities": ["deploy_plugin", "read_plugin_logs"],
         "test_instance": True,
         "production": False,
     },
@@ -125,7 +125,7 @@ class TestRun:
         assert exc_info.value.code == 1
         expected = (
             f"ERROR: Not signed in to Canvas Platform at {PLATFORM}. "
-            "Run `uv run --with 'canvas>=0.263.0' canvas login` in your terminal "
+            "Run `uv run --with 'canvas>=1.2.0' canvas login` in your terminal "
             "(it opens a browser), then try again.\n"
         )
         assert capsys.readouterr().out == expected
@@ -182,11 +182,36 @@ class TestRun:
         tested.run("instances")
 
         expected = (
-            "acme-staging test_instance=true production=false\n"
-            "acme-live test_instance=false production=true\n"
+            "acme-staging test_instance=true production=false logs=true\n"
+            "acme-live test_instance=false production=true logs=false\n"
         )
         assert capsys.readouterr().out == expected
         assert signed_in.mock_calls == [call.instances()]
+
+    def test_run__instances_without_capabilities_key_is_not_listed(self, signed_in, capsys):
+        """A row that omits `capabilities` cannot carry deploy_plugin, so it is never listed as logs=false."""
+        tested = PlatformSession
+        signed_in.instances.return_value = [
+            {
+                "slug": "acme-staging",
+                "managed": True,
+                "capabilities": ["deploy_plugin"],
+                "test_instance": True,
+                "production": False,
+            },
+            {
+                "slug": "acme-other",
+                "managed": True,
+                "capabilities": ["deploy_plugin"],
+                "test_instance": True,
+                "production": False,
+            },
+        ]
+        del signed_in.instances.return_value[1]["capabilities"]
+
+        tested.run("instances")
+
+        assert capsys.readouterr().out == "acme-staging test_instance=true production=false logs=false\n"
 
     def test_run__instances_without_test_instance_key_exits(self, signed_in, capsys):
         """Refuses when Platform omits `test_instance`: guessing false or true would hide or offer every instance for branch deploys."""

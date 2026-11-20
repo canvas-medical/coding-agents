@@ -1,11 +1,11 @@
 ---
 name: deploy-lite
-description: Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs where credentials.ini allows it.
+description: Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs where the person's role on the instance allows it.
 ---
 
 # Deploy Lite
 
-Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs when `~/.canvas/credentials.ini` has a section for the instance.
+Quick-deploy the current plugin to a Canvas instance through Canvas Platform: no version bump, no tests. Commits, deploys, and checks logs when the person can read plugin logs on the instance.
 
 ## Arguments
 
@@ -45,26 +45,20 @@ Resolve the deployment target.
 
 2. **Repository check.** Canvas Platform deploys plugins named `<prefix>__<package>` that are committed to a git repository. Run `git -C "$CPA_PLUGIN_DIR" rev-parse --show-toplevel`:
    - **Prints `$CPA_PLUGIN_DIR`:** the plugin is its own repository, the `canvas init` layout. `canvas deploy` commits and pushes that repository.
-   - **Prints another path:** the plugin sits inside a larger repository, such as a monorepo. Tell the user it deploys as a snapshot: the `deployer` tool passes `--snapshot`, which pushes the package folder as committed at HEAD and leaves that repository's remotes and config alone, and refuses uncommitted changes in the package rather than committing them (canvas-plugins `canvas_cli/apps/platform/git.py:300-329` at 0.262.0). Commits for it are made in that repository, scoped to the package folder.
-   - **Fails (not in a git repository):** the plugin is a legacy plugin.
+   - **Prints another path:** the plugin sits inside a larger repository, such as a monorepo. Tell the user it deploys as a snapshot: the `deployer` tool passes `--snapshot`, which pushes the package folder as committed at HEAD and leaves that repository's remotes and config alone, and refuses uncommitted changes in the package rather than committing them (canvas-plugins `canvas_cli/apps/platform/git.py:319-345` at 1.13.0). Commits for it are made in that repository, scoped to the package folder.
+   - **Fails (not in a git repository):** ask the user whether to run `git init` in `$CPA_PLUGIN_DIR`, the plugin's repository root, because the CLI's own offer to do it appears only in a terminal (`canvas_cli/apps/platform/git.py:107-135` at 1.13.0). On yes, run `git init` there. On no, STOP and deploy nothing.
 
-   The plugin is also a legacy plugin when the manifest `name` has no `<prefix>__` part (no `__`). For a legacy plugin, show this guidance and STOP (deploy nothing):
+   A manifest `name` without a `<prefix>__` part deploys as it is; Canvas Platform decides whether the person may deploy that name, and the `deployer` tool reports a refusal as `deploy_failed`.
 
-   > This plugin cannot be deployed to Canvas Platform as it is. Either:
-   > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and commit it to a git repository: run `git init` in the plugin container directory, or keep it inside an existing repository; or
-   > - Create a fresh plugin with `canvas init` and move the code into it.
-
-   To list the prefixes, run `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
-
-3. **Canvas CLI version.** `uv run canvas --version` must be 0.263.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=0.263.0'` in the container, then continue.
+3. **Canvas CLI version.** `uv run canvas --version` must be 1.2.0 or newer. If it is older, run `uv add 'canvas[test-utils]>=1.2.0'` in the container, then continue.
 
 4. **List the deployable instances.** From `$CPA_PLUGIN_DIR`:
 
    ```bash
-   uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+   uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one line per instance, `<slug> test_instance=<true|false> production=<true|false>`. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one line per instance, `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>`. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=1.2.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
    Work in progress deploys as a branch, which Canvas Platform accepts only on test instances and refuses on any other instance (canvas-plugins `canvas_cli/apps/platform/commands.py:1071-1076` at 1.13.0). Keep only the lines with `test_instance=true`: they are the instances this command offers.
 
@@ -126,19 +120,15 @@ Save the resolved instance slug, the confirmed branch, and the plugin name (the 
 
 ### Step 3: Start Log Monitoring (BEFORE deploy)
 
-`canvas logs` signs in with the client credentials in the `~/.canvas/credentials.ini` section named after the instance slug, not with the Canvas Platform sign-in (canvas-plugins `canvas_cli/apps/logs/logs.py:339` and `canvas_cli/apps/auth/utils.py:55-58` at 0.262.0). Check for that section, reading only section headers, since the file holds client secrets:
+`canvas logs` signs in through Canvas Platform, which issues the log token for an instance it manages (canvas-plugins `canvas_cli/apps/logs/logs.py:113-153` and `canvas_cli/apps/platform/routing.py:62-90` at 1.13.0). Read the instance's `logs=` value from the Step 2 line:
 
-```bash
-grep -qx "\[{instance}\]" ~/.canvas/credentials.ini 2>/dev/null && echo "logs=available" || echo "logs=unavailable"
-```
-
-- **`logs=available`:** start log streaming as a **background task** (`run_in_background: true`), and save the `bash_id`:
+- **`logs=true`:** start log streaming as a **background task** (`run_in_background: true`), and save the `bash_id`:
 
   ```bash
   unbuffer uv run canvas logs --host {instance}
   ```
 
-- **`logs=unavailable`:** there is no log stream for this deploy. Continue.
+- **`logs=false`:** tell the user they lack the Plugin developer or Deploy manager role on {instance}, so logs are unavailable for this deploy. Continue.
 
 Whenever this command stops before Step 6, stop log monitoring (KillShell) if it is running.
 
@@ -198,7 +188,7 @@ If cache busting is missing, add it before proceeding with deployment.
      echo "path/to/left-out-file" >> "$(git rev-parse --git-dir)/info/exclude"
      ```
 
-   - **Plugin is inside a larger repository:** the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:317-324` at 0.262.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
+   - **Plugin is inside a larger repository:** the commit lands on the current branch of that repository, so show the staged files (`git diff --cached --stat .`) and ask before committing. A snapshot refuses any uncommitted or untracked file inside the package folder (canvas-plugins `canvas_cli/apps/platform/git.py:336-343` at 1.13.0), and untracked files elsewhere in the repository do not block it. For each untracked file in the package that the user leaves out, ask whether to delete it or ignore it in that repository's `.gitignore`; never edit the repository's `.git/info/exclude` without asking.
 
 4. Commit (never push; `canvas deploy` pushes the commit to the plugin's Canvas Platform repository, or a snapshot of the package folder for a plugin inside a larger repository):
 
@@ -260,11 +250,11 @@ If cache busting is missing, add it before proceeding with deployment.
 
 After the deploy completes, report the result. Do NOT attempt to fix any errors.
 
-- **No log stream (Step 3 started none):** tell the user the deployment completed, and that Canvas logs are unavailable for this deploy, so it cannot confirm that the plugin loaded: logs stream only with a `~/.canvas/credentials.ini` section for the instance. Ask them to test in Canvas. Stop.
+- **No log stream (Step 3 started none):** tell the user the deployment completed, and that Canvas logs are unavailable for this deploy, so it cannot confirm that the plugin loaded. Ask them to test in Canvas. Stop.
 - **Log stream started:**
   1. Wait 5 seconds for logs to accumulate (`sleep 5`)
   2. Use **BashOutput** with the saved bash_id to retrieve buffered output (this does NOT stop the background process)
-  3. **If the background shell is no longer running:** the stream did not start or has dropped. Show its output, tell the user the deployment completed but Canvas logs are unavailable, ask them to test in Canvas, and stop.
+  3. **If the background shell is no longer running:** the stream did not start or has dropped (for example Canvas Platform refused the log token). Show its output, tell the user the deployment completed but Canvas logs are unavailable, ask them to test in Canvas, and stop.
   4. Scan for errors (tracebacks, `ERROR`, `Exception`, `RestrictedPython error`, `ModuleNotFoundError`, deploy failures)
   5. Stop log monitoring (KillShell): always stop regardless of outcome
   6. **If errors are found:** show the errors to the user. Do NOT offer to fix them or re-deploy. Just report the errors and stop.
@@ -272,7 +262,7 @@ After the deploy completes, report the result. Do NOT attempt to fix any errors.
 
 ## Sign-in
 
-`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). `~/.canvas/credentials.ini` is used only by `canvas logs`, and only when it has a section named after the instance; `credentials.ini` support ends December 14, 2026. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
+`canvas deploy` acts as the person signed in with `canvas login` (or `CANVAS_PLATFORM_TOKEN`). `canvas logs` uses the same sign-in. Plugin variable values live in `~/.canvas/plugin-secrets/<instance slug>.json`, keyed by the manifest name.
 
 ## Examples
 
