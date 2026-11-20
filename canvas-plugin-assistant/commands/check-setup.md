@@ -32,7 +32,7 @@ ls -la .claude/settings.local.json
   2. Run: 
   mkdir -p .claude
   export CC_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT}
-  cp $${CC_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
+  cp ${CC_PLUGIN_ROOT}/.claude/settings.json .claude/settings.local.json
   claude
   3. Then run /cpa:check-setup again
 
@@ -91,7 +91,7 @@ pwd
 ```bash
 echo $CPA_PLUGIN_DIR
 # List non-hidden subdirectories
-ls -d */ 2>/dev/null | grep -v '^\.' | sed 's|/$||'
+find . -mindepth 1 -maxdepth 1 -type d -not -name '.*' | sed 's|^\./||'
 ```
 
 **Validation logic:**
@@ -119,29 +119,18 @@ ls -d */ 2>/dev/null | grep -v '^\.' | sed 's|/$||'
   - **If no subdirectories exist**: Report "CPA_PLUGIN_DIR is empty (ready for new plugin)"
   - **If subdirectories exist**: Report "CPA_PLUGIN_DIR is empty. Existing plugins found: [list]. To work on a plugin, set: export CPA_PLUGIN_DIR=$CPA_WORKSPACE_DIR/[plugin-name]"
 
-### 5. Check Git Repository
+### 5. Check for `git`
 
 ```bash
-git rev-parse --is-inside-work-tree
+which git
 ```
 
-- **If returns "true"**: Report "Current directory is in a git repository" and continue
-- **If fails**: Report the issue:
+- **If found**: Report "git is installed" and continue
+- **If not found**: Report the issue:
   ```
-  The current directory must be inside a git repository.
-
-  If this is a new workspace, initialize git:
-
-  git init
-
-  If you need to work in an existing repository, navigate to it first, then restart Claude:
-
-  cd /path/to/your/repo
-  export CPA_RUNNING=1 
-  export CPA_WORKSPACE_DIR=$(pwd)
-  claude
+  git is required. Install it from https://git-scm.com/downloads
   ```
-  Then ask user to initialize git or navigate to the correct directory.
+  Then ask user to install it and re-run `/cpa:check-setup` after.
 
 ### 6. Check for `uv`
 
@@ -173,13 +162,41 @@ which unbuffer
 ### 8. Check for Canvas CLI
 
 ```bash
-uv run canvas --version
+uv run --with 'canvas>=1.2.0' canvas --version
 ```
+
+`canvas` 1.2.0 or later is needed for `canvas deploy` with `--branch` and `--snapshot`, and for `canvas logs` through Canvas Platform (`log_token_source`, canvas-plugins `canvas_cli/apps/logs/logs.py:113-153` at 1.13.0).
 
 - **If works**: Report the Canvas CLI version
 - **If fails**: Note that Canvas CLI will be installed when creating a plugin (it's a dependency)
 
-### 9. Check Claude Model
+### 9. Check Canvas Platform sign-in
+
+```bash
+uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami
+uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" publishers
+```
+
+- **If `whoami` passes**: Report the Platform host and email from its "Signed in to <url> as <email>" line, each publishing organization with its plugin prefix, and the instances you can deploy to
+  - **If `publishers` exits non-zero while `whoami` passes (signed in, no publishing organization)**: This is a blocking issue for creating plugins, because `/cpa:new-plugin` stops without a publishing organization. Report it in the failures summary (step 12) and not as "Environment ready!", and tell the user an organization admin must grant the Plugin developer role. `/cpa:deploy` and `/cpa:deploy-lite` push plugin code on every deploy, so they need the same role
+- **If it fails**: Show its message and ask the user to run this in their own terminal (it opens a browser to sign in), then re-run `/cpa:check-setup`. Do not run `canvas login` yourself:
+  ```bash
+  uv run --with 'canvas>=1.2.0' canvas login
+  ```
+
+### 10. Check Canvas Platform instances (optional)
+
+```bash
+uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
+```
+
+Each line is `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>`. `/cpa:deploy` and `/cpa:deploy-lite` deploy work in progress only to test instances, and stream logs only for an instance with `logs=true` (the Plugin developer or Deploy manager role on it).
+
+- **If it prints lines**: Report "test instances: [slugs with `test_instance=true`]" and "logs available for: [slugs with `logs=true`]".
+- **If no line has `test_instance=true`**: Report a note only: a Deploy manager or Organization admin designates a test instance on the instance's Plugin management tab in Canvas Platform. This is not a failure.
+- **If it exits non-zero**: Report a note only, with its message. This is not a failure.
+
+### 11. Check Claude Model
 
 Identify which Claude model you are currently running (you know this from your system context).
 
@@ -194,7 +211,7 @@ Identify which Claude model you are currently running (you know this from your s
   To switch, use the /model command or update your .claude/settings.json file to set "model": "opus".
   ```
 
-### 10. Report Results
+### 12. Report Results
 
 If all checks pass, report:
 
@@ -205,20 +222,22 @@ If all checks pass, report:
   CPA_RUNNING: 1
   CPA_WORKSPACE_DIR: [value]
   CPA_PLUGIN_DIR: [value or "empty (ready for new plugin)"]
-  Git repository: ✓
+  git: installed
   uv: installed
   unbuffer: installed
   Canvas CLI: [version or "will be installed with plugin"]
+  Canvas Platform: signed in to [Platform host] as [email], publishing as [org slug(s)], deployable instances: [slugs or "none"]
+  Test instances: [slugs, or "none designated (optional)"]; logs available for: [slugs, or "none (optional)"]
   model: [current model] [with recommendation if not opus]
 
 You're ready to start building Canvas plugins.
 
 Next step:
-- To create a new plugin: Ensure CPA_PLUGIN_DIR is empty, then run /cpa:new-plugin
+- To create a new plugin: Ensure CPA_PLUGIN_DIR is empty and you are signed in to Canvas Platform, then run /cpa:new-plugin
 - To work on an existing plugin: Set CPA_PLUGIN_DIR to the plugin directory
 ```
 
-If any checks fail, summarize what needs to be fixed before proceeding and provide clear instructions.
+If any checks fail, including a signed-in person with no publishing organization, summarize what needs to be fixed before proceeding and provide clear instructions. Do not print "Environment ready!" in that case.
 
 ## CPA Workflow
 

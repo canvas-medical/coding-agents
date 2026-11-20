@@ -32,7 +32,7 @@ Run through each checklist item, report findings, and give a clear verdict.
 **Before any other checks, verify the plugin has the correct folder structure.**
 
 ```bash
-uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_name}
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
 ```
 
 **If structure validation fails:**
@@ -42,16 +42,15 @@ uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py {plugin_n
 
 **Common fixes:**
 
-Determine the inner folder name:
+Determine the inner package folder (`<prefix>__<name>`):
 ```bash
-CONTAINER=$(basename "$PWD")
-INNER=$(echo "$CONTAINER" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ```
 
 | Issue | Fix |
 |-------|-----|
-| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json $INNER/` |
-| tests/ inside inner folder | `mv $INNER/tests ./` |
+| CANVAS_MANIFEST.json at container level | `mv CANVAS_MANIFEST.json <prefix>__<name>/` |
+| tests/ inside inner folder | `mv $INNER/tests ./` (run the `INNER=` line above first) |
 | No inner folder | Re-run `canvas init` or restructure manually |
 
 ---
@@ -198,7 +197,7 @@ Check that all test files test code that still exists:
 Check if the plugin uses HTML templates or `render_to_string`:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls "$INNER"/templates/ 2>/dev/null; grep -rn "render_to_string" --include="*.py" .
 ```
 
@@ -301,7 +300,7 @@ Update the README if issues are found.
 Check CANVAS_MANIFEST.json for applications:
 
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 grep -A 10 '"applications"' "$INNER/CANVAS_MANIFEST.json" 2>/dev/null
 ```
 
@@ -315,7 +314,7 @@ For each application entry, verify:
 
 Check icon files:
 ```bash
-INNER=$(basename "$PWD" | tr '-' '_')
+INNER=$(dirname */CANVAS_MANIFEST.json)
 ls -lh "$INNER"/assets/*.png 2>/dev/null || echo "No PNG icons found"
 ```
 
@@ -528,27 +527,55 @@ git commit -m "complete {plugin_name} wrap-up
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-**Step 13e — Ask before pushing:**
+**Step 13e, Release:**
 
-Pushing is outward-facing and irreversible, so confirm first:
+Releasing publishes this version to `main` on Canvas Platform, where every instance can install it. It is outward-facing and irreversible, so confirm first, and run it through the **`deployer`** MCP tool (provided by the `canvas_cmd_line` MCP server), never a Bash `canvas deploy`.
 
-```json
-{
-  "questions": [
-    {
-      "question": "Committed locally. Push to the remote now?",
-      "header": "Push?",
-      "options": [
-        {"label": "Push now", "description": "Run git push to the upstream branch"},
-        {"label": "Don't push", "description": "Leave the commit local; I'll push it myself later"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
+1. **Check the `deployer` tool is available.** When it is not in this session, or a call to it is refused (Studio denies it), skip this step: say Studio publishes through its Publish button, and nothing is merged or pushed.
+2. Ask:
 
-Only run `git push` if the user chooses to push.
+   ```json
+   {
+     "questions": [
+       {
+         "question": "Release this version? It publishes to main on Canvas Platform, where every instance can install it.",
+         "header": "Release?",
+         "options": [
+           {"label": "Release now", "description": "Publish the committed plugin to main on Canvas Platform and deploy it to an instance you choose"},
+           {"label": "Don't release", "description": "Leave the commit local; I'll release it myself later"}
+         ],
+         "multiSelect": false
+       }
+     ]
+   }
+   ```
+
+   On "Don't release", skip to Step 14.
+3. Check where the plugin sits with `git rev-parse --show-toplevel`:
+   - **Prints `$CPA_PLUGIN_DIR` (the plugin is its own repository):** the release deploys `main`. When `git branch --show-current` is not `main`, ask:
+
+     ```json
+     {
+       "questions": [
+         {
+           "question": "The release deploys main, and you are on a work branch. Fast-forward main to it?",
+           "header": "Merge to main?",
+           "options": [
+             {"label": "Fast-forward main", "description": "Run git switch main && git merge --ff-only <work branch>, so main holds this version"},
+             {"label": "Don't release", "description": "Stay on the work branch and release later"}
+           ],
+           "multiSelect": false
+         }
+       ]
+     }
+     ```
+
+     On "Fast-forward main", run the commands. When the repository has no local `main` (`git rev-parse --verify --quiet refs/heads/main` prints nothing, as after a `git init` that named the first branch `master`), run `git switch -c main` instead, which starts `main` at the work branch. When `main` cannot fast-forward, stop and say so; nothing is pushed.
+   - **Prints another path (the plugin is inside a larger repository):** no merge happens. The `deployer` tool pushes a snapshot of the package folder as committed at HEAD to `main`, and it refuses an uncommitted or untracked file in the package (`Status: snapshot_uncommitted`).
+4. List the instances with `uv run --with 'canvas>=1.2.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances`. Each line is `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>`. Ask which instance to deploy the release to, offering every line (a release is not limited to test instances, and a work branch deploy is). When the line says `production=true`, confirm first with the production block in `agents/deploy-uat.md` (the "Environment Promotion" JSON block); on "No, cancel", stop.
+5. Call `deployer` with `plugin_name`, `instance`, `cwd`, and `branch` left empty. An empty `branch` pushes to `main` and deploys it (canvas-plugins `canvas_cli/apps/platform/commands.py:1050-1051` at 1.13.0). Route on the `Status:` line exactly as `agents/deploy-uat.md` Step 4 does, including `snapshot_uncommitted` (offer to commit the package files in the larger repository; never pass `--yes`).
+
+To install the released version on more instances later, call `deployer` with `version` set to the released version (for example `1.4.0`) and `branch` empty. That runs `canvas deploy --plugin <name>@<version>`, which takes no folder and pushes nothing (`commands.py:985-993`, `1098-1117` at 1.13.0).
 
 ### 14. Wrap-Up Complete
 
@@ -559,13 +586,13 @@ Only run `git push` if the user chooses to push.
 This command is the **final step** in the Canvas Plugin Assistant workflow:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
 /cpa:database-performance-review  →  Database query optimization
-/cpa:wrap-up          →  Final checklist before delivery  ← YOU ARE HERE
+/cpa:wrap-up          →  Final checklist, commit, and release  ← YOU ARE HERE
 ```
 
 After wrap-up passes, the plugin is ready to ship!
