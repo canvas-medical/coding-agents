@@ -249,6 +249,28 @@ class TestRun:
         expected = "ERROR: Canvas Platform does not report which instances are production; update Canvas Platform.\n"
         assert capsys.readouterr().out == expected
 
+    def test_run__instances_staged_production_is_production(self, signed_in, capsys):
+        """An instance Canvas Platform stages Production is production even before Console flags it.
+
+        Platform's own rule (`InstanceAssignment.unsafe`) counts the stage beside Console's flag, so the
+        release step's production confirmation has to as well.
+        """
+        tested = PlatformSession
+        signed_in.instances.return_value = [
+            {
+                "slug": "acme-live",
+                "stage": "production",
+                "managed": True,
+                "capabilities": ["deploy_plugin"],
+                "test_instance": False,
+                "production": False,
+            },
+        ]
+
+        tested.run("instances")
+
+        assert capsys.readouterr().out == "acme-live test_instance=false production=true logs=false\n"
+
     def test_run__instances_none_exits(self, signed_in, capsys):
         """Refuses with no deployable instance because a deploy would have nowhere to go."""
         tested = PlatformSession

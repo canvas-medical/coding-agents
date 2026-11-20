@@ -9,7 +9,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, call, patch
 
 import canvas_cli.apps.platform
+import canvas_cli.apps.platform.commands as commands
 import pytest
+from canvas_cli.main import app
+from typer.testing import CliRunner
 
 from mcp_canvas_deployer import CanvasDeployerMcp
 
@@ -1210,3 +1213,156 @@ class TestPluginLauncher:
             "mcp_canvas_deployer.py imports mcp.server.fastmcp, which mcp 2.x renamed to "
             "mcp.server.mcpserver; drop this pin only after porting the script to MCPServer"
         )
+
+
+# Platform's refusal sentences as `canvas deploy` prints them without a terminal: a
+# PlatformError is a click.ClickException, shown as "Error: <message>" on stderr, exit 1.
+# Sentences from platform's plugins/registry.py `not_on_main` (production target) and
+# plugins/tests/test_dependencies.py (`dependency_conflict` with its hint).
+NOT_ON_MAIN_STDOUT = (
+    "Pushed acme__vitals_alert 3f2a9c1d0b7e to vitals-wip on Canvas Platform.\n"
+    "Deploying acme__vitals_alert@3f2a9c1d0b7e to acme-prod…\n"
+)
+NOT_ON_MAIN_SENTENCE = (
+    "acme__vitals_alert at 3f2a9c1d0b7e isn't on main, so it deploys only to your organization's "
+    "test instances (acme-dev), and acme-prod isn't one. It can be deployed to acme-prod once it is on main."
+)
+CONFLICT_SENTENCE = (
+    "acme-staging runs acme__a 1.0.0, which needs acme/acme__kit ~=1.0, so acme__kit 2.0.0 "
+    "cannot be installed beside it. Deploy them together: canvas deploy --plugin "
+    "acme/acme__kit@2.0.0 --plugin acme/acme__a@2.0.0 --plugin acme/acme__b@1.1.0 "
+    "--instance acme-staging"
+)
+
+
+class Reached(Exception):
+    """The canvas CLI got past its own argument checks to its first network call."""
+
+
+class TestPlatformRefusalScenarios:
+    """Platform-worded refusals and the deployer's hand-offs, checked against the real CLI's shapes."""
+
+    @pytest.mark.parametrize(
+        ("name", "instance", "kwargs", "stdout", "sentence"),
+        [
+            pytest.param(
+                PLUGIN,
+                "acme-prod",
+                {"branch": "vitals-wip"},
+                NOT_ON_MAIN_STDOUT,
+                NOT_ON_MAIN_SENTENCE,
+                id="not_on_main",
+            ),
+            pytest.param(
+                "acme__kit", "acme-staging", {"version": "2.0.0"}, "", CONFLICT_SENTENCE, id="dependency_conflict"
+            ),
+        ],
+    )
+    def test_deploy__platform_refusal_is_deploy_failed_with_its_sentence_intact(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        name: str,
+        instance: str,
+        kwargs: dict,
+        stdout: str,
+        sentence: str,
+    ) -> None:
+        """Platform's own sentence names what to do next, so it reaches the agent whole, unclassified, and nothing is configured."""
+        tested = CanvasDeployerMcp
+        plugin_dir = tmp_path / name
+        plugin_dir.mkdir()
+        manifest = {"name": name, "variables": [{"name": "API_KEY", "sensitive": True}]}
+        (plugin_dir / "CANVAS_MANIFEST.json").write_text(json.dumps(manifest), encoding="utf-8")
+        secrets_file = tmp_path / "secrets" / f"{instance}.json"
+        secrets_file.parent.mkdir()
+        secrets_file.write_text(json.dumps({name: {"API_KEY": "sk-1"}}), encoding="utf-8")
+        monkeypatch.setenv("CPA_SECRET_FILEPATH", str(secrets_file))
+        log = install_fake_uv(tmp_path, monkeypatch, deploy=(stdout, f"Error: {sentence}\n", 1))
+
+        result = asyncio.run(tested.deploy(plugin_name=name, instance=instance, cwd=str(tmp_path), **kwargs))
+
+        assert result.splitlines()[-1] == "Status: deploy_failed"
+        assert sentence in result
+        notes = (
+            tested.CONSENT_NOTE,
+            tested.STILL_RUNNING_NOTE,
+            tested.UNCOMMITTED_NOTE,
+            tested.SNAPSHOT_UNCOMMITTED_NOTE,
+            tested.SNAPSHOT_UNSUPPORTED_NOTE,
+            tested.SNAPSHOT_ROLLBACK_NOTE,
+            tested.SNAPSHOT_REPLACES_NOTE,
+        )
+        assert not [note for note in notes if note in result]
+        assert [argv[3] for argv in read_argv_log(log)] == ["deploy"]
+
+    @staticmethod
+    def _run_hand_off(result: str, monkeypatch: pytest.MonkeyPatch) -> object:
+        """Run the hand-off line of a deployer result through the installed canvas CLI, stopping at its first network call."""
+        [line] = [line for line in result.splitlines() if "&& uv run canvas deploy" in line]
+        cd_part, command = line.strip().split(" && ")
+        argv = shlex.split(command)
+        assert argv[:3] == ["uv", "run", "canvas"]
+        monkeypatch.chdir(shlex.split(cd_part)[1])
+
+        def reached(*args: object, **kwargs: object) -> None:
+            raise Reached(argv[4:])
+
+        monkeypatch.setattr(commands.auth, "resolve_platform_url", reached)
+        monkeypatch.setattr(commands, "_deploy_released", reached)
+        return CliRunner().invoke(app, argv[3:])
+
+    def test_hand_off__branch_consent_in_a_monorepo_is_accepted_by_the_cli(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The consent hand-off of a `--snapshot --branch` deploy is `--ref <branch>`, which the CLI takes inside a larger repository."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        git_init(tmp_path / "monorepo")
+        cwd = make_plugin(container, MANIFEST)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = [CONSENT_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+        assert mock_cmd.mock_calls[0].kwargs["command"][5:8] == ["--snapshot", "--branch", BRANCH]
+
+        ran = self._run_hand_off(result, monkeypatch)
+
+        assert isinstance(ran.exception, Reached), ran.output
+        assert ran.exception.args[0] == [PLUGIN, "--ref", BRANCH, "--instance", INSTANCE]
+
+    def test_hand_off__version_consent_is_accepted_by_the_cli(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The consent hand-off of a released version names it with `--plugin` and no folder, as the CLI requires."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = [CONSENT_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        ran = self._run_hand_off(result, monkeypatch)
+
+        assert isinstance(ran.exception, Reached), ran.output
+        assert ran.exception.args[0] == ["--plugin", f"{PLUGIN}@1.4.0", "--instance", INSTANCE]
+
+    def test_hand_off__snapshot_replaces_on_a_branch_is_accepted_by_the_cli(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The snapshot-replaces hand-off keeps `--branch`, a combination the CLI takes with `--snapshot`."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        git_init(tmp_path / "monorepo")
+        cwd = make_plugin(container, MANIFEST)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = [SNAPSHOT_REPLACES_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+
+        ran = self._run_hand_off(result, monkeypatch)
+
+        assert isinstance(ran.exception, Reached), ran.output
+        assert ran.exception.args[0] == [PLUGIN, "--snapshot", "--branch", BRANCH, "--instance", INSTANCE]
