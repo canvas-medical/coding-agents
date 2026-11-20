@@ -53,8 +53,7 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 
    > This plugin cannot be deployed to Canvas Platform as it is. Either:
    > - Rename the package folder, the manifest `name`, and every import to `<prefix>__<package>` (the prefix is listed by the `whoami` command below), and commit it to a git repository: run `git init` in the plugin container directory, or keep it inside an existing repository; or
-   > - Create a fresh plugin with `canvas init` and move the code into it; or
-   > - Deploy it as it is with `/cpa:deploy-legacy`, which uses `canvas install` and `~/.canvas/credentials.ini` and works only until December 14, 2026.
+   > - Create a fresh plugin with `canvas init` and move the code into it.
 
    To list the prefixes, run `uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" whoami`.
 

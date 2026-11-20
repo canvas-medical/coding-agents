@@ -12,7 +12,6 @@ import canvas_cli.apps.platform
 import pytest
 
 from mcp_canvas_deployer import CanvasDeployerMcp
-from mcp_canvas_installer import CanvasInstallerMcp
 
 
 class TestParseVariableNames:
@@ -725,13 +724,13 @@ class TestCreateServer:
         assert result.name == expected
 
     def test_create_server__tools(self) -> None:
-        """Server registers the deployer and configurer, plus the installer for /cpa:deploy-legacy."""
+        """Server registers the deployer and configurer."""
         tested = CanvasDeployerMcp
         server = tested.create_server()
 
         tool_names = {tool.name for tool in server._tool_manager.list_tools()}
 
-        expected = {"deployer", "configurer", "installer"}
+        expected = {"deployer", "configurer"}
         assert tool_names == expected
 
     @pytest.mark.parametrize(
@@ -754,20 +753,6 @@ class TestCreateServer:
         expected = "mocked"
         assert result == expected
         assert mock_method.mock_calls == [call("p", "i", "c")]
-
-    def test_create_server__installer_delegates(self) -> None:
-        """The installer tool keeps its name, so Studio's refusal of `canvas_cmd_line__installer` still matches it."""
-        tested = CanvasDeployerMcp
-        server = tested.create_server()
-
-        with patch.object(CanvasInstallerMcp, "install", new_callable=AsyncMock) as mock_install:
-            mock_install.side_effect = ["mocked"]
-            tool = server._tool_manager._tools["installer"]
-            result = asyncio.run(tool.fn(plugin_name="p", instance="i", cwd="c"))
-
-        expected = "mocked"
-        assert result == expected
-        assert mock_install.mock_calls == [call("p", "i", "c")]
 
 
 # Scenario tests: the deployer driven through a fake `uv` on PATH, so the real subprocess and secrets-file paths run.

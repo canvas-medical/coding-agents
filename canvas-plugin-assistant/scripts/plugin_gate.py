@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse gate: run `canvas validate` before a plugin is committed, installed or deployed.
+"""PreToolUse gate: run `canvas validate` before a plugin is committed or deployed.
 
 Off unless CPA_PLUGIN_GATE is `advise` (findings go back to Claude, nothing is
 stopped) or `block` (a failure stops the tool call, and Claude sees why).
@@ -21,8 +21,6 @@ from pathlib import Path
 MODE_VARIABLE = "CPA_PLUGIN_GATE"
 MODES = ("off", "advise", "block")
 MANIFEST = "CANVAS_MANIFEST.json"
-INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
-PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
 # Shapes that were a live credential in every shipped file they appeared in across installed
 # plugins, so a commit adding one is stopped in `block` mode. In a Markdown or reST doc they advise.
 CERTAIN_SECRETS = {
@@ -64,23 +62,9 @@ def find_plugin_dir(start: Path) -> Path | None:
     return children[0] if len(children) == 1 else None
 
 
-class OutsideSession(Exception):
-    """An installer target the gate will not check: checking runs code, and the hook runs
-    before the call is approved, so only plugins inside the session's working directory are."""
-
-
 def target_dir(payload: dict) -> Path | None:
     """The plugin the gated tool call acts on, or None when it acts on no plugin."""
     cwd = Path(payload.get("cwd") or ".").resolve()
-    tool_input = payload.get("tool_input") or {}
-    if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
-        plugin_name = str(tool_input.get("plugin_name", ""))
-        if not PLUGIN_NAME.fullmatch(plugin_name):
-            raise OutsideSession
-        target = (Path(tool_input.get("cwd") or cwd) / plugin_name).resolve()
-        if target != cwd and cwd not in target.parents:
-            raise OutsideSession
-        return find_plugin_dir(target)
     return find_plugin_dir(cwd)
 
 
@@ -210,7 +194,7 @@ def scan_diff(diff: str) -> tuple[list[str], list[str]]:
 
 
 def bash_action(command: str) -> str | None:
-    """`commit` for a `git commit`, `upload` for a `canvas install`/`deploy`, else None.
+    """`commit` for a `git commit`, `upload` for a `canvas deploy`, else None.
 
     Reads each simple command, skipping `NAME=value` prefixes and git's global options
     (`git -C dir commit`). A git alias for commit is not resolved.
@@ -237,7 +221,7 @@ def bash_action(command: str) -> str | None:
         if words[:2] == ["uv", "run"]:
             words = words[2:]
         program = Path(words[0]).name if words else ""
-        if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
+        if program == "canvas" and words[1:2] == ["deploy"]:
             return "upload"
         if program == "git":
             rest = iter(words[1:])
@@ -296,23 +280,10 @@ def main(stdin: str) -> int:
     if mode == "off":
         return 0
     payload = json.loads(stdin or "{}")
-    if payload.get("tool_name") == "Bash":
-        action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
-    else:
-        action = "upload"
+    action = bash_action(str((payload.get("tool_input") or {}).get("command", "")))
     if action is None:
         return 0
-    try:
-        plugin_dir = target_dir(payload)
-    except OutsideSession:
-        if mode == "block":
-            print(
-                "CPA plugin gate: it checks only plugins inside the session's working directory, "
-                "so it stopped this install. Run it with a plugin from there.",
-                file=sys.stderr,
-            )
-            return 2
-        return 0
+    plugin_dir = target_dir(payload)
     if plugin_dir is None:
         return 0
     problems: list[str] = []
