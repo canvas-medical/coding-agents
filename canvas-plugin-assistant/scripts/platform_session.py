@@ -25,7 +25,7 @@ class PlatformSession:
         Print the requested view of the Platform session, or exit 1 when it cannot be shown.
 
         Args:
-            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs, "publishers" for publishing organization slugs and prefixes.
+            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance and production flags, "publishers" for publishing organization slugs and prefixes.
         """
         try:
             platform: str = auth.resolve_platform_url()
@@ -39,7 +39,12 @@ class PlatformSession:
             client = PlatformClient(platform)
             if show == "whoami":
                 cls.print_whoami(
-                    platform, client.me(), cls.deployable_instances(client.instances())
+                    platform,
+                    client.me(),
+                    [
+                        instance["slug"]
+                        for instance in cls.deployable_instances(client.instances())
+                    ],
                 )
             elif show == "publishers":
                 cls.print_publishers(cls.publishing_orgs(client.me()))
@@ -67,18 +72,18 @@ class PlatformSession:
         ]
 
     @classmethod
-    def deployable_instances(cls, instances: list[dict[str, Any]]) -> list[str]:
+    def deployable_instances(cls, instances: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
-        Slugs of the instances the person can deploy plugins to, as the Canvas CLI decides it.
+        The instances the person can deploy plugins to, as the Canvas CLI decides it.
 
         Args:
             instances (list[dict]): The `/api/v1/instances` payload.
 
         Returns:
-            list[str]: Slugs of managed instances with the deploy_plugin capability.
+            list[dict]: Rows of managed instances with the deploy_plugin capability.
         """
         return [
-            instance["slug"]
+            instance
             for instance in instances
             if instance.get("managed")
             and "deploy_plugin" in instance.get("capabilities", [])
@@ -121,18 +126,31 @@ class PlatformSession:
         print("\n".join(f"{org['slug']} {org['plugin_prefix']}__" for org in orgs))
 
     @classmethod
-    def print_instances(cls, slugs: list[str]) -> None:
+    def print_instances(cls, instances: list[dict[str, Any]]) -> None:
         """
-        Print one deployable instance slug per line, or exit 1 when there are none.
+        Print one `<slug> test_instance=<true|false> production=<true|false>` line per deployable instance.
+
+        Exits 1 when there are none, or when a row lacks `test_instance` (a Canvas Platform
+        that does not report it), since guessing would offer or hide every instance for branch deploys.
 
         Args:
-            slugs (list[str]): Deployable instance slugs.
+            instances (list[dict]): Deployable instance rows.
         """
-        if not slugs:
+        if not instances:
             cls.exit_with_error(
                 "There is no instance Canvas Platform manages that you can deploy plugins to."
             )
-        print("\n".join(slugs))
+        if any("test_instance" not in instance for instance in instances):
+            cls.exit_with_error(
+                "Canvas Platform does not report test instances; update Canvas Platform."
+            )
+        print(
+            "\n".join(
+                f"{instance['slug']} test_instance={str(bool(instance['test_instance'])).lower()} "
+                f"production={str(bool(instance.get('production'))).lower()}"
+                for instance in instances
+            )
+        )
 
     @classmethod
     def exit_with_error(cls, message: str) -> None:

@@ -195,7 +195,7 @@ Read only the section headers, as above: the file holds client secrets and passw
 
 `canvas logs` signs in with a section named after the instance. `/cpa:deploy` and `/cpa:deploy-lite` stream logs only for an instance with a section, and deploy without logs otherwise. `/cpa:deploy-legacy`, for plugins without an organization prefix, also deploys with `canvas install` signed in with that section.
 
-- **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug from `instances`]" and "legacy deploys available for: [section names other than `localhost`]".
+- **If the file exists**: Report "log streaming available for: [sections that match a deployable instance slug, the first field of each `instances` line]" and "legacy deploys available for: [section names other than `localhost`]".
 - **If the file is missing or has no such section**: Report a note only: deploys work without it, but cannot stream logs. This is not a failure.
 - In either case, note that `credentials.ini` support ends December 14, 2026, and `/cpa:deploy-legacy` is removed by then.
 

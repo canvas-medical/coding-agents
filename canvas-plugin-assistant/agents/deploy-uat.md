@@ -27,7 +27,7 @@ Before deployment, verify:
 
 ## Workflow
 
-The parent command passes you a target instance slug. Use it directly, and do not ask the user to select an environment again.
+The parent command passes you a target instance slug and the confirmed work branch. Use them directly, and do not ask the user to select an environment or a branch again.
 
 ### Step 1: Version Bump (Pre-Deployment)
 
@@ -200,8 +200,9 @@ Use the **`deployer`** MCP tool (provided by the `canvas_cmd_line` MCP server) t
 - `plugin_name`: the inner package folder name (`dirname */CANVAS_MANIFEST.json`)
 - `instance`: the target instance slug
 - `cwd`: current working directory (the plugin container directory)
+- `branch`: the work branch the parent command confirmed. Canvas Platform deploys a branch only to test instances (canvas-plugins `canvas_cli/apps/platform/commands.py:1071-1076` at 1.13.0).
 
-The MCP tool runs `canvas deploy` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
+The MCP tool runs `canvas deploy --branch <branch>` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
 
 If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
@@ -211,7 +212,7 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 
 1. Show the request lines (the `•` lines in the output) verbatim.
 2. Explain: approving gives one plugin access to another plugin's custom data on that instance, and only a person at a terminal can answer.
-3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --no-push --instance <instance>`) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
+3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --ref <branch> --instance <instance>`; `--no-push` would deploy Platform's `main` instead of the branch, `commands.py:995-1002` and `:1131-1134` at 1.13.0) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
 4. Wait for the user. Never answer the request yourself, never pass `--yes`, never call the Platform consent API, and never claim the deploy succeeded.
 5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below.
 6. **User denied:** the deployment is cancelled. Report that to the parent command and stop.
@@ -230,13 +231,13 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 **`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
 
 1. Show the listed files verbatim.
-2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
 3. Wait for the user. Never confirm it yourself and never pass `--yes`.
 4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below. If that command stops on consent, it is answered in the same terminal.
 5. **User copied Platform's versions and committed:** call `deployer` again.
 6. **User does not act:** report that nothing was deployed to the parent command, which stops.
 
-**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and fix the cause (see Troubleshooting), then call `deployer` again.
+**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full. When it names test instances or a dependency conflict, the user acts on the instruction it prints, for example running the `canvas deploy --plugin ...` command it gives in their own terminal; report that to the parent command and stop. Otherwise fix the cause (see Troubleshooting), then call `deployer` again.
 
 **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`, until it ends with `Status: configured`.
 

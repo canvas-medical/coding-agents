@@ -10,8 +10,8 @@ Deploy the current plugin to a Canvas Platform instance, with log monitoring whe
 ## Arguments
 
 - `$1` (optional): Canvas Platform instance slug (e.g. `acme-staging`)
-  - If provided: verify it is one of the instances you can deploy to, then proceed to pre-deployment checks
-  - If omitted: use the only deployable instance, or ask the user to choose when there are several
+  - If provided: verify it is one of the test instances you can deploy to, then proceed to pre-deployment checks
+  - If omitted: use the only deployable test instance, or ask the user to choose when there are several
 
 ## Instructions
 
@@ -65,9 +65,13 @@ Resolve the deployment target **before** delegating to the agent, because the pa
    uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one line per instance, `<slug> test_instance=<true|false> production=<true|false>`. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
-5. **Handle the target instance argument:**
+   Work in progress deploys as a branch, which Canvas Platform accepts only on test instances and refuses on any other instance (canvas-plugins `canvas_cli/apps/platform/commands.py:1071-1076` at 1.13.0). Keep only the lines with `test_instance=true`: they are the instances this command offers.
+
+   **If no line has `test_instance=true`:** STOP and tell the user that a Deploy manager or Organization admin designates a test instance on the instance's Plugin management tab in Canvas Platform ([Designating test instances](https://help.canvasmedical.com/articles/4724162094-designating-test-instances)). Deploy nothing.
+
+5. **Handle the target instance argument** (among the test instances only):
    - If `$1` is provided and listed: use `$1` as the target instance
    - If `$1` is provided but not listed: use AskUserQuestion with the listed slugs as options so the user can choose or correct the name
    - If `$1` is not provided:
@@ -91,7 +95,35 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 }
 ```
 
-Save the resolved instance slug and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
+6. **Choose the branch.** Canvas Platform's `main` is published only by `/cpa:wrap-up`, so this command deploys the work as a branch (`canvas deploy --branch` pushes HEAD to that branch and refuses `main` and malformed names, `commands.py:824-840` and `:1071-1076` at 1.13.0). Run:
+
+   ```bash
+   git -C "$CPA_PLUGIN_DIR" branch --show-current
+   ```
+
+   - **Prints a name other than `main`:** ask with AskUserQuestion, replacing `<name>` with the printed name:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Deploy this work as branch `<name>` on Canvas Platform? It deploys only to test instances.",
+      "header": "Branch",
+      "options": [
+        {"label": "Use <name> (Recommended)", "description": "Push the current branch to Canvas Platform under its own name"},
+        {"label": "Another name", "description": "I'll type a different work branch name"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+   - **Prints `main`, or nothing (detached HEAD):** ask the user for a work branch name, suggesting `<plugin short name>-wip`. Never offer `main` as the default. Do not deploy until the user gives a name.
+
+   A typed name is used as given. If the CLI refuses it, the `deployer` tool reports `Status: deploy_failed` with the CLI's reason; ask for another name.
+
+Save the resolved instance slug, the confirmed branch, and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
 
 ### Step 3: Start Log Monitoring (BEFORE deploy)
 
@@ -114,7 +146,7 @@ grep -qx "\[{instance}\]" ~/.canvas/credentials.ini 2>/dev/null && echo "logs=av
 
 Use the **deploy-uat** agent to handle version bump, validation, local git commit, and deploy. Pass the resolved instance slug so the agent does not need to ask again.
 
-Tell the agent: "Deploy to {instance}", and, when the repository check found a larger repository, "The plugin is inside the larger repository at {toplevel}, so it deploys as a snapshot".
+Tell the agent: "Deploy to {instance} as branch {branch}", and, when the repository check found a larger repository, "The plugin is inside the larger repository at {toplevel}, so it deploys as a snapshot".
 
 The agent returns when the deploy is complete, or when it stopped: uncommitted changes declined, deploy failed, a snapshot refused, or a custom data consent request or a snapshot confirmation was denied or left unanswered. The agent owns the consent hand-off (see its Step 4). Continue to Step 5 only when the agent reports the deploy complete. If the agent reports a stop, stop log monitoring (KillShell) if it is running, relay the agent's report to the user, and end the command.
 

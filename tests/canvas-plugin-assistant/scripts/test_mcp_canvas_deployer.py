@@ -149,6 +149,8 @@ MANIFEST: dict = {
     "variables": [{"name": "API_KEY", "sensitive": True}, {"name": "API_URL"}],
 }
 DEPLOY_CMD: list[str] = ["uv", "run", "canvas", "deploy", PLUGIN, "--instance", INSTANCE]
+BRANCH = "vitals-wip"
+BRANCH_DEPLOY_CMD: list[str] = [*DEPLOY_CMD[:5], "--branch", BRANCH, *DEPLOY_CMD[5:]]
 CONSENT_OUTPUT = (
     "Command failed with exit code 1\n"
     "This deployment needs consent (1 request(s)):\n\n"
@@ -289,6 +291,36 @@ class TestDeploy:
         )
         assert result == expected
         assert mock_cmd.mock_calls == [call(command=DEPLOY_CMD, cwd=cwd)]
+        assert mock_secrets.mock_calls == []
+
+    def test_deploy__branch_is_passed_to_canvas_deploy(self, tmp_path: Path) -> None:
+        """A work-in-progress deploy names its branch so the commit stays off Platform's main."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {"name": PLUGIN})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+
+        assert mock_cmd.mock_calls == [call(command=BRANCH_DEPLOY_CMD, cwd=cwd)]
+        assert result.splitlines()[-1] == "Status: deployed"
+
+    def test_deploy__consent_pending_on_a_branch_hands_off_ref(self, tmp_path: Path) -> None:
+        """`--no-push` deploys Platform's main, so a branch deploy's hand-off deploys the pushed branch with `--ref`."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = [CONSENT_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+
+        hand_off = f"  cd {cwd} && uv run canvas deploy {PLUGIN} --ref {BRANCH} --instance {INSTANCE}\n"
+        assert hand_off in result
+        assert "--no-push" not in result
+        assert result.splitlines()[-1] == "Status: consent_pending"
         assert mock_secrets.mock_calls == []
 
     def test_deploy__failure_skips_configure(self, tmp_path: Path) -> None:
@@ -679,6 +711,43 @@ class TestSnapshot:
         assert len(mock_cmd.mock_calls) == 1
         assert mock_secrets.mock_calls == []
 
+    def test_deploy__snapshot_and_branch_combine(self, tmp_path: Path) -> None:
+        """The CLI accepts `--branch` with `--snapshot`, so a monorepo plugin deploys its snapshot to the branch."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        git_init(tmp_path / "monorepo")
+        cwd = make_plugin(container, {"name": PLUGIN})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+
+        expected = [*DEPLOY_CMD[:5], "--snapshot", "--branch", BRANCH, *DEPLOY_CMD[5:]]
+        assert mock_cmd.mock_calls == [call(command=expected, cwd=cwd)]
+
+    def test_deploy__replaces_platform_on_a_branch_hands_off_branch(self, tmp_path: Path) -> None:
+        """The snapshot hand-off keeps the branch, so the confirmed replacement lands on the branch and not on main."""
+        tested = CanvasDeployerMcp
+        container = tmp_path / "monorepo" / "plugins" / "vitals-alert"
+        container.mkdir(parents=True)
+        git_init(tmp_path / "monorepo")
+        cwd = make_plugin(container, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets"),
+        ):
+            mock_cmd.side_effect = [SNAPSHOT_REPLACES_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH))
+
+        hand_off = (
+            f"  cd {shlex.quote(cwd)} && uv run canvas deploy {PLUGIN} --snapshot --branch {BRANCH} "
+            f"--instance {INSTANCE}\n"
+        )
+        assert hand_off in result
+        assert result.splitlines()[-1] == "Status: snapshot_replaces_platform"
+
 
 def canvas_cli_platform_source() -> str:
     """Return the installed canvas CLI's Canvas Platform source, tests excluded.
@@ -734,25 +803,26 @@ class TestCreateServer:
         assert tool_names == expected
 
     @pytest.mark.parametrize(
-        ("tool_name", "method"),
+        ("tool_name", "method", "kwargs", "expected_call"),
         [
-            pytest.param("deployer", "deploy", id="deployer"),
-            pytest.param("configurer", "configure", id="configurer"),
+            pytest.param("deployer", "deploy", {"branch": "b"}, call("p", "i", "c", "b"), id="deployer_branch"),
+            pytest.param("deployer", "deploy", {}, call("p", "i", "c", ""), id="deployer_release"),
+            pytest.param("configurer", "configure", {}, call("p", "i", "c"), id="configurer"),
         ],
     )
-    def test_create_server__tool_delegates(self, tool_name: str, method: str) -> None:
-        """Each tool delegates to the matching classmethod."""
+    def test_create_server__tool_delegates(self, tool_name: str, method: str, kwargs: dict, expected_call) -> None:
+        """Each tool delegates to the matching classmethod; the deployer passes its branch, empty for a release."""
         tested = CanvasDeployerMcp
         server = tested.create_server()
 
         with patch.object(tested, method, new_callable=AsyncMock) as mock_method:
             mock_method.side_effect = ["mocked"]
             tool = server._tool_manager._tools[tool_name]
-            result = asyncio.run(tool.fn(plugin_name="p", instance="i", cwd="c"))
+            result = asyncio.run(tool.fn(plugin_name="p", instance="i", cwd="c", **kwargs))
 
         expected = "mocked"
         assert result == expected
-        assert mock_method.mock_calls == [call("p", "i", "c")]
+        assert mock_method.mock_calls == [expected_call]
 
 
 # Scenario tests: the deployer driven through a fake `uv` on PATH, so the real subprocess and secrets-file paths run.
@@ -925,6 +995,36 @@ class TestDeployScenarios:
         assert read_argv_log(log) == [DEPLOY_CMD]
         exp_file = {"vitals_alert": legacy, PLUGIN: {"WEBHOOK_ID": "", "AUTH_TOKEN": ""}}
         assert json.loads(secrets_file.read_text(encoding="utf-8")) == exp_file
+
+    def test_deploy__branch_with_spaces_and_semicolons_is_one_argv_element(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The branch comes from the agent, so it reaches the CLI as one argument and never through a shell."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {"name": PLUGIN})
+        write_secrets(tmp_path, monkeypatch, None)
+        log = install_fake_uv(tmp_path, monkeypatch, deploy=(CLI_DEPLOY_OK_STDOUT, "", 0))
+        hostile = "a b; rm -rf"
+
+        asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=hostile))
+
+        expected = [*DEPLOY_CMD[:5], "--branch", hostile, *DEPLOY_CMD[5:]]
+        assert read_argv_log(log) == [expected]
+
+    def test_deploy__branch_the_cli_refuses_is_deploy_failed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The CLI validates the branch name (`main`, malformed); its refusal is shown as a failed deploy, not retried."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {"name": PLUGIN})
+        write_secrets(tmp_path, monkeypatch, None)
+        refusal = "Invalid value: 'x' is not a valid branch name."
+        install_fake_uv(tmp_path, monkeypatch, deploy=("", refusal, 2))
+
+        result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch="x"))
+
+        assert refusal in result
+        assert result.splitlines()[-1] == "Status: deploy_failed"
 
     def test_deploy__consent_command_survives_a_space_in_cwd(self, tmp_path: Path) -> None:
         """The hand-off command the person pastes stays one runnable command when the plugin path has a space."""

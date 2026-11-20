@@ -67,9 +67,27 @@ ME = {
     ],
 }
 INSTANCES = [
-    {"slug": "acme-staging", "managed": True, "capabilities": ["deploy_plugin"]},
-    {"slug": "acme-prod", "managed": True, "capabilities": []},
-    {"slug": "old", "managed": False, "capabilities": ["deploy_plugin"]},
+    {
+        "slug": "acme-staging",
+        "managed": True,
+        "capabilities": ["deploy_plugin"],
+        "test_instance": True,
+        "production": False,
+    },
+    {
+        "slug": "acme-prod",
+        "managed": True,
+        "capabilities": [],
+        "test_instance": False,
+        "production": True,
+    },
+    {
+        "slug": "old",
+        "managed": False,
+        "capabilities": ["deploy_plugin"],
+        "test_instance": False,
+        "production": False,
+    },
 ]
 
 
@@ -148,17 +166,41 @@ class TestRun:
         )
         assert capsys.readouterr().out == expected
 
-    def test_run__instances_prints_slugs(self, signed_in, capsys):
-        """Prints one deployable slug per line for commands to consume."""
+    def test_run__instances_prints_slug_test_instance_and_production(self, signed_in, capsys):
+        """Prints one line per deployable instance so commands offer branch deploys only to test instances."""
         tested = PlatformSession
         signed_in.instances.return_value = INSTANCES + [
-            {"slug": "acme-qa", "managed": True, "capabilities": ["deploy_plugin"]},
+            {
+                "slug": "acme-live",
+                "managed": True,
+                "capabilities": ["deploy_plugin"],
+                "test_instance": False,
+                "production": True,
+            },
         ]
 
         tested.run("instances")
 
-        assert capsys.readouterr().out == "acme-staging\nacme-qa\n"
+        expected = (
+            "acme-staging test_instance=true production=false\n"
+            "acme-live test_instance=false production=true\n"
+        )
+        assert capsys.readouterr().out == expected
         assert signed_in.mock_calls == [call.instances()]
+
+    def test_run__instances_without_test_instance_key_exits(self, signed_in, capsys):
+        """Refuses when Platform omits `test_instance`: guessing false or true would hide or offer every instance for branch deploys."""
+        tested = PlatformSession
+        signed_in.instances.return_value = [
+            {"slug": "acme-staging", "managed": True, "capabilities": ["deploy_plugin"]},
+        ]
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("instances")
+
+        assert exc_info.value.code == 1
+        expected = "ERROR: Canvas Platform does not report test instances; update Canvas Platform.\n"
+        assert capsys.readouterr().out == expected
 
     def test_run__instances_none_exits(self, signed_in, capsys):
         """Refuses with no deployable instance because a deploy would have nowhere to go."""

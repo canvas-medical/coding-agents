@@ -64,9 +64,13 @@ Resolve the deployment target.
    uv run --with 'canvas>=0.263.0' python "${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py" instances
    ```
 
-   The script prints one instance slug per line. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
+   The script prints one line per instance, `<slug> test_instance=<true|false> production=<true|false>`. **If it exits non-zero** (for example `Not signed in to Canvas Platform ...`): show its output and STOP. When it reports not signed in, tell the user to run `uv run --with 'canvas>=0.263.0' canvas login` in their own terminal (it opens a browser) and then run this command again. If the user does not sign in, the command stops here.
 
-5. **Handle the target instance argument:**
+   Work in progress deploys as a branch, which Canvas Platform accepts only on test instances and refuses on any other instance (canvas-plugins `canvas_cli/apps/platform/commands.py:1071-1076` at 1.13.0). Keep only the lines with `test_instance=true`: they are the instances this command offers.
+
+   **If no line has `test_instance=true`:** STOP and tell the user that a Deploy manager or Organization admin designates a test instance on the instance's Plugin management tab in Canvas Platform ([Designating test instances](https://help.canvasmedical.com/articles/4724162094-designating-test-instances)). Deploy nothing.
+
+5. **Handle the target instance argument** (among the test instances only):
    - If `$1` is provided and listed: use `$1` as the target instance
    - If `$1` is provided but not listed: use AskUserQuestion with the listed slugs as options so the user can choose or correct the name
    - If `$1` is not provided:
@@ -90,7 +94,35 @@ Resolve the deployment target.
 }
 ```
 
-Save the resolved instance slug and the plugin name (the inner package folder) for the deploy and log monitoring.
+6. **Choose the branch.** Canvas Platform's `main` is published only by `/cpa:wrap-up`, so this command deploys the work as a branch (`canvas deploy --branch` pushes HEAD to that branch and refuses `main` and malformed names, `commands.py:824-840` and `:1071-1076` at 1.13.0). Run:
+
+   ```bash
+   git -C "$CPA_PLUGIN_DIR" branch --show-current
+   ```
+
+   - **Prints a name other than `main`:** ask with AskUserQuestion, replacing `<name>` with the printed name:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Deploy this work as branch `<name>` on Canvas Platform? It deploys only to test instances.",
+      "header": "Branch",
+      "options": [
+        {"label": "Use <name> (Recommended)", "description": "Push the current branch to Canvas Platform under its own name"},
+        {"label": "Another name", "description": "I'll type a different work branch name"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+   - **Prints `main`, or nothing (detached HEAD):** ask the user for a work branch name, suggesting `<plugin short name>-wip`. Never offer `main` as the default. Do not deploy until the user gives a name.
+
+   A typed name is used as given. If the CLI refuses it, the `deployer` tool reports `Status: deploy_failed` with the CLI's reason; ask for another name.
+
+Save the resolved instance slug, the confirmed branch, and the plugin name (the inner package folder) for the deploy and log monitoring.
 
 ### Step 3: Start Log Monitoring (BEFORE deploy)
 
@@ -181,8 +213,9 @@ If cache busting is missing, add it before proceeding with deployment.
    - `plugin_name`: the inner package folder name (`$PACKAGE_DIR`)
    - `instance`: the resolved instance slug
    - `cwd`: current working directory (the plugin container directory)
+   - `branch`: the confirmed work branch
 
-   The MCP tool runs `canvas deploy` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
+   The MCP tool runs `canvas deploy --branch <branch>` (with `--snapshot` when the plugin sits inside a larger repository; it detects this itself, so pass the same arguments either way), then reads variable names from `CANVAS_MANIFEST.json`, retrieves their values from `~/.canvas/plugin-secrets/{instance}.json`, and passes them to `canvas config set`. Secret values are never exposed to Claude Code.
 
    If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
@@ -192,7 +225,7 @@ If cache busting is missing, add it before proceeding with deployment.
 
    1. Show the request lines (the `•` lines in the output) verbatim.
    2. Explain: approving gives one plugin access to another plugin's custom data on that instance, and only a person at a terminal can answer.
-   3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --no-push --instance <instance>`) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
+   3. Give the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --ref <branch> --instance <instance>`; `--no-push` would deploy Platform's `main` instead of the branch, `commands.py:995-1002` and `:1131-1134` at 1.13.0) and ask the user to run it in their own terminal, approve or deny, and tell you when it finished.
    4. Wait for the user. Never answer the request yourself, never pass `--yes`, never call the Platform consent API, and never claim the deploy succeeded.
    5. **User approved and the command succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
    6. **User denied:** the deployment is cancelled. Report that and stop.
@@ -211,13 +244,13 @@ If cache busting is missing, add it before proceeding with deployment.
 12. **`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
 
     1. Show the listed files verbatim.
-    2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+    2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
     3. Wait for the user. Never confirm it yourself and never pass `--yes`.
     4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
     5. **User copied Platform's versions and committed:** call `deployer` again.
     6. **User does not act:** nothing was deployed. Tell the user and stop.
 
-13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output and stop.
+13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full and stop. When it names test instances or a dependency conflict, the user acts on the instruction it prints, for example running the `canvas deploy --plugin ...` command it gives in their own terminal.
 
 14. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 6.
 
