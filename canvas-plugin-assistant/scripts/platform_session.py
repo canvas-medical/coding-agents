@@ -5,27 +5,34 @@ Usage:
     uv run --with 'canvas>=1.2.0' python platform_session.py whoami
     uv run --with 'canvas>=1.2.0' python platform_session.py instances
     uv run --with 'canvas>=1.2.0' python platform_session.py publishers
+    uv run --with 'canvas>=1.2.0' python platform_session.py records <slug> <CareTeamRole|NoteType|Questionnaire|Team>
+    uv run --with 'canvas>=1.2.0' python platform_session.py plugins <slug>
 """
 
 import argparse
+import json
 import sys
 from typing import Any
 
 from canvas_cli.apps.platform import auth
 from canvas_cli.apps.platform.auth import PlatformAuthError
-from canvas_cli.apps.platform.client import PlatformClient, PlatformError
+from canvas_cli.apps.platform.client import PlatformClient, PlatformError, segment
+
+RECORD_MODELS: list[str] = ["CareTeamRole", "NoteType", "Questionnaire", "Team"]
 
 
 class PlatformSession:
     """Reads the person's Canvas Platform session through the Canvas CLI's own sign-in and API client."""
 
     @classmethod
-    def run(cls, show: str) -> None:
+    def run(cls, show: str, slug: str | None = None, model: str | None = None) -> None:
         """
         Print the requested view of the Platform session, or exit 1 when it cannot be shown.
 
         Args:
-            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance, production, and logs flags, "publishers" for publishing organization slugs and prefixes.
+            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance, production, and logs flags, "publishers" for publishing organization slugs and prefixes, "records" for one model's setup records on an instance as JSON, "plugins" for an instance's installed plugins as JSON.
+            slug (str | None): The instance slug, for "records" and "plugins".
+            model (str | None): One of RECORD_MODELS, for "records".
         """
         try:
             platform: str = auth.resolve_platform_url()
@@ -48,6 +55,17 @@ class PlatformSession:
                 )
             elif show == "publishers":
                 cls.print_publishers(cls.publishing_orgs(client.me()))
+            elif show == "records":
+                print(
+                    json.dumps(
+                        client.get(
+                            f"/api/v1/instances/{segment(str(slug))}/records?model={model}"
+                        ),
+                        indent=2,
+                    )
+                )
+            elif show == "plugins":
+                print(json.dumps(client.installed_plugins(str(slug)), indent=2))
             else:
                 cls.print_instances(cls.deployable_instances(client.instances()))
         except (PlatformAuthError, PlatformError) as error:
@@ -176,10 +194,19 @@ class PlatformSession:
     def main(cls) -> None:
         """Parse arguments and run."""
         parser = argparse.ArgumentParser(description="Show the Canvas Platform session")
-        parser.add_argument("show", choices=["whoami", "instances", "publishers"])
+        parser.add_argument(
+            "show",
+            choices=["whoami", "instances", "publishers", "records", "plugins"],
+        )
+        parser.add_argument("slug", nargs="?", help="Instance slug, for records and plugins")
+        parser.add_argument("model", nargs="?", choices=RECORD_MODELS, help="Model, for records")
         args = parser.parse_args()
+        if args.show in ("records", "plugins") and args.slug is None:
+            parser.error(f"{args.show} needs an instance slug")
+        if args.show == "records" and args.model is None:
+            parser.error("records needs a model")
 
-        cls.run(show=args.show)
+        cls.run(show=args.show, slug=args.slug, model=args.model)
 
 
 if __name__ == "__main__":

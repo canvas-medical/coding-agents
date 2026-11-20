@@ -1,8 +1,10 @@
 """Tests for platform_session module."""
 
+import json
 import sys
 from types import ModuleType
 from unittest.mock import MagicMock, call, patch
+from urllib.parse import quote
 
 import pytest
 
@@ -35,6 +37,7 @@ def _build_stubs() -> dict[str, ModuleType]:
     auth.stored_tokens = MagicMock()  # type: ignore[attr-defined]
     client.PlatformError = PlatformError  # type: ignore[attr-defined]
     client.PlatformClient = MagicMock()  # type: ignore[attr-defined]
+    client.segment = lambda value: quote(value, safe="")  # type: ignore[attr-defined]
     platform.auth = auth  # type: ignore[attr-defined]
     platform.client = client  # type: ignore[attr-defined]
     apps.platform = platform  # type: ignore[attr-defined]
@@ -282,6 +285,94 @@ class TestRun:
         expected = "ERROR: No organization lets you push plugin code. Ask an organization admin for the Plugin developer role.\n"
         assert capsys.readouterr().out == expected
 
+    def test_run__records_prints_the_platform_body(self, signed_in, capsys):
+        """Prints Platform's records body unchanged so the skill reads each row's fields and collected_at."""
+        tested = PlatformSession
+        body = {
+            "instance": "acme-staging",
+            "model": "Team",
+            "collected_at": "2026-11-18T09:30:00Z",
+            "records": [
+                {
+                    "key": "7",
+                    "label": "Nursing",
+                    "fields": {"members": ["Dana Lee"], "responsibilities": ["Triage"]},
+                    "collected_at": "2026-11-18T09:30:00Z",
+                },
+            ],
+        }
+        signed_in.get.return_value = body
+
+        tested.run("records", slug="acme-staging", model="Team")
+
+        assert json.loads(capsys.readouterr().out) == body
+        assert signed_in.mock_calls == [
+            call.get("/api/v1/instances/acme-staging/records?model=Team")
+        ]
+
+    def test_run__records_keeps_a_null_collected_at(self, signed_in, capsys):
+        """A model Canvas Platform has not read yet stays null, which the report words as not read yet."""
+        tested = PlatformSession
+        body = {
+            "instance": "acme-staging",
+            "model": "Questionnaire",
+            "collected_at": None,
+            "records": [],
+        }
+        signed_in.get.return_value = body
+
+        tested.run("records", slug="acme-staging", model="Questionnaire")
+
+        assert json.loads(capsys.readouterr().out)["collected_at"] is None
+
+    def test_run__records_quotes_the_slug(self, signed_in, capsys):
+        """A slug is one path segment, as the Canvas CLI's own client sends it."""
+        tested = PlatformSession
+        signed_in.get.return_value = {}
+
+        tested.run("records", slug="a/b", model="NoteType")
+
+        assert signed_in.mock_calls == [
+            call.get("/api/v1/instances/a%2Fb/records?model=NoteType")
+        ]
+
+    def test_run__records_not_found_exits_with_platform_message(self, signed_in, capsys):
+        """A 404 for an instance the person cannot reach surfaces Platform's sentence."""
+        tested = PlatformSession
+        signed_in.get.side_effect = PlatformError("Instance not found.")
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("records", slug="nope", model="Team")
+
+        assert exc_info.value.code == 1
+        assert capsys.readouterr().out == "ERROR: Instance not found.\n"
+
+    def test_run__plugins_prints_the_installed_plugins_body(self, signed_in, capsys):
+        """Prints the instance's plugin inventory as Platform returns it."""
+        tested = PlatformSession
+        body = {
+            "instance": "acme-staging",
+            "collected_at": None,
+            "plugins": [{"name": "acme__intake", "version": "1.2.0", "enabled": True}],
+        }
+        signed_in.installed_plugins.return_value = body
+
+        tested.run("plugins", slug="acme-staging")
+
+        assert json.loads(capsys.readouterr().out) == body
+        assert signed_in.mock_calls == [call.installed_plugins("acme-staging")]
+
+    def test_run__plugins_not_found_exits_with_platform_message(self, signed_in, capsys):
+        """A 404 for an instance the person cannot reach surfaces Platform's sentence."""
+        tested = PlatformSession
+        signed_in.installed_plugins.side_effect = PlatformError("Instance not found.")
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("plugins", slug="nope")
+
+        assert exc_info.value.code == 1
+        assert capsys.readouterr().out == "ERROR: Instance not found.\n"
+
     def test_run__platform_error_exits_with_message(self, signed_in, capsys):
         """Network failures surface the CLI's own message."""
         tested = PlatformSession
@@ -326,7 +417,57 @@ class TestMain:
         with patch.object(tested, "run") as mock_run:
             tested.main()
 
-        assert mock_run.mock_calls == [call(show=show)]
+        assert mock_run.mock_calls == [call(show=show, slug=None, model=None)]
+
+    def test_main__parses_records_slug_and_model(self, monkeypatch):
+        """Passes the instance slug and model to run."""
+        tested = PlatformSession
+        monkeypatch.setattr(
+            "sys.argv", ["platform_session.py", "records", "acme-staging", "CareTeamRole"]
+        )
+
+        with patch.object(tested, "run") as mock_run:
+            tested.main()
+
+        assert mock_run.mock_calls == [
+            call(show="records", slug="acme-staging", model="CareTeamRole")
+        ]
+
+    def test_main__parses_plugins_slug(self, monkeypatch):
+        """Passes the instance slug to run."""
+        tested = PlatformSession
+        monkeypatch.setattr("sys.argv", ["platform_session.py", "plugins", "acme-staging"])
+
+        with patch.object(tested, "run") as mock_run:
+            tested.main()
+
+        assert mock_run.mock_calls == [call(show="plugins", slug="acme-staging", model=None)]
+
+    def test_main__rejects_unknown_model(self, monkeypatch):
+        """Rejects a model outside the four Platform serves."""
+        tested = PlatformSession
+        monkeypatch.setattr(
+            "sys.argv", ["platform_session.py", "records", "acme-staging", "Patient"]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.main()
+
+        assert exc_info.value.code == 2
+
+    @pytest.mark.parametrize(
+        "argv",
+        [["records"], ["records", "acme-staging"], ["plugins"]],
+    )
+    def test_main__rejects_missing_slug_or_model(self, argv, monkeypatch):
+        """records needs a slug and a model, and plugins needs a slug."""
+        tested = PlatformSession
+        monkeypatch.setattr("sys.argv", ["platform_session.py", *argv])
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.main()
+
+        assert exc_info.value.code == 2
 
     def test_main__rejects_unknown_show(self, monkeypatch):
         """Rejects values outside the choices."""
