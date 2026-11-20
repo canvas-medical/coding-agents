@@ -384,6 +384,29 @@ class TestRun:
         assert json.loads(capsys.readouterr().out) == body
         assert signed_in.mock_calls == [call.installed_plugins("acme-staging")]
 
+    def test_run__reachable_prints_every_listed_slug(self, signed_in, capsys):
+        """Lists instances the person can read but not deploy to, since reading records needs only view_instances."""
+        tested = PlatformSession
+
+        tested.run("reachable")
+
+        assert capsys.readouterr().out == "acme-staging\nacme-prod\nold\n"
+        assert signed_in.mock_calls == [call.instances()]
+
+    def test_run__reachable_none_exits(self, signed_in, capsys):
+        """No instance to read is an error, so instance-analyze stops rather than offering nothing."""
+        tested = PlatformSession
+        signed_in.instances.return_value = []
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("reachable")
+
+        assert exc_info.value.code == 1
+        assert capsys.readouterr().out == (
+            "ERROR: Canvas Platform lists no instance you can view. "
+            "Ask an organization admin for a role that includes viewing instances.\n"
+        )
+
     def test_run__plugins_not_found_exits_with_platform_message(self, signed_in, capsys):
         """A 404 for an instance the person cannot reach surfaces Platform's sentence."""
         tested = PlatformSession
@@ -430,7 +453,7 @@ class TestRun:
 class TestMain:
     """Tests for PlatformSession.main method."""
 
-    @pytest.mark.parametrize("show", ["whoami", "instances", "publishers"])
+    @pytest.mark.parametrize("show", ["whoami", "instances", "publishers", "reachable"])
     def test_main__parses_show(self, show, monkeypatch):
         """Passes the positional argument to run."""
         tested = PlatformSession

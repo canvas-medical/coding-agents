@@ -51,10 +51,10 @@ Store the user's response to use later when:
 List the instances the person's Canvas Platform sign-in can reach:
 
 ```bash
-uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py instances
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py reachable
 ```
 
-Each output line is `<slug> test_instance=<bool> production=<bool> logs=<bool>`. Use the slugs. If the command exits 1, show its `ERROR:` line (for example, not signed in: the person runs `uv run --with 'canvas>=1.2.0' canvas login` in their terminal) and stop.
+It prints one slug per line: every instance the person can view, including ones they cannot deploy to. If the command exits 1, show its `ERROR:` line (for example, not signed in: the person runs `uv run --with 'canvas>=1.2.0' canvas login` in their terminal) and stop.
 
 ### Step 3: Get Instance Information
 

@@ -5,6 +5,7 @@ Usage:
     uv run --with 'canvas>=1.2.0' python platform_session.py whoami
     uv run --with 'canvas>=1.2.0' python platform_session.py instances
     uv run --with 'canvas>=1.2.0' python platform_session.py publishers
+    uv run --with 'canvas>=1.2.0' python platform_session.py reachable
     uv run --with 'canvas>=1.2.0' python platform_session.py records <slug> <CareTeamRole|NoteType|Questionnaire|Team>
     uv run --with 'canvas>=1.2.0' python platform_session.py plugins <slug>
 """
@@ -30,7 +31,7 @@ class PlatformSession:
         Print the requested view of the Platform session, or exit 1 when it cannot be shown.
 
         Args:
-            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance, production, and logs flags, "publishers" for publishing organization slugs and prefixes, "records" for one model's setup records on an instance as JSON, "plugins" for an instance's installed plugins as JSON.
+            show (str): "whoami" for the sign-in summary, "instances" for deployable instance slugs with their test_instance, production, and logs flags, "publishers" for publishing organization slugs and prefixes, "reachable" for every instance slug the person can view, "records" for one model's setup records on an instance as JSON, "plugins" for an instance's installed plugins as JSON.
             slug (str | None): The instance slug, for "records" and "plugins".
             model (str | None): One of RECORD_MODELS, for "records".
         """
@@ -55,6 +56,8 @@ class PlatformSession:
                 )
             elif show == "publishers":
                 cls.print_publishers(cls.publishing_orgs(client.me()))
+            elif show == "reachable":
+                cls.print_reachable(client.instances())
             elif show == "records":
                 print(
                     json.dumps(
@@ -183,6 +186,24 @@ class PlatformSession:
         )
 
     @classmethod
+    def print_reachable(cls, instances: list[dict[str, Any]]) -> None:
+        """
+        Print one slug per line for every instance the person can view, or exit 1 when there are none.
+
+        Canvas Platform lists only instances the person holds `view_instances` on, which is all reading
+        an instance's records needs, so deploy rights do not narrow this list.
+
+        Args:
+            instances (list[dict]): The `/api/v1/instances` payload.
+        """
+        if not instances:
+            cls.exit_with_error(
+                "Canvas Platform lists no instance you can view. "
+                "Ask an organization admin for a role that includes viewing instances."
+            )
+        print("\n".join(instance["slug"] for instance in instances))
+
+    @classmethod
     def exit_with_error(cls, message: str) -> None:
         """
         Print error message and exit with code 1.
@@ -199,7 +220,7 @@ class PlatformSession:
         parser = argparse.ArgumentParser(description="Show the Canvas Platform session")
         parser.add_argument(
             "show",
-            choices=["whoami", "instances", "publishers", "records", "plugins"],
+            choices=["whoami", "instances", "publishers", "reachable", "records", "plugins"],
         )
         parser.add_argument("slug", nargs="?", help="Instance slug, for records and plugins")
         parser.add_argument("model", nargs="?", choices=RECORD_MODELS, help="Model, for records")
