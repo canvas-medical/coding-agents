@@ -66,6 +66,7 @@ Resolve the deployment target.
 
 5. **Handle the target instance argument** (among the test instances only):
    - If `$1` is provided and listed: use `$1` as the target instance
+   - If `$1` is on a line of the instance list above with `test_instance=false`: tell the user that work in progress deploys only to test instances, and that a release to `$1` goes through `/cpa:wrap-up`. Then continue as if `$1` were not provided.
    - If `$1` is provided but not listed: use AskUserQuestion with the listed slugs as options so the user can choose or correct the name
    - If `$1` is not provided:
      - **If exactly one instance is listed:** use it automatically without asking
@@ -229,12 +230,12 @@ If cache busting is missing, add it before proceeding with deployment.
 
 10. **`Status: snapshot_unsupported`**: the package folder holds a submodule, a symbolic link, or a file stored through a filter such as Git LFS or git-crypt, which a snapshot cannot carry. Show the listed paths, tell the user each must become a regular committed file, and stop.
 
-11. **`Status: snapshot_rollback`**: Canvas Platform's `main` was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop.
+11. **`Status: snapshot_rollback`**: the branch on Canvas Platform (or `main`, for a branch Canvas Platform does not have yet) was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop.
 
 12. **`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
 
     1. Show the listed files verbatim.
-    2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+    2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>` and then `git checkout <branch>` in the clone (the clone starts on `main`, canvas-plugins `canvas_cli/apps/platform/git.py:648-652` at 1.13.0), copying them into the package folder, and committing.
     3. Wait for the user. Never confirm it yourself and never pass `--yes`.
     4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue to Step 6.
     5. **User copied Platform's versions and committed:** call `deployer` again.

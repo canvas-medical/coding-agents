@@ -106,7 +106,7 @@ scanned for secrets) and pushing is confirmed with you first.
 
 - Reads roles, teams, questionnaires, and note types from Canvas Platform's last sweep of the instance, and each section states when that sweep ran
 - Lists installed plugins to identify conflicts or opportunities
-- Generates `instance-config-{hostname}.md` report
+- Generates `instance-config-{instance}.md` report
 - Tailors findings to your plugin spec if available
 
 **deploy-uat** - Deploy plugins and guide user acceptance testing:
@@ -161,7 +161,7 @@ uv run --with 'canvas>=1.2.0' canvas login
 
 A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and it is committed to a git repository. `/cpa:new-plugin` creates plugins with `canvas init`: outside any repository the plugin folder becomes its own repository with Canvas Platform as `origin`, and inside an existing repository, such as a monorepo, it stays a folder of that repository.
 
-A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 1.2.0 or newer), which pushes the package folder as committed at HEAD to the plugin's `main` on Canvas Platform and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes `main` was last deployed from, and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 1.2.0 or newer), which pushes the package folder as committed at HEAD to the branch it deploys (the work branch for `/cpa:deploy` and `/cpa:deploy-lite`, `main` for the `/cpa:wrap-up` release) and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes that branch was last deployed from (`main`'s, for a branch Canvas Platform does not have yet), and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
 
 A plugin made before Canvas Platform needs one of:
 
@@ -369,7 +369,7 @@ piling up.
 | `security-review.md` | Security audit findings and recommendations | You |
 | `db-performance-review.md` | Database query optimization findings | You |
 | `coverage-report.md` | Test coverage report | You |
-| `instance-config-{hostname}.md` | Instance configuration analysis | You |
+| `instance-config-{instance}.md` | Instance configuration analysis | deploy-uat, you |
 | `eval-results-{timestamp}.md` | Eval suite results | You |
 | `{case_name}-security-review.md` | Per-case security review (evals) | `compare_review_results.py` |
 | `{case_name}-database-review.md` | Per-case database review (evals) | `compare_review_results.py` |

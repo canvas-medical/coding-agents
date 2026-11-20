@@ -67,6 +67,7 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 
 5. **Handle the target instance argument** (among the test instances only):
    - If `$1` is provided and listed: use `$1` as the target instance
+   - If `$1` is on a line of the instance list above with `test_instance=false`: tell the user that work in progress deploys only to test instances, and that a release to `$1` goes through `/cpa:wrap-up`. Then continue as if `$1` were not provided.
    - If `$1` is provided but not listed: use AskUserQuestion with the listed slugs as options so the user can choose or correct the name
    - If `$1` is not provided:
      - **If exactly one instance is listed:** use it automatically without asking

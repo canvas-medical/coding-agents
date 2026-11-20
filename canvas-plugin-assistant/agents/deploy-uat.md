@@ -13,8 +13,9 @@ You help solutions consultants deploy Canvas plugins. You handle the version bum
 
 Use this agent when:
 
-- Ready to deploy a plugin to a Canvas instance
-- Promoting a plugin from dev → staging → production
+- Ready to deploy work in progress, as a branch, to a test instance
+
+A release to `main`, and any deploy to a production instance, goes through `/cpa:wrap-up`, not this agent.
 
 ## Prerequisites
 
@@ -226,12 +227,12 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 
 **`Status: snapshot_unsupported`**: the package folder holds a submodule, a symbolic link, or a file stored through a filter such as Git LFS or git-crypt, which a snapshot cannot carry. Show the listed paths, tell the user each must become a regular committed file, and stop; nothing was deployed.
 
-**`Status: snapshot_rollback`**: Canvas Platform's `main` was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back. Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop; nothing was deployed.
+**`Status: snapshot_rollback`**: the branch on Canvas Platform (or `main`, for a branch Canvas Platform does not have yet) was last deployed from a commit whose changes this checkout's HEAD lacks, so this deploy would roll the plugin back (canvas-plugins `canvas_cli/apps/platform/git.py:430-433` and `:619-624` at 1.13.0). Show the listed files, tell the user to update the checkout so it includes those changes (for example `git pull`), and stop; nothing was deployed.
 
 **`Status: snapshot_replaces_platform`**: files in the package were changed on Canvas Platform (for example a catalog listing edited there), and this snapshot would replace them. Only a person at a terminal can confirm that:
 
 1. Show the listed files verbatim.
-2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>`, copying them into the package folder, and committing.
+2. Give the user both ways forward: run the exact command from the tool output (`cd <dir> && uv run canvas deploy <plugin> --snapshot --branch <branch> --instance <instance>`) in their own terminal and confirm replacing them; or keep Canvas Platform's versions by checking them out with `canvas clone <name>` and then `git checkout <branch>` in the clone (the clone starts on `main`, `git.py:648-652` at 1.13.0), copying them into the package folder, and committing.
 3. Wait for the user. Never confirm it yourself and never pass `--yes`.
 4. **User ran the command and it succeeded:** call the **`configurer`** MCP tool with the same `plugin_name`, `instance`, and `cwd`, then continue below. If that command stops on consent, it is answered in the same terminal.
 5. **User copied Platform's versions and committed:** call `deployer` again.
@@ -270,7 +271,7 @@ Each promotion should include:
 3. Backup/rollback plan for production
 ```
 
-For production deployments, always confirm:
+This agent deploys only to test instances, which are never production. `/cpa:wrap-up` asks this question before it releases to a `production=true` instance:
 
 ```json
 {
@@ -435,7 +436,7 @@ Debug logs should be removed during wrap-up (`/cpa:wrap-up`). They're useful for
 ## Integration with Other Agents
 
 - Read `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` (where workspace_dir is the plugin container directory) to understand expected behavior
-- Read `instance-config-{instance}.md` to know the environment
+- Read `{workspace_dir}/.cpa-workflow-artifacts/instance-config-{instance}.md` to know the environment
 - Update spec with any discovered issues or changes
 
 ## Example Session

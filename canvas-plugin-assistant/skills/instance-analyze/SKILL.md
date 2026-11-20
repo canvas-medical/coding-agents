@@ -178,7 +178,7 @@ Based on this configuration:
 
 ### Step 6: Save Report
 
-Save the report to `instance-config-{instance}.md` (the instance slug) in the current working directory.
+Save the report to `{workspace_dir}/.cpa-workflow-artifacts/instance-config-{instance}.md` (the instance slug), creating the directory if needed.
 
 Tell the user the file path and offer to explain any section in detail.
 
@@ -208,7 +208,7 @@ If `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` exists (where worksp
 
 **You**: *[Reads the instance's records and plugins from Canvas Platform]*
 
-**You**: """I've analyzed the plugin-testing instance and saved the report to `instance-config-plugin-testing.md`.
+**You**: """I've analyzed the plugin-testing instance and saved the report to `.cpa-workflow-artifacts/instance-config-plugin-testing.md`.
 
 Key findings relevant to your vitals alert plugin:
 - **3 clinical teams** available for task assignment: Nursing, Care Coordination, Providers
