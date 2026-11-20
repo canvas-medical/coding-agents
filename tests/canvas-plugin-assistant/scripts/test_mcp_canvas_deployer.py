@@ -305,6 +305,68 @@ class TestDeploy:
         assert mock_cmd.mock_calls == [call(command=BRANCH_DEPLOY_CMD, cwd=cwd)]
         assert result.splitlines()[-1] == "Status: deployed"
 
+    def test_deploy__version_deploys_the_released_version(self, tmp_path: Path) -> None:
+        """Installing a released version elsewhere names the plugin and version, with no folder, so nothing is pushed."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = ["Deployed", "Set 2 variable(s)"]
+            mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        version_cmd = ["uv", "run", "canvas", "deploy", "--plugin", f"{PLUGIN}@1.4.0", "--instance", INSTANCE]
+        assert mock_cmd.mock_calls == [
+            call(command=version_cmd, cwd=cwd),
+            call(command=config_set_cmd("API_KEY=sk-1", "API_URL=https://x"), cwd=cwd),
+        ]
+        assert result.splitlines()[-1] == "Status: deployed"
+
+    def test_deploy__version_ignores_a_larger_repository(self, tmp_path: Path) -> None:
+        """A released version has no folder to snapshot, so a plugin inside a larger repository gets no --snapshot."""
+        tested = CanvasDeployerMcp
+        git_init(tmp_path)
+        container = tmp_path / "plugins"
+        container.mkdir()
+        cwd = make_plugin(container, {"name": PLUGIN})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        version_cmd = ["uv", "run", "canvas", "deploy", "--plugin", f"{PLUGIN}@1.4.0", "--instance", INSTANCE]
+        assert mock_cmd.mock_calls == [call(command=version_cmd, cwd=cwd)]
+
+    def test_deploy__version_consent_hand_off_names_the_version(self, tmp_path: Path) -> None:
+        """The person's terminal command deploys the same released version, not the folder's `main`."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = [CONSENT_OUTPUT]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        hand_off = f"  cd {cwd} && uv run canvas deploy --plugin {PLUGIN}@1.4.0 --instance {INSTANCE}\n"
+        assert hand_off in result
+        assert "--no-push" not in result
+
+    def test_deploy__branch_and_version_together_is_invalid_input(self, tmp_path: Path) -> None:
+        """The CLI excludes --branch with --plugin: a work branch is pushed code, a version is already released."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, MANIFEST)
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            result = asyncio.run(
+                tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, branch=BRANCH, version="1.4.0")
+            )
+
+        expected = "Error: pass either branch or version, not both; a version is already released.\n\nStatus: invalid_input"
+        assert result == expected
+        assert mock_cmd.mock_calls == []
+
     def test_deploy__consent_pending_on_a_branch_hands_off_ref(self, tmp_path: Path) -> None:
         """`--no-push` deploys Platform's main, so a branch deploy's hand-off deploys the pushed branch with `--ref`."""
         tested = CanvasDeployerMcp
@@ -805,8 +867,11 @@ class TestCreateServer:
     @pytest.mark.parametrize(
         ("tool_name", "method", "kwargs", "expected_call"),
         [
-            pytest.param("deployer", "deploy", {"branch": "b"}, call("p", "i", "c", "b"), id="deployer_branch"),
-            pytest.param("deployer", "deploy", {}, call("p", "i", "c", ""), id="deployer_release"),
+            pytest.param("deployer", "deploy", {"branch": "b"}, call("p", "i", "c", "b", ""), id="deployer_branch"),
+            pytest.param("deployer", "deploy", {}, call("p", "i", "c", "", ""), id="deployer_release"),
+            pytest.param(
+                "deployer", "deploy", {"version": "1.4.0"}, call("p", "i", "c", "", "1.4.0"), id="deployer_version"
+            ),
             pytest.param("configurer", "configure", {}, call("p", "i", "c"), id="configurer"),
         ],
     )

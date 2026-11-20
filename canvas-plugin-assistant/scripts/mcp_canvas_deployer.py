@@ -236,7 +236,7 @@ class CanvasDeployerMcp:
         return f"Configure output:\n{result}{warning}", result.startswith("Command failed")
 
     @classmethod
-    async def deploy(cls, plugin_name: str, instance: str, cwd: str, branch: str = "") -> str:
+    async def deploy(cls, plugin_name: str, instance: str, cwd: str, branch: str = "", version: str = "") -> str:
         """Deploy a Canvas plugin to a Canvas Platform instance, then set its variables.
 
         Variables are set only when the deploy succeeds. A deploy that stops on pending
@@ -245,13 +245,17 @@ class CanvasDeployerMcp:
         inside a larger repository, such as a monorepo, deploys with `--snapshot`. An
         empty branch pushes to `main`, the release path. A branch is pushed under that name
         and Canvas Platform deploys it only to test instances; the CLI refuses `main` and
-        invalid names (canvas_cli/apps/platform/commands.py:824-840 at 1.13.0).
+        invalid names (canvas_cli/apps/platform/commands.py:824-840 at 1.13.0). A version
+        deploys an already released version with `--plugin <name>@<version>`, which takes no
+        folder and pushes nothing, and excludes `--snapshot` and `--branch`
+        (canvas_cli/apps/platform/commands.py:985-993, 1098-1117 at 1.13.0).
 
         Args:
             plugin_name: The inner package folder name, which is the folder passed to `canvas deploy`. Variables are keyed by the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
             branch: The work branch to deploy as, passed to `canvas deploy --branch` as one argument. Empty pushes to `main`.
+            version: A released version, such as `1.4.0`, to deploy as the manifest name at that version. Empty deploys the folder. Cannot be combined with `branch`.
 
         Returns:
             str: The deploy output followed by the configure output or a note for the status, ending with a
@@ -263,22 +267,21 @@ class CanvasDeployerMcp:
         if isinstance(checked, str):
             return cls._with_status(checked, "invalid_input")
         manifest_file, manifest = checked
+        if branch and version:
+            return cls._with_status(
+                "Error: pass either branch or version, not both; a version is already released.", "invalid_input"
+            )
 
-        snapshot: bool = await cls._in_larger_repo(manifest_file.parent, cwd)
-        snapshot_flag: list[str] = ["--snapshot"] if snapshot else []
-        branch_flag: list[str] = ["--branch", branch] if branch else []
+        target: list[str]
+        if version:
+            target = ["--plugin", f"{manifest['name']}@{version}"]
+        else:
+            snapshot: bool = await cls._in_larger_repo(manifest_file.parent, cwd)
+            snapshot_flag: list[str] = ["--snapshot"] if snapshot else []
+            branch_flag: list[str] = ["--branch", branch] if branch else []
+            target = [plugin_name, *snapshot_flag, *branch_flag]
         result = await cls._run_canvas_command(
-            command=[
-                "uv",
-                "run",
-                "canvas",
-                "deploy",
-                plugin_name,
-                *snapshot_flag,
-                *branch_flag,
-                "--instance",
-                instance,
-            ],
+            command=["uv", "run", "canvas", "deploy", *target, "--instance", instance],
             cwd=cwd,
         )
         output = f"Deploy output:\n{result}"
@@ -286,10 +289,15 @@ class CanvasDeployerMcp:
             # --no-push deploys Platform's main; --ref deploys the branch the failed attempt already pushed
             # (canvas_cli/apps/platform/commands.py:995-1002, 1131-1134 at 1.13.0).
             reuse_flags: str = f"--ref {shlex.quote(branch)}" if branch else "--no-push"
+            reuse_target: str = (
+                f"--plugin {shlex.quote(f'{manifest['name']}@{version}')}"
+                if version
+                else f"{shlex.quote(plugin_name)} {reuse_flags}"
+            )
             consent = (
                 f"{output}\n\n{cls.CONSENT_NOTE}\n"
-                f"  cd {shlex.quote(cwd)} && uv run canvas deploy {shlex.quote(plugin_name)} "
-                f"{reuse_flags} --instance {shlex.quote(instance)}\n"
+                f"  cd {shlex.quote(cwd)} && uv run canvas deploy {reuse_target} "
+                f"--instance {shlex.quote(instance)}\n"
                 "After it succeeds there, call the configurer tool to set variables."
             )
             return cls._with_status(consent, "consent_pending")
@@ -343,7 +351,7 @@ class CanvasDeployerMcp:
         server = FastMCP("canvas_cmd_line")
 
         @server.tool()
-        async def deployer(plugin_name: str, instance: str, cwd: str, branch: str = "") -> str:
+        async def deployer(plugin_name: str, instance: str, cwd: str, branch: str = "", version: str = "") -> str:
             """Deploy a Canvas plugin to a Canvas Platform instance and set its variables.
 
             Runs canvas deploy, then canvas config set for the variables declared in
@@ -362,8 +370,9 @@ class CanvasDeployerMcp:
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
                 branch: The confirmed work branch. Pass it for every work-in-progress deploy, which Canvas Platform accepts only on test instances. Leave it empty only for the release step of /cpa:wrap-up, which pushes to main.
+                version: Only for deploying an already released version, such as `1.4.0`, to another instance. Never combine it with `branch`.
             """
-            return await cls.deploy(plugin_name, instance, cwd, branch)
+            return await cls.deploy(plugin_name, instance, cwd, branch, version)
 
         @server.tool()
         async def configurer(plugin_name: str, instance: str, cwd: str) -> str:

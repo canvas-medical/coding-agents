@@ -202,6 +202,25 @@ class TestRun:
         expected = "ERROR: Canvas Platform does not report test instances; update Canvas Platform.\n"
         assert capsys.readouterr().out == expected
 
+    def test_run__instances_without_production_key_exits(self, signed_in, capsys):
+        """Refuses when Platform omits `production`: a production gate must not fail open, since a guessed false skips the production confirmation."""
+        tested = PlatformSession
+        signed_in.instances.return_value = [
+            {
+                "slug": "acme-live",
+                "managed": True,
+                "capabilities": ["deploy_plugin"],
+                "test_instance": False,
+            },
+        ]
+
+        with pytest.raises(SystemExit) as exc_info:
+            tested.run("instances")
+
+        assert exc_info.value.code == 1
+        expected = "ERROR: Canvas Platform does not report which instances are production; update Canvas Platform.\n"
+        assert capsys.readouterr().out == expected
+
     def test_run__instances_none_exits(self, signed_in, capsys):
         """Refuses with no deployable instance because a deploy would have nowhere to go."""
         tested = PlatformSession

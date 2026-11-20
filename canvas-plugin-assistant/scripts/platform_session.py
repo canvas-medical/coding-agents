@@ -130,8 +130,9 @@ class PlatformSession:
         """
         Print one `<slug> test_instance=<true|false> production=<true|false>` line per deployable instance.
 
-        Exits 1 when there are none, or when a row lacks `test_instance` (a Canvas Platform
-        that does not report it), since guessing would offer or hide every instance for branch deploys.
+        Exits 1 when there are none, or when a row lacks `test_instance` or `production` (a Canvas
+        Platform that does not report it), since guessing would offer or hide every instance for
+        branch deploys, or skip the production confirmation.
 
         Args:
             instances (list[dict]): Deployable instance rows.
@@ -144,10 +145,14 @@ class PlatformSession:
             cls.exit_with_error(
                 "Canvas Platform does not report test instances; update Canvas Platform."
             )
+        if any("production" not in instance for instance in instances):
+            cls.exit_with_error(
+                "Canvas Platform does not report which instances are production; update Canvas Platform."
+            )
         print(
             "\n".join(
                 f"{instance['slug']} test_instance={str(bool(instance['test_instance'])).lower()} "
-                f"production={str(bool(instance.get('production'))).lower()}"
+                f"production={str(bool(instance['production'])).lower()}"
                 for instance in instances
             )
         )
