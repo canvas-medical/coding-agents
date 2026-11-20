@@ -97,14 +97,14 @@ Map the output to the report sections:
 
 | Report section | Source |
 |---|---|
-| Roles | `CareTeamRole` rows where `fields.active` is true |
+| Roles | `CareTeamRole` rows where `fields.active` is true; `label` and `key` (the coding system and code) |
 | Teams | `Team` rows; `fields.members` (staff names) and `fields.responsibilities` |
 | Questionnaires | `Questionnaire` rows (inactive ones are not collected); `fields.code` and `fields.use_case_in_charting` |
-| Note Types | `NoteType` rows where `fields.is_active` is true |
-| Appointment Types | `NoteType` rows where `fields.is_active` and `fields.is_scheduleable` are true |
+| Note Types | `NoteType` rows where `fields.is_active` is true; `fields.is_telehealth` and `fields.is_billable` |
+| Appointment Types | `NoteType` rows where `fields.is_active` and `fields.is_scheduleable` are true; `fields.possible_durations` and `fields.is_telehealth` |
 | Installed Plugins | `plugins` rows, with their `enabled` flag |
 
-Each section carries its `collected_at`. A `null` `collected_at` means Canvas Platform has not read that model on this instance yet; the report says "not read yet by Canvas Platform", never "none".
+Each section carries its `collected_at`. For Roles, Teams, Note Types and Appointment Types, a `null` `collected_at` means Canvas Platform has not read that model on this instance yet; the report says "not read yet by Canvas Platform", never "none". For Questionnaires, an empty `records` with a `null` `collected_at` means either that Canvas Platform has not read them or that the instance has no active questionnaire; the report says "No active questionnaires found, or not read yet by Canvas Platform".
 
 ### Step 5: Generate Report
 
@@ -116,7 +116,7 @@ Create a comprehensive markdown report with this structure:
 **Instance**: {slug}
 **Generated**: {date}
 
-Each section below ends with a line `As of the last Canvas Platform sweep: {collected_at}`, or `Not read yet by Canvas Platform` when `collected_at` is null.
+Each section below ends with a line `As of the last Canvas Platform sweep: {collected_at}`, or, when `collected_at` is null, `Not read yet by Canvas Platform` (Questionnaires: `No active questionnaires found, or not read yet by Canvas Platform`).
 
 ## Summary
 
@@ -131,8 +131,8 @@ Each section below ends with a line `As of the last Canvas Platform sweep: {coll
 
 ## Roles
 
-| Name | Description |
-|------|-------------|
+| Name | Coding |
+|------|--------|
 | ... | ... |
 
 ## Teams
@@ -145,20 +145,20 @@ Team members appear as counts. List staff names only when the user asks for them
 
 ## Questionnaires
 
-| Name | Code | Status |
-|------|------|--------|
-| ... | ... | Active/Inactive |
+| Name | Code | Use in charting |
+|------|------|-----------------|
+| ... | ... | ... |
 
 ## Note Types
 
-| Name | Category |
-|------|----------|
-| ... | ... |
+| Name | Telehealth | Billable |
+|------|------------|----------|
+| ... | ... | ... |
 
 ## Appointment Types
 
-| Name | Duration | Category |
-|------|----------|----------|
+| Name | Durations | Telehealth |
+|------|-----------|------------|
 | ... | ... | ... |
 
 ## Installed Plugins

@@ -149,7 +149,7 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 
 ## Canvas Platform Sign-in
 
-`/cpa:new-plugin` and `/cpa:deploy` act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
+`/cpa:new-plugin`, `/cpa:analyze-instance`, `/cpa:deploy`, `/cpa:deploy-lite` and the `/cpa:wrap-up` release act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
 
 ```bash
 uv run --with 'canvas>=1.2.0' canvas login

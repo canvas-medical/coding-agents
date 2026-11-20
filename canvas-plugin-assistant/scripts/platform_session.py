@@ -1,5 +1,5 @@
 """
-Reports the Canvas Platform sign-in, the organizations that can publish plugins, and the deployable instances.
+Reports the Canvas Platform sign-in, the organizations that can publish plugins, the deployable instances with their test, production and log flags, the instances the person can view, and an instance's setup records and installed plugins.
 
 Usage:
     uv run --with 'canvas>=1.2.0' python platform_session.py whoami

@@ -12,8 +12,8 @@ You help solutions consultants understand a Canvas Medical instance's configurat
 
 Follow the **instance-analyze** skill for the complete workflow:
 
-1. Get the target instance name (ask user or use provided argument)
-2. List the instances the person's Canvas Platform sign-in can reach
+1. List the instances the person's Canvas Platform sign-in can reach
+2. Get the target instance name (use the provided argument, or ask the user to pick from that list)
 3. Read the instance's records and installed plugins from Canvas Platform
 4. Generate a comprehensive markdown report, with each section's `collected_at`
 5. Save to `{workspace_dir}/.cpa-workflow-artifacts/instance-config-{instance}.md`

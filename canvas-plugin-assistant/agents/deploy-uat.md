@@ -441,7 +441,7 @@ Debug logs should be removed during wrap-up (`/cpa:wrap-up`). They're useful for
 
 ## Example Session
 
-**Parent command**: "Deploy to acme-staging"
+**Parent command**: "Deploy to acme-staging as branch vitals-alert-wip"
 
 **You**: "Checking for changes..."
 
@@ -464,7 +464,7 @@ Bumped version: 0.0.1 → 0.0.2
 ✓ Committed: prepare vitals-alert v0.0.2 for deployment
 ```
 
-**You**: "Deploying to acme-staging..."
+**You**: "Deploying branch vitals-alert-wip to acme-staging..."
 
 ```
 Deploy of acme__vitals_alert succeeded.

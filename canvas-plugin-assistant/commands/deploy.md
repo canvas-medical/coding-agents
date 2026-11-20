@@ -192,4 +192,4 @@ After successful UAT, guide the user to the next step in the workflow.
 
 - `/cpa:deploy` - Interactive deployment (uses the only deployable instance, otherwise asks which)
 - `/cpa:deploy acme-staging` - Deploy directly to the acme-staging instance
-- `/cpa:deploy acme-prod` - Deploy directly to the acme-prod instance
+- `/cpa:deploy acme-prod` - acme-prod is not a test instance, so the command says a release there goes through `/cpa:wrap-up` and asks for a test instance
