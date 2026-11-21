@@ -1,0 +1,14 @@
+{
+  "eval_name": "case_006",
+  "review_command": "security-review",
+  "description": "Plugin secret passed into template context and used from browser JavaScript",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "self.secrets[\"FORMULARY_API_KEY\"] is placed in render_to_string context and emitted into inline JavaScript, exposing it to every user who opens the page; fix is a SimpleAPI route that calls the external API server-side",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

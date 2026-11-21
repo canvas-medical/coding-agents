@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Problem Timeline</title>
+    <script>
+      window.TIMELINE_CONFIG = {% autoescape off %}{{ TIMELINE_CONFIG }}{% endautoescape %};
+    </script>
+  </head>
+  <body>
+    <ol id="timeline"></ol>
+    <script>
+      const list = document.getElementById("timeline");
+      for (const event of window.TIMELINE_CONFIG.events) {
+        const item = document.createElement("li");
+        item.textContent = `${event.onset ?? "unknown"}: ${event.notes ?? ""}`;
+        list.appendChild(item);
+      }
+    </script>
+  </body>
+</html>
