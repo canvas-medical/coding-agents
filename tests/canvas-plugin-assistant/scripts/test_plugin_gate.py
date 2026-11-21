@@ -17,7 +17,7 @@ def _plugin(root: Path, name: str = "acme_intake") -> Path:
     return plugin
 
 
-def _bash(cwd: Path, command: str = "git commit -m change") -> str:
+def _bash(cwd: Path, command: str = "canvas deploy acme_intake") -> str:
     return json.dumps({"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)})
 
 
@@ -79,7 +79,7 @@ class TestTargetDir:
         plugin = _plugin(container)
         payload = _installer(tmp_path, {"plugin_name": "acme_intake", "cwd": str(container)})
 
-        assert plugin_gate.target_dir(payload) == plugin
+        assert plugin_gate.target_dirs(payload, ("upload", None)) == [plugin]
 
     @pytest.mark.parametrize(
         "tool_input",
@@ -97,13 +97,13 @@ class TestTargetDir:
         _plugin(tmp_path, "outside")
 
         with pytest.raises(plugin_gate.OutsideSession):
-            plugin_gate.target_dir(_installer(session, tool_input))
+            plugin_gate.target_dirs(_installer(session, tool_input), ("upload", None))
 
     def test_a_bash_call_targets_the_plugin_at_its_cwd(self, tmp_path: Path) -> None:
         """A Bash call resolves from the session's cwd."""
         plugin = _plugin(tmp_path)
 
-        assert plugin_gate.target_dir(json.loads(_bash(tmp_path))) == plugin
+        assert plugin_gate.target_dirs(json.loads(_bash(tmp_path)), ("upload", None)) == [plugin]
 
 
 class TestCanvasExecutable:
@@ -155,6 +155,11 @@ class TestRunValidate:
         warned = _completed(0, stdout=f"Plugin acme_intake has a valid CANVAS_MANIFEST.json file\n{WARNING}\n")
         with patch("plugin_gate.subprocess.run", return_value=warned):
             assert plugin_gate.run_validate(tmp_path) == (None, [WARNING.strip()])
+
+    def test_a_warning_on_a_file_whose_name_has_a_space_is_kept(self) -> None:
+        """The credential lint reads every shipped file, and a file name can hold a space."""
+        line = "⚠ client key.pem:1  [hardcoded-credential]  A private key ships inside the plugin package."
+        assert plugin_gate.validate_warnings(f"  {line}\n") == [line]
 
     def test_warning_blocks_are_returned_with_their_items(self, tmp_path: Path) -> None:
         """Validate also prints `Warning:` blocks, such as handlers the manifest never loads."""
@@ -313,6 +318,8 @@ STRIPE_LIVE = "sk_" + "live_" + "Ab3" * 9
 ANTHROPIC = "sk-ant-" + "api03-" + "A1b2C3" * 15
 SLACK_BOT = "xox" + "b-" + "123456789012-123456789012-" + "AbCdEf123456" * 2
 PEM_HEADER = "-----BEGIN " + "PRIVATE KEY-----"
+HEX_TOKEN = "0123456789abcdef" * 2
+MIXED_TOKEN = "aB3dE5fG7hJ9kL1mN3pQr5s"
 
 
 def _diff(path: str, *added: str, start: int = 12) -> str:
@@ -396,6 +403,23 @@ class TestScanDiff:
         assert certain == []
         assert bool(possible) is found
 
+    @pytest.mark.parametrize(
+        ("path", "value", "found"),
+        [
+            pytest.param("acme_intake/h.py", HEX_TOKEN, True, id="hex_token_in_code"),
+            pytest.param("acme_intake/h.py", MIXED_TOKEN, True, id="mixed_token_in_code"),
+            pytest.param("acme_intake/tests/test_h.py", HEX_TOKEN, False, id="hex_token_in_tests"),
+            pytest.param("acme_intake/tests/test_h.py", MIXED_TOKEN, False, id="mixed_token_in_tests"),
+            pytest.param("acme_intake/test/fixtures.py", MIXED_TOKEN, False, id="mixed_token_in_test"),
+            pytest.param("README.md", MIXED_TOKEN, False, id="mixed_token_in_docs"),
+            pytest.param("docs/GUIDE.RST", MIXED_TOKEN, False, id="mixed_token_in_upper_case_docs"),
+        ],
+    )
+    def test_possible_values_follow_canvas_validate(self, path: str, value: str, found: bool) -> None:
+        """The same values `canvas validate` warns on: a long lowercase hex run counts as random,
+        and tests and docs are skipped, so Claude hears one story from both tools."""
+        assert bool(plugin_gate.scan_diff(_diff(path, f'auth_token = "{value}"'))[1]) is found
+
     def test_removed_lines_are_ignored(self) -> None:
         """Deleting a credential is the fix, not a finding."""
         diff = "--- a/h.py\n+++ b/h.py\n@@ -3 +2,0 @@\n" + f'-KEY = "{STRIPE_LIVE}"\n'
@@ -459,12 +483,36 @@ class TestBashAction:
             pytest.param("echo $(git commit -m change)", "commit", id="command_substitution"),
             pytest.param("echo `git commit -m change`", "commit", id="backticks"),
             pytest.param("git commit -m 'line one\nline two'", "commit", id="multiline_message"),
+            pytest.param("# stage and commit\ngit add a.py && git commit -m x", "commit", id="comment_line_first"),
+            pytest.param("git status\n# now commit\ngit commit -am x", "commit", id="comment_line_between"),
+            pytest.param("echo done#1; git commit -am x", "commit", id="hash_inside_a_word"),
+            pytest.param("# git commit -m change", None, id="commit_in_a_comment"),
+            pytest.param("timeout 60 git commit -am x", "commit", id="timeout_wrapper"),
+            pytest.param("timeout -k 5 --signal TERM 60s git commit -am x", "commit", id="timeout_with_options"),
+            pytest.param("nice git commit -am x", "commit", id="nice_wrapper"),
+            pytest.param("timeout --preserve-status 60 git commit -am x", "commit", id="timeout_flag_without_value"),
+            pytest.param("nice -n 10 timeout 60 git commit -am x", "commit", id="nice_then_timeout"),
+            pytest.param("git merge --continue", "commit", id="merge_continue"),
+            pytest.param("git rebase --continue", "commit", id="rebase_continue"),
+            pytest.param("git -C acme cherry-pick --continue", "commit", id="cherry_pick_continue"),
+            pytest.param("git am --continue", "commit", id="am_continue"),
+            pytest.param("git revert --continue", "commit", id="revert_continue"),
+            pytest.param("git rebase --abort", None, id="rebase_abort"),
+            pytest.param("git merge main", None, id="merge_without_continue"),
             pytest.param("", None, id="empty"),
         ],
     )
     def test_bash_action(self, command: str, action: str | None) -> None:
         """Global options, env prefixes and compound commands do not hide a commit."""
-        assert plugin_gate.bash_action(command) == action
+        result = plugin_gate.bash_actions(command)
+        assert (result[0][0] if result else None) == action
+
+
+def _git_identity(monkeypatch: pytest.MonkeyPatch) -> None:
+    for variable in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
+        monkeypatch.setenv(variable, "Test")
+    for variable in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
+        monkeypatch.setenv(variable, "test@example.com")
 
 
 def _git(cwd: Path, *args: str) -> None:
@@ -517,6 +565,30 @@ class TestScanCommit:
         assert certain == ["acme_intake/.env: an environment file"]
         assert possible == ["acme_intake/tests/fixture.pem: a key file (fine only if it is a mutual-TLS client key)"]
 
+    @pytest.mark.parametrize("command", ["clean", "process"])
+    def test_a_filter_driver_never_runs(self, repo: Path, tmp_path_factory: pytest.TempPathFactory, command: str) -> None:
+        """Reading the worktree runs any filter driver the repository assigns, which is code the
+        hook would run before the call is approved, so every driver is switched off and the diff
+        still reads, even for a driver marked required."""
+        marker = tmp_path_factory.mktemp("probe") / "ran"
+        _git(repo, "config", f"filter.probe.{command}", f"touch {marker}")
+        _git(repo, "config", "filter.probe.required", "true")
+        (repo.parent / ".git" / "info" / "attributes").write_text("*.py filter=probe\n")
+        (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+
+        plugin_gate.commit_plugins(repo)
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert not marker.exists()
+        assert len(certain) == 1
+
+    def test_a_git_read_that_fails_raises(self, repo: Path) -> None:
+        """A diff git cannot produce is not an empty commit."""
+        (repo.parent / ".git" / "index").write_bytes(b"not an index")
+
+        with pytest.raises(plugin_gate.GitFailed, match=r"`git diff` exited \d+"):
+            plugin_gate.scan_commit(repo)
+
 
 @pytest.mark.usefixtures("canvas_on_path")
 class TestMainSecretScan:
@@ -530,7 +602,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 2
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 2
 
         err = capsys.readouterr().err
         assert "the changes this commit can record add what look like live credentials" in err
@@ -545,7 +617,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 0
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 0
 
         context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
         assert context.startswith("CPA plugin gate, advisory only (CPA_PLUGIN_GATE=advise)")
@@ -559,7 +631,7 @@ class TestMainSecretScan:
         (repo / "h.py").write_text('API_TOKEN = "aB3dE5fG7hJ9kL1mN3pQ"\n')
         _git(repo, "add", "h.py")
         with patch("plugin_gate.run_validate", return_value=(None, [])):
-            assert plugin_gate.main(_bash(repo)) == 0
+            assert plugin_gate.main(_bash(repo, "git commit -m change")) == 0
 
         context = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
         assert context.startswith(
@@ -593,3 +665,308 @@ class TestMainSecretScan:
             assert plugin_gate.main(payload) == 0
         validate.assert_called_once_with(repo)
         scan.assert_not_called()
+
+
+class TestNamedTargets:
+    """Tests for finding the plugins a call names or a commit touches."""
+
+    @pytest.mark.parametrize(
+        ("arguments", "target"),
+        [
+            pytest.param(["acme_intake"], "acme_intake", id="positional"),
+            pytest.param(["--instance", "acme-staging", "work/acme_x"], "work/acme_x", id="after_a_value_option"),
+            pytest.param(["acme_intake", "--host", "acme-dev"], "acme_intake", id="before_a_value_option"),
+            pytest.param(["--yes", "acme_intake"], "acme_intake", id="after_a_flag"),
+            pytest.param(["--instance", "acme-staging"], None, id="no_path"),
+        ],
+    )
+    def test_upload_target_is_the_first_positional_argument(self, arguments: list[str], target: str | None) -> None:
+        """Option values are not mistaken for the plugin path."""
+        assert plugin_gate.upload_target(arguments) == target
+
+    @pytest.mark.parametrize(
+        ("command", "action"),
+        [
+            pytest.param("canvas deploy other/acme_x --instance s", ("upload", "other/acme_x"), id="deploy_path"),
+            pytest.param("git -C my-plugin commit -m x", ("commit", "my-plugin"), id="git_dir"),
+            pytest.param("git -C a -C b commit -m x", ("commit", "a/b"), id="git_dir_chained"),
+            pytest.param("git commit -m x", ("commit", None), id="plain_commit"),
+            pytest.param("uv run --with x --frozen canvas deploy acme_x", ("upload", "acme_x"), id="uv_run_options"),
+            pytest.param("uv run --frozen pytest -q", None, id="uv_run_other_command"),
+            pytest.param("cd my-plugin && git commit -am x", ("commit", "my-plugin"), id="cd_then_commit"),
+            pytest.param("cd work && cd sub && canvas deploy acme_x", ("upload", "work/sub/acme_x"), id="cd_twice"),
+            pytest.param("cd work && canvas deploy", ("upload", "work"), id="cd_then_deploy_here"),
+            pytest.param("uv run --directory work canvas deploy acme_x", ("upload", "work/acme_x"), id="uv_directory"),
+        ],
+    )
+    def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
+        """The action names the plugin path a deploy targets, or the directory git runs in."""
+        assert plugin_gate.bash_actions(command) == ([action] if action else [])
+
+    def test_a_commit_validates_the_plugins_it_touches_two_levels_down(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """In CPA's launch layout the session starts at the workspace and the plugin sits two
+        folders below it; the commit's changed files lead to it."""
+        _git_identity(monkeypatch)
+        project = tmp_path / "my-plugin"
+        plugin = _plugin(project, "my_plugin")
+        (plugin / "h.py").write_text("x = 1\n")
+        _git(project, "init", "-q")
+        _git(project, "add", ".")
+        _git(project, "commit", "-q", "-m", "first")
+        (plugin / "h.py").write_text("x = 2\n")
+        payload = json.loads(_bash(tmp_path, "git -C my-plugin commit -am change"))
+
+        assert plugin_gate.target_dirs(payload, ("commit", "my-plugin")) == [plugin.resolve()]
+
+    def test_a_commit_touching_two_plugins_validates_both(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Every plugin with a changed file is checked, and a commit touching none checks nothing."""
+        _git_identity(monkeypatch)
+        first, second = _plugin(tmp_path, "acme_one"), _plugin(tmp_path, "acme_two")
+        (tmp_path / "notes.txt").write_text("a\n")
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        payload = json.loads(_bash(tmp_path, "git commit -am x"))
+
+        (tmp_path / "notes.txt").write_text("b\n")
+        assert plugin_gate.target_dirs(payload, ("commit", None)) == []
+
+        for plugin in (first, second):
+            (plugin / "CANVAS_MANIFEST.json").write_text('{"name": "changed"}')
+        assert plugin_gate.target_dirs(payload, ("commit", None)) == [first.resolve(), second.resolve()]
+
+    def test_commit_plugins_outside_a_repository_is_empty(self, tmp_path: Path) -> None:
+        """A folder git does not know holds no commit to check."""
+        assert plugin_gate.commit_plugins(tmp_path) == []
+
+    def test_a_deploy_validates_the_plugin_it_names(self, tmp_path: Path) -> None:
+        """`canvas deploy <path>` checks that plugin, not the one the session started in."""
+        _plugin(tmp_path, "acme_here")
+        other = _plugin(tmp_path / "work", "acme_other")
+        payload = json.loads(_bash(tmp_path, "canvas deploy work/acme_other"))
+
+        assert plugin_gate.target_dirs(payload, ("upload", "work/acme_other")) == [other.resolve()]
+
+    @pytest.mark.parametrize(
+        "action",
+        [pytest.param(("upload", "../elsewhere/acme_x"), id="deploy"), pytest.param(("commit", ".."), id="commit")],
+    )
+    def test_a_target_outside_the_session_is_refused(self, tmp_path: Path, action: tuple) -> None:
+        """Checking runs code before the call is approved, so a named target outside the session is not checked."""
+        session = tmp_path / "session"
+        _plugin(session, "acme_here")
+        with pytest.raises(plugin_gate.OutsideSession):
+            plugin_gate.target_dirs(json.loads(_bash(session, "x")), action)
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    def test_block_mode_names_each_failing_plugin(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """With several plugins in one commit, each failure is labelled with its plugin."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        plugins = [tmp_path / "acme_one", tmp_path / "acme_two"]
+        results = {plugins[0]: ("bad import", []), plugins[1]: (None, [])}
+        with patch("plugin_gate.target_dirs", return_value=plugins), patch(
+            "plugin_gate.scan_commit", return_value=([], [])
+        ), patch("plugin_gate.run_validate", side_effect=lambda plugin: results[plugin]):
+            assert plugin_gate.main(_bash(tmp_path, "git commit -m x")) == 2
+
+        err = capsys.readouterr().err
+        assert err.startswith("CPA plugin gate (acme_one, acme_two): acme_one: bad import")
+
+
+class TestCommandsTheGateMustNotMiss:
+    """Untracked files, several actions in one command, and targets the gate cannot resolve."""
+
+    def test_a_new_untracked_file_leads_to_its_plugin(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The hook runs before `git add new.py && git commit`, so the new file is still untracked."""
+        _git_identity(monkeypatch)
+        plugin = _plugin(tmp_path)
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        (plugin / "new.py").write_text("x = (\n")
+
+        assert plugin_gate.commit_plugins(tmp_path) == [plugin.resolve()]
+
+    def test_a_credential_in_a_new_untracked_file_is_found(self, repo: Path) -> None:
+        """`git add new.py && git commit` records a file `git diff` never shows, so it is read whole.
+        An ignored file is one `git add -A` would not record, so it is skipped."""
+        (repo / "billing.py").write_text(f'x = 1\nKEY = "{STRIPE_LIVE}"\n')
+        (repo / ".env").write_text("A=1\n")
+        (repo / "ignored.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        (repo / ".gitignore").write_text("ignored.py\n")
+
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert sorted(certain) == [
+            "acme_intake/.env: an environment file",
+            "acme_intake/billing.py:2: a Stripe live key `sk_l…` (35 characters)",
+        ]
+
+    def test_every_action_in_a_command_is_returned(self) -> None:
+        """`canvas deploy a && canvas deploy b` deploys both, so both are checked."""
+        assert plugin_gate.bash_actions("canvas deploy a && canvas deploy b; git commit -m x") == [
+            ("upload", "a"),
+            ("upload", "b"),
+            ("commit", None),
+        ]
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("cd ~/work && git commit -m x", id="home"),
+            pytest.param("cd $PLUGIN && git commit -m x", id="variable"),
+            pytest.param("cd - && canvas deploy acme_x", id="previous_dir"),
+            pytest.param("cd && git commit -m x", id="bare_cd"),
+            pytest.param("pushd work && git commit -m x", id="pushd"),
+            pytest.param("git -C $DIR commit -m x", id="git_dir_variable"),
+            pytest.param("canvas deploy acme_*", id="glob_target"),
+            pytest.param("uv run --directory ~/w canvas deploy acme_x", id="uv_directory_home"),
+        ],
+    )
+    def test_a_target_the_shell_expands_is_unclear(self, command: str) -> None:
+        """The gate cannot see what `~`, `$`, globs, `cd -` or `pushd` resolve to, so it refuses."""
+        with pytest.raises(plugin_gate.UnclearTarget):
+            plugin_gate.bash_actions(command)
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("git -C ~/repo log --oneline", id="git_dir_home_log"),
+            pytest.param("cd ~ && git status", id="cd_home_status"),
+            pytest.param("cd && git pull", id="bare_cd_pull"),
+            pytest.param("pushd work && git status && popd", id="pushd_status"),
+            pytest.param("uv run --directory $D pytest -q", id="uv_directory_variable_pytest"),
+            pytest.param("cd $X && canvas validate acme_x", id="cd_variable_validate"),
+        ],
+    )
+    def test_an_expanded_directory_without_a_gated_action_is_ignored(self, command: str) -> None:
+        """Only a commit, install or deploy needs its directory known; other commands pass untouched."""
+        assert plugin_gate.bash_actions(command) == []
+
+    def test_a_named_target_never_resolves_to_an_enclosing_plugin(self, tmp_path: Path) -> None:
+        """`canvas deploy notes` inside a plugin names a folder that is not a plugin; the enclosing
+        plugin is not checked in its place."""
+        plugin = _plugin(tmp_path)
+        (plugin / "notes").mkdir()
+        payload = json.loads(_bash(plugin, "canvas deploy notes"))
+
+        assert plugin_gate.target_dirs(payload, ("upload", "notes")) == []
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
+    def test_an_unclear_command_is_stopped_in_block_mode(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+    ) -> None:
+        """Block mode stops a command whose plugin it cannot resolve, and says why."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+        with patch("plugin_gate.subprocess.run") as run:
+            assert plugin_gate.main(_bash(tmp_path, "cd $PLUGIN && git commit -m x")) == code
+        run.assert_not_called()
+        if mode == "block":
+            assert "could not tell which plugin this command acts on" in capsys.readouterr().err
+
+    @pytest.mark.usefixtures("canvas_on_path")
+    def test_both_deploys_in_one_command_are_validated(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Each plugin a compound command deploys is validated once."""
+        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
+        first, second = _plugin(tmp_path, "acme_one"), _plugin(tmp_path, "acme_two")
+        with patch("plugin_gate.run_validate", return_value=(None, [])) as validate:
+            command = "canvas deploy acme_one && canvas deploy acme_two && canvas deploy acme_one"
+            assert plugin_gate.main(_bash(tmp_path, command)) == 0
+
+        assert [call.args[0] for call in validate.call_args_list] == [first.resolve(), second.resolve()]
+
+    def test_a_new_binary_file_is_skipped(self, repo: Path) -> None:
+        """An untracked file that is not UTF-8 text is not scanned."""
+        (repo / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe" + STRIPE_LIVE.encode())
+
+        assert plugin_gate.scan_commit(repo) == ([], [])
+
+    def test_a_new_symlink_is_not_followed(self, repo: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
+        """A symlink could point outside the repository, so its target is never read."""
+        outside = tmp_path_factory.mktemp("elsewhere") / "outside.txt"
+        outside.write_text(f'KEY = "{STRIPE_LIVE}"\n')
+        (repo / "link.py").symlink_to(outside)
+
+        assert plugin_gate.scan_commit(repo) == ([], [])
+
+    def test_a_new_file_over_the_cap_is_reported_unread(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A huge file would stall the hook, so it is named as a possible finding instead of read."""
+        monkeypatch.setattr(plugin_gate, "MAX_SCAN_BYTES", 10)
+        content = f'{{"key": "{STRIPE_LIVE}"}}\n'
+        (repo / "dump.json").write_text(content)
+
+        assert plugin_gate.scan_commit(repo) == (
+            [],
+            [f"acme_intake/dump.json: a new file too large to scan ({len(content)} bytes)"],
+        )
+
+    def test_a_non_ascii_file_name_is_read(self, repo: Path) -> None:
+        """git quotes such names unless told not to; the file is still found and read."""
+        (repo / "café.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
+
+        certain, _ = plugin_gate.scan_commit(repo)
+
+        assert certain == ["acme_intake/café.py:1: a Stripe live key `sk_l…` (35 characters)"]
+
+    def test_a_session_in_a_subfolder_sees_new_files_across_the_repository(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """`git ls-files --others` lists only the current folder, so it runs from the repository root."""
+        _git_identity(monkeypatch)
+        plugin = _plugin(tmp_path / "plugins")
+        (tmp_path / "docs").mkdir()
+        (tmp_path / "docs" / "x.md").write_text("x\n")
+        _git(tmp_path, "init", "-q")
+        _git(tmp_path, "add", ".")
+        _git(tmp_path, "commit", "-q", "-m", "first")
+        (plugin / "new.py").write_text("x = 1\n")
+
+        assert plugin_gate.commit_plugins(tmp_path / "docs") == [plugin.resolve()]
+
+    def test_scan_commit_outside_a_repository_finds_nothing(self, tmp_path: Path) -> None:
+        """A folder git does not know records no commit."""
+        assert plugin_gate.scan_commit(tmp_path) == ([], [])
+
+    def test_a_new_file_the_gate_cannot_read_is_reported(self, repo: Path) -> None:
+        """A file left unreadable (a docker-owned 0600 file, say) is named, not a crash that lets the commit through."""
+        (repo / "secret.py").write_text("x = 1\n")
+        with patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+            assert plugin_gate.scan_commit(repo) == ([], ["acme_intake/secret.py: a new file the gate could not read"])
+
+
+@pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0), ("off", 0)])
+def test_a_crash_in_the_gate_fails_closed_only_in_block_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+) -> None:
+    """Claude Code runs the call after an uncaught error, so `run` turns a crash into a stop in block mode."""
+    monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+    with patch("plugin_gate.main", side_effect=FileNotFoundError("gone")):
+        assert plugin_gate.run(_bash(tmp_path)) == code
+    if mode == "block":
+        assert "the check failed (FileNotFoundError: gone)" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
+def test_a_commit_whose_changes_cannot_be_read_is_stopped_in_block_mode(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], mode: str, code: int
+) -> None:
+    """A broken index leaves the gate unable to see what the commit records, so `block` stops it."""
+    monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
+    (repo.parent / ".git" / "index").write_bytes(b"not an index")
+
+    assert plugin_gate.run(_bash(repo, "git commit -am change")) == code
+    if mode == "block":
+        assert "could not read the changes this commit can record (`git " in capsys.readouterr().err
+
+
+def test_run_passes_main_through() -> None:
+    """Without an error, `run` returns what `main` returns."""
+    with patch("plugin_gate.main", return_value=0):
+        assert plugin_gate.run("{}") == 0
