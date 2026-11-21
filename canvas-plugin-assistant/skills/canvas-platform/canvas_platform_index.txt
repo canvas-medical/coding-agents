@@ -1213,6 +1213,7 @@
 - [Electronic Refill Requests: Approve, Deny, and Ignore](https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore)
         - What you'll learn
     - Available Actions
+    - Assigning a Refill Request
     - Approve a Refill Request
         - Step 1: Open the request
         - Step 2: Approve and submit
@@ -1230,6 +1231,7 @@
         - Requests remaining in the queue
         - Ignore option
         - Duplicate requests
+        - Assigning requests
         - Responses prepared by a plugin
 
 ## Revenue & Billing

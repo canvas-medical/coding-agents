@@ -14076,13 +14076,15 @@ The Add Condition command records a coded (ICD-10) condition on the patient's Co
   2. Add the **Add Condition** command to a new or existing note. It is in the note's History section.
   3. Complete the command fields. The only required field is the condition.
      - **Condition** : Search for the condition using free text or ICD-10 code. This is the same picker the Diagnose command uses.
+     - **Category Type** : **Problem List Item** (the default) or **Health Concern**.
+     - **Category Domain** : Optional. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
      - **Background** : Provide history of the condition
      - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015")
      - **Comments** : Additional notes pertaining to the condition (up to 1000 characters)
   4. Click **Record** to add the condition. It appears in the patient summary as an active entry.
 **Key points:**
   - No assessment is opened for the condition, and the visit is not documented as having assessed it
-  - If the condition is already on the patient's Conditions list, Canvas displays: _"This condition is already on the patient's conditions list."_
+  - A condition already on the patient's chart, whether active or resolved, can't be added again. **Record** is disabled and the command displays: _"This condition is already on the patient's chart. Use Assess to update it, including reactivating a resolved condition."_
   - Once the condition has been assessed, the Add Condition command can no longer be entered in error, because doing so would remove the condition the assessment describes
 ## Configuration & Set Up
 No special configuration is required. The Assess and Add Condition commands are available by default in all patient charts.
@@ -14092,6 +14094,10 @@ A: It depends on whether the condition is active now, and whether you are assess
   - **Assess Condition** : you are assessing the condition at today's visit, whether it is new or already on the chart
   - **Add Condition** : the condition was diagnosed previously and is still active
   - **Past Medical History** : you are backfilling a condition the patient had in the past that is not active now
+**Q: Why is Record disabled on my Add Condition command?**
+A: The condition is already on the patient's chart, either active or resolved. Use **Assess Condition** to update it, which also makes a resolved condition active again.
+**Q: What's the difference between a Problem List Item and a Health Concern?**
+A: Both appear on the patient's Conditions list. Choose **Health Concern** for a concern the care team is tracking that isn't a diagnosed problem, and **Problem List Item** for everything else. Problem List Item is the default.
 **Q: How can I add a diagnosis/ICD-10 code that's not in the system?**
 A: Diagnosis codes cannot be added manually. Canvas updates ICD-10 codes in accordance with CMS on April 1 and October 1 every year.
 **Q: What if I enter the wrong diagnosis?**
@@ -14101,7 +14107,7 @@ A: Use the Change Diagnosis command to update the condition while preserving his
   - [Managing Historical Conditions](/articles/3935780129)
   - [Understanding Coding Gaps](/articles/5456716623)
 * * *
-**Keywords:** diagnose command, assess condition, add condition command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions
+**Keywords:** diagnose command, assess condition, add condition command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions, category type, health concern, problem list item, category domain
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/9221634314-new-diagnoses
 
@@ -14429,6 +14435,7 @@ Electronic refill requests allow pharmacies to request medication refills direct
 ### What you'll learn
   - What each refill request action does
   - When to approve, deny, or ignore a request
+  - How to see and change who a refill request is assigned to
   - How duplicate refill requests should be handled
   - What to do when a request remains in the queue
   - How to send a refill response a plugin prepared
@@ -14438,6 +14445,12 @@ Electronic refill requests may include the following actions:
   - **Deny** — Denies the refill request and sends a denial response back to the pharmacy.
   - **Ignore** — Dismisses the refill request from the queue without sending a response back to the pharmacy.
 > **Duplicate refill request?** If the request is a duplicate and does not need a pharmacy response, use **Ignore** when that option is available.
+## Assigning a Refill Request
+Each refill request card in the refill worklist shows **Assigned to** with the prescriber the request is assigned to, or _Unassigned_.
+**To reassign a refill request:**
+  1. On the refill request card, click the name next to **Assigned to**.
+  2. Choose another prescriber from the list. The list shows prescribers set up for e-prescribing.
+The card updates right away. If the worklist is filtered to one assignee, the card leaves the list once it's assigned to someone else.
 ## Approve a Refill Request
 Use **Approve** when the refill request should be accepted and the pharmacy should receive an approval response.
 ### Step 1: Open the request
@@ -14477,8 +14490,8 @@ This is most useful for duplicate refill requests or requests that no longer req
   - The request no longer requires action in Canvas.
 > **Don't see Ignore?** The **Ignore** option may not appear for every refill request. If **Ignore** is not available, review the request and choose the appropriate available action, such as approving or denying the request.
 ## Refill Responses Prepared by a Plugin
-If your organization uses a plugin to help manage refill requests, the plugin can add an **Approve Refill** or **Deny Refill** command to a note in the patient's chart, ready for review. The command is marked **Plugin Generated**.
-A plugin can only prepare the response. It can't send it to the pharmacy.
+If your organization uses a plugin to help manage refill requests, the plugin can add an **Approve Refill** or **Deny Refill** command to a note in the patient's chart, ready for review. The command is marked **Plugin Generated**. A plugin can also assign a refill request to a prescriber or ignore it, the same as you can from the refill worklist.
+A plugin can only prepare an approval or denial. It can't send it to the pharmacy.
 ### Send a prepared response
   1. Open the note in the patient's chart that holds the **Approve Refill** or **Deny Refill** command.
   2. Review the command, and update the note to the pharmacist or the denial reason if needed.
@@ -14508,11 +14521,14 @@ A: **Ignore** may only appear when Canvas determines the request can be dismisse
 ### Duplicate requests
 **Q: I received multiple requests for the same medication. Which one should I use?**
 A: Review the request details to confirm whether the requests are duplicates. If a duplicate request does not need a pharmacy response, select **Ignore** when available.
+### Assigning requests
+**Q: I reassigned a refill request and it disappeared from my list. Where did it go?**
+A: Your worklist is filtered to one assignee, so the request moved to the new assignee's list. Clear the assignee filter to see every request.
 ### Responses prepared by a plugin
 **Q: A plugin added an Approve Refill command to a note. Has the pharmacy been notified?**
 A: No. A plugin can only prepare the response. The pharmacy gets it only after someone opens the command in the patient's chart and sends it.
 * * *
-**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill, plugin generated, refill dashboard
+**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill, plugin generated, refill dashboard, refill assignee, reassign refill
 **Categories:** Clinical Documentation & Commands, Medications, ePrescribing
 **Roles:** Providers, Clinical Staff
 ----- END PAGE https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore
