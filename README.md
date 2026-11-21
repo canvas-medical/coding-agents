@@ -72,6 +72,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 - Unit test authoring with 90% coverage target
 - Instance configuration analysis
 - Deployment with log monitoring
+- Reference-plugin guidance (MSF first) with a pre-deploy pattern review
 
 **Slash Commands** (prefixed with `cpa:` when installed via marketplace):
 | Command | Description |
