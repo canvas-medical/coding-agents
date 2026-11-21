@@ -22,7 +22,7 @@ Before deployment, verify:
 
 1. Plugin has a valid `CANVAS_MANIFEST.json`
 2. Plugin passes local tests (`uv run pytest`)
-3. Plugin passes type checking (`uv run mypy --config-file=mypy.ini .`)
+3. Plugin passes type checking (see the type-checking command below, which falls back to the canonical ruleset when the plugin has no `mypy.ini`)
 4. User has Canvas CLI configured with target instance credentials
 
 ## Workflow
@@ -94,7 +94,10 @@ uv run canvas validate .
 uv run pytest
 
 # Run type checking
-uv run mypy --config-file=mypy.ini .
+mypy_ini=mypy.ini
+[ -f "$mypy_ini" ] || mypy_ini="${CLAUDE_PLUGIN_ROOT}/config/mypy.ini"
+uv run --no-project --with "mypy>=1.19.0,<2" \
+  mypy --config-file="$mypy_ini" .
 ```
 
 If `canvas validate` reports violations, **fix them before running `canvas install`** — it runs the runner's own loader and allowlist, so anything it flags (disallowed imports, sandbox-rejected constructs like `setattr`/`bytearray`, Custom Data misconfiguration, handler-load failures) will break the deploy on the instance. Its output names the file, line, and remediation for each; consult `${CLAUDE_PLUGIN_ROOT}/sandbox-allowlist.md` for the allowed imports and names.

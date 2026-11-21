@@ -31,6 +31,24 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/validate_cpa_environment.py" --requ
 cd "$CPA_PLUGIN_DIR"
 ```
 
+### Step 1a: Canvas Code Style (advisory)
+
+Read back the style status recorded by `/cpa:style`:
+
+```bash
+uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/style_status.py" --check
+```
+
+| Exit | Meaning | What to do |
+|------|---------|------------|
+| 0 | every check passed | Continue. |
+| 1 | a check failed | Tell the user, offer to run `/cpa:style`, continue if they decline. |
+| 3 | unknown (no record, unreadable, a check never ran, or the code changed after the checks did) | Same: offer `/cpa:style`, continue if they decline. |
+
+**This is advisory — never refuse to deploy on style.** Deploying deliberately-dirty code for a quick UAT pass is legitimate, and the Studio deploy path treats style as a soft gate for the same reason. Print the verdict, offer the fix, respect the answer.
+
+Why it is here at all: on the Studio path `canvas install` gates style deterministically, but this command is the CPA-native route to an instance and has no such gate. Without this nudge, unstyled code reaches UAT and only gets cleaned at wrap-up — so the tree a reviewer tested is not the tree that ships. `/cpa:wrap-up` remains the firm pre-delivery backstop.
+
 ### Step 2: Determine Target Hostname
 
 Resolve the deployment target **before** delegating to the agent — the parent needs the hostname to start log monitoring.
@@ -102,6 +120,7 @@ This command is **step 3** in the Canvas Plugin Assistant workflow:
 ```
 /cpa:check-setup      →  Verify environment tools (uv, unbuffer)
 /cpa:new-plugin       →  Create plugin from requirements
+/cpa:style            →  Format + lint + type-check to the Canvas standard
 /cpa:deploy           →  Deploy to Canvas instance for UAT  ← YOU ARE HERE
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
