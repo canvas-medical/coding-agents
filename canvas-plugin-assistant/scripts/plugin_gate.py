@@ -106,10 +106,65 @@ def canvas_executable(plugin_dir: Path) -> str | None:
     else `canvas` from PATH (Studio's image). Never `uv run`, which builds environments.
     """
     for directory in (plugin_dir, plugin_dir.parent):
-        candidate = directory / ".venv" / "bin" / "canvas"
-        if candidate.is_file():
+        venv = directory / ".venv"
+        candidate = venv / "bin" / "canvas"
+        if (
+            candidate.is_file()
+            and candidate.resolve().is_relative_to(venv.resolve())
+            and not venv_is_tracked(directory)
+        ):
             return str(candidate)
     return shutil.which("canvas")
+
+
+def repository_root(directory: Path) -> Path | None:
+    """The nearest folder at or above `directory` holding a `.git`. Git refuses to track a
+    `.git` path in any spelling, so a clone cannot plant one, unlike a bare-repository layout
+    (`HEAD`, `objects/`, `refs/`) that git's own discovery would accept.
+    """
+    resolved = directory.resolve()
+    for folder in (resolved, *resolved.parents):
+        if (folder / ".git").exists():
+            return folder
+    return None
+
+
+def venv_is_tracked(directory: Path) -> bool:
+    """Whether `directory/.venv` may have arrived with the repository rather than from `uv sync`
+    (which git ignores). The gate runs before the tool call is approved, so such a `.venv` is
+    never executed. True when git tracks any path the filesystem resolves to `.venv` (a
+    case-insensitive filesystem opens `.VENV` as `.venv`), and whenever git cannot answer inside
+    a repository. Outside any repository nothing was cloned, so it is False.
+    """
+    root = repository_root(directory)
+    if root is None:
+        return False
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                f"--git-dir={root / '.git'}",
+                f"--work-tree={root}",
+                "-c",
+                "core.fsmonitor=false",
+                "-C",
+                str(directory.resolve()),
+                "ls-files",
+                "-z",
+            ],
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):  # the hook runs on any python3, not only 3.14
+        return True
+    if result.returncode != 0:
+        return True
+    venv = directory / ".venv"
+    names = {path.split("/", 1)[0] for path in result.stdout.split("\0") if path}
+    return any((directory / name).exists() and (directory / name).samefile(venv) for name in names)
 
 
 def run_validate(plugin_dir: Path) -> tuple[str | None, list[str]]:

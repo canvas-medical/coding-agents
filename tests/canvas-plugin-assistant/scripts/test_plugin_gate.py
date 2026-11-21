@@ -118,6 +118,106 @@ class TestCanvasExecutable:
         with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
             assert plugin_gate.canvas_executable(plugin) == str(venv_canvas)
 
+    def test_a_canvas_committed_inside_a_venv_is_never_run(self, tmp_path: Path) -> None:
+        """The gate runs before the call is approved, so a `.venv` the repository itself
+        carries (a cloned file, not one `uv sync` made) is refused and PATH's canvas runs."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("#!/bin/sh\n")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "-f", ".venv/bin/canvas"], check=True)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_canvas_committed_under_another_spelling_of_venv_is_never_run(self, tmp_path: Path) -> None:
+        """On a case-insensitive filesystem `.VENV` in the repository is the `.venv` the gate opens."""
+        plugin = _plugin(tmp_path)
+        committed = tmp_path / ".VENV" / "bin" / "canvas"
+        committed.parent.mkdir(parents=True)
+        committed.write_text("#!/bin/sh\n")
+        if not (tmp_path / ".venv" / "bin" / "canvas").is_file():
+            pytest.skip("case-sensitive filesystem: `.VENV` is not `.venv` here")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "-f", ".VENV/bin/canvas"], check=True)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_venv_canvas_that_links_outside_the_venv_is_never_run(self, tmp_path: Path) -> None:
+        """A canvas that resolves outside its `.venv` is a file the repository chose, not uv's."""
+        plugin = _plugin(tmp_path)
+        elsewhere = tmp_path / "tools" / "canvas"
+        elsewhere.parent.mkdir()
+        elsewhere.write_text("#!/bin/sh\n")
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.symlink_to(elsewhere)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_bare_repository_layout_in_the_clone_cannot_answer_for_it(self, tmp_path: Path) -> None:
+        """A clone can carry `HEAD`, `objects/`, `refs/` and a `config` that git would discover
+        as a repository with an empty index; the clone's own `.git` answers instead."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = plugin / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("#!/bin/sh\n")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "-f", "."], check=True)
+        (plugin / "HEAD").write_text("ref: refs/heads/main\n")
+        (plugin / "objects").mkdir()
+        (plugin / "refs").mkdir()
+        (plugin / "config").write_text("[core]\n\tbare = false\n\tworktree = .\n")
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_a_venv_is_not_run_when_git_refuses_the_repository(self, tmp_path: Path) -> None:
+        """Inside a repository any git failure leaves the `.venv` unvouched for, whatever the
+        message says (it quotes paths a clone can name, such as "not a git repository")."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("")
+        (tmp_path / ".git").mkdir()
+        refused = subprocess.CompletedProcess(
+            ["git"],
+            128,
+            stdout="",
+            stderr=f"fatal: detected dubious ownership in repository at '{tmp_path}/not a git repository'\n",
+        )
+        with (
+            patch("plugin_gate.subprocess.run", return_value=refused),
+            patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"),
+        ):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    @pytest.mark.parametrize("error", [OSError("no git"), subprocess.TimeoutExpired("git", 10)])
+    def test_a_venv_is_not_run_when_git_cannot_say_it_is_untracked(
+        self, tmp_path: Path, error: Exception
+    ) -> None:
+        """Without an answer from git, the `.venv` canvas could have come with the repository."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("")
+        (tmp_path / ".git").mkdir()
+        with (
+            patch("plugin_gate.subprocess.run", side_effect=error),
+            patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"),
+        ):
+            assert plugin_gate.canvas_executable(plugin) == "/usr/local/bin/canvas"
+
+    def test_an_untracked_venv_in_a_repository_wins_over_path(self, tmp_path: Path) -> None:
+        """The `.venv` `uv sync` makes is ignored by git, so it is the project's own canvas."""
+        plugin = _plugin(tmp_path)
+        venv_canvas = tmp_path / ".venv" / "bin" / "canvas"
+        venv_canvas.parent.mkdir(parents=True)
+        venv_canvas.write_text("")
+        (tmp_path / ".gitignore").write_text(".venv/\n")
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+        with patch("plugin_gate.shutil.which", return_value="/usr/local/bin/canvas"):
+            assert plugin_gate.canvas_executable(plugin) == str(venv_canvas)
+
     def test_without_a_venv_canvas_comes_from_path(self, tmp_path: Path) -> None:
         """Studio's image installs canvas system-wide and its workspaces have no `.venv` canvas."""
         plugin = _plugin(tmp_path)
