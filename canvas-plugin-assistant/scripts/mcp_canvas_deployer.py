@@ -71,6 +71,13 @@ class CanvasDeployerMcp:
         "call the deployer tool again for this."
     )
 
+    # Variables are read from the working-tree manifest, which can have moved past the released version.
+    VERSION_NOT_CONFIGURED_NOTE: str = (
+        "Variables not set: the working-tree CANVAS_MANIFEST.json is not version {version}, so its variables "
+        "may not match the ones {version} declares. Set each variable {version} declares in the user's own "
+        "terminal:"
+    )
+
     @classmethod
     async def _in_larger_repo(cls, plugin_dir: Path, cwd: str) -> bool:
         """Whether the plugin sits inside a git repository rooted somewhere other than `cwd`.
@@ -239,8 +246,9 @@ class CanvasDeployerMcp:
     async def deploy(cls, plugin_name: str, instance: str, cwd: str, branch: str = "", version: str = "") -> str:
         """Deploy a Canvas plugin to a Canvas Platform instance, then set its variables.
 
-        Variables are set only when the deploy succeeds. A deploy that stops on pending
-        custom data consent is handed back to the person with the command to run, and a
+        Variables are set only when the deploy succeeds, and for a version only when the
+        working-tree manifest is that version, since variables are read from it. A deploy
+        that stops on pending custom data consent is handed back to the person with the command to run, and a
         deploy still running on Canvas Platform is left for the configurer tool. A plugin
         inside a larger repository, such as a monorepo, deploys with `--snapshot`. An
         empty branch pushes to `main`, the release path. A branch is pushed under that name
@@ -261,7 +269,8 @@ class CanvasDeployerMcp:
             str: The deploy output followed by the configure output or a note for the status, ending with a
                 `Status:` line: `invalid_input`, `consent_pending`, `still_running`, `dirty_tree`,
                 `snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`,
-                `snapshot_replaces_platform`, `deploy_failed`, `configure_failed`, or `deployed`.
+                `snapshot_replaces_platform`, `deploy_failed`, `deployed_not_configured`, `configure_failed`,
+                or `deployed`.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
@@ -322,6 +331,12 @@ class CanvasDeployerMcp:
             return cls._with_status(f"{output}\n\n{cls.UNCOMMITTED_NOTE}", "dirty_tree")
         if result.startswith("Command failed"):
             return cls._with_status(output, "deploy_failed")
+        if version and manifest.get("version") != version:
+            not_configured = (
+                f"{output}\n\n{cls.VERSION_NOT_CONFIGURED_NOTE.format(version=version)}\n"
+                f"  canvas config set {shlex.quote(manifest['name'])} KEY=value --instance {shlex.quote(instance)}"
+            )
+            return cls._with_status(not_configured, "deployed_not_configured")
         configured, failed = await cls._configure(instance, cwd, manifest)
         return cls._with_status(f"{output}\n\n{configured}", "configure_failed" if failed else "deployed")
 
@@ -362,8 +377,8 @@ class CanvasDeployerMcp:
             A plugin inside a larger repository, such as a monorepo, deploys with --snapshot.
             The output ends with one `Status:` line: invalid_input, consent_pending,
             still_running, dirty_tree, snapshot_uncommitted, snapshot_unsupported,
-            snapshot_rollback, snapshot_replaces_platform, deploy_failed, configure_failed,
-            or deployed.
+            snapshot_rollback, snapshot_replaces_platform, deploy_failed,
+            deployed_not_configured, configure_failed, or deployed.
 
             Args:
                 plugin_name: The inner package folder name. Variables are keyed by the manifest name.

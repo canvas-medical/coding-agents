@@ -1,4 +1,4 @@
-"""Tripwire for the nested-repository removal in commands/new-plugin.md."""
+"""Tripwire for scripts/remove_nested_repo.sh, the nested-repository removal after `canvas init`."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ PLUGIN: str = "acme__vitals_alert"
 def test_canvas_init_still_nests_a_repository_inside_a_work_tree(tmp_path: Path) -> None:
     """`canvas init` inside a work tree still runs `git init` in the new container.
 
-    commands/new-plugin.md Step 3 removes that nested `.git` with a guarded block. This runs the installed
+    scripts/remove_nested_repo.sh removes that nested `.git`. This runs the installed
     CLI's real `init` with only Canvas Platform stubbed, so it fails as soon as a canvas-plugins release
     skips `git init` inside a work tree, whatever form that fix takes.
 
@@ -59,7 +59,8 @@ def test_canvas_init_still_nests_a_repository_inside_a_work_tree(tmp_path: Path)
 
     assert (project_dir / ".git").exists(), (
         "canvas init no longer runs git init inside an existing work tree. Raise CPA's canvas floor "
-        "(every `canvas>=` pin) to the release that carries that fix, then delete the guarded nested "
-        "`.git` removal block in canvas-plugin-assistant/commands/new-plugin.md Step 3, the Step 4 "
-        "instruction to remove it, and this test file"
+        "(every `canvas>=` pin) to the release that carries that fix, then delete "
+        "canvas-plugin-assistant/scripts/remove_nested_repo.sh and its test, the steps that run it and "
+        "the --show-toplevel checks that send the agent back to it (commands/new-plugin.md Steps 3-4, "
+        "agents/plugin-brainstorm.md Steps 1-1.5), and this test file"
     )

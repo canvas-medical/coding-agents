@@ -167,25 +167,13 @@ ls "$plugin_name"/*__*/CANVAS_MANIFEST.json
 
 Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_name" "$plugin_name.unprefixed"`), and re-run `/cpa:new-plugin` once that is fixed.
 
-**Inside an existing repository (`in_existing_repo=yes`), once the prefix check passes:** the plugin stays in place in that repository, with no repository or Platform `origin` of its own. `canvas init` runs `git init` in the new container even inside a work tree and points `origin` at Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:1331-1339` and `git.py:97-99` at 1.13.0), so remove that nested repository. Run this as one block; it deletes only a commit-less repository rooted at the container:
+**Inside an existing repository (`in_existing_repo=yes`), once the prefix check passes:** the plugin stays in place in that repository, with no repository or Platform `origin` of its own. `canvas init` runs `git init` in the new container even inside a work tree and points `origin` at Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:1331-1339` and `git.py:97-99` at 1.13.0), so remove that nested repository. The script deletes only a commit-less repository rooted at the container:
 
 ```bash
-plugin_name="[generated-plugin-name]"
-dir="$CPA_WORKSPACE_DIR/$plugin_name"
-if [ -z "$plugin_name" ]; then
-  echo "Nothing removed: the plugin name is empty"
-elif [ ! -d "$dir/.git" ]; then
-  echo "No nested repository at $dir; nothing to remove"
-elif ! [ "$dir" -ef "$(git -C "$dir" rev-parse --show-toplevel)" ]; then
-  echo "Nothing removed: $dir is not the root of its own repository"
-elif [ "$(git -C "$dir" rev-list --all --count)" != "0" ]; then
-  echo "Nothing removed: the repository at $dir has commits"
-else
-  trash "$dir/.git" && echo "Removed the nested repository at $dir/.git"
-fi
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/remove_nested_repo.sh" "$CPA_WORKSPACE_DIR" "[generated-plugin-name]"
 ```
 
-If it prints "No nested repository", the plugin is already in place; continue. If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand.
+If it prints "Removed the nested repository" or "No nested repository", the plugin is in place; continue. If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand.
 
 The plugin is still registered on Canvas Platform. `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` publish it from the existing repository as a snapshot with `canvas deploy --snapshot`, once its files are committed there.
 

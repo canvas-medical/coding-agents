@@ -256,7 +256,13 @@ cd {plugin_name}
 
 Check the prefix with `ls */CANVAS_MANIFEST.json`. If the folder name has no `__`, STOP: the plugin was scaffolded without an organization prefix and was not registered, so it cannot be deployed. When signed out, `canvas init` does this silently: ask the user to run `uv run --with 'canvas>=1.2.0' canvas login` in their own terminal. When it prints "scaffolded without a publisher prefix", no organization lets them push plugin code: an organization admin must grant them the Plugin developer role. Either way, move the scaffolded folder aside so the name is free (`cd "$CPA_WORKSPACE_DIR" && mv "{plugin_name}" "{plugin_name}.unprefixed"`), and start over once that is fixed.
 
-`{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:1331-1339` at 1.13.0), even inside an existing repository. When `in_existing_repo=yes`, the plugin belongs in place in that repository, so remove the fresh, commit-less nested repository with `trash "$CPA_WORKSPACE_DIR/{plugin_name}/.git"`. `git rev-parse --show-toplevel` then prints the existing repository's root, and deploys publish the plugin from there as a snapshot (`canvas deploy --snapshot`) once its files are committed.
+`{package}` below is the inner package folder, `<prefix>__<name>`. The command registers the plugin on Canvas Platform and makes `{plugin_name}/` its own git repo with `origin` on Canvas Platform (canvas-plugins `canvas_cli/apps/platform/commands.py:1331-1339` at 1.13.0), even inside an existing repository. When `in_existing_repo=yes`, the plugin belongs in place in that repository, so remove the fresh, commit-less nested repository; the script deletes only a commit-less repository rooted at the container:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/remove_nested_repo.sh" "$CPA_WORKSPACE_DIR" "{plugin_name}"
+```
+
+If it prints "Removed the nested repository" or "No nested repository", the plugin is in place; continue. If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand. Deploys publish the plugin from the existing repository as a snapshot (`canvas deploy --snapshot`) once its files are committed.
 
 **Run this command BEFORE doing anything else.** Do not:
 - Create directories manually
@@ -280,7 +286,11 @@ echo "Verifying structure..."
 test -f "$INNER/CANVAS_MANIFEST.json" && echo "OK: Inner folder '$INNER' holds the manifest" || echo "ERROR: Manifest missing"
 test -d "tests" && echo "OK: tests/ at container level" || echo "ERROR: tests/ not found"
 uv run python "${CLAUDE_PLUGIN_ROOT}/scripts/verify_plugin_structure.py"
+git rev-parse --show-toplevel
 ```
+
+- **`in_existing_repo=no`:** the printed path must be `$CPA_WORKSPACE_DIR/{plugin_name}`, the container as its own git repository.
+- **`in_existing_repo=yes`:** the printed path must be the existing repository's root, not the container. If it prints the container, the nested `.git` is still there: remove it as in Step 1.
 
 Expected structure:
 ```

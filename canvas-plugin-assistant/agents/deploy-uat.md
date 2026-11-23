@@ -238,7 +238,9 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 5. **User copied Platform's versions and committed:** call `deployer` again.
 6. **User does not act:** report that nothing was deployed to the parent command, which stops.
 
-**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full. When it names test instances or a dependency conflict, the user acts on the instruction it prints, for example running the `canvas deploy --plugin ...` command it gives in their own terminal; report that to the parent command and stop. Otherwise fix the cause (see Troubleshooting), then call `deployer` again.
+**`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full, report it to the parent command, and stop.
+
+**`Status: deployed_not_configured`**: a released `version` deployed, but its variables were not set, because the working-tree `CANVAS_MANIFEST.json` is a different version and its variables may not match the released one's. Show the output, and ask the user to set each variable the released version declares in their own terminal with the `canvas config set <name> KEY=value --instance <slug>` command it gives. Never call `configurer` for this: it reads the same working-tree manifest.
 
 **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`, until it ends with `Status: configured`.
 

@@ -311,7 +311,7 @@ class TestDeploy:
     def test_deploy__version_deploys_the_released_version(self, tmp_path: Path) -> None:
         """Installing a released version elsewhere names the plugin and version, with no folder, so nothing is pushed."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, MANIFEST)
+        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.4.0"})
 
         with (
             patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
@@ -327,6 +327,35 @@ class TestDeploy:
             call(command=config_set_cmd("API_KEY=sk-1", "API_URL=https://x"), cwd=cwd),
         ]
         assert result.splitlines()[-1] == "Status: deployed"
+
+    @pytest.mark.parametrize(
+        "manifest",
+        [
+            pytest.param({**MANIFEST, "version": "1.5.0"}, id="manifest_moved_on"),
+            pytest.param(MANIFEST, id="manifest_without_version"),
+        ],
+    )
+    def test_deploy__version_skips_configure_when_the_manifest_is_another_version(
+        self,
+        tmp_path: Path,
+        manifest: dict,
+    ) -> None:
+        """Variables come from the working-tree manifest, so a released version is configured only when they match."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, manifest)
+
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = ["Deployed"]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        version_cmd = ["uv", "run", "canvas", "deploy", "--plugin", f"{PLUGIN}@1.4.0", "--instance", INSTANCE]
+        assert mock_cmd.mock_calls == [call(command=version_cmd, cwd=cwd)]
+        assert mock_secrets.mock_calls == []
+        assert f"canvas config set {PLUGIN} KEY=value --instance {INSTANCE}" in result
+        assert result.splitlines()[-1] == "Status: deployed_not_configured"
 
     def test_deploy__version_ignores_a_larger_repository(self, tmp_path: Path) -> None:
         """A released version has no folder to snapshot, so a plugin inside a larger repository gets no --snapshot."""
@@ -632,6 +661,19 @@ class TestStatusLine:
             mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
             result = asyncio.run(tested.deploy(plugin_name=plugin_name, instance=INSTANCE, cwd=cwd))
 
+        assert result.splitlines()[-1] == expected
+        assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
+
+    def test_deploy__status_line_deployed_not_configured(self, tmp_path: Path) -> None:
+        """A released version whose manifest the working tree has moved past deploys without setting variables."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = ["Deployed"]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        expected = "Status: deployed_not_configured"
         assert result.splitlines()[-1] == expected
         assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
 
