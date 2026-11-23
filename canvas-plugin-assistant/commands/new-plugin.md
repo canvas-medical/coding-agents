@@ -172,8 +172,10 @@ Either way, move the scaffolded folder aside so the name is free (`mv "$plugin_n
 ```bash
 plugin_name="[generated-plugin-name]"
 dir="$CPA_WORKSPACE_DIR/$plugin_name"
-if [ -z "$plugin_name" ] || [ ! -d "$dir/.git" ]; then
-  echo "Nothing removed: no nested repository at $dir/.git"
+if [ -z "$plugin_name" ]; then
+  echo "Nothing removed: the plugin name is empty"
+elif [ ! -d "$dir/.git" ]; then
+  echo "No nested repository at $dir; nothing to remove"
 elif ! [ "$dir" -ef "$(git -C "$dir" rev-parse --show-toplevel)" ]; then
   echo "Nothing removed: $dir is not the root of its own repository"
 elif [ "$(git -C "$dir" rev-list --all --count)" != "0" ]; then
@@ -183,7 +185,7 @@ else
 fi
 ```
 
-If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand.
+If it prints "No nested repository", the plugin is already in place; continue. If it prints "Nothing removed", show the message to the user and stop rather than removing anything by hand.
 
 The plugin is still registered on Canvas Platform. `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` publish it from the existing repository as a snapshot with `canvas deploy --snapshot`, once its files are committed there.
 
