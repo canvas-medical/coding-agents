@@ -12,6 +12,7 @@ import canvas_cli.apps.platform
 import canvas_cli.apps.platform.commands as commands
 import pytest
 from canvas_cli.main import app
+from canvas_cli.utils.validators.manifest_schema import manifest_schema
 from typer.testing import CliRunner
 
 from mcp_canvas_deployer import CanvasDeployerMcp
@@ -316,7 +317,7 @@ class TestDeploy:
     def test_deploy__version_deploys_the_released_version(self, tmp_path: Path) -> None:
         """Installing a released version elsewhere names the plugin and version, with no folder, so nothing is pushed."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.4.0"})
+        cwd = make_plugin(tmp_path, {**MANIFEST, "plugin_version": "1.4.0"})
 
         with (
             patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
@@ -336,7 +337,7 @@ class TestDeploy:
     @pytest.mark.parametrize(
         "manifest",
         [
-            pytest.param({**MANIFEST, "version": "1.5.0"}, id="manifest_moved_on"),
+            pytest.param({**MANIFEST, "plugin_version": "1.5.0"}, id="manifest_moved_on"),
             pytest.param(MANIFEST, id="manifest_without_version"),
         ],
     )
@@ -400,7 +401,7 @@ class TestDeploy:
     def test_deploy__version_configure_later_passes_the_version(self, tmp_path: Path, output: str) -> None:
         """A version deploy that configures later tells the agent to pass the version, so configurer can refuse a moved manifest."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+        cwd = make_plugin(tmp_path, {**MANIFEST, "plugin_version": "1.5.0"})
 
         with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
             mock_cmd.side_effect = [output]
@@ -581,7 +582,7 @@ class TestConfigure:
     ) -> None:
         """After a consent or still-running hand-off, configurer reads the same working-tree manifest the deployer guards."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, {**MANIFEST, "version": manifest_version})
+        cwd = make_plugin(tmp_path, {**MANIFEST, "plugin_version": manifest_version})
 
         with (
             patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
@@ -714,7 +715,7 @@ class TestStatusLine:
     def test_deploy__status_line_deployed_not_configured(self, tmp_path: Path) -> None:
         """A released version whose manifest the working tree has moved past deploys without setting variables."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+        cwd = make_plugin(tmp_path, {**MANIFEST, "plugin_version": "1.5.0"})
 
         with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
             mock_cmd.side_effect = ["Deployed"]
@@ -771,7 +772,7 @@ class TestStatusLine:
     def test_configure__status_line_deployed_not_configured(self, tmp_path: Path) -> None:
         """Configuring a released version the working tree has moved past sets nothing."""
         tested = CanvasDeployerMcp
-        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+        cwd = make_plugin(tmp_path, {**MANIFEST, "plugin_version": "1.5.0"})
 
         with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
             result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
@@ -945,6 +946,16 @@ def test_marker_matches_canvas_cli(marker: str) -> None:
     source = canvas_cli_platform_source()
 
     assert marker in source, f"canvas CLI no longer prints {marker!r}; update the deployer marker"
+
+
+def test_manifest_version_key_matches_canvas_cli_schema() -> None:
+    """The deployer's version guard reads the key the canvas CLI requires, so a renamed key fails here."""
+    required = manifest_schema["required"]
+
+    assert CanvasDeployerMcp.MANIFEST_VERSION_KEY in required, (
+        f"canvas CLI manifest schema no longer requires {CanvasDeployerMcp.MANIFEST_VERSION_KEY!r} (requires "
+        f"{required}); update CanvasDeployerMcp.MANIFEST_VERSION_KEY"
+    )
 
 
 class TestCreateServer:

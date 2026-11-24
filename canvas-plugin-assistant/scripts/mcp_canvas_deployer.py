@@ -70,6 +70,10 @@ class CanvasDeployerMcp:
         "call the deployer tool again for this."
     )
 
+    # The CANVAS_MANIFEST.json key holding the plugin's version, required by the canvas CLI's manifest schema
+    # (canvas_cli/utils/validators/manifest_schema.py `required`).
+    MANIFEST_VERSION_KEY: str = "plugin_version"
+
     # Variables are read from the working-tree manifest, which can have moved past the released version.
     VERSION_NOT_CONFIGURED_NOTE: str = (
         "Variables not set: the working-tree CANVAS_MANIFEST.json is not version {version}, so its variables "
@@ -90,7 +94,7 @@ class CanvasDeployerMcp:
             str | None: The note and `canvas config set` command for the user to run, or None when the
                 variables can be set from the working-tree manifest.
         """
-        if not version or manifest.get("version") == version:
+        if not version or manifest.get(cls.MANIFEST_VERSION_KEY) == version:
             return None
         return (
             f"{cls.VERSION_NOT_CONFIGURED_NOTE.format(version=version)}\n"
