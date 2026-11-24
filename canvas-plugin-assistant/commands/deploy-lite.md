@@ -241,7 +241,7 @@ If cache busting is missing, add it before proceeding with deployment.
     5. **User copied Platform's versions and committed:** call `deployer` again.
     6. **User does not act:** nothing was deployed. Tell the user and stop.
 
-13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full and stop. When it names test instances or a dependency conflict, the user acts on the instruction it prints, for example running the `canvas deploy --plugin ...` command it gives in their own terminal.
+13. **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full and stop.
 
 14. **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and tell the user the plugin is running without its variables until the **`configurer`** MCP tool ends with `Status: configured`, then continue to Step 6.
 

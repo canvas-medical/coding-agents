@@ -207,7 +207,7 @@ The MCP tool runs `canvas deploy --branch <branch>` (with `--snapshot` when the 
 
 If the response includes a warning about missing secrets, show the warning to the user. The deploy still proceeds, and the warning is informational.
 
-The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending`, `still_running`, or `snapshot_replaces_platform`: a second call creates a second waiting deployment, or meets the same refusal. The **`configurer`** tool also ends with a `Status:` line: `configured`, `configure_failed`, or `invalid_input`. When a `configurer` call below ends with anything other than `Status: configured`, handle it as `configure_failed`.
+The last line of the tool output is `Status: <status>`. Route on that line alone, never on the `canvas deploy` text above it. Never call `deployer` again for `consent_pending`, `still_running`, or `snapshot_replaces_platform`: a second call creates a second waiting deployment, or meets the same refusal. The **`configurer`** tool also ends with a `Status:` line: `configured`, `deployed_not_configured`, `configure_failed`, or `invalid_input`. Every `configurer` call below passes `version` too when the `deployer` call did. When a `configurer` call ends with `Status: deployed_not_configured`, handle it as that status below; with anything else other than `Status: configured`, handle it as `configure_failed`.
 
 **`Status: consent_pending`**: the deployment is waiting on custom data access consent. Only a person at a terminal can answer it:
 
@@ -240,7 +240,7 @@ The last line of the tool output is `Status: <status>`. Route on that line alone
 
 **`Status: deploy_failed` or `Status: invalid_input`**: the deploy did not run or failed. Show the output in full, report it to the parent command, and stop.
 
-**`Status: deployed_not_configured`**: a released `version` deployed, but its variables were not set, because the working-tree `CANVAS_MANIFEST.json` is a different version and its variables may not match the released one's. Show the output, and ask the user to set each variable the released version declares in their own terminal with the `canvas config set <name> KEY=value --instance <slug>` command it gives. Never call `configurer` for this: it reads the same working-tree manifest.
+**`Status: deployed_not_configured`** (from `deployer` or `configurer`): a released `version` deployed, but its variables were not set, because the working-tree `CANVAS_MANIFEST.json` is a different version and its variables may not match the released one's. Show the output, and ask the user to set each variable the released version declares in their own terminal with the `canvas config set <name> KEY=value --instance <slug>` command it gives. Never call `configurer` for this: it reads the same working-tree manifest.
 
 **`Status: configure_failed`**: the plugin is deployed but its variables were not set. Show the output and fix the cause, then call the **`configurer`** MCP tool (not `deployer`) with the same `plugin_name`, `instance`, and `cwd`, until it ends with `Status: configured`.
 

@@ -26,8 +26,7 @@ class CanvasDeployerMcp:
 
     STILL_RUNNING_MARKER: str = "is still running after"
     STILL_RUNNING_NOTE: str = (
-        "Still running: the deployment is still running on Canvas Platform, so variables were not set. "
-        "Call the configurer tool once the deployment succeeds."
+        "Still running: the deployment is still running on Canvas Platform, so variables were not set."
     )
 
     UNCOMMITTED_MARKER: str = "You have uncommitted changes"
@@ -77,6 +76,26 @@ class CanvasDeployerMcp:
         "may not match the ones {version} declares. Set each variable {version} declares in the user's own "
         "terminal:"
     )
+
+    @classmethod
+    def _version_not_configured(cls, manifest: dict, instance: str, version: str) -> str | None:
+        """The hand-off for a released version whose variables the working-tree manifest cannot describe.
+
+        Args:
+            manifest (dict): The working-tree CANVAS_MANIFEST.json.
+            instance (str): Target Canvas Platform instance slug.
+            version (str): The released version deployed, or empty for a branch or release deploy.
+
+        Returns:
+            str | None: The note and `canvas config set` command for the user to run, or None when the
+                variables can be set from the working-tree manifest.
+        """
+        if not version or manifest.get("version") == version:
+            return None
+        return (
+            f"{cls.VERSION_NOT_CONFIGURED_NOTE.format(version=version)}\n"
+            f"  canvas config set {shlex.quote(manifest['name'])} KEY=value --instance {shlex.quote(instance)}"
+        )
 
     @classmethod
     async def _in_larger_repo(cls, plugin_dir: Path, cwd: str) -> bool:
@@ -294,6 +313,8 @@ class CanvasDeployerMcp:
             cwd=cwd,
         )
         output = f"Deploy output:\n{result}"
+        # configurer sets a released version's variables only when the working-tree manifest is that version.
+        configurer_version: str = f" with version {version}" if version else ""
         if cls.CONSENT_PENDING_MARKER in result:
             # --no-push deploys Platform's main; --ref deploys the branch the failed attempt already pushed
             # (canvas_cli/apps/platform/commands.py:995-1002, 1131-1134 at 1.13.0).
@@ -307,11 +328,15 @@ class CanvasDeployerMcp:
                 f"{output}\n\n{cls.CONSENT_NOTE}\n"
                 f"  cd {shlex.quote(cwd)} && uv run canvas deploy {reuse_target} "
                 f"--instance {shlex.quote(instance)}\n"
-                "After it succeeds there, call the configurer tool to set variables."
+                f"After it succeeds there, call the configurer tool{configurer_version} to set variables."
             )
             return cls._with_status(consent, "consent_pending")
         if cls.STILL_RUNNING_MARKER in result:
-            return cls._with_status(f"{output}\n\n{cls.STILL_RUNNING_NOTE}", "still_running")
+            return cls._with_status(
+                f"{output}\n\n{cls.STILL_RUNNING_NOTE} Call the configurer tool{configurer_version} once the "
+                "deployment succeeds.",
+                "still_running",
+            )
         if any(marker in result for marker in cls.SNAPSHOT_UNCOMMITTED_MARKERS):
             return cls._with_status(f"{output}\n\n{cls.SNAPSHOT_UNCOMMITTED_NOTE}", "snapshot_uncommitted")
         if cls.SNAPSHOT_UNSUPPORTED_MARKER in result:
@@ -331,32 +356,36 @@ class CanvasDeployerMcp:
             return cls._with_status(f"{output}\n\n{cls.UNCOMMITTED_NOTE}", "dirty_tree")
         if result.startswith("Command failed"):
             return cls._with_status(output, "deploy_failed")
-        if version and manifest.get("version") != version:
-            not_configured = (
-                f"{output}\n\n{cls.VERSION_NOT_CONFIGURED_NOTE.format(version=version)}\n"
-                f"  canvas config set {shlex.quote(manifest['name'])} KEY=value --instance {shlex.quote(instance)}"
-            )
-            return cls._with_status(not_configured, "deployed_not_configured")
+        not_configured: str | None = cls._version_not_configured(manifest, instance, version)
+        if not_configured:
+            return cls._with_status(f"{output}\n\n{not_configured}", "deployed_not_configured")
         configured, failed = await cls._configure(instance, cwd, manifest)
         return cls._with_status(f"{output}\n\n{configured}", "configure_failed" if failed else "deployed")
 
     @classmethod
-    async def configure(cls, plugin_name: str, instance: str, cwd: str) -> str:
+    async def configure(cls, plugin_name: str, instance: str, cwd: str, version: str = "") -> str:
         """Set a Canvas plugin's manifest variables on a Canvas Platform instance.
+
+        For a released version, variables are set only when the working-tree manifest is that version,
+        since they are read from it.
 
         Args:
             plugin_name: The inner package folder name, which holds CANVAS_MANIFEST.json. Variables are keyed by the manifest name.
             instance: Target Canvas Platform instance slug.
             cwd: Working directory (plugin container directory).
+            version: The released version the deploy installed, or empty for a branch or release deploy.
 
         Returns:
             str: The configure output or an error message, ending with a `Status:` line: `invalid_input`,
-                `configure_failed`, or `configured`.
+                `deployed_not_configured`, `configure_failed`, or `configured`.
         """
         checked = cls._plugin_manifest(plugin_name, instance, cwd)
         if isinstance(checked, str):
             return cls._with_status(checked, "invalid_input")
         _, manifest = checked
+        not_configured: str | None = cls._version_not_configured(manifest, instance, version)
+        if not_configured:
+            return cls._with_status(not_configured, "deployed_not_configured")
         configured, failed = await cls._configure(instance, cwd, manifest)
         return cls._with_status(configured, "configure_failed" if failed else "configured")
 
@@ -370,7 +399,8 @@ class CanvasDeployerMcp:
             """Deploy a Canvas plugin to a Canvas Platform instance and set its variables.
 
             Runs canvas deploy, then canvas config set for the variables declared in
-            CANVAS_MANIFEST.json. The instance is a Canvas Platform instance slug. Values
+            CANVAS_MANIFEST.json, except for a released version the working-tree manifest
+            is not, which ends with deployed_not_configured instead. The instance is a Canvas Platform instance slug. Values
             come from ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are
             never returned in the output. Consent requests for custom data access are never
             answered here: they are returned for the user to answer in their own terminal.
@@ -390,21 +420,24 @@ class CanvasDeployerMcp:
             return await cls.deploy(plugin_name, instance, cwd, branch, version)
 
         @server.tool()
-        async def configurer(plugin_name: str, instance: str, cwd: str) -> str:
+        async def configurer(plugin_name: str, instance: str, cwd: str, version: str = "") -> str:
             """Set a deployed Canvas plugin's variables on a Canvas Platform instance.
 
             Runs canvas config set for the variables declared in CANVAS_MANIFEST.json. The
             instance is a Canvas Platform instance slug. Values come from
             ~/.canvas/plugin-secrets/<instance>.json keyed by manifest name and are never
             returned in the output. Use it after the user approves a pending consent request.
-            The output ends with one `Status:` line: invalid_input, configure_failed, or configured.
+            For a released version the working-tree manifest is not, it sets nothing and ends
+            with deployed_not_configured. The output ends with one `Status:` line:
+            invalid_input, deployed_not_configured, configure_failed, or configured.
 
             Args:
                 plugin_name: The inner package folder name. Variables are keyed by the manifest name.
                 instance: Canvas Platform instance slug.
                 cwd: Working directory (plugin container directory).
+                version: The released version the deployer call passed, if any. Leave it empty otherwise.
             """
-            return await cls.configure(plugin_name, instance, cwd)
+            return await cls.configure(plugin_name, instance, cwd, version)
 
         return server
 

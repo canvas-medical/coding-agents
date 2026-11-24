@@ -116,7 +116,7 @@ Resolve the deployment target **before** delegating to the agent, because the pa
 
    - **Prints `main`, or nothing (detached HEAD):** ask the user for a work branch name, suggesting `<plugin short name>-wip`. Never offer `main` as the default. Do not deploy until the user gives a name.
 
-   A typed name is used as given. If the CLI refuses it, the `deployer` tool reports `Status: deploy_failed` with the CLI's reason; ask for another name.
+   A typed name is used as given. If the CLI refuses it, the `deployer` tool reports `Status: deploy_failed` with the CLI's reason, the agent stops, and the user re-runs `/cpa:deploy` with another name.
 
 Save the resolved instance slug, the confirmed branch, and the plugin name (the inner package folder). You will pass them to the agent and use the slug for log monitoring.
 

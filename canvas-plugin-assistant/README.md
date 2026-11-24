@@ -178,7 +178,7 @@ A plugin made before Canvas Platform needs one of:
 ### Plugin Secrets
 
 Plugins that declare `variables` in `CANVAS_MANIFEST.json` need values for each instance. CPA reads these values from a per-instance JSON file and
-passes them to `canvas config set` after each successful deploy. Secret values are never exposed to Claude Code.
+passes them to `canvas config set` after each successful deploy, except a released version that differs from the working-tree manifest, whose variables the user sets with `canvas config set`. Secret values are never exposed to Claude Code.
 
 **Default location:**
 
@@ -202,7 +202,7 @@ passes them to `canvas config set` after each successful deploy. Secret values a
 
 A file keyed by an unprefixed name needs its key renamed to `<prefix>__<name>`.
 
-On each deployment, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
+On each deployment that sets variables, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
 
 **Custom file path:**
 

@@ -161,6 +161,11 @@ CONSENT_OUTPUT = (
     "Deployment 6f1c is waiting on these requests, and there is no terminal to ask at. "
     "Run the command again at a terminal, without --yes, to approve or deny them."
 )
+STILL_RUNNING_OUTPUT = (
+    "Command failed with exit code 1\n"
+    "Deployment 6f1c created.\n"
+    "Deploy of acme__vitals_alert is still running after 300s (deployment 6f1c)."
+)
 
 
 def make_plugin(tmp_path: Path, manifest: dict | None) -> str:
@@ -385,6 +390,24 @@ class TestDeploy:
         assert hand_off in result
         assert "--no-push" not in result
 
+    @pytest.mark.parametrize(
+        "output",
+        [
+            pytest.param(CONSENT_OUTPUT, id="consent_pending"),
+            pytest.param(STILL_RUNNING_OUTPUT, id="still_running"),
+        ],
+    )
+    def test_deploy__version_configure_later_passes_the_version(self, tmp_path: Path, output: str) -> None:
+        """A version deploy that configures later tells the agent to pass the version, so configurer can refuse a moved manifest."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            mock_cmd.side_effect = [output]
+            result = asyncio.run(tested.deploy(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        assert "call the configurer tool with version 1.4.0" in result.lower()
+
     def test_deploy__branch_and_version_together_is_invalid_input(self, tmp_path: Path) -> None:
         """The CLI excludes --branch with --plugin: a work branch is pushed code, a version is already released."""
         tested = CanvasDeployerMcp
@@ -542,12 +565,36 @@ class TestConfigure:
         assert result == expected
         assert mock_cmd.mock_calls == []
 
+    @pytest.mark.parametrize(
+        ("manifest_version", "expected", "config_set_calls"),
+        [
+            pytest.param("1.4.0", "Status: configured", 1, id="manifest_is_the_version"),
+            pytest.param("1.5.0", "Status: deployed_not_configured", 0, id="manifest_moved_on"),
+        ],
+    )
+    def test_configure__version_sets_variables_only_from_a_matching_manifest(
+        self,
+        tmp_path: Path,
+        manifest_version: str,
+        expected: str,
+        config_set_calls: int,
+    ) -> None:
+        """After a consent or still-running hand-off, configurer reads the same working-tree manifest the deployer guards."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {**MANIFEST, "version": manifest_version})
 
-STILL_RUNNING_OUTPUT = (
-    "Command failed with exit code 1\n"
-    "Deployment 6f1c created.\n"
-    "Deploy of acme__vitals_alert is still running after 300s (deployment 6f1c)."
-)
+        with (
+            patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd,
+            patch("mcp_canvas_deployer.SecretRequester.get_secrets") as mock_secrets,
+        ):
+            mock_cmd.side_effect = ["Set 2 variable(s)"]
+            mock_secrets.side_effect = [{"API_KEY": "sk-1", "API_URL": "https://x"}]
+            result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        assert result.splitlines()[-1] == expected
+        assert len(mock_cmd.mock_calls) == config_set_calls
+
+
 DIRTY_OUTPUT = (
     "Command failed with exit code 2\n"
     "Error: Invalid value: You have uncommitted changes, and deploy only pushes committed work."
@@ -720,6 +767,19 @@ class TestStatusLine:
 
         assert result.splitlines()[-1] == expected
         assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
+
+    def test_configure__status_line_deployed_not_configured(self, tmp_path: Path) -> None:
+        """Configuring a released version the working tree has moved past sets nothing."""
+        tested = CanvasDeployerMcp
+        cwd = make_plugin(tmp_path, {**MANIFEST, "version": "1.5.0"})
+
+        with patch.object(tested, "_run_canvas_command", new_callable=AsyncMock) as mock_cmd:
+            result = asyncio.run(tested.configure(plugin_name=PLUGIN, instance=INSTANCE, cwd=cwd, version="1.4.0"))
+
+        expected = "Status: deployed_not_configured"
+        assert result.splitlines()[-1] == expected
+        assert [line for line in result.splitlines() if line.startswith("Status: ")] == [expected]
+        assert mock_cmd.mock_calls == []
 
 
 def git_init(directory: Path) -> None:
@@ -917,7 +977,10 @@ class TestCreateServer:
             pytest.param(
                 "deployer", "deploy", {"version": "1.4.0"}, call("p", "i", "c", "", "1.4.0"), id="deployer_version"
             ),
-            pytest.param("configurer", "configure", {}, call("p", "i", "c"), id="configurer"),
+            pytest.param("configurer", "configure", {}, call("p", "i", "c", ""), id="configurer"),
+            pytest.param(
+                "configurer", "configure", {"version": "1.4.0"}, call("p", "i", "c", "1.4.0"), id="configurer_version"
+            ),
         ],
     )
     def test_create_server__tool_delegates(self, tool_name: str, method: str, kwargs: dict, expected_call) -> None:
