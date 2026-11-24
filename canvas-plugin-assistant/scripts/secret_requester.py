@@ -14,13 +14,13 @@ class SecretRequester:
     or from ~/.canvas/plugin-secrets/<instance>.json if the env var is
     not defined or empty.
 
-    Each file is keyed by plugin name, then secret name:
+    Each file is keyed by the plugin's manifest name, then secret name:
         {
-            "my_plugin": {
+            "acme__my_plugin": {
                 "MY_API_KEY": "sk-...",
                 "WEBHOOK_SECRET": "abc..."
             },
-            "other_plugin": {
+            "acme__other_plugin": {
                 "TOKEN": "xyz..."
             }
         }
@@ -42,8 +42,8 @@ class SecretRequester:
 
         Args:
             secret_names: List of secret names to retrieve.
-            instance: Canvas instance hostname used to locate the secrets file.
-            plugin_name: Plugin name used as the top-level key in the file.
+            instance: Canvas Platform instance slug used to locate the secrets file.
+            plugin_name: Plugin manifest name used as the top-level key in the file.
 
         Returns:
             Mapping of secret names to their non-empty values.

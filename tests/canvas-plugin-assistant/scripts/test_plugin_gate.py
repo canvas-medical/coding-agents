@@ -28,14 +28,6 @@ WARNING = (
 )
 
 
-def _installer(session: Path, tool_input: dict) -> dict:
-    return {
-        "tool_name": "mcp__plugin_cpa_canvas_cmd_line__installer",
-        "tool_input": {"instance": "acme-dev", **tool_input},
-        "cwd": str(session),
-    }
-
-
 def _completed(returncode: int, stdout: str = "", stderr: str = "") -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
 
@@ -72,32 +64,6 @@ class TestFindPluginDir:
 
 class TestTargetDir:
     """Tests for target_dir."""
-
-    def test_the_installer_tool_targets_its_plugin_name_under_its_cwd(self, tmp_path: Path) -> None:
-        """The MCP installer names the plugin and the directory it runs in."""
-        container = tmp_path / "acme-intake"
-        plugin = _plugin(container)
-        payload = _installer(tmp_path, {"plugin_name": "acme_intake", "cwd": str(container)})
-
-        assert plugin_gate.target_dir(payload) == plugin
-
-    @pytest.mark.parametrize(
-        "tool_input",
-        [
-            pytest.param({"plugin_name": "acme_intake", "cwd": "/"}, id="cwd_outside_the_session"),
-            pytest.param({"plugin_name": "../outside"}, id="parent_traversal"),
-            pytest.param({"plugin_name": "/etc"}, id="absolute_name"),
-            pytest.param({"plugin_name": ""}, id="empty_name"),
-        ],
-    )
-    def test_the_installer_tool_never_reaches_outside_the_session(self, tmp_path: Path, tool_input: dict) -> None:
-        """The hook runs before approval, so a target outside the session's cwd is not checked."""
-        session = tmp_path / "session"
-        _plugin(session)
-        _plugin(tmp_path, "outside")
-
-        with pytest.raises(plugin_gate.OutsideSession):
-            plugin_gate.target_dir(_installer(session, tool_input))
 
     def test_a_bash_call_targets_the_plugin_at_its_cwd(self, tmp_path: Path) -> None:
         """A Bash call resolves from the session's cwd."""
@@ -237,17 +203,6 @@ class TestMain:
 
         assert plugin_gate.main(_bash(tmp_path)) == 2
         assert "'blocking' is not one of off, advise, block" in capsys.readouterr().err
-
-    @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
-    def test_an_installer_target_outside_the_session_is_stopped_in_block_mode(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, code: int
-    ) -> None:
-        """An install the gate will not check is stopped in block mode and passed in advise mode."""
-        monkeypatch.setenv("CPA_PLUGIN_GATE", mode)
-        payload = json.dumps(_installer(tmp_path, {"plugin_name": "../elsewhere"}))
-        with patch("plugin_gate.subprocess.run") as run:
-            assert plugin_gate.main(payload) == code
-        run.assert_not_called()
 
     def test_a_call_outside_any_plugin_passes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """A commit in an unrelated repository is not the gate's business."""
@@ -448,7 +403,8 @@ class TestBashAction:
             pytest.param("git log --grep commit", None, id="commit_as_an_argument"),
             pytest.param("echo 'git commit'", None, id="commit_in_a_string"),
             pytest.param("canvas deploy acme_intake", "upload", id="deploy"),
-            pytest.param("uv run canvas install acme_intake --host acme-dev", "upload", id="install_through_uv"),
+            # `canvas install` is not a deploy path, so the gate has nothing to validate for it.
+            pytest.param("uv run canvas install acme_intake --host acme-dev", None, id="install_through_uv"),
             pytest.param(".venv/bin/canvas deploy acme_intake", "upload", id="venv_canvas"),
             pytest.param("canvas validate acme_intake", None, id="validate_alone"),
             pytest.param("git --version", None, id="git_with_only_options"),
@@ -579,17 +535,4 @@ class TestMainSecretScan:
         with patch("plugin_gate.run_validate") as validate, patch("plugin_gate.scan_commit") as scan:
             assert plugin_gate.main(_bash(repo, "git status --short")) == 0
         validate.assert_not_called()
-        scan.assert_not_called()
-
-    def test_the_installer_tool_is_validated_without_a_commit_scan(
-        self, repo: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """An installer call uploads the plugin, so it is validated and not scanned as a commit."""
-        monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
-        payload = json.dumps(_installer(repo.parent, {"plugin_name": "acme_intake", "cwd": str(repo.parent)}))
-        with patch("plugin_gate.run_validate", return_value=(None, [])) as validate, patch(
-            "plugin_gate.scan_commit"
-        ) as scan:
-            assert plugin_gate.main(payload) == 0
-        validate.assert_called_once_with(repo)
         scan.assert_not_called()

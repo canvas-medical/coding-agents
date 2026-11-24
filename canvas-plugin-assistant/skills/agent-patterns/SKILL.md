@@ -37,7 +37,7 @@ An agent reaches Anthropic only through Canvas's inference gateway. Never add an
 "variables": [{"name": "INFERENCE_GATEWAY_KEY", "sensitive": true}]
 ```
 
-The platform builds the `LLMGateway` passed to `run()` from that key. `gateway.client()` returns a `GatewayClient` pointed at the gateway that offers `messages.create` and `messages.stream` only, not a full Anthropic client, so there is no `client.beta` or `client.models`. Gateway keys are issued per organization in Canvas Platform, and the user's Canvas team issues one for the plugin. The deploy flow's `installer` tool reads it from `~/.canvas/plugin-secrets/<host>.json`, so ask the user to add it there or set it in the plugin's settings in the Admin UI. Never ask for the key in chat or put it on a command line.
+The platform builds the `LLMGateway` passed to `run()` from that key. `gateway.client()` returns a `GatewayClient` pointed at the gateway that offers `messages.create` and `messages.stream` only, not a full Anthropic client, so there is no `client.beta` or `client.models`. Gateway keys are issued per organization in Canvas Platform, and the user's Canvas team issues one for the plugin. The deploy flow's `deployer` and `configurer` tools read it from `~/.canvas/plugin-secrets/<instance>.json`, so ask the user to add it there or set it in the plugin's settings in the Admin UI. Never ask for the key in chat or put it on a command line.
 
 ## Shape of an agent plugin
 

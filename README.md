@@ -70,21 +70,21 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 - Icon generation for Application plugins (SVG to 48x48 PNG)
 - API security review for authentication/authorization
 - Unit test authoring with 90% coverage target
-- Instance configuration analysis
-- Deployment with log monitoring
+- Instance configuration analysis from Canvas Platform
+- Branch deploys to test instances with log monitoring, and release from wrap-up
 
 **Slash Commands** (prefixed with `cpa:` when installed via marketplace):
 | Command | Description |
 |---------|-------------|
-| `:check-setup` | Verify environment tools (uv, unbuffer, canvas CLI) |
+| `:check-setup` | Verify environment tools (git, uv, unbuffer, canvas CLI) and Canvas Platform sign-in |
 | `:new-plugin` | Start brainstorming a new plugin specification |
 | `:create-icon` | Generate SVG icon and convert to 48x48 PNG for Applications |
-| `:analyze-instance` | Analyze Canvas instance configuration |
-| `:deploy` | Deploy plugin and monitor logs |
+| `:analyze-instance` | Analyze Canvas instance configuration from Canvas Platform |
+| `:deploy` | Deploy work in progress to a test instance and monitor logs |
 | `:coverage` | Run tests with coverage, offer to improve if below 90% |
 | `:security-review` | Comprehensive security audit (API auth, FHIR tokens, secrets) |
 | `:database-performance-review` | Review for N+1 queries and ORM optimization |
-| `:wrap-up` | Final checklist before calling a plugin "done" |
+| `:wrap-up` | Final checklist, then release to Canvas Platform |
 | `:run-evals` | Execute eval cases to verify review commands |
 
 **Workflow Artifacts:**
