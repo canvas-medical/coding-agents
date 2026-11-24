@@ -97,6 +97,12 @@ class UnclearTarget(OutsideSession):
     reason = "it could not tell which plugin this command acts on, so it stopped it. Use a plain relative path, without `~`, variables, `cd -` or `pushd`."
 
 
+class UnreadableCommand(UnclearTarget):
+    """A command whose quoting shlex cannot close, such as a heredoc body holding an apostrophe."""
+
+    reason = "it could not read this command's quoting (a heredoc or `$'...'` holding a quote), so it stopped it. Write files with the Write tool, and run the commit, install or deploy as a command of its own."
+
+
 def inside(path: Path, cwd: Path) -> Path:
     """``path`` resolved, or OutsideSession when it is not within ``cwd``."""
     resolved = path.resolve()
@@ -427,7 +433,11 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     try:
         tokens = list(lexer)
     except ValueError:
-        return [("commit", None)] if re.search(r"\bgit\b[\s\S]*\bcommit\b", command) else []
+        # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which
+        # commands run and where, so a command that may commit or upload is not guessed at.
+        if re.search(r"\bgit\b[\s\S]*(?:\bcommit|--continue)\b|\bcanvas\b[\s\S]*\b(?:install|deploy)\b", command):
+            raise UnreadableCommand from None
+        return []
     actions: list[tuple[str, str | None]] = []
     words: list[str] = []
     # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.

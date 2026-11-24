@@ -471,7 +471,6 @@ class TestBashAction:
             pytest.param("git -C acme_intake commit -m change", "commit", id="global_dir_option"),
             pytest.param("git -c user.name=x --no-pager commit -m change", "commit", id="global_config_option"),
             pytest.param("cd acme && GIT_AUTHOR_NAME=x git commit -am change", "commit", id="compound_with_env"),
-            pytest.param("git commit -m 'unbalanced", "commit", id="unparseable_still_a_commit"),
             pytest.param("git status --short", None, id="other_git_command"),
             pytest.param("git log --grep commit", None, id="commit_as_an_argument"),
             pytest.param("echo 'git commit'", None, id="commit_in_a_string"),
@@ -912,6 +911,26 @@ class TestCommandsTheGateMustNotMiss:
         with pytest.raises(plugin_gate.UnclearTarget):
             for action in plugin_gate.bash_actions(command):
                 plugin_gate.target_dirs(payload, action)
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit -C b commit -am x", id="heredoc_then_commit"),
+            pytest.param("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ncanvas deploy acme_x", id="heredoc_then_deploy"),
+            pytest.param("git -C b commit -a -F - <<'EOF'\nDon't merge yet\nEOF", id="commit_message_heredoc"),
+            pytest.param("echo $'it\\'s' && canvas deploy acme_x", id="ansi_c_quote"),
+            pytest.param("git commit -m 'unbalanced", id="unbalanced_commit"),
+            pytest.param("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit rebase --continue", id="heredoc_then_continue"),
+        ],
+    )
+    def test_a_command_shlex_cannot_read_is_unclear(self, command: str) -> None:
+        """A quote shlex cannot close hides where a commit or deploy runs, so the gate does not guess."""
+        with pytest.raises(plugin_gate.UnclearTarget):
+            plugin_gate.bash_actions(command)
+
+    def test_an_unreadable_command_that_neither_commits_nor_uploads_passes(self) -> None:
+        """Nothing gated is in it, so an unclosed quote alone stops nothing."""
+        assert plugin_gate.bash_actions("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit status") == []
 
     @pytest.mark.usefixtures("canvas_on_path")
     @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
