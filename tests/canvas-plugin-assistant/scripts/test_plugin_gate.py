@@ -717,6 +717,9 @@ class TestNamedTargets:
             pytest.param("# note \\\ngit -C b commit -am x", ("commit", "b"), id="backslash_ending_a_comment"),
             pytest.param("git status # x \\\ngit -C b commit -am x", ("commit", "b"), id="backslash_ending_a_trailing_comment"),
             pytest.param("echo a#b \\\n  c; git -C b commit -am x", ("commit", "b"), id="hash_inside_a_word_continues"),
+            pytest.param('git -C "a #b" \\\n  commit -am x', ("commit", "a #b"), id="quoted_hash_continues"),
+            pytest.param("git -C a\\ #b \\\n  commit -am x", ("commit", "a #b"), id="escaped_space_hash_continues"),
+            pytest.param("echo 'a \\\ngit -C b commit -am x'", None, id="backslash_inside_single_quotes"),
             pytest.param("uv run --directory= canvas deploy acme_x", ("upload", "acme_x"), id="uv_empty_equals_value"),
         ],
     )

@@ -47,10 +47,6 @@ HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
-# A line ending in an odd run of backslashes continues; `\\` is an escaped backslash.
-ENDS_IN_CONTINUATION = re.compile(r"(?<!\\)(?:\\\\)*\\$")
-# A `#` that starts a word starts a comment, and a comment's trailing backslash is only text.
-COMMENT_START = re.compile(r"(?:^|[\s;&|()])#")
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
@@ -367,21 +363,44 @@ def is_literal(word: str) -> bool:
 
 
 def joined_lines(command: str) -> str:
-    """``command`` with each line continuation the shell honors joined into one line."""
-    lines = command.split("\n")
-    logical: list[str] = []
-    current = ""
-    for index, line in enumerate(lines):
-        current += line
-        if ENDS_IN_CONTINUATION.search(line):
-            # Dropped either way: it joins the next line, or it is comment text that would
-            # otherwise escape the separator the newline becomes.
-            current = current[:-1]
-            if index < len(lines) - 1 and not COMMENT_START.search(current):
+    """``command`` with each backslash-newline the shell reads as a line continuation removed.
+
+    Scans quotes, escapes and comments as the shell does: a backslash inside single quotes or a
+    comment is text, and a `#` starts a comment only at the start of an unquoted word.
+    """
+    out: list[str] = []
+    quote = ""
+    comment = False
+    word_start = True
+    index = 0
+    while index < len(command):
+        char, pair = command[index], command[index : index + 2]
+        if comment:
+            comment = char != "\n"
+            if pair == "\\\n":
+                # A comment's trailing backslash would escape the separator the newline becomes.
+                index += 1
                 continue
-        logical.append(current)
-        current = ""
-    return "\n".join(logical)
+        elif quote == "'":
+            quote = "" if char == "'" else quote
+        elif pair == "\\\n":
+            index += 2
+            continue
+        elif char == "\\":
+            out.append(pair)
+            index += 2
+            word_start = False
+            continue
+        elif quote == '"':
+            quote = "" if char == '"' else quote
+        elif char in "'\"":
+            quote = char
+        elif char == "#" and word_start:
+            comment = True
+        word_start = not quote and not comment and (char.isspace() or char in ";&|()")
+        out.append(char)
+        index += 1
+    return "".join(out)
 
 
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
