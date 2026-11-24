@@ -722,6 +722,7 @@ class TestNamedTargets:
             pytest.param("echo 'a \\\ngit -C b commit -am x'", None, id="backslash_inside_single_quotes"),
             pytest.param("# it's\ngit -C b commit -am x # isn't", ("commit", "b"), id="apostrophes_in_comments"),
             pytest.param("git status\n\ngit -C b commit -am x", ("commit", "b"), id="blank_line_between"),
+            pytest.param("echo $(date)#; git -C b commit -am x", ("commit", "b"), id="hash_after_a_substitution"),
             pytest.param("uv run --directory= canvas deploy acme_x", ("upload", "acme_x"), id="uv_empty_equals_value"),
         ],
     )

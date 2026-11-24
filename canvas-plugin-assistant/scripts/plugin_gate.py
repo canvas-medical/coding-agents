@@ -363,11 +363,12 @@ def is_literal(word: str) -> bool:
 
 
 def joined_lines(command: str) -> str:
-    """``command`` without its comments and with each line continuation joined.
+    """``command`` with each line continuation joined and its comments made inert.
 
     Scans quotes, escapes and comments as the shell does: a backslash inside single quotes or a
-    comment is text, and a `#` starts a comment only at the start of an unquoted word. Removing
-    comments keeps an apostrophe in one from pairing with a quote in another when shlex reads it.
+    comment is text, and a `#` starts a comment only at the start of an unquoted word. Comment text
+    stays as words, which errs toward checking when a `#` is misread; its quotes and backslashes
+    become spaces, so they cannot pair with a quote or escape a separator elsewhere.
     """
     out: list[str] = []
     quote = ""
@@ -377,6 +378,7 @@ def joined_lines(command: str) -> str:
     while index < len(command):
         char, pair = command[index], command[index : index + 2]
         if comment and char != "\n":
+            out.append(" " if char in "'\"\\" else char)
             index += 1
             continue
         if comment:
@@ -397,8 +399,6 @@ def joined_lines(command: str) -> str:
             quote = char
         elif char == "#" and word_start:
             comment = True
-            index += 1
-            continue
         word_start = not quote and not comment and (char.isspace() or char in ";&|()")
         out.append(char)
         index += 1
@@ -414,8 +414,8 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     those depends on shell expansion. A git alias for commit is not resolved.
     """
     # In the shell a newline or backtick starts a new command and a backslash-newline continues
-    # one, which shlex alone does not see; joined_lines also removes comments, since shlex's own
-    # comment would run to the end of the whole command.
+    # one, which shlex alone does not see. shlex's own comment would run to the end of the whole
+    # command, so joined_lines handles comments instead.
     lexer = shlex.shlex(
         # Spaced, so a blank line's two separators do not merge into one `;;` word.
         joined_lines(command).replace("\n", " ; ").replace("`", " ; "),
