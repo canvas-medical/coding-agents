@@ -47,6 +47,8 @@ HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# A backslash-newline after an even run of backslashes (`\\` then a newline) still ends the line.
+LINE_CONTINUATION = re.compile(r"(?<!\\)((?:\\\\)*)\\\n")
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
@@ -374,7 +376,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # one, which shlex alone does not see. Its `#` comment would run to the end of the whole
     # command, so a comment is read as words instead, which errs toward checking.
     lexer = shlex.shlex(
-        command.replace("\\\n", "").replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True
+        LINE_CONTINUATION.sub(r"\1", command).replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True
     )
     lexer.whitespace_split = True
     lexer.commenters = ""
@@ -413,8 +415,8 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         if words[:2] == ["uv", "run"]:
             words = words[2:]
             while words and words[0].startswith("-"):
-                option, _, inline = words.pop(0).partition("=")
-                if option in UV_RUN_VALUE_OPTIONS and not inline and words:
+                option, equals, inline = words.pop(0).partition("=")
+                if option in UV_RUN_VALUE_OPTIONS and not equals and words:
                     inline = words.pop(0)
                 if option == "--directory" and inline:
                     run_dirs.append(inline)

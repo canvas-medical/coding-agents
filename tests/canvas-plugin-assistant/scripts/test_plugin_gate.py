@@ -5,9 +5,8 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 import plugin_gate
+import pytest
 
 
 def _plugin(root: Path, name: str = "acme_intake") -> Path:
@@ -189,7 +188,7 @@ class TestRunValidate:
         assert warnings == []
 
     def test_a_cli_too_old_for_validate_is_not_read_as_plugin_errors(self, tmp_path: Path) -> None:
-        """canvas releases before `validate` answer "No such command", which says nothing about the plugin."""
+        """Canvas releases before `validate` answer "No such command", which says nothing about the plugin."""
         too_old = _completed(2, stderr="Error: No such command 'validate'. Did you mean 'validate-manifest'?")
         with patch("plugin_gate.subprocess.run", return_value=too_old):
             problem, _ = plugin_gate.run_validate(tmp_path)
@@ -237,7 +236,8 @@ class TestMain:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """A misspelled mode exits 2, so the typo shows on the first gated call instead of the
-        gate silently being off."""
+        gate silently being off.
+        """
         monkeypatch.setenv("CPA_PLUGIN_GATE", "blocking")
 
         assert plugin_gate.main(_bash(tmp_path)) == 2
@@ -362,7 +362,8 @@ class TestScanDiff:
 
     def test_a_private_key_only_advises(self) -> None:
         """A mutual-TLS client key can only be loaded from a file today, so it advises, and no
-        part of it is shown."""
+        part of it is shown.
+        """
         added = f'"private_key": "{PEM_HEADER}\\nMIIEvQIBADANBg"'
         assert plugin_gate.scan_diff(_diff("acme_intake/cert/client.json", added)) == (
             [],
@@ -417,7 +418,8 @@ class TestScanDiff:
     )
     def test_possible_values_follow_canvas_validate(self, path: str, value: str, found: bool) -> None:
         """The same values `canvas validate` warns on: a long lowercase hex run counts as random,
-        and tests and docs are skipped, so Claude hears one story from both tools."""
+        and tests and docs are skipped, so Claude hears one story from both tools.
+        """
         assert bool(plugin_gate.scan_diff(_diff(path, f'auth_token = "{value}"'))[1]) is found
 
     def test_removed_lines_are_ignored(self) -> None:
@@ -427,7 +429,8 @@ class TestScanDiff:
 
     def test_an_added_line_cannot_pose_as_a_file_header(self) -> None:
         """Added content reading "++ b/README.md" shows as "+++ b/README.md" and must stay content,
-        or every finding after it would be read as docs and only advise."""
+        or every finding after it would be read as docs and only advise.
+        """
         certain, possible = plugin_gate.scan_diff(
             _diff("acme_intake/h.py", "++ b/README.md", f'KEY = "{STRIPE_LIVE}"', start=1)
         )
@@ -437,8 +440,9 @@ class TestScanDiff:
 
     @pytest.mark.parametrize("separator", [" ", "\x0c", "\r"])
     def test_line_separators_inside_content_keep_the_count(self, separator: str) -> None:
-        """git counts lines by newline alone, so other line-separator characters stay inside a
-        line and cannot desync the hunk or pose as a header."""
+        """Git counts lines by newline alone, so other line-separator characters stay inside a
+        line and cannot desync the hunk or pose as a header.
+        """
         certain, possible = plugin_gate.scan_diff(
             _diff("acme_intake/h.py", f"note = 'a{separator}+++ b/README.md'", f'KEY = "{STRIPE_LIVE}"', start=1)
         )
@@ -573,7 +577,8 @@ class TestScanCommit:
     def test_a_filter_driver_never_runs(self, repo: Path, tmp_path_factory: pytest.TempPathFactory, command: str) -> None:
         """Reading the worktree runs any filter driver the repository assigns, which is code the
         hook would run before the call is approved, so every driver is switched off and the diff
-        still reads, even for a driver marked required."""
+        still reads, even for a driver marked required.
+        """
         marker = tmp_path_factory.mktemp("probe") / "ran"
         _git(repo, "config", f"filter.probe.{command}", f"touch {marker}")
         _git(repo, "config", "filter.probe.required", "true")
@@ -708,6 +713,8 @@ class TestNamedTargets:
             pytest.param("uv run --directory=work canvas deploy acme_x", ("upload", "work/acme_x"), id="uv_directory_equals"),
             pytest.param("canvas deploy \\\n  work/acme_x \\\n  --instance s", ("upload", "work/acme_x"), id="continued_deploy"),
             pytest.param("git -C my-plugin \\\n  commit -am x", ("commit", "my-plugin"), id="continued_commit"),
+            pytest.param("echo a\\\\\ngit -C b commit -am x", ("commit", "b"), id="escaped_backslash_ends_the_line"),
+            pytest.param("uv run --directory= canvas deploy acme_x", ("upload", "acme_x"), id="uv_empty_equals_value"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -718,7 +725,8 @@ class TestNamedTargets:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """In CPA's launch layout the session starts at the workspace and the plugin sits two
-        folders below it; the commit's changed files lead to it."""
+        folders below it; the commit's changed files lead to it.
+        """
         _git_identity(monkeypatch)
         project = tmp_path / "my-plugin"
         plugin = _plugin(project, "my_plugin")
@@ -806,7 +814,8 @@ class TestCommandsTheGateMustNotMiss:
 
     def test_a_credential_in_a_new_untracked_file_is_found(self, repo: Path) -> None:
         """`git add new.py && git commit` records a file `git diff` never shows, so it is read whole.
-        An ignored file is one `git add -A` would not record, so it is skipped."""
+        An ignored file is one `git add -A` would not record, so it is skipped.
+        """
         (repo / "billing.py").write_text(f'x = 1\nKEY = "{STRIPE_LIVE}"\n')
         (repo / ".env").write_text("A=1\n")
         (repo / "ignored.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
@@ -862,7 +871,8 @@ class TestCommandsTheGateMustNotMiss:
 
     def test_a_named_target_never_resolves_to_an_enclosing_plugin(self, tmp_path: Path) -> None:
         """`canvas deploy notes` inside a plugin names a folder that is not a plugin; the enclosing
-        plugin is not checked in its place."""
+        plugin is not checked in its place.
+        """
         plugin = _plugin(tmp_path)
         (plugin / "notes").mkdir()
         payload = json.loads(_bash(plugin, "canvas deploy notes"))
@@ -944,7 +954,7 @@ class TestCommandsTheGateMustNotMiss:
         )
 
     def test_a_non_ascii_file_name_is_read(self, repo: Path) -> None:
-        """git quotes such names unless told not to; the file is still found and read."""
+        """Git quotes such names unless told not to; the file is still found and read."""
         (repo / "café.py").write_text(f'KEY = "{STRIPE_LIVE}"\n')
 
         certain, _ = plugin_gate.scan_commit(repo)
