@@ -714,6 +714,9 @@ class TestNamedTargets:
             pytest.param("canvas deploy \\\n  work/acme_x \\\n  --instance s", ("upload", "work/acme_x"), id="continued_deploy"),
             pytest.param("git -C my-plugin \\\n  commit -am x", ("commit", "my-plugin"), id="continued_commit"),
             pytest.param("echo a\\\\\ngit -C b commit -am x", ("commit", "b"), id="escaped_backslash_ends_the_line"),
+            pytest.param("# note \\\ngit -C b commit -am x", ("commit", "b"), id="backslash_ending_a_comment"),
+            pytest.param("git status # x \\\ngit -C b commit -am x", ("commit", "b"), id="backslash_ending_a_trailing_comment"),
+            pytest.param("echo a#b \\\n  c; git -C b commit -am x", ("commit", "b"), id="hash_inside_a_word_continues"),
             pytest.param("uv run --directory= canvas deploy acme_x", ("upload", "acme_x"), id="uv_empty_equals_value"),
         ],
     )

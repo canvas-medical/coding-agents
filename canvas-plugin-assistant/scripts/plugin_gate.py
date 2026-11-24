@@ -47,8 +47,10 @@ HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
-# A backslash-newline after an even run of backslashes (`\\` then a newline) still ends the line.
-LINE_CONTINUATION = re.compile(r"(?<!\\)((?:\\\\)*)\\\n")
+# A line ending in an odd run of backslashes continues; `\\` is an escaped backslash.
+ENDS_IN_CONTINUATION = re.compile(r"(?<!\\)(?:\\\\)*\\$")
+# A `#` that starts a word starts a comment, and a comment's trailing backslash is only text.
+COMMENT_START = re.compile(r"(?:^|[\s;&|()])#")
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
@@ -364,6 +366,24 @@ def is_literal(word: str) -> bool:
     return not (word == "-" or word.startswith("~") or any(c in word for c in "$*?[{"))
 
 
+def joined_lines(command: str) -> str:
+    """``command`` with each line continuation the shell honors joined into one line."""
+    lines = command.split("\n")
+    logical: list[str] = []
+    current = ""
+    for index, line in enumerate(lines):
+        current += line
+        if ENDS_IN_CONTINUATION.search(line):
+            # Dropped either way: it joins the next line, or it is comment text that would
+            # otherwise escape the separator the newline becomes.
+            current = current[:-1]
+            if index < len(lines) - 1 and not COMMENT_START.search(current):
+                continue
+        logical.append(current)
+        current = ""
+    return "\n".join(logical)
+
+
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
     """Every gated action in the command: (`commit`, the directory git runs in) for each
     `git commit`, (`upload`, the named plugin path) for each `canvas install`/`deploy`.
@@ -376,7 +396,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # one, which shlex alone does not see. Its `#` comment would run to the end of the whole
     # command, so a comment is read as words instead, which errs toward checking.
     lexer = shlex.shlex(
-        LINE_CONTINUATION.sub(r"\1", command).replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True
+        joined_lines(command).replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True
     )
     lexer.whitespace_split = True
     lexer.commenters = ""
