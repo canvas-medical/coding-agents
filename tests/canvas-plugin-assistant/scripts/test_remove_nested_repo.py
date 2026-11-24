@@ -121,6 +121,35 @@ def test_empty_plugin_name_never_touches_the_workspace_repository(tmp_path: Path
     assert (workspace / ".git").is_dir()
 
 
+def test_plugin_name_reaching_outside_the_workspace_is_refused(tmp_path: Path) -> None:
+    """A name like `../sibling` would reach a commit-less repository beside the workspace, so nothing is removed."""
+    workspace: Path = tmp_path / "workspace"
+    workspace.mkdir()
+    sibling: Path = tmp_path / "sibling"
+    sibling.mkdir()
+    git("init", "-q", str(sibling))
+
+    output: str = run_script(tmp_path, [str(workspace), "../sibling"])
+
+    assert output == "Nothing removed: the plugin name must be a single folder name"
+    assert (sibling / ".git").is_dir()
+
+
+@pytest.mark.parametrize("plugin_name", [".", "..", "nested/vitals-alert"])
+def test_plugin_name_that_is_not_one_folder_is_refused(tmp_path: Path, plugin_name: str) -> None:
+    """`.` would point at a commit-less workspace's own `.git`, so a name must be exactly one folder."""
+    workspace: Path = tmp_path / "workspace"
+    (workspace / "nested" / "vitals-alert").mkdir(parents=True)
+    git("init", "-q", str(workspace))
+    git("init", "-q", str(workspace / "nested" / "vitals-alert"))
+
+    output: str = run_script(tmp_path, [str(workspace), plugin_name])
+
+    assert output == "Nothing removed: the plugin name must be a single folder name"
+    assert (workspace / ".git").is_dir()
+    assert (workspace / "nested" / "vitals-alert" / ".git").is_dir()
+
+
 def test_empty_workspace_is_refused(tmp_path: Path) -> None:
     """An unset workspace would resolve the container from the filesystem root, so nothing is removed."""
     output: str = run_script(tmp_path, ["", PLUGIN_NAME])

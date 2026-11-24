@@ -5,7 +5,8 @@
 #
 # `canvas init` runs `git init` in the new container even inside an existing work tree
 # (canvas-plugins canvas_cli/apps/platform/commands.py:1331-1339 at 1.13.0). This deletes that
-# `.git` only when it is the root of its own repository and has no commits. Every outcome prints
+# `.git` only when the plugin name is a single folder name and the container is the root of its own
+# repository with no commits. Every outcome prints
 # one line, and the caller routes on its start:
 #   "Removed the nested repository"  removed; continue
 #   "No nested repository"           nothing to remove; continue
@@ -20,6 +21,8 @@ if [ -z "$workspace" ]; then
   echo "Nothing removed: the workspace is empty"
 elif [ -z "$plugin_name" ]; then
   echo "Nothing removed: the plugin name is empty"
+elif case "$plugin_name" in */* | . | ..) true ;; *) false ;; esac; then
+  echo "Nothing removed: the plugin name must be a single folder name"
 elif [ ! -d "$dir/.git" ]; then
   echo "No nested repository at $dir; nothing to remove"
 elif ! [ "$dir" -ef "$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" ]; then
