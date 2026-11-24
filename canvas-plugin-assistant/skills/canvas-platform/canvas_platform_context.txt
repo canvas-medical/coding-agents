@@ -3923,7 +3923,7 @@ Find the plugin to install at <https://github.com/Medical-Software-Foundation/ca
 Patient conditions evolve over time. Some resolve, others require diagnostic updates, and many remain relevant as historical context. This article explains how to document past medical history, take an entry back off the chart, resolve active conditions, and change diagnoses in Canvas Medical while preserving important clinical information.
 ## User's Guide
 ### Documenting Past Medical History
-The Past Medical History command documents conditions that are no longer active but may still impact clinical decision-making.
+The Past Medical History command documents conditions that are no longer active but may still impact clinical decision-making. Every condition it records is a problem list item.
 **To add past medical history:**
   1. Add the Past Medical History command to a new or existing note
   2. Complete the command fields:
@@ -3931,12 +3931,17 @@ The Past Medical History command documents conditions that are no longer active 
      - **Approximate Start Date** : Date when the condition began (e.g., "last week," "3 years ago," "2015," or specific date)
      - **Approximate End Date** : Date the condition resolved
      - **Show on Condition List** : Toggle on to display the condition in the patient summary
+     - **Category Domain** : Optional domain for the problem list item. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
      - **Comments** : Additional notes pertaining to the condition (up to 1000 characters)
   3. Click **Record** to add the medical history to the patient record
 **Key points:**
   - Searches ICD-10 codes similarly to the Diagnose command
   - Supports entering the code directly in addition to text search
   - Use free-text date entries for flexibility
+  - The condition is always recorded as a problem list item, whether or not **Show on Condition List** is on
+  - A condition already on the patient's chart can't be added again, and **Record** is disabled:
+    - For an active condition, the command displays: _"This condition is already active on the patient's chart. Use Resolve Condition to move it to past medical history."_
+    - For a resolved condition, the command displays: _"This condition is already on the patient's chart as resolved. Use Assess to update it."_
 ### Removing a Past Medical History Entry
 The Remove Past Medical History command removes a past medical history condition from the patient's chart and records the rationale why. Reach for it when an entry turns out to be wrong for the patient, for example one brought in by an import or taken from a history the patient has since corrected.
 The note that originally recorded the entry is left exactly as it is, so the chart still shows what was documented and when. There is no need to amend or correct that earlier note.
@@ -3982,6 +3987,10 @@ No special configuration is required. Past Medical History, Remove Past Medical 
 ## FAQ & Troubleshooting
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving the historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
+**Q: What category does a Past Medical History entry get?**
+A: It's always a problem list item. Category Domain is optional and adds SDOH, Functional Status, Disability Status, or Cognitive Status to it.
+**Q: Why is Record disabled on my Past Medical History command?**
+A: The condition is already on the patient's chart. If it's active, use Resolve Condition to move it to past medical history. If it's already resolved, use Assess Condition to update it.
 **Q: Can I undo a resolved condition?**
 A: Yes. If the condition was resolved by mistake, enter the Resolve Condition command in error and the condition returns to active. If the condition has come back, add an Assess Condition command and pick the resolved condition from the search. Recording it makes the condition active again and keeps its full history in one place.
 **Q: Can I undo removing a past medical history entry?**
@@ -3993,7 +4002,7 @@ A: When resolving a condition, toggle on "Show on conditions list." Resolved con
 ## Related Resources
   - [Documenting New Diagnoses](/articles/9221634314)
   - [Assessing and Updating Conditions](/articles/7989321964)
-**Keywords:** past medical history, remove past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates
+**Keywords:** past medical history, remove past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates, category domain, problem list item, SDOH
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
 
@@ -4101,7 +4110,7 @@ Yes. A Studio admin can connect your repository under **Studio** → **Studio se
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4083957452-print-batch-statement
 ## Introduction
-Users have the ability to generate and print batch statements. 
+Users have the ability to generate and print batch statements.
   - All statements generate in a single PDF. If you do not desire to print all statements, you can select specific pages.
 ## Step by Step
   - Navigate to the menu, located on the top left-hand side
@@ -4110,6 +4119,10 @@ Users have the ability to generate and print batch statements.
   - Click on the drop down arrow.
   - Select **Generate patient statements batch**
 ** _NOTE:_**_A pop up notification appears to confirm that the PDF is being generated._ _As stated on the notification, this process can take up to 10 minutes. A task is generated and assigned to the user that opted to_** _Generate patient statements batch._**
+The task title tells you how the batch went:
+  - **Batch of patient statements ready** : the PDF is attached and ready to print. If some statements could not be rendered, the title says how many were left out.
+  - **No patient statements were generated: no patients have a balance to invoice.** There was nothing to bill, so no PDF was made.
+  - **Batch of patient statements failed to generate** , or **stopped before finishing** : no batch PDF was made. When some statements were already created, the title says how many are visible to patients. Try again, or contact support if it keeps failing.
 **_NOTE:_**_The task is also accessible from the panel view as it is visible on the overall task list_
   - Click on the **Task** icon
 ** _TIP:_**_The Task icon indicates when a new task has been assigned to the user; this is indicated by a red badge above the task._
@@ -4631,7 +4644,7 @@ Provider names must match exactly as they appear on their medical license to avo
   - **Tax ID** : Provide the appropriate Tax ID based on the billing method, whether for an organization or a specific practice location.
     - While optional, leaving blank for providers triggers [claim check alerts](https://canvas-medical.help.usepylon.com/articles/9992348572-claim-management#claim-checks-87)
   - **Tax ID Type, Language, and Schedule Column Ordering** : Keep as default settings
-  - **Signature** : Displays as provider signatures on all visit notes, printed lab or imaging order requisitions, referrals, and can be included in letter templates.
+  - **Signature** : Appears on superbills, referral and instruct printouts, and in letters built from a template that includes the provider signature. Printed visit notes that require signing, and printed lab, imaging and DME requisitions, show an "Electronically signed by" line with the provider's name and the date instead of the image.
   - **Personal Meeting Room Link** : A direct link to virtual exam rooms used for telehealth visits.
   - **Supervising Provider** : Physician the provider operates under
 ## Uploading Staff Signatures
