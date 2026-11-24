@@ -50,12 +50,19 @@ SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
-CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch"}
+CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch", "--plugin"}
 # Words that run the command after them: `env git commit`, `if git commit; then`.
-COMMAND_PREFIXES = {"env", "command", "time", "nohup", "exec", "sudo", "!", "{", "$", "then", "do", "else", "if", "while", "until"}
+COMMAND_PREFIXES = {
+    "env", "command", "builtin", "noglob", "time", "nohup", "exec", "sudo", "!", "{", "$",
+    "then", "do", "else", "if", "while", "until",
+}
 # Words that run the command after their options, with the options that take a value.
 # `timeout` also takes a duration before the command.
-WRAPPER_VALUE_OPTIONS = {"timeout": {"-k", "-s", "--kill-after", "--signal"}, "nice": {"-n", "--adjustment"}}
+WRAPPER_VALUE_OPTIONS = {
+    "timeout": {"-k", "-s", "--kill-after", "--signal"},
+    "nice": {"-n", "--adjustment"},
+    "stdbuf": {"-i", "-o", "-e"},
+}
 # git subcommands whose `--continue` commits whatever is staged.
 RECORDS_ON_CONTINUE = {"merge", "rebase", "cherry-pick", "am", "revert"}
 # How `canvas validate` prints a lint warning: "  ⚠ handlers/h.py:1  [code]  message".
@@ -185,7 +192,11 @@ def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
         if (named / MANIFEST).is_file():
             return [named]
         children = [child for child in named.iterdir() if (child / MANIFEST).is_file()] if named.is_dir() else []
-        return children if len(children) == 1 else []
+        if len(children) != 1:
+            # Missing at hook time (made earlier in the same command) or not a plugin: the CLI
+            # uploads whatever is there when it runs, so the gate does not wave it through.
+            raise UnclearTarget
+        return children
     else:
         start = cwd
     plugin = find_plugin_dir(start)
@@ -359,10 +370,12 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     options, and follows `cd`, `git -C` and `uv run --directory`. Raises UnclearTarget when one of
     those depends on shell expansion. A git alias for commit is not resolved.
     """
-    # shlex reads a newline as whitespace and a backtick as a word character, which would merge
-    # two commands into one; both start a new command in the shell. Its `#` comment would run to
-    # the end of the whole command, so a comment is read as words instead, which errs toward checking.
-    lexer = shlex.shlex(command.replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True)
+    # In the shell a newline or backtick starts a new command and a backslash-newline continues
+    # one, which shlex alone does not see. Its `#` comment would run to the end of the whole
+    # command, so a comment is read as words instead, which errs toward checking.
+    lexer = shlex.shlex(
+        command.replace("\\\n", "").replace("\n", ";").replace("`", ";"), posix=True, punctuation_chars=True
+    )
     lexer.whitespace_split = True
     lexer.commenters = ""
     try:
@@ -400,11 +413,19 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         if words[:2] == ["uv", "run"]:
             words = words[2:]
             while words and words[0].startswith("-"):
-                option = words.pop(0)
-                if option in UV_RUN_VALUE_OPTIONS and words:
-                    value = words.pop(0)
-                    if option == "--directory":
-                        run_dirs.append(value)
+                option, _, inline = words.pop(0).partition("=")
+                if option in UV_RUN_VALUE_OPTIONS and not inline and words:
+                    inline = words.pop(0)
+                if option == "--directory" and inline:
+                    run_dirs.append(inline)
+            # An option the list above lacks leaves its value where the program belongs.
+            later = [index for index, word in enumerate(words) if Path(word).name == "canvas"]
+            if (
+                words
+                and Path(words[0]).name != "canvas"
+                and any(words[index + 1 : index + 2] in (["install"], ["deploy"]) for index in later)
+            ):
+                raise UnclearTarget
         program = Path(words[0]).name if words else ""
         if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
             target = upload_target(words[2:])

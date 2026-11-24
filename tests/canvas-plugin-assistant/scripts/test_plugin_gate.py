@@ -255,10 +255,10 @@ class TestMain:
         run.assert_not_called()
 
     def test_a_call_outside_any_plugin_passes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """A commit in an unrelated repository is not the gate's business."""
+        """A deploy that names no plugin, run from a folder holding none, is not the gate's business."""
         monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
         with patch("plugin_gate.subprocess.run") as run:
-            assert plugin_gate.main(_bash(tmp_path)) == 0
+            assert plugin_gate.main(_bash(tmp_path, "canvas deploy --instance acme")) == 0
         run.assert_not_called()
 
     def test_a_passing_plugin_passes(
@@ -492,6 +492,10 @@ class TestBashAction:
             pytest.param("nice git commit -am x", "commit", id="nice_wrapper"),
             pytest.param("timeout --preserve-status 60 git commit -am x", "commit", id="timeout_flag_without_value"),
             pytest.param("nice -n 10 timeout 60 git commit -am x", "commit", id="nice_then_timeout"),
+            pytest.param("stdbuf -oL git commit -am x", "commit", id="stdbuf_wrapper"),
+            pytest.param("stdbuf -o L canvas deploy acme_intake", "upload", id="stdbuf_option_value"),
+            pytest.param("builtin git commit -am x", "commit", id="builtin_prefix"),
+            pytest.param("noglob git commit -am x", "commit", id="noglob_prefix"),
             pytest.param("git merge --continue", "commit", id="merge_continue"),
             pytest.param("git rebase --continue", "commit", id="rebase_continue"),
             pytest.param("git -C acme cherry-pick --continue", "commit", id="cherry_pick_continue"),
@@ -641,8 +645,11 @@ class TestMainSecretScan:
     def test_only_a_commit_is_scanned(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """An install or deploy uploads the plugin, not a commit, so the commit scan does not run."""
         monkeypatch.setenv("CPA_PLUGIN_GATE", "block")
-        with patch("plugin_gate.run_validate", return_value=(None, [])), patch("plugin_gate.scan_commit") as scan:
-            assert plugin_gate.main(_bash(repo, "canvas deploy acme_intake")) == 0
+        with patch("plugin_gate.run_validate", return_value=(None, [])) as validate, patch(
+            "plugin_gate.scan_commit"
+        ) as scan:
+            assert plugin_gate.main(_bash(repo.parent, "canvas deploy acme_intake")) == 0
+        validate.assert_called_once()
         scan.assert_not_called()
 
     def test_a_git_command_that_is_not_a_commit_runs_nothing(self, repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -678,6 +685,7 @@ class TestNamedTargets:
             pytest.param(["acme_intake", "--host", "acme-dev"], "acme_intake", id="before_a_value_option"),
             pytest.param(["--yes", "acme_intake"], "acme_intake", id="after_a_flag"),
             pytest.param(["--instance", "acme-staging"], None, id="no_path"),
+            pytest.param(["--plugin", "acme_x@1.2.0", "--instance", "s"], None, id="released_version"),
         ],
     )
     def test_upload_target_is_the_first_positional_argument(self, arguments: list[str], target: str | None) -> None:
@@ -697,6 +705,9 @@ class TestNamedTargets:
             pytest.param("cd work && cd sub && canvas deploy acme_x", ("upload", "work/sub/acme_x"), id="cd_twice"),
             pytest.param("cd work && canvas deploy", ("upload", "work"), id="cd_then_deploy_here"),
             pytest.param("uv run --directory work canvas deploy acme_x", ("upload", "work/acme_x"), id="uv_directory"),
+            pytest.param("uv run --directory=work canvas deploy acme_x", ("upload", "work/acme_x"), id="uv_directory_equals"),
+            pytest.param("canvas deploy \\\n  work/acme_x \\\n  --instance s", ("upload", "work/acme_x"), id="continued_deploy"),
+            pytest.param("git -C my-plugin \\\n  commit -am x", ("commit", "my-plugin"), id="continued_commit"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -856,7 +867,32 @@ class TestCommandsTheGateMustNotMiss:
         (plugin / "notes").mkdir()
         payload = json.loads(_bash(plugin, "canvas deploy notes"))
 
-        assert plugin_gate.target_dirs(payload, ("upload", "notes")) == []
+        with pytest.raises(plugin_gate.UnclearTarget):
+            plugin_gate.target_dirs(payload, ("upload", "notes"))
+
+    def test_a_named_folder_resolves_to_the_one_plugin_inside_it(self, tmp_path: Path) -> None:
+        """From the workspace, `canvas deploy my-plugin` names the project, whose plugin is inside it."""
+        plugin = _plugin(tmp_path / "my-plugin", "my_plugin")
+        payload = json.loads(_bash(tmp_path, "canvas deploy my-plugin"))
+
+        assert plugin_gate.target_dirs(payload, ("upload", "my-plugin")) == [plugin.resolve()]
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("cp -R acme_intake acme_copy && canvas deploy acme_copy", id="target_made_earlier"),
+            pytest.param("(cd acme_intake && ls) && canvas deploy acme_intake", id="cd_inside_a_subshell"),
+            pytest.param("uv run -p 3.13 canvas deploy acme_intake", id="uv_option_value_unknown"),
+        ],
+    )
+    def test_a_deploy_the_gate_cannot_resolve_is_unclear(self, tmp_path: Path, command: str) -> None:
+        """A deploy whose plugin the gate cannot find at hook time is stopped, not waved through."""
+        _plugin(tmp_path)
+        payload = json.loads(_bash(tmp_path, command))
+
+        with pytest.raises(plugin_gate.UnclearTarget):
+            for action in plugin_gate.bash_actions(command):
+                plugin_gate.target_dirs(payload, action)
 
     @pytest.mark.usefixtures("canvas_on_path")
     @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
