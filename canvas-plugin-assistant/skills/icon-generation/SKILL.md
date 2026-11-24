@@ -107,7 +107,7 @@ If generating an icon for a Canvas plugin, update the manifest:
 ```json
 {
   "name": "Plugin Name",
-  "version": "1.0.0",
+  "plugin_version": "1.0.0",
   "applications": [
     {
       "class": "plugin_name.applications.my_app:MyApp",
