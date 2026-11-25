@@ -502,7 +502,10 @@ def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> i
 def quoted_operators_hidden(text: str) -> str:
     """``text`` with each operator character inside quotes or after a backslash swapped for a
     stand-in shlex reads as a word character. shlex returns a quoted `;` as the same token as a
-    real one, so without this a quoted `"&&"` or `")"` would read as a separator."""
+    real one, so without this a quoted `"&&"` or `")"` would read as a separator. Raises ValueError
+    for text that already holds a stand-in, which would otherwise come back as an operator."""
+    if any(chr(stand_in) in text for stand_in in SHOW_OPERATORS):
+        raise ValueError("the command holds a character the gate uses as a stand-in")
     out: list[str] = []
     quote = ""
     index = 0
