@@ -480,6 +480,14 @@ LaunchModalEffect(
 # - PAGE: Full page
 ```
 
+**DEFAULT_MODAL on narrow screens.** Below 900px wide, Canvas shows a `DEFAULT_MODAL` full screen and puts its own strip with a back arrow above your iframe. The arrow closes the modal. Plugins can't hide or restyle it. At that width Canvas also ignores `RESIZE`, and the bottom of the iframe runs a little past the screen. Design for it:
+- Show your own heading. Canvas doesn't display `title` on a `DEFAULT_MODAL` at any width.
+- Give the modal its own Close button that posts `CLOSE_MODAL` (see "Dismissing your modal" in the SDK docs). Wide modals have no visible close control, only Escape and clicking outside. Show the button only once the `INIT_CHANNEL` port has arrived.
+- Close (or offer Done) after a successful submit.
+- Lay out mobile-first: stack labels above fields under ~560px, 44px tap targets, and ~72px of bottom padding so the last control is reachable.
+- Keep `dismissible=True` unless the user must finish a step (e.g. consent). `dismissible=False` hides the arrow but also blocks Escape and clicking outside.
+- `RIGHT_CHART_PANE`/`_LARGE` have no arrow but stay 25%/40% wide on small screens, so they are not a phone fix.
+
 ---
 
 ## Best Practices
