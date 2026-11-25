@@ -687,6 +687,17 @@ class TestNamedTargets:
             pytest.param(
                 'x="$(cat <<EOF\nhi\nEOF)"\ncanvas deploy acme_x\nEOF', ("upload", "acme_x"), id="delimiter_then_paren"
             ),
+            pytest.param('git -c user.name="$(whoami)" commit -am x', ("commit", None), id="substitution_in_a_git_option"),
+            pytest.param(
+                'canvas deploy --instance "$(cat .instance)" work/acme_x',
+                ("upload", "work/acme_x"),
+                id="substitution_in_a_deploy_option",
+            ),
+            pytest.param(
+                "canvas deploy --instance $(cat .instance) work/acme_x",
+                ("upload", "work/acme_x"),
+                id="unquoted_substitution_in_a_deploy_option",
+            ),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -819,6 +830,9 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param("git -C $DIR commit -m x", id="git_dir_variable"),
             pytest.param("canvas deploy acme_*", id="glob_target"),
             pytest.param("uv run --directory ~/w canvas deploy acme_x", id="uv_directory_home"),
+            pytest.param('git -C "$(git rev-parse --show-toplevel)" commit -am x', id="git_dir_quoted_substitution"),
+            pytest.param("git -C $(pwd) commit -am x", id="git_dir_substitution"),
+            pytest.param("git -C `pwd` commit -am x", id="git_dir_backticks"),
         ],
     )
     def test_a_target_the_shell_expands_is_unclear(self, command: str) -> None:

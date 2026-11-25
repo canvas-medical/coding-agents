@@ -366,9 +366,9 @@ def joined_lines(command: str) -> str:
     Scans quotes, escapes and comments as the shell does: a backslash inside single quotes or a
     comment is text, and a `#` starts a comment only at the start of an unquoted word. Comment text
     stays as words, which errs toward checking when a `#` is misread; its quotes and backslashes
-    become spaces, so they cannot pair with a quote or escape a separator elsewhere. A `$(...)` or
-    backtick substitution inside double quotes closes the quote until it ends, since shlex would
-    read the command it runs as one quoted word; a heredoc body inside one is dropped as text.
+    become spaces, so they cannot pair with a quote or escape a separator elsewhere. The command in
+    a `$(...)` or backtick substitution is read as a command of its own at the next separator, and
+    a `$_` takes its place in the word it sat in; a heredoc body inside one is dropped as text.
     Raises ValueError for a substitution it cannot follow: one holding `case`, whose patterns end
     in an unmatched `)`, or one or its heredoc never closing.
     """
@@ -376,8 +376,12 @@ def joined_lines(command: str) -> str:
     quote = ""
     comment = False
     word_start = True
-    # One entry per substitution open inside double quotes: "`", or a `$(`'s count of unclosed `(`.
-    substitutions: list[int | str] = []
+    # One entry per open substitution: where its text starts in `out`, "`" or a `$(`'s count of
+    # unclosed `(`, and the quote to resume once it closes.
+    substitutions: list[tuple[int, int | str, str]] = []
+    # Closed substitutions' commands, read as commands of their own at the next separator. The word
+    # each sat in keeps a `$_` in its place, so the command around it keeps its program and options.
+    lifted: list[str] = []
     # (delimiter, leading tabs stripped) for each heredoc whose body starts at the next newline.
     heredocs: list[tuple[str, bool]] = []
     index = 0
@@ -411,13 +415,27 @@ def joined_lines(command: str) -> str:
         elif quote == '"' and command.startswith("$((", index):
             # Arithmetic, where `<<` is a shift, unless it does not parse as one and bash runs it.
             raise ValueError("a `$((` inside double quotes")
-        elif quote == '"' and (pair == "$(" or char == "`"):
+        elif substitutions and (
+            (char == ")" and substitutions[-1][1] == 0 and not quote)
+            or (char == "`" and substitutions[-1][1] == "`")
+        ):
+            start, _, quote = substitutions.pop()
+            lifted.append("".join(out[start:]))
+            del out[start:]
+            out.append("$_")
+            index += 1
+            word_start = False
+            continue
+        elif (pair == "$(" and not command.startswith("$((", index)) or char == "`":
             opener = "$(" if pair == "$(" else "`"
-            out.append('"' + opener)
+            substitutions.append((len(out), 0 if opener == "$(" else "`", quote))
             quote = ""
-            substitutions.append(0 if opener == "$(" else "`")
             index += len(opener)
             word_start = True
+            continue
+        elif lifted and not substitutions and not quote and char in ";&|\n":
+            out.append(" ; " + " ; ".join(lifted) + " ; ")
+            lifted = []
             continue
         elif quote == '"':
             quote = "" if char == '"' else quote
@@ -436,23 +454,17 @@ def joined_lines(command: str) -> str:
             continue
         elif char == "#" and word_start:
             comment = True
-        elif substitutions and ((char == ")" and substitutions[-1] == 0) or (char == "`" and substitutions[-1] == "`")):
-            substitutions.pop()
-            out.append(char + '"')
-            quote = '"'
-            index += 1
-            word_start = False
-            continue
         elif substitutions and pair == "((":
             raise ValueError("arithmetic, where `<<` is a shift, inside a quoted substitution")
-        elif substitutions and substitutions[-1] != "`" and char in "()":
-            substitutions[-1] = int(substitutions[-1]) + (1 if char == "(" else -1)
+        elif substitutions and substitutions[-1][1] != "`" and char in "()":
+            start, depth, resume = substitutions[-1]
+            substitutions[-1] = (start, int(depth) + (1 if char == "(" else -1), resume)
         word_start = not quote and not comment and (char.isspace() or char in ";&|()")
         out.append(char)
         index += 1
     if substitutions or heredocs:
         raise ValueError("a quoted substitution or its heredoc never closes")
-    return "".join(out)
+    return "".join(out + [" ; " + " ; ".join(lifted)] if lifted else out)
 
 
 def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> int:
