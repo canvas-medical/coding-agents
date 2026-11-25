@@ -916,15 +916,19 @@ class TestCommandsTheGateMustNotMiss:
         with pytest.raises(plugin_gate.UnclearTarget):
             plugin_gate.bash_actions(command)
 
-    def test_a_command_holding_a_stand_in_is_unreadable(self) -> None:
+    @pytest.mark.parametrize(
+        "command",
+        [
+            pytest.param("git -C myplugin commit -am x", id="in_a_path"),
+            pytest.param("g''it commit -am x ", id="with_a_quote_splitting_git"),
+            pytest.param("ls myplugin", id="without_a_gated_action"),
+        ],
+    )
+    def test_a_command_holding_a_stand_in_is_unreadable(self, command: str) -> None:
         """The stand-in for a quoted `;` would come back as a `;` in a path bash reads as written,
-        so a commit naming one is refused rather than checked in the wrong folder."""
+        and a search for `git` and `commit` can be split by quotes, so the command is refused."""
         with pytest.raises(plugin_gate.UnreadableCommand):
-            plugin_gate.bash_actions("git -C myplugin commit -am x")
-
-    def test_a_stand_in_without_a_gated_action_is_ignored(self) -> None:
-        """Only a commit or deploy needs its command read; other commands pass untouched."""
-        assert plugin_gate.bash_actions("ls myplugin") == []
+            plugin_gate.bash_actions(command)
 
     @pytest.mark.parametrize(
         "command",

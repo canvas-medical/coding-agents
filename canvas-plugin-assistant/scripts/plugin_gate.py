@@ -502,10 +502,8 @@ def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> i
 def quoted_operators_hidden(text: str) -> str:
     """``text`` with each operator character inside quotes or after a backslash swapped for a
     stand-in shlex reads as a word character. shlex returns a quoted `;` as the same token as a
-    real one, so without this a quoted `"&&"` or `")"` would read as a separator. Raises ValueError
-    for text that already holds a stand-in, which would otherwise come back as an operator."""
-    if any(chr(stand_in) in text for stand_in in SHOW_OPERATORS):
-        raise ValueError("the command holds a character the gate uses as a stand-in")
+    real one, so without this a quoted `"&&"` or `")"` would read as a separator. bash_actions
+    refuses text that already holds a stand-in, which would otherwise come back as an operator."""
     out: list[str] = []
     quote = ""
     index = 0
@@ -544,6 +542,10 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # In the shell a newline or backtick starts a new command and a backslash-newline continues
     # one, which shlex alone does not see. shlex's own comment would run to the end of the whole
     # command, so joined_lines handles comments instead.
+    if any(chr(stand_in) in command for stand_in in SHOW_OPERATORS):
+        # A stand-in already in the command would come back as an operator. Refused outright: the
+        # fallback search below for a commit or deploy can be split by quotes (`g''it commit`).
+        raise UnreadableCommand
     try:
         lexer = shlex.shlex(
             # Spaced, so a blank line's two separators do not merge into one `;;` word.
