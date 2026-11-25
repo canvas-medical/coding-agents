@@ -364,12 +364,16 @@ def joined_lines(command: str) -> str:
     Scans quotes, escapes and comments as the shell does: a backslash inside single quotes or a
     comment is text, and a `#` starts a comment only at the start of an unquoted word. Comment text
     stays as words, which errs toward checking when a `#` is misread; its quotes and backslashes
-    become spaces, so they cannot pair with a quote or escape a separator elsewhere.
+    become spaces, so they cannot pair with a quote or escape a separator elsewhere. A `$(...)` or
+    backtick substitution inside double quotes closes the quote until it ends, since shlex would
+    read the command it runs as one quoted word.
     """
     out: list[str] = []
     quote = ""
     comment = False
     word_start = True
+    # One entry per substitution open inside double quotes: "`", or a `$(`'s count of unclosed `(`.
+    substitutions: list[int | str] = []
     index = 0
     while index < len(command):
         char, pair = command[index], command[index : index + 2]
@@ -389,12 +393,29 @@ def joined_lines(command: str) -> str:
             index += 2
             word_start = False
             continue
+        elif quote == '"' and (pair == "$(" or char == "`"):
+            opener = "$(" if pair == "$(" else "`"
+            out.append('"' + opener)
+            quote = ""
+            substitutions.append(0 if opener == "$(" else "`")
+            index += len(opener)
+            word_start = True
+            continue
         elif quote == '"':
             quote = "" if char == '"' else quote
         elif char in "'\"":
             quote = char
         elif char == "#" and word_start:
             comment = True
+        elif substitutions and ((char == ")" and substitutions[-1] == 0) or (char == "`" and substitutions[-1] == "`")):
+            substitutions.pop()
+            out.append(char + '"')
+            quote = '"'
+            index += 1
+            word_start = False
+            continue
+        elif substitutions and substitutions[-1] != "`" and char in "()":
+            substitutions[-1] = int(substitutions[-1]) + (1 if char == "(" else -1)
         word_start = not quote and not comment and (char.isspace() or char in ";&|()")
         out.append(char)
         index += 1

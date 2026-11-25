@@ -665,6 +665,15 @@ class TestNamedTargets:
             pytest.param("git status\n\ngit -C b commit -am x", ("commit", "b"), id="blank_line_between"),
             pytest.param("echo $(date)#; git -C b commit -am x", ("commit", "b"), id="hash_after_a_substitution"),
             pytest.param("uv run --directory= canvas deploy acme_x", ("upload", "acme_x"), id="uv_empty_equals_value"),
+            pytest.param(
+                'out="$(canvas deploy my-plugin/my_plugin --instance acme 2>&1)"',
+                ("upload", "my-plugin/my_plugin"),
+                id="deploy_in_a_quoted_substitution",
+            ),
+            pytest.param('echo "done: `canvas deploy acme_x`"', ("upload", "acme_x"), id="deploy_in_quoted_backticks"),
+            pytest.param('out="$(cd work && (canvas deploy acme_x))"', ("upload", "work/acme_x"), id="parens_inside"),
+            pytest.param('out="$(echo ")" && canvas deploy acme_x)"', ("upload", "acme_x"), id="quoted_paren_inside"),
+            pytest.param('echo "$(date) then git commit"', None, id="text_after_a_substitution_stays_quoted"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
