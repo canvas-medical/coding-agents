@@ -1,0 +1,14 @@
+{
+  "eval_name": "case_008",
+  "review_command": "security-review",
+  "description": "Page script writes fetched patient message bodies into innerHTML with a template literal",
+  "expected_findings": [
+    {
+      "category": "Template and HTML Output Safety",
+      "severity": "HIGH",
+      "description": "templates/messages.html appends ${m.body} (Message.content from patients/integrations, fetched as JSON) to list.innerHTML, so markup in a message runs as script in the staff session; fix is createElement + textContent",
+      "must_detect": true
+    }
+  ],
+  "expected_verdict": "ISSUES FOUND"
+}

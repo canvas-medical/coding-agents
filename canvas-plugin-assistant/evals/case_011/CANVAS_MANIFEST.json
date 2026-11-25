@@ -1,0 +1,33 @@
+{
+  "sdk_version": "0.1.0",
+  "plugin_version": "0.1.0",
+  "name": "eval-case-011",
+  "description": "Eval case",
+  "components": {
+    "handlers": [
+      {
+        "class": "api.checkout:CheckoutAPI",
+        "description": "Copay checkout endpoints"
+      }
+    ],
+    "applications": [
+      {
+        "class": "api.checkout:CheckoutApp",
+        "name": "Copay Checkout",
+        "description": "Collect a copay",
+        "scope": "patient_specific"
+      }
+    ]
+  },
+  "variables": [
+    {
+      "name": "STRIPE_PUBLISHABLE_KEY",
+      "sensitive": false
+    },
+    {
+      "name": "ELIGIBILITY_API_SECRET",
+      "sensitive": true
+    }
+  ],
+  "readme": "./README.md"
+}

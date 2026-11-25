@@ -1,0 +1,7 @@
+{% for r in results %}
+<button type="button" class="srow" onclick="pickPatient('{{ r.id }}', '{{ r.name }}')">
+  <span class="srow-name">{{ r.name }}</span>{% if r.dob %} <span class="small">{{ r.dob }}</span>{% endif %}
+</button>
+{% empty %}
+<p class="small">No matching patients.</p>
+{% endfor %}

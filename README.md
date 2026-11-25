@@ -82,7 +82,7 @@ Guided Canvas plugin development with SDK reference, patterns, security review, 
 | `:analyze-instance` | Analyze Canvas instance configuration from Canvas Platform |
 | `:deploy` | Deploy work in progress to a test instance and monitor logs |
 | `:coverage` | Run tests with coverage, offer to improve if below 90% |
-| `:security-review` | Comprehensive security audit (API auth, FHIR tokens, secrets) |
+| `:security-review` | Comprehensive security audit (API auth, FHIR tokens, secrets, template and HTML output) |
 | `:database-performance-review` | Review for N+1 queries and ORM optimization |
 | `:wrap-up` | Final checklist, then release to Canvas Platform |
 | `:run-evals` | Execute eval cases to verify review commands |

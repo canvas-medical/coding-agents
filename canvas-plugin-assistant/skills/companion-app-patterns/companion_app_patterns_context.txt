@@ -266,7 +266,11 @@ if the caller isn't the assignee). Do not trust client-sent intent.
 
 No framework, no bundler, no build step. The HTML shell contains a minimal
 structure (header chrome, filter bar, content slot) and the JS module handles
-state and rendering by innerHTML'ing into the content slot.
+state and rendering by building elements with `document.createElement` and
+setting every server or API value with `textContent`, then replacing the
+content slot's children (`slot.replaceChildren(...nodes)`). Never write data
+with `innerHTML`, `insertAdjacentHTML`, `outerHTML`, or `document.write`:
+markup in a patient name or note would run as script in the staff session.
 
 ### Material-style cards
 
