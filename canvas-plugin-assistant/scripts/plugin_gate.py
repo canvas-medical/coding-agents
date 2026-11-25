@@ -47,6 +47,11 @@ HEREDOC = re.compile(r"<<(?P<dash>-?)[ \t]*(?P<word>(?:[^\s;&|()<>'\"]|'[^']*'|\
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
+# One shell operator in a run of punctuation shlex returns as a single token, such as `);` or
+# `;(`: a redirection first, so `>&` stays one word, then `case` terminators and `|&`.
+SHELL_OPERATOR = re.compile(r"&>>?|[<>]+[&|]?|;;&|;;|;&|\|&|&&|\|\||[;&|()]")
+# Operators that end a command the way `;` or `|` does.
+SEPARATOR_ALIASES = {";;&": ";", ";;": ";", ";&": ";", "|&": "|"}
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas deploy` options that take a separate value, so their value is not the plugin path.
@@ -490,6 +495,15 @@ def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> i
         start = end + 1
 
 
+def operators(token: str) -> list[str]:
+    """``token`` split into the shell operators it holds when it is all punctuation, since shlex
+    joins `);` or `;(` into one token that would otherwise read as a word and hide the command
+    after it."""
+    if not token or token.strip("();<>|&"):
+        return [token]
+    return [SEPARATOR_ALIASES.get(part, part) for part in SHELL_OPERATOR.findall(token)]
+
+
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
     """Every gated action in the command: (`commit`, the directory git runs in) for each
     `git commit`, (`upload`, the named plugin path) for each `canvas deploy`.
@@ -510,7 +524,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         )
         lexer.whitespace_split = True
         lexer.commenters = ""
-        tokens = list(lexer)
+        tokens = [operator for token in lexer for operator in operators(token)]
     except ValueError:
         # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which
         # commands run and where, so a command that may commit or upload is not guessed at.
@@ -524,11 +538,9 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     base: str | None = None
     base_unknown = False
     # A `cd` in a subshell ends with it, but shlex returns a quoted or escaped paren as the same
-    # token as a real one, so a `)` cannot be trusted to restore `base`. Instead a `cd` since the
-    # outermost open `(` makes `base` unknown at each `)`, matched or not. `opened` holds the
-    # `cd` count at each open `(`.
+    # token as a real one, so no `(` or `)` can be trusted to say where a subshell begins or ends.
+    # Instead any `cd` before a `)` makes `base` unknown from there on.
     cds = 0
-    opened: list[int] = []
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
@@ -594,12 +606,8 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                         actions.append(("commit", joined_all(base, git_dirs)))
                     break
         words = []
-        if token == "(":
-            opened.append(cds)
-        elif token == ")":
-            base_unknown = base_unknown or cds > (opened[0] if opened else 0)
-            if opened:
-                opened.pop()
+        if token == ")":
+            base_unknown = base_unknown or cds > 0
     return actions
 
 

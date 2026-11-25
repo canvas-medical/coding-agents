@@ -713,6 +713,14 @@ class TestNamedTargets:
                 ("commit", "my-plugin"),
                 id="commit_inside_a_subshell",
             ),
+            pytest.param("(ls);git commit -am x", ("commit", None), id="close_paren_joined_to_a_separator"),
+            pytest.param("true;(git commit -am x)", ("commit", None), id="separator_joined_to_an_open_paren"),
+            pytest.param("ls|&git commit -am x", ("commit", None), id="pipe_with_stderr"),
+            pytest.param(
+                "echo hi>&2;git -C my-plugin commit -am x",
+                ("commit", "my-plugin"),
+                id="redirection_before_a_separator",
+            ),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -869,6 +877,11 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param("echo \\( ; cd my-plugin ; echo \\) ; git commit -am x", id="escaped_parens"),
             pytest.param('(cd my-plugin ; echo "(") ; git commit -am x', id="quoted_open_inside_a_subshell"),
             pytest.param('(echo ")" ; cd my-plugin) ; git commit -am x', id="quoted_close_inside_a_subshell"),
+            pytest.param(
+                '( echo ")" ; cd my-plugin ; echo "(" ) ; git commit -am x',
+                id="quoted_close_then_open_around_a_cd",
+            ),
+            pytest.param("cd my-plugin && (cd ..);git commit -am x", id="close_paren_joined_to_a_separator"),
         ],
     )
     def test_a_cd_inside_parentheses_is_unclear_after_them(self, command: str) -> None:
