@@ -699,21 +699,20 @@ class TestNamedTargets:
                 id="unquoted_substitution_in_a_deploy_option",
             ),
             pytest.param(
-                'cd my-plugin && top="$(cd .. && pwd)" && git commit -am x',
+                'cd my-plugin && git commit -am "$(cd .. && echo change)"',
                 ("commit", "my-plugin"),
-                id="cd_in_a_quoted_substitution_stays_in_it",
+                id="cd_in_a_substitution_after_the_commit",
             ),
             pytest.param(
-                "cd my-plugin && top=$(cd .. && pwd) && git commit -am x",
+                'echo "(" ; cd my-plugin ; git commit -am x',
                 ("commit", "my-plugin"),
-                id="cd_in_a_substitution_stays_in_it",
+                id="quoted_open_paren_without_a_close",
             ),
             pytest.param(
-                "cd my-plugin && (cd .. && ls) && git commit -am x",
+                "(cd my-plugin && git commit -am x) && ls",
                 ("commit", "my-plugin"),
-                id="cd_in_a_subshell_stays_in_it",
+                id="commit_inside_a_subshell",
             ),
-            pytest.param("(cd work && ls) && canvas deploy acme_x", ("upload", "acme_x"), id="deploy_after_a_subshell"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -862,6 +861,26 @@ class TestCommandsTheGateMustNotMiss:
     @pytest.mark.parametrize(
         "command",
         [
+            pytest.param('cd my-plugin && top="$(cd .. && pwd)" && git commit -am x', id="quoted_substitution"),
+            pytest.param("cd my-plugin && top=$(cd .. && pwd) && git commit -am x", id="substitution"),
+            pytest.param("cd my-plugin && (cd .. && ls) && git commit -am x", id="subshell"),
+            pytest.param("(cd work && ls) && canvas deploy acme_x", id="deploy_after_a_subshell"),
+            pytest.param('echo "(" ; cd my-plugin ; echo ")" ; git commit -am x', id="quoted_parens"),
+            pytest.param("echo \\( ; cd my-plugin ; echo \\) ; git commit -am x", id="escaped_parens"),
+            pytest.param('(cd my-plugin ; echo "(") ; git commit -am x', id="quoted_open_inside_a_subshell"),
+            pytest.param('(echo ")" ; cd my-plugin) ; git commit -am x', id="quoted_close_inside_a_subshell"),
+        ],
+    )
+    def test_a_cd_inside_parentheses_is_unclear_after_them(self, command: str) -> None:
+        """A subshell's `cd` ends with it, but shlex reads a quoted paren as a real one, so a commit
+        or deploy after a `)` that may close a `cd` is refused rather than placed.
+        """
+        with pytest.raises(plugin_gate.UnclearTarget):
+            plugin_gate.bash_actions(command)
+
+    @pytest.mark.parametrize(
+        "command",
+        [
             pytest.param("git -C ~/repo log --oneline", id="git_dir_home_log"),
             pytest.param("cd ~ && git status", id="cd_home_status"),
             pytest.param("cd && git pull", id="bare_cd_pull"),
@@ -896,6 +915,7 @@ class TestCommandsTheGateMustNotMiss:
         "command",
         [
             pytest.param("cp -R acme_intake acme_copy && canvas deploy acme_copy", id="target_made_earlier"),
+            pytest.param("(cd acme_intake && ls) && canvas deploy acme_intake", id="cd_inside_a_subshell"),
             pytest.param("uv run -p 3.13 canvas deploy acme_intake", id="uv_option_value_unknown"),
         ],
     )

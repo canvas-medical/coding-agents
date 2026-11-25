@@ -469,7 +469,7 @@ def joined_lines(command: str) -> str:
 
 def subshells(commands: list[str]) -> str:
     """``commands`` as subshells after a separator: a substitution runs in one, so a `cd` in it
-    does not move the commands after it."""
+    leaves the commands after it with a directory bash_actions does not guess at."""
     return "".join(f" ; ( {command} )" for command in commands)
 
 
@@ -523,8 +523,12 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # An expanded `cd` makes it unknown, which matters only if a gated action follows.
     base: str | None = None
     base_unknown = False
-    # (base, base_unknown) at each open `(`: a subshell's `cd` ends with it.
-    outer: list[tuple[str | None, bool]] = []
+    # A `cd` in a subshell ends with it, but shlex returns a quoted or escaped paren as the same
+    # token as a real one, so a `)` cannot be trusted to restore `base`. Instead a `cd` since the
+    # outermost open `(` makes `base` unknown at each `)`, matched or not. `opened` holds the
+    # `cd` count at each open `(`.
+    cds = 0
+    opened: list[int] = []
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
@@ -541,6 +545,8 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                     words.pop(0)
             else:
                 break
+        if words[:1] in (["cd"], ["pushd"], ["popd"]):
+            cds += 1
         if words[:1] in (["pushd"], ["popd"]) or (words[:1] == ["cd"] and len(words) != 2):
             base_unknown = True
         elif words[:1] == ["cd"]:
@@ -589,9 +595,11 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                     break
         words = []
         if token == "(":
-            outer.append((base, base_unknown))
-        elif token == ")" and outer:
-            base, base_unknown = outer.pop()
+            opened.append(cds)
+        elif token == ")":
+            base_unknown = base_unknown or cds > (opened[0] if opened else 0)
+            if opened:
+                opened.pop()
     return actions
 
 
