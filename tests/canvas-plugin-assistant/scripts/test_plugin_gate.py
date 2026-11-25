@@ -928,12 +928,14 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param("ls myplugin", id="without_a_gated_action"),
             pytest.param("g''it commit -am \"$(( 1 + 1 ))\"", id="unparsed_with_git_split_by_quotes"),
             pytest.param("ca\\nvas dep''loy acme_x \"$(( 1 ))\"", id="unparsed_with_deploy_split_by_quotes"),
+            pytest.param("git $'\\x63ommit' -am \"$(( 1 + 1 ))\"", id="unparsed_with_commit_built_by_the_shell"),
+            pytest.param("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit status", id="unparsed_without_a_gated_action"),
         ],
     )
     def test_a_command_the_gate_cannot_read_is_unreadable(self, command: str) -> None:
         """A command holding a stand-in for a quoted `;` (which would come back as a `;` in a path
-        bash reads as written), or one shlex cannot split that may commit or deploy even with its
-        words split by quotes, is refused."""
+        bash reads as written), or any command shlex cannot split, since the shell can build a
+        commit or deploy from pieces (`$'\\x63ommit'`), is refused."""
         with pytest.raises(plugin_gate.UnreadableCommand):
             plugin_gate.bash_actions(command)
 
@@ -1009,10 +1011,6 @@ class TestCommandsTheGateMustNotMiss:
         """A quote shlex cannot close hides where a commit or deploy runs, so the gate does not guess."""
         with pytest.raises(plugin_gate.UnclearTarget):
             plugin_gate.bash_actions(command)
-
-    def test_an_unreadable_command_that_neither_commits_nor_uploads_passes(self) -> None:
-        """Nothing gated is in it, so an unclosed quote alone stops nothing."""
-        assert plugin_gate.bash_actions("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit status") == []
 
     @pytest.mark.usefixtures("canvas_on_path")
     @pytest.mark.parametrize(("mode", "code"), [("block", 2), ("advise", 0)])
