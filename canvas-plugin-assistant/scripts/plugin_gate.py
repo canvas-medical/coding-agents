@@ -109,7 +109,7 @@ class UnclearTarget(OutsideSession):
 class UnreadableCommand(UnclearTarget):
     """A command whose quoting shlex cannot close, such as a heredoc body holding an apostrophe."""
 
-    reason = "it could not read this command's quoting (a heredoc or `$'...'` holding a quote), so it stopped it. Write files with the Write tool, and run the commit or deploy as a command of its own."
+    reason = "it could not read this command's quoting (a heredoc or `$'...'` holding a quote, or `$((` inside double quotes), so it stopped it. Write files with the Write tool, and run the git, canvas or uv command as a command of its own."
 
 
 def inside(path: Path, cwd: Path) -> Path:
@@ -558,12 +558,9 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         tokens = [operator for token in lexer for operator in operators(token)]
     except ValueError:
         # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which
-        # commands run and where, so a command that may commit or upload is not guessed at. Quotes
-        # and backslashes can split a word (`g''it`, `com\mit`), so the search runs without them,
-        # and it looks for the action alone, since the program may be one the shell expands.
-        if re.search(r"\b(?:commit|deploy)\b|--continue\b", re.sub(r"[\"'\\]", "", command)):
-            raise UnreadableCommand from None
-        return []
+        # commands run and where. The shell can build a commit or deploy from pieces no text search
+        # sees (`git $'\x63ommit'`), so any such command is refused.
+        raise UnreadableCommand from None
     actions: list[tuple[str, str | None]] = []
     words: list[str] = []
     # Where an earlier `cd` in the same command left the shell, relative to the session's cwd.
