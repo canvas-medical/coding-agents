@@ -886,6 +886,10 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param('"$(command -v canvas)" deploy acme_x', id="program_quoted_substitution"),
             pytest.param("`which canvas` deploy acme_x", id="program_backticks"),
             pytest.param('"$(command -v git)" commit -am x', id="git_program_substitution"),
+            pytest.param('git "$(echo commit)" -am x', id="git_subcommand_substitution"),
+            pytest.param('canvas "$(echo deploy)" acme_x', id="canvas_subcommand_substitution"),
+            pytest.param('"$(command -v canvas)" "$(echo deploy)" acme_x', id="program_and_subcommand_substitution"),
+            pytest.param("$G -C my-plugin commit -am x", id="program_variable_before_options"),
         ],
     )
     def test_a_target_the_shell_expands_is_unclear(self, command: str) -> None:
@@ -922,11 +926,14 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param("git -C myplugin commit -am x", id="in_a_path"),
             pytest.param("g''it commit -am x ", id="with_a_quote_splitting_git"),
             pytest.param("ls myplugin", id="without_a_gated_action"),
+            pytest.param("g''it commit -am \"$(( 1 + 1 ))\"", id="unparsed_with_git_split_by_quotes"),
+            pytest.param("ca\\nvas dep''loy acme_x \"$(( 1 ))\"", id="unparsed_with_deploy_split_by_quotes"),
         ],
     )
-    def test_a_command_holding_a_stand_in_is_unreadable(self, command: str) -> None:
-        """The stand-in for a quoted `;` would come back as a `;` in a path bash reads as written,
-        and a search for `git` and `commit` can be split by quotes, so the command is refused."""
+    def test_a_command_the_gate_cannot_read_is_unreadable(self, command: str) -> None:
+        """A command holding a stand-in for a quoted `;` (which would come back as a `;` in a path
+        bash reads as written), or one shlex cannot split that may commit or deploy even with its
+        words split by quotes, is refused."""
         with pytest.raises(plugin_gate.UnreadableCommand):
             plugin_gate.bash_actions(command)
 

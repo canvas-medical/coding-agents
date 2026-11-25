@@ -558,8 +558,10 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
         tokens = [operator for token in lexer for operator in operators(token)]
     except ValueError:
         # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which
-        # commands run and where, so a command that may commit or upload is not guessed at.
-        if re.search(r"\bgit\b[\s\S]*(?:\bcommit|--continue)\b|\bcanvas\b[\s\S]*\bdeploy\b", command):
+        # commands run and where, so a command that may commit or upload is not guessed at. Quotes
+        # and backslashes can split a word (`g''it`, `com\mit`), so the search runs without them,
+        # and it looks for the action alone, since the program may be one the shell expands.
+        if re.search(r"\b(?:commit|deploy)\b|--continue\b", re.sub(r"[\"'\\]", "", command)):
             raise UnreadableCommand from None
         return []
     actions: list[tuple[str, str | None]] = []
@@ -613,8 +615,14 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
             ):
                 raise UnclearTarget
         program = Path(words[0]).name if words else ""
-        if not is_literal(program) and words[1:2] in (["deploy"], ["commit"]):
-            # A program the shell expands, such as "$(command -v canvas)", may be canvas or git.
+        if not is_literal(program) and any(
+            word in ("deploy", "commit", "--continue") or not is_literal(word) for word in words[1:]
+        ):
+            # A program the shell expands, such as "$(command -v canvas)", may be canvas or git,
+            # and a later word it expands may be its subcommand.
+            raise UnclearTarget
+        if program == "canvas" and words[1:2] and not is_literal(words[1]):
+            # A subcommand the shell expands, such as "$(echo deploy)", may be deploy.
             raise UnclearTarget
         if program == "canvas" and words[1:2] == ["deploy"]:
             target = upload_target(words[2:])
@@ -631,6 +639,9 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                     if word == "-C" and value:
                         git_dirs.append(value)
                 elif not word.startswith("-"):
+                    if not is_literal(word):
+                        # A subcommand the shell expands, such as "$(echo commit)", may be commit.
+                        raise UnclearTarget
                     if word == "commit" or (word in RECORDS_ON_CONTINUE and "--continue" in rest):
                         if base_unknown or not all(is_literal(path) for path in git_dirs):
                             raise UnclearTarget
