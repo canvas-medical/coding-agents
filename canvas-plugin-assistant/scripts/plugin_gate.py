@@ -408,7 +408,8 @@ def joined_lines(command: str) -> str:
             index += 2
             word_start = False
             continue
-        elif quote == '"' and (pair == "$(" or char == "`"):
+        # `"$((...))"` is arithmetic, not a command, so it stays quoted text.
+        elif quote == '"' and ((pair == "$(" and command[index + 2 : index + 3] != "(") or char == "`"):
             opener = "$(" if pair == "$(" else "`"
             out.append('"' + opener)
             quote = ""
@@ -440,6 +441,8 @@ def joined_lines(command: str) -> str:
             index += 1
             word_start = False
             continue
+        elif substitutions and pair == "((":
+            raise ValueError("arithmetic, where `<<` is a shift, inside a quoted substitution")
         elif substitutions and substitutions[-1] != "`" and char in "()":
             substitutions[-1] = int(substitutions[-1]) + (1 if char == "(" else -1)
         word_start = not quote and not comment and (char.isspace() or char in ";&|()")
@@ -456,8 +459,12 @@ def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> i
     while True:
         end = command.find("\n", start)
         line = command[start:] if end == -1 else command[start:end]
-        if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+        body = line.lstrip("\t") if strip_tabs else line
+        if body == delimiter:
             return len(command) if end == -1 else end + 1
+        if body.startswith(delimiter + ")"):
+            # bash also ends a heredoc inside `$(...)` at its delimiter followed by the closing `)`.
+            return start + len(line) - len(body) + len(delimiter)
         if end == -1:
             raise ValueError(f"heredoc {delimiter!r} has no closing line")
         start = end + 1
