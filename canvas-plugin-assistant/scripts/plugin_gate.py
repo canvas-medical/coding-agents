@@ -42,6 +42,8 @@ KEY_FILE = re.compile(r"(?:^|/)[^/]+\.(?:pem|key|p12|pfx)$")
 DOCS = re.compile(r"(?i)\.(?:md|rst)$")
 HEX_TOKEN = re.compile(r"[0-9a-f]{32,}")
 HUNK_START = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+# `<<EOF`, `<<-EOF`, `<< 'EOF'` or `<<"EOF"`: the word whose line ends the heredoc body.
+HEREDOC = re.compile(r"<<(?P<dash>-?)[ \t]*(?P<word>(?:[^\s;&|()<>'\"]|'[^']*'|\"[^\"]*\")+)")
 # git's global options that take a separate value: `git -C dir commit` is still a commit.
 GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env"}
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
@@ -366,7 +368,9 @@ def joined_lines(command: str) -> str:
     stays as words, which errs toward checking when a `#` is misread; its quotes and backslashes
     become spaces, so they cannot pair with a quote or escape a separator elsewhere. A `$(...)` or
     backtick substitution inside double quotes closes the quote until it ends, since shlex would
-    read the command it runs as one quoted word.
+    read the command it runs as one quoted word; a heredoc body inside one is dropped as text.
+    Raises ValueError for a substitution it cannot follow: one holding `case`, whose patterns end
+    in an unmatched `)`, or one or its heredoc never closing.
     """
     out: list[str] = []
     quote = ""
@@ -374,12 +378,23 @@ def joined_lines(command: str) -> str:
     word_start = True
     # One entry per substitution open inside double quotes: "`", or a `$(`'s count of unclosed `(`.
     substitutions: list[int | str] = []
+    # (delimiter, leading tabs stripped) for each heredoc whose body starts at the next newline.
+    heredocs: list[tuple[str, bool]] = []
     index = 0
     while index < len(command):
         char, pair = command[index], command[index : index + 2]
         if comment and char != "\n":
             out.append(" " if char in "'\"\\" else char)
             index += 1
+            continue
+        if char == "\n" and heredocs and not quote:
+            index = index + 1
+            for delimiter, strip_tabs in heredocs:
+                index = heredoc_end(command, index, delimiter, strip_tabs)
+            heredocs = []
+            comment = False
+            word_start = True
+            out.append(char)
             continue
         if comment:
             comment = False
@@ -405,6 +420,17 @@ def joined_lines(command: str) -> str:
             quote = "" if char == '"' else quote
         elif char in "'\"":
             quote = char
+        elif substitutions and word_start and re.match(r"case\b", command[index:]):
+            raise ValueError("a `case` inside a quoted substitution")
+        elif substitutions and pair == "<<" and command[index + 2 : index + 3] != "<":
+            heredoc = HEREDOC.match(command, index)
+            if heredoc is None:
+                raise ValueError("a heredoc without a delimiter")
+            heredocs.append((re.sub(r"[\"'\\]", "", heredoc["word"]), heredoc["dash"] == "-"))
+            out.append("<< heredoc")
+            index = heredoc.end()
+            word_start = False
+            continue
         elif char == "#" and word_start:
             comment = True
         elif substitutions and ((char == ")" and substitutions[-1] == 0) or (char == "`" and substitutions[-1] == "`")):
@@ -419,7 +445,22 @@ def joined_lines(command: str) -> str:
         word_start = not quote and not comment and (char.isspace() or char in ";&|()")
         out.append(char)
         index += 1
+    if substitutions or heredocs:
+        raise ValueError("a quoted substitution or its heredoc never closes")
     return "".join(out)
+
+
+def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> int:
+    """Where ``command`` resumes after a heredoc body starting at ``start``: past its delimiter line.
+    Raises ValueError when no line ends the body."""
+    while True:
+        end = command.find("\n", start)
+        line = command[start:] if end == -1 else command[start:end]
+        if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+            return len(command) if end == -1 else end + 1
+        if end == -1:
+            raise ValueError(f"heredoc {delimiter!r} has no closing line")
+        start = end + 1
 
 
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
@@ -433,15 +474,15 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # In the shell a newline or backtick starts a new command and a backslash-newline continues
     # one, which shlex alone does not see. shlex's own comment would run to the end of the whole
     # command, so joined_lines handles comments instead.
-    lexer = shlex.shlex(
-        # Spaced, so a blank line's two separators do not merge into one `;;` word.
-        joined_lines(command).replace("\n", " ; ").replace("`", " ; "),
-        posix=True,
-        punctuation_chars=True,
-    )
-    lexer.whitespace_split = True
-    lexer.commenters = ""
     try:
+        lexer = shlex.shlex(
+            # Spaced, so a blank line's two separators do not merge into one `;;` word.
+            joined_lines(command).replace("\n", " ; ").replace("`", " ; "),
+            posix=True,
+            punctuation_chars=True,
+        )
+        lexer.whitespace_split = True
+        lexer.commenters = ""
         tokens = list(lexer)
     except ValueError:
         # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which

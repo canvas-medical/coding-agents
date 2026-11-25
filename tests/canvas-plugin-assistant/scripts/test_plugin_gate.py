@@ -674,6 +674,16 @@ class TestNamedTargets:
             pytest.param('out="$(cd work && (canvas deploy acme_x))"', ("upload", "work/acme_x"), id="parens_inside"),
             pytest.param('out="$(echo ")" && canvas deploy acme_x)"', ("upload", "acme_x"), id="quoted_paren_inside"),
             pytest.param('echo "$(date) then git commit"', None, id="text_after_a_substitution_stays_quoted"),
+            pytest.param(
+                "git -C b commit -m \"$(cat <<'EOF'\nDon't merge (yet\nEOF\n)\"",
+                ("commit", "b"),
+                id="claude_code_commit_message_heredoc",
+            ),
+            pytest.param(
+                'out="$(cat <<-END\n\tgit -C b commit )\n\tEND\n)"; canvas deploy acme_x',
+                ("upload", "acme_x"),
+                id="tab_stripped_heredoc_in_a_substitution",
+            ),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -872,6 +882,10 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param("echo $'it\\'s' && canvas deploy acme_x", id="ansi_c_quote"),
             pytest.param("git commit -m 'unbalanced", id="unbalanced_commit"),
             pytest.param("cat > n.md <<'EOF'\nThe plugin's notes\nEOF\ngit rebase --continue", id="heredoc_then_continue"),
+            pytest.param('out="$(case x in a) echo;; esac; canvas deploy acme_x)"', id="case_in_a_substitution"),
+            pytest.param("git commit -m \"$(cat <<'EOF'\nno closing line\n)\"", id="unclosed_heredoc_in_a_substitution"),
+            pytest.param('out="$(cat << )"; git commit -m x', id="heredoc_without_a_delimiter"),
+            pytest.param('git commit -m "$(echo x', id="unclosed_substitution"),
         ],
     )
     def test_a_command_shlex_cannot_read_is_unclear(self, command: str) -> None:
