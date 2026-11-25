@@ -52,6 +52,10 @@ SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
 SHELL_OPERATOR = re.compile(r"&>>?|[<>]+[&|]?|;;&|;;|;&|\|&|&&|\|\||[;&|()]")
 # Operators that end a command the way `;` or `|` does.
 SEPARATOR_ALIASES = {";;&": ";", ";;": ";", ";&": ";", "|&": "|"}
+# Private-use stand-ins for operator characters that are quoted or escaped, so shlex reads them
+# as word characters; SHOW_OPERATORS turns them back once the command is split.
+HIDE_OPERATORS = str.maketrans({char: chr(0xE000 + offset) for offset, char in enumerate("();<>|&")})
+SHOW_OPERATORS = {ord(stand_in): chr(code) for code, stand_in in HIDE_OPERATORS.items()}
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
 # `canvas deploy` options that take a separate value, so their value is not the plugin path.
@@ -495,6 +499,28 @@ def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> i
         start = end + 1
 
 
+def quoted_operators_hidden(text: str) -> str:
+    """``text`` with each operator character inside quotes or after a backslash swapped for a
+    stand-in shlex reads as a word character. shlex returns a quoted `;` as the same token as a
+    real one, so without this a quoted `"&&"` or `")"` would read as a separator."""
+    out: list[str] = []
+    quote = ""
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "\\" and quote != "'":
+            out.append(char + text[index + 1 : index + 2].translate(HIDE_OPERATORS))
+            index += 2
+            continue
+        if quote and char == quote:
+            quote = ""
+        elif not quote and char in "'\"":
+            quote = char
+        out.append(char.translate(HIDE_OPERATORS) if quote else char)
+        index += 1
+    return "".join(out)
+
+
 def operators(token: str) -> list[str]:
     """``token`` split into the shell operators it holds when it is all punctuation, since shlex
     joins `);` or `;(` into one token that would otherwise read as a word and hide the command
@@ -518,7 +544,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     try:
         lexer = shlex.shlex(
             # Spaced, so a blank line's two separators do not merge into one `;;` word.
-            joined_lines(command).replace("\n", " ; ").replace("`", " ; "),
+            quoted_operators_hidden(joined_lines(command).replace("\n", " ; ").replace("`", " ; ")),
             posix=True,
             punctuation_chars=True,
         )
@@ -537,13 +563,13 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # An expanded `cd` makes it unknown, which matters only if a gated action follows.
     base: str | None = None
     base_unknown = False
-    # A `cd` in a subshell ends with it, but shlex returns a quoted or escaped paren as the same
-    # token as a real one, so no `(` or `)` can be trusted to say where a subshell begins or ends.
-    # Instead any `cd` before a `)` makes `base` unknown from there on.
+    # A `cd` in a subshell ends with it, but an unquoted `)` can also end a `case` pattern, so the
+    # gate does not pair parens to restore `base`. Instead any `cd` before a `)` makes `base`
+    # unknown from there on.
     cds = 0
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
-            words.append(token)
+            words.append(token.translate(SHOW_OPERATORS))
             continue
         while words:
             if words[0] in COMMAND_PREFIXES or words[0] == "" or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", words[0]):
