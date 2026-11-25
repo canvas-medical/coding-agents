@@ -111,12 +111,12 @@ If it reports `style_clean: false` after four rounds, leave the code in its best
 Run this before deploying or wrapping up:
 
 ```
-/cpa:check-setup      →  Verify environment tools (uv, unbuffer)
+/cpa:check-setup      →  Verify environment tools and Canvas Platform sign-in
 /cpa:new-plugin       →  Create plugin from requirements
 /cpa:style            →  Format + lint + type-check to the Canvas standard  ← YOU ARE HERE
 /cpa:deploy           →  Deploy to Canvas instance for UAT
 /cpa:coverage         →  Check test coverage (aim for 90%)
 /cpa:security-review  →  Comprehensive security audit
 /cpa:database-performance-review  →  Database query optimization
-/cpa:wrap-up          →  Final checklist before delivery
+/cpa:wrap-up          →  Final checklist, commit, and release
 ```

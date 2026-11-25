@@ -122,7 +122,7 @@ This command is **step 4** in the Canvas Plugin Assistant workflow:
 /cpa:coverage         →  Check test coverage (aim for 90%)  ← YOU ARE HERE
 /cpa:security-review  →  Comprehensive security audit
 /cpa:database-performance-review  →  Database query optimization
-/cpa:wrap-up          →  Final checklist before delivery
+/cpa:wrap-up          →  Final checklist, commit, and release
 ```
 
 After achieving 90% coverage, guide the user to the next step of the workflow.

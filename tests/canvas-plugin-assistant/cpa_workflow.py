@@ -3,14 +3,14 @@
 # The workflow, in order: (command name, one-line description). This is the single
 # source of truth; every command file's "## CPA Workflow" block is rendered from it.
 STEPS = [
-    ("check-setup", "Verify environment tools (uv, unbuffer)"),
+    ("check-setup", "Verify environment tools and Canvas Platform sign-in"),
     ("new-plugin", "Create plugin from requirements"),
     ("style", "Format + lint + type-check to the Canvas standard"),
     ("deploy", "Deploy to Canvas instance for UAT"),
     ("coverage", "Check test coverage (aim for 90%)"),
     ("security-review", "Comprehensive security audit"),
     ("database-performance-review", "Database query optimization"),
-    ("wrap-up", "Final checklist before delivery"),
+    ("wrap-up", "Final checklist, commit, and release"),
 ]
 
 # Column the descriptions start at. `/cpa:database-performance-review` is longer
