@@ -7927,7 +7927,7 @@ recipient
 array[json] required
 Message recipient.  
 Supported reference types are a single **Patient** or **Practitioner**.
-Between the sender and recipient, one must be a practitioner while the other must be a patient.
+Between the sender and recipient, one must be a practitioner while the other must be a patient. When the sender is a **RelatedPerson** , the recipient must be a practitioner.
 Click to view child attributes
 reference 
 string required
@@ -7938,15 +7938,16 @@ Type the reference refers to (e.g. "Patient" or "Practitioner").
 sender 
 json required
 Message sender.  
-Supported reference types are a single **Patient** or **Practitioner**.
-Between the sender and recipient, one must be a practitioner while the other must be a patient.
+Supported reference types are a single **Patient** , **Practitioner** , or **RelatedPerson**. A **RelatedPerson** sender is a family member or other representative who sent the message through [family portal access](/sdk/patient-portal/#family-portal-access). The reference is to the [RelatedPerson](/api/relatedperson/) their access was given from, even when they also have a chart of their own.
+Between the sender and recipient, one must be a practitioner while the other must be a patient.  
+To send a message as a family member, set `sender` to the RelatedPerson their access was given from and `recipient` to a practitioner. Canvas files the message on that RelatedPerson's patient's chart, sent from the family member's own portal login.
 Click to view child attributes
 reference 
 string required
-The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"` or `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`.
+The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"`, `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`, or `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`.
 type 
 string 
-Type the reference refers to (e.g. "Patient" or "Practitioner").
+Type the reference refers to (e.g. "Patient", "Practitioner", or "RelatedPerson").
 payload 
 array[json] required
 Message payload.  
@@ -7996,7 +7997,7 @@ A communication message in Canvas that was sent, received, delivered, or relayed
   - unknown 
 subject 
 json 
-Focus of the message. Always a **Patient** reference.
+Focus of the message. Always a **Patient** reference: the patient whose chart the message is filed on. For a message a family member or other representative sent through [family portal access](/sdk/patient-portal/#family-portal-access), that's the chart they sent it on, even when they have a chart of their own.
 Click to view child attributes
 reference 
 string 
@@ -8028,14 +8029,15 @@ Type the reference refers to (e.g. "Patient" or "Practitioner").
 sender 
 json 
 Message sender.  
-Supported reference types are a single **Patient** or **Practitioner**.
+Supported reference types are a single **Patient** , **Practitioner** , or **RelatedPerson**. A **RelatedPerson** sender is a family member or other representative who sent the message through [family portal access](/sdk/patient-portal/#family-portal-access). The reference is to the [RelatedPerson](/api/relatedperson/) their access was given from, even when they also have a chart of their own.
+When Canvas can no longer name the RelatedPerson a family member's message came from, `sender` is the family member's own Patient reference if they have a chart, and is left out if they don't.
 Click to view child attributes
 reference 
 string 
-The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"` or `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`.
+The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"`, `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`, or `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`.
 type 
 string 
-Type the reference refers to (e.g. "Patient" or "Practitioner").
+Type the reference refers to (e.g. "Patient", "Practitioner", or "RelatedPerson").
 payload 
 array[json] 
 Message payload.  
@@ -8057,7 +8059,7 @@ The requested resource was not found.
 get
 /Communication
 #### Communication search
-Communication search will only return messages between a practitioner and patient, not between two practitioners.  
+Communication search will only return messages between a practitioner and patient, including a family member's messages to a practitioner, not between two practitioners.  
 ### Query Parameters
 ****
 _id 
@@ -8071,7 +8073,7 @@ string
 Message recipient in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"` or `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`.
 sender 
 string 
-Message sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"` or `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`.
+Message sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"`, `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`, or `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`. A Patient sender matches the messages that patient sent on their own chart, not ones they sent on another chart through family portal access. A RelatedPerson sender matches the messages family members sent through the access given from that RelatedPerson, including after staff removed the contact from the chart.
 ### Response Payload Attributes
 resourceType 
 string 
@@ -8116,7 +8118,7 @@ A communication message in Canvas that was sent, received, delivered, or relayed
   - unknown 
 subject 
 json 
-Focus of the message. Always a **Patient** reference.
+Focus of the message. Always a **Patient** reference: the patient whose chart the message is filed on. For a message a family member or other representative sent through [family portal access](/sdk/patient-portal/#family-portal-access), that's the chart they sent it on, even when they have a chart of their own.
 Click to view child attributes
 reference 
 string 
@@ -8148,14 +8150,15 @@ Type the reference refers to (e.g. "Patient" or "Practitioner").
 sender 
 json 
 Message sender.  
-Supported reference types are a single **Patient** or **Practitioner**.
+Supported reference types are a single **Patient** , **Practitioner** , or **RelatedPerson**. A **RelatedPerson** sender is a family member or other representative who sent the message through [family portal access](/sdk/patient-portal/#family-portal-access). The reference is to the [RelatedPerson](/api/relatedperson/) their access was given from, even when they also have a chart of their own.
+When Canvas can no longer name the RelatedPerson a family member's message came from, `sender` is the family member's own Patient reference if they have a chart, and is left out if they don't.
 Click to view child attributes
 reference 
 string 
-The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"` or `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`.
+The reference string of the sender in the format of `"Patient/a39cafb9d1b445be95a2e2548e12a787"`, `"Practitioner/ed1e304acdb847148338c6b0596d93fd"`, or `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`.
 type 
 string 
-Type the reference refers to (e.g. "Patient" or "Practitioner").
+Type the reference refers to (e.g. "Patient", "Practitioner", or "RelatedPerson").
 payload 
 array[json] 
 Message payload.  
@@ -25999,7 +26002,8 @@ Search for Medication resources.
 **A Medication Search requires either a code or _text search parameter to perform.**
 _text 
 string 
-Performs a case insensitive partial search on the narrative of the Medication.
+Performs a case-insensitive partial search on the narrative of the Medication, which is the medication description. A Medication matches when every word of the search appears somewhere in its description, in any order. Commas separate words the same way spaces do.  
+A strength can be written with or without a space before the unit: `amoxicillin 500mg` and `amoxicillin 500 mg` return the same results. Numbers also match inside larger numbers, so `lisinopril 5mg` can return 25 mg strengths alongside 5 mg.
 code 
 System url and code that identifies the medication formatted like   
 `system_url|code`.  
@@ -29112,7 +29116,9 @@ Currently supported numeric values are
 \- body temperature  
 \- pulse rate  
 \- oxygen saturation  
-\- respiration rate A `valueQuantity` can also be used to represent a diagnostic score. Scores will have a unit of 'score'.
+\- respiration rate  
+The value must be a number greater than zero; otherwise the request is rejected with a 422 error.   
+A `valueQuantity` can also be used to represent a diagnostic score. Scores will have a unit of 'score'.
 Click to view child attributes
 value 
 number required
@@ -29126,8 +29132,8 @@ Actual result.
 This is used for vital observation that correspond with a string value. If this field is not provided or specifically the value attribute in the json is omitted, Canvas will interpret that as an empty value. A Read/Search of this observation will display the `dataAbsentReason` attribute.   
 Currently supported string values are   
 \- **note** \- this is a free text comment field in the Canvas Vital Command. Maximum length is 150 characters.   
-\- **pulse rhythm** \- This is an enum in the Canvas Vital command. Values supported are **Regular** , **Irregularly Irregular** , **Regulary Irregular**. If one of these values is not provided, a 422 error will occur.   
-\- **blood pressure** \- This is a string reprentation of the systolic and diastolic combined in the format `"100/80"`. If this valueString is not given, it will not appear correctly in the Canvas Vital Command.
+\- **pulse rhythm** \- This is an enum in the Canvas Vital command. Values supported are **Regular** , **Irregularly Irregular** , **Regularly Irregular**. Any other value is rejected with a 422 error.   
+\- **blood pressure** \- This is a string representation of the systolic and diastolic combined in the format `"100/80"`. A trailing `mmHg` is accepted and removed; a blood pressure valueString in any other format is rejected with a 422 error.
 hasMember 
 array[json] 
 Related Observation reference(s) that belongs to the Observation group/panel.  
@@ -33004,7 +33010,7 @@ Contact parties (e.g., guardian, partner, friend, emergency contact) for the pat
 Click to view child attributes
 id 
 string 
-Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one.
+Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one. Canvas skips an entry whose `id` names a contact that staff removed from this patient's chart after it had [family portal access](/sdk/patient-portal/#family-portal-access), so writing back an earlier read doesn't restore that contact.
 relationship 
 array[json] 
 Codings describing the relationship of the contact to the patient. Codings can come from the standard `v3-RoleCode` system or from your instance's [configurable contact categories](https://help.canvasmedical.com/articles/8258338559-contact-categories), including the built-in **Emergency contact** category (`code`: `EMC`). Multiple codings can be combined on a single relationship to capture, e.g., both a familial relationship (`SPS` = spouse) and a contact-category role (`EMC` = emergency contact).
@@ -33486,7 +33492,7 @@ Contact parties (e.g., guardian, partner, friend, emergency contact) for the pat
 Click to view child attributes
 id 
 string 
-Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one.
+Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one. Canvas skips an entry whose `id` names a contact that staff removed from this patient's chart after it had [family portal access](/sdk/patient-portal/#family-portal-access), so writing back an earlier read doesn't restore that contact.
 relationship 
 array[json] 
 Codings describing the relationship of the contact to the patient. Codings can come from the standard `v3-RoleCode` system or from your instance's [configurable contact categories](https://help.canvasmedical.com/articles/8258338559-contact-categories), including the built-in **Emergency contact** category (`code`: `EMC`). Multiple codings can be combined on a single relationship to capture, e.g., both a familial relationship (`SPS` = spouse) and a contact-category role (`EMC` = emergency contact).
@@ -34005,7 +34011,7 @@ Contact parties (e.g., guardian, partner, friend, emergency contact) for the pat
 Click to view child attributes
 id 
 string 
-Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one.
+Canvas-issued identifier for this contact. Include on update to target an existing contact; omit to create a new one. Canvas skips an entry whose `id` names a contact that staff removed from this patient's chart after it had [family portal access](/sdk/patient-portal/#family-portal-access), so writing back an earlier read doesn't restore that contact.
 relationship 
 array[json] 
 Codings describing the relationship of the contact to the patient. Codings can come from the standard `v3-RoleCode` system or from your instance's [configurable contact categories](https://help.canvasmedical.com/articles/8258338559-contact-categories), including the built-in **Emergency contact** category (`code`: `EMC`). Multiple codings can be combined on a single relationship to capture, e.g., both a familial relationship (`SPS` = spouse) and a contact-category role (`EMC` = emergency contact).
@@ -40260,10 +40266,10 @@ json
 Click to view child attributes
 reference 
 string 
-The reference string of who the agent is in the format of `"Practitioner/a39cafb9d1b445be95a2e2548e12a787"`. When the committer or originator is a patient, such as a write made with a patient-context token, the reference is to that patient in the format `"Patient/b8dfa97bdcdf4754bcd8197ca78ef0f0"`. If the reference is `Organization/00000000-0000-0000-0002-000000000000`, a committer or originator couldn't be found in Canvas as the agent, so Canvas Medical is the default agent.
+The reference string of who the agent is in the format of `"Practitioner/a39cafb9d1b445be95a2e2548e12a787"`. The agent is the record's committer, or its originator when the record has no committer. When the agent is a patient, such as a write made with a patient-context token, the reference is to that patient in the format `"Patient/b8dfa97bdcdf4754bcd8197ca78ef0f0"`. When a family member or other representative acts on the patient's chart through [family portal access](/sdk/patient-portal/#family-portal-access), the reference is to the [RelatedPerson](/api/relatedperson/) their access was given from, in the format `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`. If the reference is `Organization/00000000-0000-0000-0002-000000000000`, Canvas couldn't identify that committer or originator on the patient's chart, so Canvas Medical is the default agent.
 type 
 string 
-Type the reference refers to (e.g. "Practitioner", "Patient", "Organization").
+Type the reference refers to (e.g. "Practitioner", "Patient", "RelatedPerson", "Organization").
 display 
 string 
 Text alternative for the resource.
@@ -40458,10 +40464,10 @@ json
 Click to view child attributes
 reference 
 string 
-The reference string of who the agent is in the format of `"Practitioner/a39cafb9d1b445be95a2e2548e12a787"`. When the committer or originator is a patient, such as a write made with a patient-context token, the reference is to that patient in the format `"Patient/b8dfa97bdcdf4754bcd8197ca78ef0f0"`. If the reference is `Organization/00000000-0000-0000-0002-000000000000`, a committer or originator couldn't be found in Canvas as the agent, so Canvas Medical is the default agent.
+The reference string of who the agent is in the format of `"Practitioner/a39cafb9d1b445be95a2e2548e12a787"`. The agent is the record's committer, or its originator when the record has no committer. When the agent is a patient, such as a write made with a patient-context token, the reference is to that patient in the format `"Patient/b8dfa97bdcdf4754bcd8197ca78ef0f0"`. When a family member or other representative acts on the patient's chart through [family portal access](/sdk/patient-portal/#family-portal-access), the reference is to the [RelatedPerson](/api/relatedperson/) their access was given from, in the format `"RelatedPerson/3f1b2c7d8e9a4b5c6d7e8f9a0b1c2d3e"`. If the reference is `Organization/00000000-0000-0000-0002-000000000000`, Canvas couldn't identify that committer or originator on the patient's chart, so Canvas Medical is the default agent.
 type 
 string 
-Type the reference refers to (e.g. "Practitioner", "Patient", "Organization").
+Type the reference refers to (e.g. "Practitioner", "Patient", "RelatedPerson", "Organization").
 display 
 string 
 Text alternative for the resource.
@@ -43559,7 +43565,7 @@ string
 The identifier of the RelatedPerson.
 active 
 boolean 
-Whether this related person's record is in active use.
+Whether this related person's record is in active use. `false` for a contact that staff removed from the patient's chart after it had [family portal access](/sdk/patient-portal/#family-portal-access). Canvas keeps that contact for the records its family member wrote, so a read by `id` or a search by `_id` still returns it, and references to it, such as a Provenance `agent.who`, resolve. A search by `patient` leaves it out.
 patient 
 json 
 The patient this person is related to.
@@ -43721,7 +43727,7 @@ string
 The identifier of the RelatedPerson.
 active 
 boolean 
-Whether this related person's record is in active use.
+Whether this related person's record is in active use. `false` for a contact that staff removed from the patient's chart after it had [family portal access](/sdk/patient-portal/#family-portal-access). Canvas keeps that contact for the records its family member wrote, so a read by `id` or a search by `_id` still returns it, and references to it, such as a Provenance `agent.who`, resolve. A search by `patient` leaves it out.
 patient 
 json 
 The patient this person is related to.
@@ -47895,7 +47901,7 @@ Here is a payload to create a weight of 176.4 lbs:
 Looking in the Canvas UI, there will now be weight of `176 lbs 6.4 oz` added in that Vitals Command:
 ![Protocol framework](/assets/images/vitals/weight.png)
 ####  Add Waist Circumference 
-Waist Circumference is denoted by the LOINC code `29463-7`. Since its value is numeric, we will be able to pass the value and units through the `valueQuantity` attribute. By default if no `valueQuantity.unit` is specified, it will default to using centimeters, but `in` is also supported, it will just convert it to `cm` on the UI or when a Read/Search is performed.
+Waist Circumference is denoted by the LOINC code `56086-2`. Since its value is numeric, we will be able to pass the value and units through the `valueQuantity` attribute. By default if no `valueQuantity.unit` is specified, it will default to using centimeters, but `in` is also supported, it will just convert it to `cm` on the UI or when a Read/Search is performed.
 Here is a payload to create a waist circumference of `98.2 cm`:
     ```python
     payload = {
@@ -47973,7 +47979,7 @@ Here is a payload to create a temperature of `98.4 °F`:
 Looking in the Canvas UI, there will now be temperature of `98.4 °F` added in that Vitals Command:
 ![Protocol framework](/assets/images/vitals/body-temperature.png)
 ####  Add Blood Pressure 
-Blood Pressure is denoted by the LOINC code `85354-9`. In the Vital's command blood pressure is a string value that combines the systolic and diastolic components with a `/`. So the payload will pass the `valueString` component in order for the blood pressure to appear correctly in the Vitals Command.
+Blood Pressure is denoted by the LOINC code `85354-9`. In the Vital's command blood pressure is a string value that combines the systolic and diastolic components with a `/`. So the payload will pass the `valueString` component in order for the blood pressure to appear correctly in the Vitals Command. A trailing `mmHg` is accepted and removed; a `valueString` in any other format is rejected with a 422 error.
 Since blood pressure is made up of two values, the payload will also define a `component` attribute list to pass the systolic (LOINC code `8480-6`) and diastolic (LOINC code `8462-4`) values. These two values are numeric, so they will have the `valueQuantity` attributes where the unit will be `mmHg`
 Here is a payload to create a Blood Pressure of `122/68`:
     ```python
@@ -48081,7 +48087,7 @@ Here is a payload to create a pulse rate of `115 bpm`:
 Looking in the Canvas UI, there will now be pulse rate of `115 bpm` added in that Vitals Command:
 ![Protocol framework](/assets/images/vitals/pulse-rate.png)
 ####  Add Pulse Rhythm 
-Pulse Rhythm is denoted by the LOINC code `8884-9`. Canvas accepts only three different string values for pulse rhythm: `Regular`, `Irregularly Irregular`, or `Regulary Irregular`. This value will be passed in the `valueString` attribute.
+Pulse Rhythm is denoted by the LOINC code `8884-9`. Canvas accepts only three different string values for pulse rhythm: `Regular`, `Irregularly Irregular`, or `Regularly Irregular`, and rejects any other value with a 422 error. This value will be passed in the `valueString` attribute.
 Here is a payload to create a pulse rhythm of `Regular`:
     ```python
     payload = {

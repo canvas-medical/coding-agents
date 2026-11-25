@@ -58,9 +58,9 @@ export CPA_RUNNING=1 && export CPA_WORKSPACE_DIR=$(pwd) && export CPA_PLUGIN_DIR
 
 ### Plugin Gate
 
-A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) before `git commit`, `canvas install`, `canvas deploy` (bare, through `uv run`, or `.venv/bin/canvas`) and the `installer` MCP tool. It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
+A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox handler load) before `git commit` and `canvas deploy` (bare, through `uv run`, or `.venv/bin/canvas`). It does nothing unless `CPA_PLUGIN_GATE` is set, and nothing for a call outside a plugin.
 
-- Which plugin: for a commit, every plugin holding a file the commit can record; for an install or deploy, the plugin it names. A `cd`, `git -C` or `uv run --directory` earlier in the command is followed, so the workspace layout above (`my-plugin/my_plugin/`) is found from the workspace.
+- Which plugin: for a commit, every plugin holding a file the commit can record; for a deploy, the plugin it names. A `cd`, `git -C` or `uv run --directory` earlier in the command is followed, so the workspace layout above (`my-plugin/my_plugin/`) is found from the workspace.
 
 - `advise` hands any failure back to Claude as context and lets the call run.
 - `block` stops the call and gives Claude the failure to fix. A validate that cannot run (no CLI, a CLI too old to have `validate`, over 120 seconds) also stops it.
@@ -70,6 +70,7 @@ A PreToolUse hook runs `canvas validate` (manifest, static sandbox lint, sandbox
 - It reads the repository with git's filter drivers and fsmonitor switched off, so no repository-configured command runs. A git read that fails stops the commit in `block` mode.
 - It runs the project's own `.venv/bin/canvas` (in the plugin folder or the one above it), else `canvas` from `PATH`. It never runs `uv`, since the hook runs before the call is approved and `uv` builds environments.
 - A plugin is checked only when it sits inside the session's working directory, since checking runs its code before the call is approved. In `block` mode a call on a plugin elsewhere is stopped; in `advise` mode it runs.
+- The `deployer` MCP tool is not gated: `canvas deploy` runs the same checks as `canvas validate` before it pushes.
 - The hook is stdlib-only and runs under `python3`.
 
 ### Command Requirements
@@ -107,16 +108,15 @@ scanned for secrets) and pushing is confirmed with you first.
 
 **instance-analyzer** - Understand Canvas instance configuration:
 
-- Documents roles, teams, questionnaires, note types, appointment types
+- Reads roles, teams, questionnaires, and note types from Canvas Platform's last sweep of the instance, and each section states when that sweep ran
 - Lists installed plugins to identify conflicts or opportunities
-- Generates `instance-config-{hostname}.md` report
+- Generates `instance-config-{instance}.md` report
 - Tailors findings to your plugin spec if available
 
 **deploy-uat** - Deploy plugins and guide user acceptance testing:
 
 - Pre-deployment validation (manifest, tests)
-- Deploy to dev/staging/production environments
-- Real-time log monitoring during testing
+- Deploy work in progress as a branch to test instances through Canvas Platform
 - UAT checklist and results documentation
 
 ### Skills
@@ -131,6 +131,7 @@ scanned for secrets) and pushing is confirmed with you first.
 - **testing**: Unit test authoring, mocking patterns, and coverage checking
 - **icon-generation**: Generate SVG icons and convert to 48x48 PNG for Canvas plugin Applications
 - **companion-app-patterns**: UI, data-access, and packaging conventions for provider companion plugins (mobile-oriented modals on the `provider_companion_*` scopes)
+- **agent-patterns**: When to build an agent with the Agent Development Kit instead of a handler that calls a model, standard tools first, tool grants and approval, testing with a fake gateway, and agent security review
 
 ### Slash Commands
 
@@ -138,62 +139,74 @@ Commands are namespaced with `cpa:` prefix when installed via the marketplace.
 
 | Command                        | Description                                                 |
 |--------------------------------|-------------------------------------------------------------|
-| `:check-setup`                 | Verify environment tools (uv, unbuffer)                     |
+| `:check-setup`                 | Verify environment tools and Canvas Platform sign-in        |
 | `:new-plugin`                  | Start brainstorming a new plugin specification              |
 | `:create-icon`                 | Generate SVG icon and convert to 48x48 PNG for Applications |
-| `:analyze-instance`            | Analyze Canvas instance configuration                       |
-| `:deploy`                      | Deploy plugin and monitor logs                              |
+| `:analyze-instance`            | Analyze Canvas instance configuration from Canvas Platform  |
+| `:deploy`                      | Deploy work in progress to a test instance as a branch      |
+| `:deploy-lite`                 | Quick-deploy: no version bump, no tests                     |
 | `:coverage`                    | Run tests with coverage, offer to improve if below 90%      |
 | `:security-review`             | Comprehensive security audit with report                    |
 | `:database-performance-review` | Database query optimization review with report              |
-| `:wrap-up`                     | Final checklist before calling a plugin "done"              |
+| `:wrap-up`                     | Final checklist, then release to Canvas Platform            |
 | `:run-evals`                   | Run eval suite to test review command accuracy              |
 
-## Credentials Setup
+## Canvas Platform Sign-in
 
-Add your Canvas instance credentials to `~/.canvas/credentials.ini`:
+`/cpa:new-plugin`, `/cpa:analyze-instance`, `/cpa:deploy`, `/cpa:deploy-lite` and the `/cpa:wrap-up` release act as the person signed in to Canvas Platform. Sign in once in your own terminal (it opens a browser):
 
-```ini
-[plugin-testing]
-client_id = your_client_id
-client_secret = your_client_secret
-root_password = your_admin_password
-
-[customer-instance]
-client_id = ...
-client_secret = ...
-root_password = ...
+```bash
+uv run --with 'canvas>=1.2.0' canvas login
 ```
 
-- `client_id` / `client_secret`: For Canvas CLI (API access)
-- `root_password`: For admin portal access (instance analyzer)
+- `CANVAS_PLATFORM_TOKEN`: set in CI to deploy without a stored sign-in
+- `CANVAS_PLATFORM_URL`: points the CLI at a different Canvas Platform
+- `/cpa:check-setup` reports the signed-in person, their organizations with each plugin prefix, and the instances available for deploys
+
+A plugin deploys to Canvas Platform when its package is named `<prefix>__<name>` (the prefix is the publishing organization) and it is committed to a git repository. `/cpa:new-plugin` creates plugins with `canvas init`: outside any repository the plugin folder becomes its own repository with Canvas Platform as `origin`, and inside an existing repository, such as a monorepo, it stays a folder of that repository.
+
+A plugin inside a larger repository deploys as a snapshot: `/cpa:deploy`, `/cpa:deploy-lite`, and `/cpa:wrap-up` run `canvas deploy --snapshot` (canvas 1.2.0 or newer), which pushes the package folder as committed at HEAD to the branch it deploys (the work branch for `/cpa:deploy` and `/cpa:deploy-lite`, `main` for the `/cpa:wrap-up` release) and leaves the repository's remotes alone. It refuses uncommitted changes in the package, submodules, symbolic links, Git LFS or git-crypt files, a checkout that lacks changes that branch was last deployed from (`main`'s, for a branch Canvas Platform does not have yet), and, outside a terminal, files changed on Canvas Platform that it would replace. The `deployer` tool reports each refusal on its `Status:` line (`snapshot_uncommitted`, `snapshot_unsupported`, `snapshot_rollback`, `snapshot_replaces_platform`), and the last one is handed to the person's terminal. For CI from a monorepo with a service account and `CANVAS_PLATFORM_TOKEN`, see [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+
+A plugin made before Canvas Platform needs one of:
+
+- Rename the package folder, the manifest `name`, and every import to `<prefix>__<name>`, and commit it to a git repository
+- Run `canvas init` for a new plugin and move the code into it
+
+### Test instances, releases, and logs
+
+- **Work in progress**: `/cpa:deploy` and `/cpa:deploy-lite` run `canvas deploy --branch <name>`, which pushes HEAD to a branch of the plugin on Canvas Platform and deploys it. Canvas Platform accepts a branch only on test instances, so these commands offer only instances reported with `test_instance=true`. A Deploy manager or Organization admin designates a test instance on its Plugin management tab. The default branch name is the current git branch; on `main` or a detached HEAD, the command asks for a work branch name.
+- **Release**: `main` on Canvas Platform is a release, published only by `/cpa:wrap-up`. After confirmation, it calls the `deployer` tool with no branch, which pushes to `main` and deploys it to the instance you choose, and asks again before a `production=true` instance. Passing `version` to the `deployer` installs an already released version on another instance without pushing, and sets its variables only when the working-tree manifest is that version. Where the `deployer` is unavailable (Studio), wrap-up skips the release and Studio's Publish button releases instead.
+- **Logs**: `canvas logs --host <instance>` signs in through Canvas Platform, which issues a log token to a person with the Plugin developer or Deploy manager role on the instance (`logs=true`). Without that role, deploys run without logs and ask you to test in Canvas.
+- **Instance flags**: `platform_session.py instances` prints `<slug> test_instance=<true|false> production=<true|false> logs=<true|false>` per instance. `production=true` also covers an instance staged Production, because Canvas Platform's own unsafe-instance rule counts both. A Canvas Platform that omits `test_instance` or `production` makes the script exit with an error.
 
 ### Plugin Secrets
 
-Plugins that declare `secrets` in `CANVAS_MANIFEST.json` need secret values for deployment. CPA reads these values from a per-instance JSON file and
-passes them to the `canvas install` command — secret values are never exposed to Claude Code.
+Plugins that declare `variables` in `CANVAS_MANIFEST.json` need values for each instance. CPA reads these values from a per-instance JSON file and
+passes them to `canvas config set` after each successful deploy, except a released version that differs from the working-tree manifest, whose variables the user sets with `canvas config set`. Secret values are never exposed to Claude Code.
 
 **Default location:**
 
 ```
-~/.canvas/plugin-secrets/{instance}.json
+~/.canvas/plugin-secrets/{instance slug}.json
 ```
 
-**File format** (keyed by plugin name):
+**File format** (keyed by the manifest `name`, which carries the organization prefix):
 
 ```json
 {
-  "my_plugin": {
+  "acme__my_plugin": {
     "API_KEY": "sk-...",
     "WEBHOOK_SECRET": "abc..."
   },
-  "other_plugin": {
+  "acme__other_plugin": {
     "TOKEN": "xyz..."
   }
 }
 ```
 
-On each deployment, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
+A file keyed by an unprefixed name needs its key renamed to `<prefix>__<name>`.
+
+On each deployment that sets variables, CPA automatically syncs the file with the variables declared in `CANVAS_MANIFEST.json` (the modern `variables` array; the deprecated `secrets` array is still read as a fallback): missing entries are added with empty values and stale entries are removed. Fill in the values before deploying.
 
 **Custom file path:**
 
@@ -206,7 +219,11 @@ export CPA_SECRET_FILEPATH=/path/to/my-secrets.json
 When set, this single file is used for all instances (the instance name is ignored for file resolution). This is useful for CI/CD pipelines or shared
 secret stores.
 
-If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The install still proceeds — the warning is informational.
+If a secret value is empty or missing at deploy time, CPA skips it and shows a warning. The deploy still proceeds, and the warning is informational.
+
+### Custom Data Consent
+
+When a plugin's `custom_data` reads or writes a namespace that another plugin created on the instance, the deployment waits for the instance organization's consent. The CLI asks for consent at a terminal only, so CPA shows each request (plugin, access, namespace, instances) and gives you the `canvas deploy` command to run in your own terminal. Approval is per plugin, namespace, and instance, and one denial cancels the deployment.
 
 ### Evals Setup
 
@@ -221,7 +238,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ## Workflow
 
 ```
-:check-setup      →  Verify environment tools (uv, unbuffer)
+:check-setup      →  Verify environment tools and Canvas Platform sign-in
 :new-plugin       →  Create plugin from requirements
 :deploy           →  Deploy to Canvas instance for UAT
 :coverage                    →  Check test coverage (aim for 90%)
@@ -231,7 +248,7 @@ This key is used by the comparison script to evaluate whether review commands co
 ```
 
 1. **Check Setup** (`:check-setup`)
-    - Verify uv and unbuffer are installed
+    - Verify git, uv, unbuffer, and the Canvas CLI are installed and you are signed in to Canvas Platform
 
 2. **Describe the Problem** (`:new-plugin`)
     - Tell Claude what the customer needs
@@ -240,8 +257,8 @@ This key is used by the comparison script to evaluate whether review commands co
     - Plugin is scaffolded, implemented, and tested
 
 3. **Deploy and Test** (`:deploy`)
-    - Deploy to test instance
-    - Perform user acceptance testing with real-time log monitoring
+    - Deploy the work as a branch to a test instance
+    - Perform user acceptance testing
 
 4. **Quality Checks** (`:coverage`, `:security-review`, `:database-performance-review`)
     - Verify test coverage meets 90% threshold
@@ -251,6 +268,7 @@ This key is used by the comparison script to evaluate whether review commands co
 5. **Wrap Up** (`:wrap-up`)
     - Final checklist: security, DB performance, coverage, README
     - Interactive commit: stages tracked changes only, reviews/secret-scans any untracked files before including them, and confirms before pushing
+    - Release: after confirmation, publishes the committed plugin to `main` on Canvas Platform and deploys it to an instance
 
 ## Icon Generation
 
@@ -304,6 +322,7 @@ automatically.
 │   ├── create-icon.md         # :create-icon
 │   ├── analyze-instance.md    # :analyze-instance
 │   ├── deploy.md              # :deploy
+│   ├── deploy-lite.md         # :deploy-lite
 │   ├── coverage.md            # :coverage
 │   ├── security-review.md     # :security-review
 │   ├── database-performance-review.md # :database-performance-review
@@ -323,7 +342,8 @@ automatically.
 │   ├── fhir-api-client-security/    # FHIR API token security
 │   ├── database-performance/  # N+1 query detection
 │   ├── testing/               # Test authoring & coverage
-│   └── companion-app-patterns/ # Provider companion (mobile) plugin conventions
+│   ├── companion-app-patterns/ # Provider companion (mobile) plugin conventions
+│   └── agent-patterns/        # Agent Development Kit agents
 ├── agents/
 │   ├── plugin-brainstorm.md   # Requirements gathering
 │   ├── instance-analyzer.md   # Instance configuration analysis
@@ -334,7 +354,7 @@ automatically.
     ├── convert_svg_to_png.py      # SVG to 48x48 PNG conversion
     ├── compare_review_results.py  # Eval comparison using Anthropic API
     ├── get_plugin_dir.py          # Workspace directory resolution
-    ├── plugin_gate.py             # `canvas validate` before commit, install or deploy
+    ├── plugin_gate.py             # `canvas validate` before commit or deploy
     └── verify_plugin_structure.py # Check the plugin structure
 
 ```
@@ -353,7 +373,7 @@ piling up.
 | `security-review.md` | Security audit findings and recommendations | You |
 | `db-performance-review.md` | Database query optimization findings | You |
 | `coverage-report.md` | Test coverage report | You |
-| `instance-config-{hostname}.md` | Instance configuration analysis | You |
+| `instance-config-{instance}.md` | Instance configuration analysis | deploy-uat, you |
 | `eval-results-{timestamp}.md` | Eval suite results | You |
 | `{case_name}-security-review.md` | Per-case security review (evals) | `compare_review_results.py` |
 | `{case_name}-database-review.md` | Per-case database review (evals) | `compare_review_results.py` |
@@ -390,11 +410,11 @@ root.
 # Compact view
 uv run pytest tests/canvas-plugin-assistant/scripts/ -q
 
-# Compact view + coverage
-uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assistant/scripts --cov-report=term-missing -q
+# Compact view + coverage of one module
+uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=mcp_canvas_deployer --cov-report=term-missing -q
 
-# Standard view + coverage
-uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assistant/scripts --cov-report=term-missing
+# Standard view + coverage of one module
+uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=mcp_canvas_deployer --cov-report=term-missing
 ```
 
 ### Tested Modules
@@ -405,7 +425,8 @@ uv run pytest tests/canvas-plugin-assistant/scripts/ --cov=canvas-plugin-assista
 | `constants.py`                | CPA environment variable constants          |
 | `convert_svg_to_png.py`       | SVG to 48x48 PNG conversion                 |
 | `get_plugin_dir.py`           | Plugin directory resolution                 |
-| `mcp_canvas_installer.py`     | MCP server for plugin install with secrets  |
+| `mcp_canvas_deployer.py`      | MCP server for plugin deploy and variables  |
+| `platform_session.py`         | Canvas Platform sign-in, instance flags, setup records and plugins |
 | `secret_requester.py`         | Plugin secret retrieval from local files    |
 | `validate_cpa_environment.py` | Environment variable validation             |
 | `verify_plugin_structure.py`  | Plugin structure verification               |

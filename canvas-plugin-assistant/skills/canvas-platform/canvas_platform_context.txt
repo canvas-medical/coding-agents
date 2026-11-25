@@ -1037,12 +1037,12 @@ Hand off a document, send it for signature, and read its history.
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/1662279684-patient-communications
 The Patient Communications plugin handles how your practice reaches patients outside the visit: appointment texts and emails, forms and intake patients complete in the portal before a visit, consents they review and sign, secure messages with staff, and the tasks that tell staff when a patient has done something. Admins set it up in one place, **Notifications Admin** , and staff work with it from a panel in the patient's chart.
-This guide describes Patient Communications 0.19.10. Your Canvas team can tell you which version your practice runs.
+This guide describes Patient Communications 0.19.15. Your Canvas team can tell you which version your practice runs.
 ## What's included
 Feature| What it does| Guide  
 ---|---|---  
 Appointment notifications| Texts and emails for confirmations, reminders, telehealth join links, no-shows, and cancellations| [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
-Forms and intake| Questionnaires and intake sections patients complete in the portal, assigned by staff or automatically before a visit| [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)  
+Forms and intake| Questionnaires and intake sections patients complete in the portal, assigned by staff, automatically before a visit, or to every new patient| [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake)  
 Consents| Consents patients sign on the portal or in DocuSign, including consents a provider countersigns| [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents)  
 Messaging and tasks| Secure messages with patients, message notifications, and tasks for patient messages and completed paperwork| [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks)  
 Portal invite and password reset emails| Your own wording for the emails Canvas sends with a portal login link| [Portal Invite and Password Reset Emails](https://help.canvasmedical.com/articles/5857270843-patient-communications-portal-invite-and-password-reset-emails)  
@@ -1057,7 +1057,7 @@ Patients| Patient portal home| A welcome banner, plus an **Action Required** ban
 **Notifications Admin** opens a full page with four tabs:
   - **Campaigns** : every message the plugin sends, each as a card you turn on or off and edit. Also holds the **Completed Paperwork Notifications** and **Patient Message Tasks** settings.
   - **Visit Type Overrides** : turn appointment messages off for a visit type, or give a visit type its own wording, channels, and timing.
-  - **Pre-Visit Forms** : choose the intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Pre-Visit Forms** : choose the intake sections, questionnaires, and consents each visit type sends before the visit, and the intake sections and questionnaires every new patient gets.
   - **Consents** : link consents to DocuSign, choose which consents every new patient gets, and set up provider countersignature.
 One **Save** button, in the tab bar, saves every tab at once. Nothing changes until you click it.
 The top of the **Campaigns** tab shows **Integration Status** : whether **Twilio SMS** and **SendGrid Email** are **Configured**. This only checks that the settings are filled in, not that the accounts work.
@@ -1458,21 +1458,21 @@ Patient Communications sends consents to patients to review and sign in the pati
 How the consent is set up| How the patient signs  
 ---|---  
 No DocuSign template| On the portal signature pad  
-DocuSign template, patient signs alone, assigned by staff from the chart| In DocuSign, inside the portal  
-DocuSign template, patient signs alone, sent automatically to new patients or before a visit| On the portal signature pad  
+DocuSign template, patient signs alone| In DocuSign, inside the portal  
 **Requires provider countersignature**|  In DocuSign, then the provider countersigns  
+A consent assigned from the chart gets its DocuSign document when it is assigned. A consent sent automatically, to new patients or before a visit, gets its DocuSign document when the patient first opens it. If the DocuSign secrets aren't set, or DocuSign can't create the document, the patient signs on the portal signature pad instead.
 ## Set up consents
   1. In **Notifications Admin** , open the **Consents** tab. Each consent shows its name and code.
   2. Under **DocuSign template** , pick the template the consent is signed with, or **No template (portal signature pad)**.
      - If the list doesn't load, paste the template ID from DocuSign instead.
-     - To create a new template, drop the consent PDF on the row, or click to choose it. The plugin creates a template named after the consent and opens DocuSign's editor in a pop-up. Place the signature fields, then click **Save and Close** in DocuSign. Allow pop-ups for Canvas if the editor doesn't open.
+     - To create a new template, drop the consent PDF on the row, or click to choose it, and click **Create template**. The plugin creates a template named after the consent, saves it as the consent's template, and opens DocuSign's editor in a pop-up. Place the signature fields, then click **Save and Close** in DocuSign. Allow pop-ups for Canvas if the editor doesn't open.
   3. Check **Assign to new patients** to send the consent to every patient created from now on.
   4. Check **Requires provider countersignature** if a provider signs after the patient. See Dual-signature consents below.
-  5. Click **Save** in the tab bar. Each row confirms what was saved.
+  5. Click **Save** in the tab bar. Each row confirms what was saved. Leaving or reloading the page with unsaved changes on this tab asks first.
 ### Consents for new patients
 Consents checked **Assign to new patients** go to each new patient when they are created. Patients created before you checked the box don't get them, and a patient who already has the consent assigned or accepted isn't sent it again.
 **New patient consents order** lists these consents. Use **Move up** and **Move down** to set the order they are sent in.
-To text or email new patients about their consents, turn on **New Patient Consent Notifications** on the **Campaigns** tab. It goes out once, within about 5 minutes of the patient being created, after their phone number and email are saved, and links to their portal **Forms** page. It doesn't name the consents. Patients created more than a day before are skipped.
+To text or email new patients about their consents and forms, turn on **New Patient Forms Notifications** on the **Campaigns** tab. It goes out once to a new patient who still has a consent from **Assign to new patients** , or a form from the **New Patients** row on **Pre-Visit Forms** , to complete. It is sent within about 5 minutes of the patient being created, after their phone number and email are saved, and links to their portal **Forms** page. It doesn't name the consents or forms. Patients created more than a day before are skipped. See [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake) for forms sent to new patients.
 ### Consents before a visit
 On the **Pre-Visit Forms** tab, each visit type has a **Consents** list. Those consents are sent with the visit's forms, within the visit type's lead time. A patient who already has the consent assigned or accepted isn't sent it again. See [Forms and Intake](https://help.canvasmedical.com/articles/5139234686-patient-communications-forms-and-intake).
 ### Assign a consent from the chart
@@ -1511,10 +1511,10 @@ What you see| What to check
 A consent isn't on the **Consents** tab or in **Assign Consent**|  Its coding system isn't offered, or it isn't set to show in the patient portal.  
 **Requires provider countersignature** is grayed out| The consent has no DocuSign template yet.  
 "DocuSign secrets are not configured, so dual-signature consents cannot be enabled."| The DocuSign connection secrets aren't set.  
-A consent with a DocuSign template opened the signature pad| It was sent automatically to a new patient or before a visit, which uses the signature pad for consents the patient signs alone.  
+A consent with a DocuSign template opened the signature pad| The DocuSign secrets aren't set, or DocuSign couldn't create the document when the consent was assigned or first opened.  
 "This document is not ready to sign yet. Please contact your care team."| A dual-signature consent couldn't be sent to DocuSign. Look for a task starting "Consent not sent".  
 A new patient didn't get a consent| **Assign to new patients** was checked after the patient was created.  
-No new-patient consent text or email| **New Patient Consent Notifications** is off, the patient was created more than a day before it was turned on, or they had no phone or email when it ran.  
+No new-patient text or email| **New Patient Forms Notifications** is off, the patient was created more than a day before it was turned on, or they had no phone or email when it ran.  
 Consents appear in a different order on the portal| The portal lists the most recently sent consent first.  
 No **Countersign** button| You aren't the countersigner or on the countersigner team, or the consent is waiting for an appointment to be booked.  
 A countersignature shows up late| The webhook secrets aren't set or DocuSign couldn't reach Canvas. A check every 15 minutes catches up.  
@@ -1713,6 +1713,58 @@ Within the patient chart, navigate to the **Addresses** section.
   - Clicking the link directs users to the patient view with the corresponding facility selected as the filter. Users can see patient name, age, sex at birth, date of birth, care team, facility and room number, protocols, and last seen date and reason for visit.
 Patients can be added to or removed from this facility list view by adding or removing the facility from the patient chart.
 ----- END PAGE https://help.canvasmedical.com/articles/2395218732-facility-group-scheduling
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me
+Canvas uses ID.me to confirm your identity before you are enrolled to send prescriptions. You can verify your identity within Canvas in about five minutes.
+## Before you begin
+  - A photo of your driver's license, state ID, passport, or passport card.
+  - A smartphone with a camera and a web browser. ID.me texts you a link to take the photos.
+  - The first name, last name, and date of birth on your Canvas staff record must match your ID.
+If you already have an ID.me account, you may only need to sign in and give permission to share your details.
+## Step 1: Open Identity verification
+  1. In Canvas, click the **menu** icon in the top left corner.
+  2. Click **Identity verification**. It opens in a new browser tab.
+![Canvas main menu with Identity verification highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3a06975f-da32-4ef3-9631-d76b0c358b41-p01-menu.png?Expires=253370764800&Signature=GHX2rUFxO1prFGp-WvM9ecKyupBwqVe4tvi3KhdgLw0N6AsyArj09H6Uamsduf8QQ5SF37gcQXWFGBQTwtsfn~OUtR7U0dRSS9ZxSRFo3kKvXs-g6MmY67ncrRAhdhPbIItm4z-W06c94rcVu6GVobnt85Fz44g~U5PYM~5bvsaW0kDs-dsRJ3CHqRLIWvA47PC7WQHk093YKvGtV9sOu19y9vORNnOZzGZ8v11MQsJg9iqssy3wshELHQ8smshAxSqiGDJS6rJE6a5S5qQmIcRIWs7Gvip1h061xph0qKYkdc~BMa0k~2XQZ-zczxUX89hr~ctS~9sHrBWXuVKxnQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+If you don't see **Identity verification** in the menu, ID.me isn't turned on for your practice yet. Ask your practice administrator.
+## Step 2: Start the verification
+Click **Verify with ID.me**.
+![Verify your identity to prescribe page with the Verify with ID.me button highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F93ab8de0-97cb-4cc5-a4ea-f429f6d811ec-p02-start.png?Expires=253370764800&Signature=Kwy3mfS7yVHAkEsf8W3OeHbQGZZBHv-Lx2HzdhGryaeREyfjYPiY-ZaqV8WR3tTaBbxJziM1s52m4Qi-5Rf2It5eVYkmAxpXTjJiRkmRDtt0E3MpEF9rM8~nS7yUSufS-3O1gTSnssUpyXuSaNCwMz~mcJVETu4E5r92k0InOBluG1~ZAldzy6vkOy6cKj-tP6ZAMlJxLdF8Ehdfn8i1Uh~rARLR64TS-x6vJ~d4RdVVUW-iPfKyWX3dXvsbDF9vH1F-0JCHKZLk1N98qjD0DKoMrwEl~6shF0-qIzcLVAFBjLJKfj5hQ42~lFZAAWvdTzJBrZQYKuv682687XT6qg__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 3: Sign in to ID.me or create an account
+  1. Enter your email and click **Continue**. If you're new to ID.me, click **Create a wallet** instead.
+  2. Choose how ID.me should send you sign-in codes. **Passkey** and **Text Message or Phone Call** both work.
+  3. Enter the 6-digit code ID.me sends you and click **Continue**.
+![ID.me sign in screen with Continue highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F69c7fbe0-2bcb-4f5d-9f24-a49b37a22581-p03-signin.png?Expires=253370764800&Signature=oBmOJ7zGM-2btmp-oOIa9BeHBAaQb77sbY6t665fkUOO3I4IX3x4K6RjkfROaeemIJJJNX0dQE144Xr7WDfLzBMludXYxpq3spSTDEJveylJZCngd9Gn5vxSnigf6~7L0kuSxHmAdzFEqEtfh9CYqmsrZob-a5IcI09~AIH9mIwJ6r5XXA7MmAgs482f6tx8pkPgu1RPNjpQeh~he8dNxm8tLPz3RoPwfocJaVDBNdHZOGub1lCm2K7OL2bYO0WFZfWFu~fc48wFeplawBb2m8iNY~gSc6BgpYOAA5r5sEhPjh2CuGcoMu9kXTrSFe8Kau6tFD4xxxjNMewdirOGOw__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me multi-factor authentication method choices highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe8cefa3a-6447-4982-a584-35a0ca122b24-p04-mfa.png?Expires=253370764800&Signature=Q1K6qDj3MeRjLXqGbwnHukS7162IhbDqxsjenlrqipYCYlnOkhxaGo5WrB2IHj2~uq4pX4LLVy5WnJaVwSQOAYRNSMIH1jl2SkurLqqZrmJL3~GkTsk~6oaJNlS07jB-GbcFB52~bnCgjoafu-PtZ4MtCcsiN08~sM5G31gg0Zt3F9~Nj9yagXk99eT9g8smHXC2S2FJqFJZeo7LTVkthxJYNGQehjKTZsLrDudL586PHqlMtHyUKCL0yawUy3c8Fg3n18gqbalex-BZvvyKvSLMyZL7kspVRb6~IlNexrb7LdpJOthgeMel8jINLSID3imVKJ4JvFc-LDUFSka-pA__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me screen to enter the 6-digit code](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F2693b0cb-e3ea-4b2c-8a7f-650c4e316da2-p05-code.png?Expires=253370764800&Signature=u94qTXn7KpMZFKH78jysgY-tnT4D6WFNO4uH1G-LFAL~bR-PW7VTNxfTfLyvBCZaYQnontQevm001OXX2ZwnqiliZKoYKj5v7jUhuR~wm~~KX68-G99D4jOYK0eNGSr26Ol-LQg2LGeFHjMXdi3klBM8Q01~Oe8fgPXEBRWvTecHaZm6hefOwB996VZtOx1tFPI9DOGjFWV3iXtI5GthK8oH2oUgYQ~OmfRK3z4DTrT4j6pKZQzldaW5IdXcG1tHW8j0ij~bBuSq~PqvaWeJQwLQLVAou8SKQ571560~Q-wvn0BE1J2ChNir7DaEdIayFFLAVlZxkxSUfEvCtg3Eug__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 4: Photograph your ID on your phone
+  1. Choose your type of ID.
+  2. Enter your mobile number and click **Continue**. ID.me texts you a link that says **Continue verifying for Canvas Medical**.
+  3. Open the link on your phone, confirm your email, and take photos of your ID.
+  4. Check the details ID.me read from your ID, then click **Confirm** , or **Retake photo** if anything is wrong.
+  5. Click **Open camera** and take the video selfie. Keep your computer's browser tab open while you do this; it moves on by itself when your phone is done.
+![ID.me verification method choices with license or state ID highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb570b713-1fb9-4f11-81c4-0fc9b2b75bd9-p06-method.png?Expires=253370764800&Signature=P~Xn~myrVk61F3EsPZVNGVg08TzhJ2JZRYFavbOb-4PVbYpbzjxUAmWaIzVJ0znVMPs09gGPLWyfPhyd~v2Khb13SwGjzfOT48B9JtI8bFOiEhcD3xEEw~f18G9wyZXx9lCDGSOVE4KCK58b-B2GeKA8nPjLmqxcorFJha-FXRwtc4I5i3kIDmc9IhQy6frnxQqRnoQiaKtSc6NRcOgWDfau9JDpYNab2aRAxWPvW2eSWZ0hWNPFfnQrcWWXB2Mb58LwjrYtx1GVOcnkKxFa9at81bAH1WrjnnWPF2lkcnTj~0t3BbtE0z1LxMIdRlLfTW165Fqy1KmWK2bvdywarA__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me screen to enter a mobile number, with Continue highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F763a2ed7-b72d-4586-96c9-ba4dd6f586f2-p07-phone-link.png?Expires=253370764800&Signature=AS3uto072HOi-svP9U1Layu6i~EfUBVGNKvl4R7x8wFIuoykN9fPXR46al2rSYC1v1dB7~iWYqCBpbZKviiD0NU06deH~lMcOH9xvBZEndO5X9tL3tnhcvU6Duts5vK2-vomeRhtVaZvIGD-tSd0uWVpRgin-OZ7ChHgg99ogEPVN-deR~ly1Z-G15ng9RX61Ijowpq7frMk1OhaM8Ky57gWebLYOjztKpmr9n-kh~f8XoTMgRHnawiwciiNlROnycqf8v8RlFZvZARRuLOqxjS~S98CIL4zjRnCX0lbev4LNYpP7zN6RQKHrKSEp-8iAQLKB50JpayMK-ZQfidZqQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Text message from ID.me with the link to continue verifying for Canvas Medical](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F15b897f6-2600-44d6-8466-ba1ee4ca9c2f-p08-sms.png?Expires=253370764800&Signature=WanuWXPPXXvi50r6Y~VwD2asP3kQeBSzOj~~76WFXSuOBbwRfJWOhY-Ws3T~CefKtZJNCa9xRG4K4-Y3FByvTSpIXgzcSlo8In-j8DGPkGQ6NmTu5Sm7r8880VdmuTd3RrUsjct5zeZPnUKG5MaJeNjtUDNSkoa4ckxPYGobb49GgswL7CQhnLIHg4CEAKmeXbYBF-k992rC9Cap3bwnzTOahjbUVfZHIh6Qt7IljTIq1ZhyDXQ5UcpFBgALSijgTbkNCnzcCYJsz2R1SUE8eDFwjvzGNiLWoowxuxVh8yc7uEXojrwi2y38~r2sFMy~02OliMGDSGD0UA1r2vGo7w__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone asking to confirm your email address](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fcfbb8771-d8f6-4737-9733-d13ede2b12e7-p09-phone-email.png?Expires=253370764800&Signature=OZE5mYVYCVNOj5DPEK1m2Wq23fB7oX-~F5~L7t1OMKn3jPdD3gG2ljKja2mjxhHJ1myr0YQurajWU0nwlYQi05-bbg2CxWYrJFe8JbzoJk2sbBylDs9i8HwnIwHy03RYbCqbGVXxOfH16BPXP~J6Wh0fETXXNMnN0PhzDL-bJb3jHyBHoqXwJz78rNE9bK0fTmhFPogV5omHmrjsQnjOO9BtUwYEiLvnKqmt6WdUy0W4eCLz7BWa4HFysrWf694IjilWId1ifhLAbelPJ23cBFW5aO7bzpFyOp-1BTf2RDbFyhSfY1PheE79S6SZ0b1hVhK5oCKfT0ewiQ9bNQEzRQ__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone showing Review your details with Confirm and Retake photo](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F5a23ad44-b654-4f09-9be9-7fe8228d1eeb-p10-phone-review.png?Expires=253370764800&Signature=FrUZudXjQGKGa5goRgel4Efg-7OGHvPTUioeXQDXZvzfezQg64bdj6T3xjPF6S0wCDAJ0935nEuy0lNeiUP2gY9Q7U6LVU1NVpmO9j0798wpE8~hs4QYD~jDLImyiRxki4S0no~GRgHk~Rr7jDfvyweZBeeDIpDAyPDc0-7iPYQNu1Z5XXR5x3Pojp5IbpCo2QrriRFxXU0Bab~GgP9Utfl9JFGEF~LslfJlEXEdyr2pgPgwv2avMcKVdMd2464-HWYI5xEipfZxuVLZqyVIEtKFSPBFCM8qcHpZLoIeP2WuWkARux9sa7gBp-xywzpwIGK0OmpXD4asOgsyOU0N6Q__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me on a phone asking for a video selfie, with Open camera highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F442d5d32-b372-4d40-aeef-b149975893ee-p11-phone-selfie.png?Expires=253370764800&Signature=RNlxxACO596T13qRdKnUcyon-6ihgmtEuP~tzU4i0Yw-OnO~WjpTzcLWxGiz74N~GIyZBgGI8ZZPBV8nwJgKmlsNfpkudVFlDud~soCMXI40qAB5Hw6Q2WvvcB1yhABy0x-SHJVuBXvqsEujY3EgMOeOGw3QJ-gxwX-hw0mhxLI8AToWSMlQHjxB1fF4AGYVjMC-~zItZ-Y7rdIovkHo7OESGaJKxIwRc7g1e0OInpfxfOiidFNBahOtrOHYpEhKk1S1DAiAWKv3q4HpxUWiCGvq2LZF6YB7gMaYKbHiVpBx3RKtSw5sIBE21gJRvJVNPQC0P-skgrNgxdw1w9kBQw__&Key-Pair-Id=K3NV4LZ47N8M46)
+Back on your computer, ID.me compares your selfie to your ID. This takes a few seconds.
+![ID.me comparing the selfie to the ID document](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F16164f14-0702-4136-83a9-82cd98cc8b1d-p12-selfie-compare.png?Expires=253370764800&Signature=LHryTh4x5ngEKP99gQeajIRn6JS5XGo-30wgnTNw~pkcnINRCqT10n6mG1JEa5pDQ6Z7F9PVSLpnNjBr94VlqgTlTKKX1DIUkXCU1pjbHaZcmdRUBGxY0fqlOtgWyNl1dZIlJrtU01W-tbAAYgwKMMGBlX8c3xyTp~EOUj6iR61BqYp-Z8WLDIVToyJNvr776fU-unAeeKa5BWDsL9EfNqdfiNNGsOfDPaqXJZPk3tc0sMujKqIvi-4lb1M5BBnRXuZ3c9W6PhrbIp~v4jDgRUYjrG4~dRZJjXlzDcDPjtmMv0q9jwbPbY6A~VHMSwQBgV8PTbICd2hckSyB7hp8EA__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 5: Finish the ID.me checks
+  1. Enter your Social Security number twice and click **Continue**.
+  2. Check that your name, date of birth, address, and phone are correct. Check the box agreeing to the Fair Credit Reporting Act check and click **Yes**. ID.me states this does not affect your credit score.
+![ID.me Social Security number entry](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F85724333-767c-4756-9c8f-386fbf8ee94b-p13-ssn.png?Expires=253370764800&Signature=ibf5a~iwLEBAfCHuVpIczgTDyzjKF4XbmnlzEEsuYB2dQJPHsrws9BhTcB7VK~55WjK-F7CDYzzGeMgRoH~36Hko0PikXd5yUxxY9k1e096ipm1ukvDq17dwTWiI4tEfXLepLkocZKIxG4ORdyn~BzPgE5ZiPJyWxj~fNk6ERIlVzPZ9fPoX9qxD4DpJf9RImk-K77CKp08CBV29NX6ElWG5yKTAi9pb81pENbtzqAJ45n6nYPx2ulr0EU2cMLhZbj6lP7KR1k4BYWuQsgQkQjKBWze~mf8Z6feWFLa7oC7DEqkQREZTU5smKRK95CYmMt0gozR2GQcob7j48FZ2ew__&Key-Pair-Id=K3NV4LZ47N8M46)![ID.me Is your information displayed correctly screen with the consent checkbox and Yes highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F121609b9-1353-4650-956d-bf2649bd87db-p14-confirm.png?Expires=253370764800&Signature=pFCTWCocF7W3sS9wVbmMqwyGiiR~tmWKDVJhi~9g~xYZiUtdwg~yco7aY~8Cg0-qebCpohD6D8KBdIIBjBUqH1b23Uw~D1jsRpxOuyrpeUMGukR0imTHyGhILKw-5K41z1E41wyMHxcoqN56SuJ4ZsUJ0z2YJBiz-bPc4D2Ysd8n5TFWKcq3aoxLNHnv8U6T29lLLVV4DiRb4uIgtwLQKsKdXPftm6Q8TeWBtEYfy1pvaHPE84a1465ncPQ-qDT6deY0B-FZGndb3YbDFPoBr9p8RQ78MuTNMDgrrLXP8M4v17C3eX2F9CESxisbn3qLaxP1vxmOrKlww5TvwEKzfQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Step 6: Allow ID.me to share your details with Canvas
+ID.me shows **We've verified your identity!** and lists what Canvas Medical will receive: email, first name, last name, birth date, and addresses. Click **Allow**.
+![ID.me Authorize Canvas Medical screen with Allow highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ff9359716-c686-4a9c-aef1-29bca788502b-p15-allow.png?Expires=253370764800&Signature=i8p~1WJrEjuKxS2zWQdu7h~8TJObl6Z0TasxqCELn7oMZMQcU8UATmaIevpx3tkw7U~cb4x3y-nv-dg78hRHCRHVUQwa0GKp08V1LiHduAf-ow0vCJkQCZRYzr0LeCRucyF3L9jJvKxLGjxOpaINKoRmh7w~UjKqkvYe3TYZHMESUkINsvN6B7Gwsg~EWzqtC3nuomeDLzZJ5YQAb61BUZ0g29aXiEuHhS1QN3rMiDin4wi2xQfEKraROo~DQ6sgfJpTeQpvqkYdVUUOtK4um94AwmzT-Mg3wm1C8Kty5r9BWw6a66sZchENakmAGfaylVLjnk-l605XiOlGHJfKPA__&Key-Pair-Id=K3NV4LZ47N8M46)
+If you click **Deny** , ID.me does not send your verification to Canvas and nothing is recorded. Canvas shows **You chose not to share your details** with a **Try again** button.
+## Step 7: Confirm you're verified
+Canvas shows **You're verified**. Click **Done** to return to the Identity verification page, which now shows **Your identity is verified** with the date. Nothing else is needed from you. You can return to this page from **Identity verification** in the menu at any time.
+![Canvas page showing Your identity is verified](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fa1b1cab5-fd6f-4f13-8bd3-f712c79d433e-p16-verified.png?Expires=253370764800&Signature=k2HK5rsJGWd~d4rc5-Tui25UsfAYZ68xeHmArk4TqHVOQrdUi6ZJlZJuJbm-Nr2Ps8QPr~~iBMBXupZJhXR3qOaIQhTyCAzRlqvfGn-SjJrJujSLcw7xYTaF3ybdLZEkfCHDZpqSa8GoxDtLdF~GGh4sbbg118d8XrsX51K7EbgFNTVzI3aGjrLRZRGqCKlO9MKAh205vv~moBke4xPEULbL87B8rcK6fjScZTcbpsL4hjPRibevZZd0EXRMbTi3G5Oa1NbRC1GjTDfxXni1bvK3hFxWb-KZNZJ2SzDf~CmS3mKiCT6xmgdbqGfwLSJu5iDE-mjwsz6Df0EsxoL7yQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+## If verification did not finish
+If Canvas shows **Verification did not finish** , click **Error details** to see why.
+![Verification did not finish page with Error details and Try again highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Ffe82aa01-a220-4de0-98d3-c1d0060f59b4-p17-failed.png?Expires=253370764800&Signature=Gq6LQ8NJVqyiNrvgZXsxXA364H1~Gej3V-GZUwND3ebneoUtaAe4QoOP-CbmDHvlPTYdOZPLxqdZ76~dFkrOTNLs~-rh2TVwcqqj6D1GSxRqk~rRwraQukpIhpgVxUMFBzJKol6~7tjF4qwylBDlf7DfUKV2OXQnRU8vhIbHqwaMzDt8z6GZUG03R1l2nKuW8gClGstrBP7AMfBs2x60GKwxluggw8e2tVNZaj3mk28pZqo-j6zvvLz7yBsh8xGZPbJXMbD4JwX9sIgOfjxiXNWPOIowjG1aOapwEovBZMgQkxWNFDD8137-lvkURiI-hn8msxiQXK6EC6YGC-mYKw__&Key-Pair-Id=K3NV4LZ47N8M46)![Expanded error details showing a date of birth mismatch](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F80397710-ae2f-44df-a364-092ac3a6b6e3-p18-failed-details.png?Expires=253370764800&Signature=An055STU8VH72dsqQiSe1S8jeTh1H2IMZJ3lw8qXEyssrtM2BiqtF75SJaZiKexDK6kLART2aez4KPktiZwy8mjAMMK0cCoGevb2-Xb6zSLiqGKAHa8-dquDzxAZu2KuLne9rqV37Mlp03zNcB-UrbMIhylMnZnEVXAGRpLyP84SBcJ~jNqffJ6XhwpQHdgobthuBVP7ECdQoJvXc79-zqKFhJ~OffL7xTDGgpKJWeQC3tCmeLZ6N1xYrmmnjulXCxN0S7KqMOirf0OjG3VfWRF41xfzc2u-bn3ZiEkXT~aeyRSL8VN07HgsrkdPoAO53SfyFsZTVT7voufJ22jo2A__&Key-Pair-Id=K3NV4LZ47N8M46)
+  - **The identity ID.me verified does not match this staff record.** ID.me verified you, but your name or date of birth differs from your Canvas staff record, so Canvas did not record it. The details below that message say which one: date of birth, first name, or last name. Ask your practice administrator to correct your staff record, then click **Try again**.
+  - **A date of birth is required on both sides** (or a first or last name). Your staff record is missing that detail. Ask your administrator to add it, then try again.
+  - **ID.me could not be reached.** Wait a few minutes and try again.
+  - **That verification link has already been used or has expired.** Start again from **Identity verification**.
+  - **ID.me verified your identity, but Canvas could not record it.** Contact Canvas support before trying again.
+If you contact Canvas support, include the **Reference** shown under Error details.
+----- END PAGE https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/2428914045-patients-module
@@ -2911,6 +2963,9 @@ Each queue is divided into columns with key data. Users can filter and sort clai
 **Labels**
   - Either the pre-configured or [**custom labels**](https://canvas-medical.help.usepylon.com/articles/7708474806-task-claim-labels) associated to the claim
   - This column can be filtered to a specific label or a set of labels
+**Assignee**
+  - The staff member or team the claim is assigned to. To show it, go to **Settings > Quality & Revenue > Queues**, open the queue, add **Assignee** to its **Visible Columns** , and click **Save**.
+  - Users can filter claims to one or more staff members or teams, or to **Unassigned** , and sort by staff name, then team name.
 ![Jess Screenshot from Google Chrome on2024-11-07 5.jpg](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fc2d4acdc-9881-472c-bda9-5b7d4281eadd-1730991621591-JessScreenshotfromGoogleChromeon2024-11-075.jpg-285a90d3-8908-4231-86a3-8b74d0a7a296?Expires=253370764800&Signature=VsAheYQk~Rq7f8ekZtSQ0epnnHB2YmCg2xNvPkOyqq2IsZVDnZcQkzrhHRHEVbZhw~~xo1ZN2wbRI-t1JDxxhGyg8Pd4uwd-Jz3xuj5tVBC6nh~5br1AGCpYFuzvli13xru4tZGTSdopyFrmClrlq7f2AVQn3YJpWptJYwEBxPdp4v7AgiG1gq1wtmUBYx1c6De4QhR65CzzBaT4FHaXFrgdkwbL5~n~99IKaiaV8OaWiW3ThjZY5AprStvCjWxgt8H-gqm~F57DJ2CtAh47QqXv8rkTqlQdgGcqtkzwOMBHvfSG~8AcpzSXEG-Y02S08-RC1hRSp-6BPB2ii5Vhcw__&Key-Pair-Id=K3NV4LZ47N8M46)
 ## Manually Moving Claims to a New Revenue Queue
 Users can transfer claims between queues manually when necessary
@@ -3868,7 +3923,7 @@ Find the plugin to install at <https://github.com/Medical-Software-Foundation/ca
 Patient conditions evolve over time. Some resolve, others require diagnostic updates, and many remain relevant as historical context. This article explains how to document past medical history, take an entry back off the chart, resolve active conditions, and change diagnoses in Canvas Medical while preserving important clinical information.
 ## User's Guide
 ### Documenting Past Medical History
-The Past Medical History command documents conditions that are no longer active but may still impact clinical decision-making.
+The Past Medical History command documents conditions that are no longer active but may still impact clinical decision-making. Every condition it records is a problem list item.
 **To add past medical history:**
   1. Add the Past Medical History command to a new or existing note
   2. Complete the command fields:
@@ -3876,12 +3931,17 @@ The Past Medical History command documents conditions that are no longer active 
      - **Approximate Start Date** : Date when the condition began (e.g., "last week," "3 years ago," "2015," or specific date)
      - **Approximate End Date** : Date the condition resolved
      - **Show on Condition List** : Toggle on to display the condition in the patient summary
+     - **Category Domain** : Optional domain for the problem list item. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
      - **Comments** : Additional notes pertaining to the condition (up to 1000 characters)
   3. Click **Record** to add the medical history to the patient record
 **Key points:**
   - Searches ICD-10 codes similarly to the Diagnose command
   - Supports entering the code directly in addition to text search
   - Use free-text date entries for flexibility
+  - The condition is always recorded as a problem list item, whether or not **Show on Condition List** is on
+  - A condition already on the patient's chart can't be added again, and **Record** is disabled:
+    - For an active condition, the command displays: _"This condition is already active on the patient's chart. Use Resolve Condition to move it to past medical history."_
+    - For a resolved condition, the command displays: _"This condition is already on the patient's chart as resolved. Use Assess to update it."_
 ### Removing a Past Medical History Entry
 The Remove Past Medical History command removes a past medical history condition from the patient's chart and records the rationale why. Reach for it when an entry turns out to be wrong for the patient, for example one brought in by an import or taken from a history the patient has since corrected.
 The note that originally recorded the entry is left exactly as it is, so the chart still shows what was documented and when. There is no need to amend or correct that earlier note.
@@ -3927,6 +3987,10 @@ No special configuration is required. Past Medical History, Remove Past Medical 
 ## FAQ & Troubleshooting
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving the historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
+**Q: What category does a Past Medical History entry get?**
+A: It's always a problem list item. Category Domain is optional and adds SDOH, Functional Status, Disability Status, or Cognitive Status to it.
+**Q: Why is Record disabled on my Past Medical History command?**
+A: The condition is already on the patient's chart. If it's active, use Resolve Condition to move it to past medical history. If it's already resolved, use Assess Condition to update it.
 **Q: Can I undo a resolved condition?**
 A: Yes. If the condition was resolved by mistake, enter the Resolve Condition command in error and the condition returns to active. If the condition has come back, add an Assess Condition command and pick the resolved condition from the search. Recording it makes the condition active again and keeps its full history in one place.
 **Q: Can I undo removing a past medical history entry?**
@@ -3938,7 +4002,7 @@ A: When resolving a condition, toggle on "Show on conditions list." Resolved con
 ## Related Resources
   - [Documenting New Diagnoses](/articles/9221634314)
   - [Assessing and Updating Conditions](/articles/7989321964)
-**Keywords:** past medical history, remove past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates
+**Keywords:** past medical history, remove past medical history, resolve condition, change diagnosis, historical conditions, ICD-10 update, inactive conditions, billing updates, category domain, problem list item, SDOH
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/3935780129-managing-historical-conditions
 
@@ -4005,9 +4069,48 @@ Set `AUTOMATED_INVOICING` to **False** in Constance: Config and save. No further
 ----- END PAGE https://help.canvasmedical.com/articles/3981780818-enable-automated-patient-statements-and-payment-reminders-via-email
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code
+Your organization's plugins now live on Canvas Platform, including the ones built in Studio. These are the questions developers ask most once their organization is upgraded.
+# Getting Your Plugin Code
+**How do I get a copy of my plugins' code?**  
+Use `canvas clone` with the Canvas CLI:
+  1. Upgrade the CLI: `pip install --upgrade canvas` (or `uv tool upgrade canvas`).
+  2. Sign in once with `canvas login`, which opens your browser, then run `canvas whoami`. Your organization should be listed with "can push, deploy".
+  3. Clone each plugin by name: `canvas clone acme__intake`. This creates an `acme__intake` folder with the plugin's code, ready to deploy.
+Run `canvas clone` once for each plugin you want a copy of.
+**Which plugin names do I use?**  
+The names your plugins have in Canvas, such as `acme__intake`. `canvas list --host <instance>` lists every plugin on an instance.
+**My clone has two branches. Which one has the newest code?**  
+`main` holds released versions. Studio keeps its in-progress work on a `canvas-studio` branch. Run `git branch -a`, and if `canvas-studio` is there, compare `plugin_version` in `CANVAS_MANIFEST.json` on each branch (`git checkout canvas-studio` to switch). Use whichever is newer.
+**What roles do I need?**  
+**Plugin developer** to clone and push plugin code, and **Deploy manager** to deploy it to your instances. An Organization admin on your team can grant both. See [Users and Roles](https://help.canvasmedical.com/articles/5540123924-users-and-roles).
+**`canvas clone` says it can't find my plugin.**  
+Your organization's plugins may not be upgraded yet. Everyone with the Organization admin, Plugin developer or Deploy manager role gets an email when the upgrade starts and another when it is complete. If you have the second email and clone still can't find the plugin, contact your Canvas team.
+# Keeping Plugins in Your Own Repository
+**Can I keep my plugins in my own GitHub repository?**  
+Yes. Copy the folder that holds `CANVAS_MANIFEST.json` into your repository, for example at `plugins/acme__intake/`, leaving out the `.git` folder, and commit. Then deploy from your repository with `--snapshot`:
+`canvas deploy plugins/acme__intake --snapshot --instance acme-staging`
+See [Working with a monorepo](https://docs.canvasmedical.com/guides/working-with-a-monorepo/).
+**Deploy listed some files and asked whether to replace them. What does that mean?**  
+Your copy differs from the code on Canvas Platform. Answer no, check that you copied from the right branch, and deploy again.
+# Deploying
+**Do I still use`canvas install`?**  
+No. Use `canvas deploy` in its place. `canvas install` stops working on December 14, 2026. See [Upgrading to Canvas Platform](https://docs.canvasmedical.com/guides/upgrading-to-canvas-platform/) for the full switch, including CI pipelines.
+# Working With Studio
+**If I change a Studio plugin's code myself, does Studio overwrite it?**  
+No. The next time the plugin's project opens in Studio, Studio brings your change in, and it holds Studio's next deploy until someone reviews the change in Studio. See [When code changes outside Studio](https://help.canvasmedical.com/articles/4485157203-When-code-changes-outside-Studio).
+**Can Studio send its work to our repository for review?**  
+Yes. A Studio admin can connect your repository under **Studio** → **Studio settings** → **Release strategy** → **Gated**. Studio then sends finished work to your repository as pull requests. See the [Studio Admin Guide](https://help.canvasmedical.com/articles/2234141107-Studio-Admin-Guide) and [Gated release: from Promote to Production](https://help.canvasmedical.com/articles/7597495196-Gated-release:-from-Promote-to-Production).
+# More Help
+  - [Canvas CLI reference](https://docs.canvasmedical.com/sdk/canvas_cli/), including `canvas clone` and `canvas deploy`
+  - [Upgrading to Canvas Platform](https://docs.canvasmedical.com/guides/upgrading-to-canvas-platform/)
+  - Questions? Message us in your organization's shared Slack channel, or submit a ticket with the [Canvas Platform support form](https://canvas-medical.portal.usepylon.com/forms/platform-support).
+----- END PAGE https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/4083957452-print-batch-statement
 ## Introduction
-Users have the ability to generate and print batch statements. 
+Users have the ability to generate and print batch statements.
   - All statements generate in a single PDF. If you do not desire to print all statements, you can select specific pages.
 ## Step by Step
   - Navigate to the menu, located on the top left-hand side
@@ -4016,6 +4119,10 @@ Users have the ability to generate and print batch statements.
   - Click on the drop down arrow.
   - Select **Generate patient statements batch**
 ** _NOTE:_**_A pop up notification appears to confirm that the PDF is being generated._ _As stated on the notification, this process can take up to 10 minutes. A task is generated and assigned to the user that opted to_** _Generate patient statements batch._**
+The task title tells you how the batch went:
+  - **Batch of patient statements ready** : the PDF is attached and ready to print. If some statements could not be rendered, the title says how many were left out.
+  - **No patient statements were generated: no patients have a balance to invoice.** There was nothing to bill, so no PDF was made.
+  - **Batch of patient statements failed to generate** , or **stopped before finishing** : no batch PDF was made. When some statements were already created, the title says how many are visible to patients. Try again, or contact support if it keeps failing.
 **_NOTE:_**_The task is also accessible from the panel view as it is visible on the overall task list_
   - Click on the **Task** icon
 ** _TIP:_**_The Task icon indicates when a new task has been assigned to the user; this is indicated by a red badge above the task._
@@ -4537,7 +4644,7 @@ Provider names must match exactly as they appear on their medical license to avo
   - **Tax ID** : Provide the appropriate Tax ID based on the billing method, whether for an organization or a specific practice location.
     - While optional, leaving blank for providers triggers [claim check alerts](https://canvas-medical.help.usepylon.com/articles/9992348572-claim-management#claim-checks-87)
   - **Tax ID Type, Language, and Schedule Column Ordering** : Keep as default settings
-  - **Signature** : Displays as provider signatures on all visit notes, printed lab or imaging order requisitions, referrals, and can be included in letter templates.
+  - **Signature** : Appears on superbills, referral and instruct printouts, and in letters built from a template that includes the provider signature. Printed visit notes that require signing, and printed lab, imaging and DME requisitions, show an "Electronically signed by" line with the provider's name and the date instead of the image.
   - **Personal Meeting Room Link** : A direct link to virtual exam rooms used for telehealth visits.
   - **Supervising Provider** : Physician the provider operates under
 ## Uploading Staff Signatures
@@ -7249,7 +7356,7 @@ Due to the ever evolving nature of our product, recorded videos may be slightly 
 Patient Communications lets patients complete questionnaires and intake in the patient portal before a visit. Staff assign forms from the patient's chart, or each visit type sends its own set automatically before the appointment. Patients work through everything in one guided form, their progress saves as they go, and their answers land in the chart when they submit. This guide is part of [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications).
 ## Overview
   - **Staff** assign questionnaires and intake sections from the **Forms** tab of the **Patient Communications** panel in the chart.
-  - **Admins** choose, on the **Pre-Visit Forms** tab of **Notifications Admin** , which intake sections, questionnaires, and consents each visit type sends before the visit.
+  - **Admins** choose, on the **Pre-Visit Forms** tab of **Notifications Admin** , which intake sections, questionnaires, and consents each visit type sends before the visit, and which intake sections and questionnaires every new patient gets.
   - **Patients** open **Forms** in the portal menu, or a link in a text or email, and complete everything in one step-by-step form.
   - **Answers** go into the chart: questionnaires into the visit note, patient-reported history as draft entries for a provider to review, and demographics into the patient's profile.
   - **Staff are told** when a patient submits, with a task and an optional email. See [Messaging and Tasks](https://help.canvasmedical.com/articles/2810197045-patient-communications-messaging-and-tasks).
@@ -7276,8 +7383,9 @@ Vitals| Optionally enters height and weight
 For conditions, surgeries, medications, allergies, goals, and vitals, the patient also sees what is **already on file** , read-only, so they only add what's missing.
 ## Assign forms from the chart
   1. Open the patient's chart, then **Patient Communications** > **Forms**.
-  2. To send questionnaires, use **Assign Forms** : move them from **Available** to **Selected** , set the **Due Date** (a week from today by default), and click **Assign**. Choosing **Patient Intake** sends every intake section.
-  3. To send only some intake sections, use **Assign Intake** : move the sections to **Selected** , set a **Due Date** , and click **Assign Intake**. The sections appear to the patient in alphabetical order.
+  2. To send questionnaires, use **Assign Forms** : move them from **Available** to **Selected (in order)** , use ▲ ▼ to set the order the patient sees them, set the **Due Date** (a week from today by default), and click **Assign**. Choosing **Patient Intake** sends every intake section.
+  3. To send only some intake sections, use **Assign Intake** : move the sections to **Selected (in order)** , use ▲ ▼ to set the order the patient sees them, set a **Due Date** , and click **Assign Intake**.
+In both, an item you add goes to the end of **Selected (in order)**. To move items, highlight them and click ▲ or ▼. **Available** stays in alphabetical order.
 **Assigned Forms** lists what the patient still has to do, grouped by visit or due date, with their progress once they start. **History** lists what they completed or what expired.
   - To remove a questionnaire, click **×** next to it. This removes every assignment of that questionnaire for the patient, including ones sent for a visit.
   - A patient can have one intake assigned outside a visit at a time.
@@ -7295,8 +7403,18 @@ When a patient has a booked appointment of that visit type within the lead time,
   - Each appointment gets its forms once. Changes to a visit type's forms apply to appointments that haven't been processed yet.
   - A form you remove from a patient's visit is not sent again for that visit.
   - Forms for a visit stay on the patient's list until the end of the visit day, then show as **Expired** , including when the appointment is canceled or rescheduled.
+## Send forms to new patients
+The **New Patients** row at the top of the **Pre-Visit Forms** tab chooses the intake sections and questionnaires every new patient gets. It has the same pickers as a visit type, without consents or a lead time. Consents for new patients are chosen on the **Consents** tab; see [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents).
+  1. In **Notifications Admin** , open the **Pre-Visit Forms** tab.
+  2. In the **New Patients** row, move intake sections and questionnaires to **Selected (in order)** and use ▲ ▼ to set the order the patient sees them.
+  3. Click **Save**.
+  - The forms are assigned when a patient is created, with no visit and no due date. Patients created before you set them up don't get them.
+  - When the patient books a visit, the forms they haven't submitted move to it: they are due on the visit date, are grouped with the visit's forms on the portal, and file into its note. Answers the patient has already saved move with them.
+  - If that visit is canceled or marked no-show, the forms they haven't submitted move off it and go to the next visit the patient books.
+  - A visit type that sends the same questionnaire or intake section skips it for that visit.
+  - Intake history submitted before any visit is booked goes into a new Chart Review note.
 ## Text and email the patient
-Two cards on the **Campaigns** tab tell patients they have forms. Both are off by default.
+Three cards on the **Campaigns** tab tell patients they have forms. All are off by default.
 **Form Assignment Notifications** sends one text or email each time staff assign forms from the chart.
 Field| Shows  
 ---|---  
@@ -7311,6 +7429,7 @@ Field| Shows
 `{{form_names}}`| The questionnaires, "Patient intake", and consents that were assigned  
 `{{forms_link}}`| A link to the patient's portal **Forms** page  
 Patient, appointment, location, and organization fields| As in [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications)  
+**New Patient Forms Notifications** sends one text or email to a new patient who still has a form from the **New Patients** row, or a new patient consent, to complete. See [Consents](https://help.canvasmedical.com/articles/2250124863-patient-communications-consents).
 **Appointment Reminders** can also remind patients about unfinished forms with `{{form_reminder}}`. See [Appointment Notifications](https://help.canvasmedical.com/articles/4564357734-patient-communications-appointment-notifications).
 ## What the patient sees
   1. The patient opens **Forms** from the portal menu, or the link in a text or email. If they aren't signed in, the portal asks them to sign in first.
@@ -7324,7 +7443,7 @@ After submitting, the patient cannot open or change their answers. The portal ho
 ## Where answers go
 What the patient submits| Where it lands  
 ---|---  
-Questionnaires| Completed in the visit's note. Forms not tied to a visit go into a new Chart Review note.  
+Questionnaires| Completed in the visit's note. When that note is canceled, deleted, locked, or signed, they go into a new note of the visit's note type. Forms not tied to a visit go into a new Chart Review note.  
 Conditions, medications, allergies, surgeries, family history, goals, vitals, and the mental health sections| Draft entries for a provider to review and sign, in the visit's note or the separate note chosen on **Pre-Visit Forms**. The note is titled "Patient Intake — self-reported history (review & sign)".  
 Address, phone, email, preferred name, suffix, contact preference| Saved straight to the patient's profile. A blank answer never clears what's there.  
 Name, date of birth, sex at birth| Saved only when the chart has no value. If the patient's answer differs from the chart, a task "Reconcile patient intake" is created instead, labeled **intake-reconcile**.  
@@ -7334,11 +7453,13 @@ Preferred pharmacy| Saved to the patient's preferred pharmacies
 What you see| What to check  
 ---|---  
 The patient sees "Uh-oh! We couldn't find that." when opening forms| The visit day has passed, the forms were already submitted, or there was nothing to fill out.  
+The patient sees "Something went wrong submitting your forms. Please try again."| The submit didn't go through, for example because the visit day had passed or no note could be found for the questionnaires. The patient's answers stay saved and the forms stay assigned, so they can submit again. If it keeps happening, contact your Canvas team.  
 The link in a message is blank| Contact your Canvas team; the link needs your instance's address set up with the plugin.  
 A form assignment message has no link| The default templates leave out `{{forms_link}}`. Add it to **Form Assignment Notifications**.  
 "Patient has been notified" but no message went out| **Form Assignment Notifications** is off.  
 Pre-visit forms weren't assigned| The visit type has no forms on **Pre-Visit Forms** , the appointment is outside the lead time, or the appointment was processed before the forms were added.  
 No pre-visit text or email| **Pre-Visit Forms Notifications** is off, the appointment isn't booked, or the patient was already notified for this appointment.  
+A new patient didn't get forms| The **New Patients** row had no forms when the patient was created.  
 History answers aren't in the chart| They are draft entries waiting for a provider to review in the visit's note or the separate note. If no note could be found, a task "Patient Intake: self-reported history not filed" is created.  
 A demographic change didn't save| Check for an **intake-reconcile** task, or ask your Canvas team whether the `FHIR_*` secrets are set.  
 Removing one questionnaire removed others| **×** removes every assignment of that questionnaire for the patient. Assign it again if needed.  
@@ -9284,6 +9405,72 @@ A: Yes. Follow the deactivation process. To reactivate, you'll need to complete 
 ----- END PAGE https://help.canvasmedical.com/articles/6405678539-activating-epcs-grants-with-drfirst
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin
+The Patient Numbering plugin gives every patient a short Patient ID in addition to the Canvas MRN. Staff see the Patient ID in the patient's profile and can find a patient by it from the patient search bar. New patients get the next Patient ID automatically, and no two patients ever share one.
+## Overview
+  - **A Patient ID for every patient** , such as 1, 2, 3, or a formatted ID such as PAT0001, shown as a read-only **Patient ID** field in the **Patient demographics** section of the profile.
+  - **Search by Patient ID** from the patient search bar by typing `!` followed by the Patient ID.
+  - **Keep IDs from a previous system.** When patients are imported with an ID from the system you used before (for example `PAT0102`), each patient keeps that number, and new patients continue after the highest one in use.
+  - **A Patient Numbering app** for administrators, to number existing patients once and check progress.
+The MRN does not change. The Patient ID sits alongside it.
+## Before you begin
+  - The plugin must be installed on your Canvas instance. See **Install the Plugin** below.
+  - Only staff listed in the plugin's `ADMIN_STAFF_IDS` setting can open the Patient Numbering app. Everyone can see the Patient ID in the profile and search by it.
+  - Decide on the ID format before you number anyone: plain numbers, or a prefix and fixed width such as PAT0001. If you are bringing patients over from a previous system, set the plugin to read their old IDs first. See **Plugin settings** below.
+  - If patients are being imported, finish the import before numbering existing patients, so imported patients keep their old IDs.
+## Number existing patients
+This is a one-time step an administrator runs after installing the plugin. Until it finishes, new patients are not numbered, so existing patients always get the lowest numbers.
+  1. Click the app menu (the grid icon in the top right of Canvas) and select **Patient Numbering**.
+![Patient Numbering in the Canvas app menu](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F35ee9301-ce4a-4ed0-8936-192d926093cc-01-app-menu.png?Expires=253370764800&Signature=LYPhU7661LwvAbClEBHyKeDaKvGiBTbianYbWNQ9sKAWDTCk1DLEKbFlJKBCPn~dnDPUwn5P1ljvGlsYmpf7h3OQNQI~HXWbgwHxnGoTvYLffWBTQcGeF3X29ba2w88VKhtbypmd6yM~lcYjyUpGfNqRkPRhUanqQ6YIVz7FLz7hVwpt4fDXWGkGw5MIIxOte0Di2vrXigXK6TEme5Eb9gydNI1sAy1yexl1M0yHL3P6dQfWwLL0KCXZnICzwcIPqFDfO3sO~4M66GvZkkimfsdvqhDzC5O7UJPFAHmgfl6UABpiW3VtDhrEfhl2RN~HjWgM~dOBJICLXl8kLt1btw__&Key-Pair-Id=K3NV4LZ47N8M46)
+  2. Review the summary. **Patients** is how many patients are in Canvas, **Remaining** is how many still need a Patient ID, and **Next Patient ID** shows the format the next number will use.
+  3. Click **Number existing patients**.
+![Patient Numbering app before numbering existing patients](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F2dc8be4d-e095-4e01-b6f9-bf6cd55a8a63-02-admin-before.png?Expires=253370764800&Signature=SW9XUWGDwtE5e0NCeqIm2ZaypWDeOIHmX~~XziwZhK0gp2xZ8TXfF~8Wvdgf9obzEuuO7wl21C4zXWWs2Pvyf1KV6mWXT4F0WPvQ78XI~6WQESHEAC9vFEe4pS9qtcHkDkZtxnhCxQdlKvV3cxqy99DNBzZDrGy-FWuYNziTPWTJhdrd7psBRvhhIYYUS48wWeR0kvDqCJ0qs3d2En2kUE4hqn3DxJ59RLdw7UHCHSd5-PycdXbnprcFeKbYB4FuLYZxy2UAnamYyeHDrtRTHyWCUAy~AHXFusaiB2RQegsIqKjCx03RHDmFp-ru5HdKPWoGO0xLtrfBuLWTIh6JbQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+The app numbers patients in batches of 100 and shows progress below the button ("Numbered through ... remaining"). When it finishes, the message reads **Done. Every patient has a Patient ID.** , the summary updates, and the button is grayed out.
+![Patient Numbering app after numbering existing patients](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe1b2214f-5a3a-4f9d-97a7-76bdaf6b6c04-03-admin-after.png?Expires=253370764800&Signature=dD0XwPkZCUz9fXNN5MvJq5YpKQCMAlB97-T4usi8H2cdW~fwmFuxbGhrlu5xuu7eTQIvE0R9fWa6qO1a8vE~Pk40e0SjJjWpWwOz-YNrhiLF8K8oh6Oy9wt5a8xvhwojGnZwDSYWfIqVInSEBiDrzAfwiWawpjXIf2awKA3WhV4qD5-fszsz2kZSpkqJ6WtZdn~X7yaHjPKKmicpIBsq8z4AUIZ~7i7Wih57Hab1Oc4LpeqcxHjasgbFauLh843Uu0X2erKH0IPVf1iiWcheE3-5kKVbg1iI-hYWbe7-QjHOnHiXYBhq2HbENviuyvod3TX0BjVkI1B3ez9Q5-~i2w__&Key-Pair-Id=K3NV4LZ47N8M46)
+How the numbers are assigned:
+  - Patients who have an ID from your previous system keep the number in that ID. The app shows how many under **Kept from <system>**.
+  - Everyone else is numbered after the highest number in use, oldest patient first, in the order they were added to Canvas.
+  - **New patients numbered automatically** changes to **Yes**. From then on, each new patient gets the next Patient ID the moment they are created.
+Leave the page open until you see "Done." If you close it or the connection drops partway through, open the app again and click **Number existing patients**. It continues where it stopped, and patients who already have a Patient ID keep it.
+## Find a patient's Patient ID
+  1. Open the patient's chart and click the **Profile** tab under the patient's name.
+![Profile tab on the patient chart](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3b92f67f-2f30-403e-b73f-6dc3dfcef64a-04-chart-profile-tab.png?Expires=253370764800&Signature=YxaoThepuYe4WbrEF0k3TwGgAGg7jnXKXxwGagr4jw1emaOQ4eAICh8y4Uqh6kq43kKJ-ypyjZW5bKJtG1PNR0nGnrjifC3lVufKkY5desZgjs1yjETpQ0sWtZ08BUayVC5pZxnXWrRUIHne7~qAHXbx9fDBLzwfeQnJU50EUPftDDwZTcGoNoALFkC7vvvHnqKXHeFVTpU6BeSUWkzqb9Kk~~UD3X1lY0-VDW40GCHmby2yjRosbRu-RDh0-ZIl4BOKslkjlVvyeXKeABgkxP0GygoxVkL03lac3faCstpkb0OrxHSrSYChIoklWc-sRugegwBlfcrrGj7aC0JchQ__&Key-Pair-Id=K3NV4LZ47N8M46)
+  2. In **Patient demographics** , the **Patient ID** field shows the patient's number.
+![Patient ID in Patient demographics](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F75e52289-45f2-4b68-b50d-d20d129c10a6-05-profile-patient-id.png?Expires=253370764800&Signature=HyDpCLDNgX23vxIh3dVyCfb~0tuewg9IzOUmTfx5iV~5i8fDW1gXvh5BtrlkuxeooNVl0-Et7UL0oPgcrKP3ZTMd3rm-kwNBKa3KBPhTINyDQtPhK~~O4AhcA8EyNH4CfqIx5d3XoMyEFkm-5YBcX8ps709BSLYcnnk1CiQVtIqit0l92waqKLJAD5xPUDlJTUvqj4DhTzh5NSrI-9pGK7-R8vyIBOxMNl9V3IMj0mzssNH87MDFzKByGn~4A9-mV4uVcYg~84OOlzDlzlYA0iDo3KvbtX9DSOuIYVDqq5GncyXMvh3HUE1l-t-Wen7p8t5FkeHi1hDFiEUXvU9JLg__&Key-Pair-Id=K3NV4LZ47N8M46)
+The Patient ID is read-only. Clicking **Edit** on the demographics section does not change it.
+## Search for a patient by Patient ID
+  1. Click the patient search bar at the top of Canvas.
+  2. Type `!` followed by the Patient ID exactly as it appears in the profile, for example `!42` or `!PAT0102`.
+  3. Select the patient from the results.
+![Searching by Patient ID from the patient search bar](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F44ab9ff2-a5b8-40d5-abc6-6e81334ae168-06-search.png?Expires=253370764800&Signature=FkCDWIAdInk4fmHCYGPeySg6MVBitbwIoeQMFLaaaFpnQW7DGdHtSTUm7VJLCpuLtSUkqnuI4ukQQT9RDbcxqTPysJNMDFoJJNS-oqYtjuvDcS8SeLR2NrR6FdJxKRsvet7P-KukHTYivcWfyXg5o4SEI9f~rEpg8RNnrjs9Y5ofEHSiHICe9m-fftFrvU3wU3wbgP-SP9sVtKpqXBqAafX3H0jtOAtzOu5UyOGwGLycy1pLj59FaJmWwmy0pYCjkTCaL562OF-FBdBzyAp4k4av0BnzTGsj1RKvPhTUgnAnU5Q-dNzNEXqF97JzP87YbiiSPerA8l925DWnER~dGw__&Key-Pair-Id=K3NV4LZ47N8M46)
+The `!` tells the search bar to look up patient identifiers instead of names.
+## Troubleshooting
+**What you see**| **What to do**  
+---|---  
+The Patient Numbering app says **Not authorized**|  Your staff ID is not in the plugin's `ADMIN_STAFF_IDS` setting. Ask an administrator to add it. If the setting is empty, nobody can open the app.  
+A new patient has no Patient ID| Existing patients have not been numbered yet. Open the Patient Numbering app. If **New patients numbered automatically** says **No, number existing patients first** , click **Number existing patients**. The new patient is numbered in the same run.  
+An error appears under the button, ending in "Click again to continue where it stopped."| Click **Number existing patients** again. Patients numbered before the error keep their Patient IDs.  
+"Done" says some patients had a source ID whose number was already taken| Two or more patients had the same ID in your previous system. The patient added to Canvas first keeps the number, and the others get the next free number instead. Check those patients' records to see which IDs were duplicated.  
+A patient did not keep their old ID| The old ID must start with the `NUMBER_PREFIX` and be followed only by digits. For example, with the prefix `PAT`, `PAT0102` is kept as 102, but `P-102` is not. Patients whose ID does not match are numbered after the highest number in use.  
+Searching by number finds no one| Type `!` before the Patient ID, and include the prefix and any leading zeros exactly as shown in the profile.  
+## Install the Plugin
+Find the plugin to install at [Medical-Software-Foundation/canvas: extensions/patient-numbering](https://github.com/Medical-Software-Foundation/canvas/tree/main/extensions/patient-numbering).
+After installing:
+  1. Copy the generated `namespace_read_write_access_key` and `namespace_read_access_key` from the plugin's settings and store them somewhere safe. Canvas creates them only on the first install, and reinstalling the plugin later needs them.
+  2. Have one of the listed administrators open the Patient Numbering app and click **Number existing patients**.
+## Plugin settings
+Administrators set these in Canvas admin settings under **Plugin_Io > Plugins > patient_numbering**. Set them before numbering existing patients.
+**Setting**| **Required**| **What it does**  
+---|---|---  
+`ADMIN_STAFF_IDS`| Yes| Staff IDs allowed to open the Patient Numbering app, separated by commas. Each one is the staff member's 32-character staff key. If it is empty, nobody can open the app.  
+`SOURCE_IDENTIFIER_SYSTEM`| No| The identifier system that holds each patient's ID from your previous system, matched exactly. Leave it empty to number every patient from 1.  
+`NUMBER_PREFIX`| No| Letters shown before the number, for example `PAT`. When keeping old IDs, they must start with this prefix to be kept.  
+`NUMBER_WIDTH`| No| Pads the number with leading zeros to this many digits. For example, `4` shows 42 as `0042`. Leave it empty for no padding. A value that is not a whole number is ignored.  
+`namespace_read_write_access_key`| Generated| Created on the first install. Keep a copy for reinstalls.  
+Choose the prefix and width before numbering anyone. Each patient's displayed Patient ID is written when they are numbered, so changing the prefix or width later applies only to patients numbered afterward.
+----- END PAGE https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/6442909989-vaccines-vaccine-lots
 Effective vaccine inventory management is essential for ensuring availability, reducing waste, and maintaining compliance with healthcare regulations. Canvas simplifies this process with an integrated inventory system that allows providers to track stock levels, monitor expiration dates, and document administration in real time.
 # Documenting Vaccines and Vaccine Lots
@@ -10643,6 +10830,113 @@ A: Yes, simply use **Create or update an automation** and select the existing au
 ----- END PAGE https://help.canvasmedical.com/articles/7126006931-automations
 
 
+----- BEGIN PAGE https://help.canvasmedical.com/articles/7157688655-public-booking-plugin
+## Overview
+The Public Booking plugin lets new leads and patients book an appointment from a public link, with no portal account. The visitor picks a service, a location, and a time, then enters their name, date of birth, phone, and email. The plugin books against the same provider and room availability that the Scheduling with Rooms modal offers staff, matches the visitor to an existing chart or creates a new one, holds the room, sends a portal invite, and creates a staff task.
+Booking page:
+    https://<your-instance>.canvasmedical.com/plugin-io/api/public_scheduling/booking
+## Who should use this plugin
+Practices that want new patients to book themselves from a link or a "Book now" button on their website, including practices whose visits need both a provider and a room.
+## Problem it solves
+Canvas's native self-scheduling lives in the patient portal and requires a login, and visits that need a room are coordinated by the Scheduling with Rooms plugin. The Public Booking plugin gives prospective patients a public page that books against provider and room availability together, and hands the booking to staff with a task.
+## Before you begin
+  - Install the Scheduling with Rooms plugin first. Public Booking reads its room configuration and stores its own settings in the same Custom Data namespace.
+  - In Scheduling Admin, set up the visit types, durations, and room mappings you want to offer.
+  - Make sure each bookable provider has Clinic availability events at the locations where they see patients. An event with no allowed note types allows every visit type.
+  - For visit types mapped to rooms, give each room Clinic availability events at the locations where it is used. A room's calendar that names a location counts at that location; one that names no location counts only at the room's primary practice location.
+  - To text booking confirmations, install the Patient Communications plugin and turn on its confirmation SMS channel in Notifications Admin.
+## Install the plugin
+    canvas install public_scheduling --host <your-instance> \
+      --secret namespace_read_write_access_key=<Scheduling with Rooms read_write key>
+The `namespace_read_write_access_key` value is the same key set on the Scheduling with Rooms plugin. After installing, open **Online Booking Admin** from the provider menu to choose the bookable services and providers.
+## Configure the booking page
+Open **Online Booking Admin** from the provider menu. Any signed-in staff member can open it, and changes apply to the booking page as soon as they are saved.
+Tab| What it sets  
+---|---  
+General| Organization name, logo, booking window, and minimum notice  
+Booking flow| Step order, the patient time zone picker, provider cards or a dropdown, and add-to-calendar buttons  
+Services| Which visit types are bookable and in what order, the name and description patients see, and the visit length  
+Locations| Which locations are offered, the address and description shown, and a photo  
+Providers| Which staff patients can book, with photo, credentials, a one-line bio, and a full bio  
+Pages| The text on every page of the flow, the practice phone number, whether email and a reason for visit are asked, and up to 10 booking questions  
+Branding| Colors, font, and an optional faded background image  
+Links| A builder for links that open the page with a service, a location, or both already chosen  
+Each Pages section has a **Preview** button that shows unsaved changes against live services, locations, and times. A preview cannot book.
+## How patients book
+  1. **Service.** The patient picks a visit type.
+  2. **Location.** Only locations that offer the chosen visit type are listed. A location qualifies when a provider has availability there for that visit type and, for a visit type mapped to rooms, one of the rooms the booking would hold has availability there that allows the visit type too. A telehealth-only visit type is therefore listed only where its telehealth rooms are, and a visit type whose rooms are all in clinics is never listed at a Telehealth location. When no location qualifies, the service has no locations, and the page does not fall back to every location. The step is skipped when only one location qualifies.
+  3. **Time.** A month calendar highlights dates with openings. Picking a date lists its times grouped into morning, afternoon, and evening.
+  4. **Details.** The patient enters their name, date of birth, phone, email, and any reason for visit or booking questions you turned on.
+  5. **Review.** The patient checks the appointment and their details. Nothing is booked until they confirm.
+  6. **Confirmation.** The page offers an "Add to Google Calendar" link and an `.ics` download for Apple Calendar and Outlook.
+If Location is placed before Service in Booking flow, the same rules run the other way: a location lists only the services it offers.
+## What happens after a booking
+  - **Chart.** The booking attaches to an existing chart only when exactly one active patient has the same first name, last name, and date of birth and a matching phone or email. Otherwise a new chart is created. A name and birthdate collision flags the task for staff review.
+  - **Appointment and room.** The appointment is booked on the provider's calendar, and when the visit type uses a room, the room event is created and linked the same way Scheduling with Rooms links it. Canceling or rescheduling in Scheduling with Rooms releases or moves the room as usual.
+  - **Reason for visit.** A reason the patient entered is added to the visit note as a Reason for Visit command, left uncommitted for the provider.
+  - **Portal invite.** A portal invite is sent when the patient has an email and has not registered.
+  - **Staff task.** Each booking creates a task titled "Online booking: ..." with the reason, booking question answers, and any review note.
+  - **If the time was taken.** When a new chart's time is taken before the appointment is booked, staff get a task to call the patient instead.
+## Booking links for a specific service or location
+A link can choose the service, the location, or both for the patient:
+    https://<your-instance>.canvasmedical.com/plugin-io/api/public_scheduling/booking?appointment_type=<note type code>&location=<practice location id>
+  - `appointment_type` is the visit type's note type code, as listed on the Services tab.
+  - `location` is the practice location id, with or without dashes.
+  - A value set by the link is chosen for the patient, and that step leaves the flow, so the patient cannot change it. The other steps run as usual.
+  - A value that is not offered online (unknown, hidden on the Services or Locations tab, or not a scheduleable visit type) is ignored, and so is a location that does not offer the chosen service. The patient then chooses that step as usual.
+  - A link with neither parameter opens the full flow.
+### Build a link
+  1. Open **Online Booking Admin** and go to the **Links** tab.
+  2. Pick a service, a location, or both.
+  3. Click **Copy** , or **Open** to try the link in a new tab.
+Links are built from saved settings. A link built from unsaved changes works once they are saved.
+### Add booking to your website
+Add a "Book now" button or link on your website that opens the booking link in a new tab. The booking page cannot be shown in an iframe on another website: Canvas only allows its own pages to frame plugin pages.
+## Protections on the public page
+  - An hourly limit on bookings per IP address, set by `RATE_LIMIT_PER_HOUR`, and a higher limit on page reads.
+  - Optional CAPTCHA with Cloudflare Turnstile or Google reCAPTCHA.
+  - A hidden honeypot field that silently discards automated submissions.
+  - Every input is validated, and the chosen time is rechecked before booking.
+  - Booking stays closed until at least one visit type is offered and at least one provider is bookable.
+  - The admin pages require a staff session. The public page never changes settings.
+## Plugin variables
+Variables marked * can also be set in Online Booking Admin, which takes precedence when its field is filled in.
+Variable| Meaning  
+---|---  
+`PUBLIC_VISIT_TYPE_CODES`*| Note type codes bookable online, comma-separated, in display order. Each entry is `code`, `code:minutes`, `code:description`, or `code:minutes:description`. Without a number, the shortest duration set in Scheduling Admin is used.  
+`PUBLIC_LOCATION_IDS`| Optional comma-separated practice location ids to limit the page to.  
+`SCHEDULABLE_STAFF_ROLES`| Role codes whose staff are bookable until a provider list is saved on the Providers tab.  
+`ALLOW_INTERVALS`| `true` for quarter-hour start times. Use the same value as Scheduling with Rooms.  
+`BOOKING_WINDOW_DAYS`*| How far ahead times are offered. Default 60.  
+`MIN_NOTICE_HOURS`*| Minimum hours between now and a bookable start. Default 24.  
+`RATE_LIMIT_PER_HOUR`| Bookings per IP address per hour. Default 10.  
+`CAPTCHA_PROVIDER`| `turnstile` or `recaptcha`.  
+`CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY`| The CAPTCHA provider's keys. CAPTCHA turns on once all three CAPTCHA variables are set.  
+`BOOKING_TASK_TEAM_ID`*| Optional team id for the staff tasks.  
+`SEND_PORTAL_INVITE`*| `true` (default) to send portal invites.  
+`ORGANIZATION_NAME`*| Shown on the first page as "Welcome to" followed by the name. Unset, the page reads "Book an appointment".  
+`PRACTICE_PHONE`*| Tap-to-call number shown when booking is closed or no location offers the chosen service.  
+`BOOKING_PAGE_LOGO_URL`*| An `https` image URL shown above the title.  
+`BRAND_PRIMARY`, `BRAND_PRIMARY_HOVER`, `BRAND_PRIMARY_TINT_BG`, `BRAND_PRIMARY_TINT_TEXT`*| Hex colors for buttons, their hover state, and highlighted backgrounds and their text.  
+`BRAND_FONT_STACK`*| CSS font-family list.  
+`BRAND_FONT_URL`*| A Google Fonts CSS URL that loads the font in `BRAND_FONT_STACK`.  
+`namespace_read_write_access_key`| The Scheduling with Rooms namespace read_write key.  
+## Troubleshooting
+Issue| What to check  
+---|---  
+The page says online booking is unavailable.| At least one service must be selected on the Services tab and at least one provider on the Providers tab.  
+A service has no locations.| A provider needs a Clinic availability event at that location that allows the visit type and occurs within the booking window. For a visit type mapped to rooms, one of its rooms needs availability at that location too.  
+A service is offered at some locations but missing at one you expect.| At that location, a provider and, for a visit type mapped to rooms, one of its rooms both need a Clinic availability event that allows the visit type within the booking window. A room calendar that names no location counts only at the room's primary practice location, so add an event on a calendar for that location.  
+A location shows no times.| Check provider and room availability, existing appointments, minimum notice, and the booking window.  
+A booking link still shows the service or location step.| The value in the link is not offered online, or the location does not offer the chosen service. Rebuild the link from the Links tab.  
+A location shows no address.| Billing addresses are never shown. Add an address on the Locations tab.  
+The booking page does not load inside our website.| The page cannot be framed by another site. Use a button or link that opens it in a new tab.  
+Patients are not receiving confirmation texts.| Turn on the confirmation SMS channel in the Patient Communications plugin's Notifications Admin.  
+## Related articles
+  - [Managing Provider Availability](https://help.canvasmedical.com/articles/6105998178-managing-provider-availability)
+----- END PAGE https://help.canvasmedical.com/articles/7157688655-public-booking-plugin
+
+
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7194215286-canvas-patient-safety-scale
 ## Introduction
 Patient safety issues are those that interfere with the process of health care and could lead to diagnostic errors, medical errors, injury, or other preventable harm to a patient during the process of health care (AHRQ).
@@ -10769,6 +11063,30 @@ A: Reports typically take 1-5 minutes to generate.
 **Keywords:** Report Jobs, Billing Reports, Financial Summaries, Revenue Management, Data Analysis, Practice Analytics, Canvas Reporting, Healthcare Metrics
 **Categories:** Practice Management, Billing, Operational Analytics, Financial Reporting
 ----- END PAGE https://help.canvasmedical.com/articles/7194605474-report-jobs
+
+
+----- BEGIN PAGE https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators
+Prescribers at your practice confirm their identity with ID.me before they are enrolled to send prescriptions. For the prescriber's enrollment steps, see [Verifying Your Identity with ID.me: Step-by-Step Guide for Prescribers](/articles/2418476962).
+## Before you begin
+  - Make sure identity verification is enabled. If prescribers don't see **Identity verification** in the left hand menu, contact Canvas support.
+  - Only staff with the **EPCS Administrator** role see the list of prescribers and their verification status. Give this role only to the people who manage prescriber enrollment.
+## Update staff profiles with names and birth dates
+Before a prescriber starts identity proofing, make sure the **First name** , **Last name** , and **Birth date** on their Canvas staff record match their government-issued ID. Canvas compares these three fields with what ID.me verifies, and if any of them differs or is blank, the verification is not recorded.
+  1. In **Settings** , go to **Practice** > **Staff** and open the prescriber's record.
+  2. Check **First name** , **Last name** , and **Birth date** against the prescriber's ID, and fill in **Birth date** if it is blank.
+  3. Click **Save**.
+![Staff record with First name, Last name, and Birth date highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F6befdfeb-8a53-4718-8fe4-d8aa7353bb25-a04-identity-fields.png?Expires=253370764800&Signature=e1Kk8~IFM~~Ktd5GarVMR~YjmyJP9U5-W6B5-Um7wHLuHACJRQcDxiztmsWGfReZb0CC7pLKXEdP2XexXY8etdlJQDfjGWRvSKGjqAgla7mi58Puj0wm507SuKOlzaxKictoUDPdnH8SV0wl2nFq2XthkrlDtsCgNRV2HIzuAa~LZb3ZXYiK9aISxMnxedFIa3JemggDkhy7wygHcYzLwooeRP2dgX4jhoxF4bTWFU~-XRoC9Ry2EyAxGS62hYRVLENLkDVvrH2zelrXRWhOWajhomdeSdKEuB9lyySiKpKwLUKqwRzc3-0NdHVS4ZNJcPDU78ZYyjPsESkhaGvP6Q__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Give the staff member that is tracking Identity Verification the EPCS Administrator role
+  1. In Canvas, open the menu and click **Settings**.
+  2. Go to **Practice** > **Staff** , search for the staff member, and click their name.
+  3. Scroll to **Staff roles** and click **Add another Staff role**.
+  4. In the new **Role** field, choose **EPCS Administrator - EP role**.
+  5. Click **Save** at the bottom of the page.
+![Staff list in Settings with the search box and a staff name highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F60cddf13-0ece-43c8-879b-1558f34bed86-a01-staff-list.png?Expires=253370764800&Signature=b5w8gWajuumWcK7QjYyYTVkTan1cpApjLBlhOjmaSndROCWXdUiEt6acVucNIO7ZiINCY0y2Bwv6UyTTy2t1j2JfxdMLamEKYIJmjWnwl2mYS54I73baSW0VNFFlr8hT49WdpsfVy8y2exyZTl7T3m~rqg7KF2wl27LTJvfWbPWSlsq0W5846OqLp4tdbPRmfg3wkwAsljatwNgWNJGaIIuujk5icoR1Ea~xU6P46nudDC7ddZrtTSmGegIQ7thrDy~1OQsm1q1WsPatMY42TZcLchowcz6S00Dp~AaKZ5hk0BNVqocYk0RyZW8xLbqbmCP94b8DGpJVwPjZL5ZAxw__&Key-Pair-Id=K3NV4LZ47N8M46)![Staff roles section with Add another Staff role and the EPCS Administrator role highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fe37167db-6167-4990-9a31-00626f5dab7a-a02-role.png?Expires=253370764800&Signature=Hy5TgFl8F7VvBHBA9RMT2qnn-F3eE9MW0OG2~7FoiAW7WmlKyGTGYUDas68WKP-OEP-QWfG0ij8sFh4BelZ1hDVg1sp3u5tChI8A7x-aDKW4dcHsSIGfwcOQWh~M0pXzOmFU1S-O6~8efjSVhWiafZxFk3QNT1EVciGXqQ9yGupn~bcKBRsN-zT14~jDA43iJNEuihwB5wajYg5aNtEKinVMmAEFF7RDe1h60F~AzMKXlvkcYBzQjAN6z4WHg9N8T3lxwahOnmeqKyywkHSKGtaolRO9vWiyTALdpSnbIp0Jb6Nbfmyj7IK6GE0q1h--eFDZZQBfMf0sJuBksyt82g__&Key-Pair-Id=K3NV4LZ47N8M46)
+## Open the Identity Verification Dashboard
+Open **Identity verification** from the left hand menu. Below your own status, the **Prescribers** table lists every active staff member with their NPI, whether they have verified (**Yes** or **Not yet**), and the date.
+![Canvas main menu with Identity verification highlighted](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F3a06975f-da32-4ef3-9631-d76b0c358b41-p01-menu.png?Expires=253370764800&Signature=GHX2rUFxO1prFGp-WvM9ecKyupBwqVe4tvi3KhdgLw0N6AsyArj09H6Uamsduf8QQ5SF37gcQXWFGBQTwtsfn~OUtR7U0dRSS9ZxSRFo3kKvXs-g6MmY67ncrRAhdhPbIItm4z-W06c94rcVu6GVobnt85Fz44g~U5PYM~5bvsaW0kDs-dsRJ3CHqRLIWvA47PC7WQHk093YKvGtV9sOu19y9vORNnOZzGZ8v11MQsJg9iqssy3wshELHQ8smshAxSqiGDJS6rJE6a5S5qQmIcRIWs7Gvip1h061xph0qKYkdc~BMa0k~2XQZ-zczxUX89hr~ctS~9sHrBWXuVKxnQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Prescribers table showing verification status for each staff member](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fb154a366-c105-4426-bf26-d6a084752809-a03-prescribers.png?Expires=253370764800&Signature=s858ebWZ1bHo4VOKE7016lTjr-Nqrk1gFkU~fwuGk7ft4XwNWytkSYZ6GvFc2b~SVY06JbyKIPMFyhP7-URZ9CrYDO96plp~pFXzo0NO6xMuXF6wiPV0ObAh~~~tvxcavaBC7GCWQJb9D-ZnT8aBGb4lnyJLY9K2Z4k0mO5ORSDp~zgEug6xeqeKVc9pjgty-ZrNIfUxR5Zc1J5WNgYb01uPuI8wV1VvVfIFvsj4ziAtGaD0InlKrSoIsJmg8nVfNQa761h3g0L164dJ1gChOqv-GSfOvW2ZE5ouaDU-O0fBX2zC3apY3gww3L4mb6HF0GRGt2TfCVV7dEMtFOkZTw__&Key-Pair-Id=K3NV4LZ47N8M46)
+----- END PAGE https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators
 
 
 ----- BEGIN PAGE https://help.canvasmedical.com/articles/7271273093-training-clinical
@@ -11841,7 +12159,7 @@ Add the **Assess Condition** command to a new or existing note through one of th
   - Add the **Assess Condition** command directly to a new or existing note
   - Hover over the condition in the Patient Summary and click **Assess**
   - Click the **+** button on the Conditions section of the Patient Summary to add an empty Assess Condition command, then search for the condition, new or already on the chart
-![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1791945421583-image.png?Expires=253370764800&Signature=IoFojFAkw6QrvmBRkdid~~I~krhS1wS4hcgyYqTO2HcqBMzRLF4Ny0ebqYwrlWYrUf8rJcrTa2J9U9XDzwhONR7KmSLymJVVwlHxguJvAUEI9Ye1Q4JU0CX2TKtWSuMkWjmKXyXvlMR8JYfWhpt9dLwQN2YQxFD9TmioEXm-UClxB~hnRY8cDKfRNFkHOQoAkbzq0LQxhe8QFgwEPnxQguNdj4LKuhh7OkZws2thW-RaQRck3EakHtuEl--oDwaiZX5Ur3k2jg4OcfYWPagVnfjsEC3HSmGAe3bdECpBubjOnD4flA8zumufgB6BbBSK6m9OskFjAKPLTz-wFcuFzw__&Key-Pair-Id=K3NV4LZ47N8M46)
+![An Assess Condition command added from the Conditions section of the Patient Summary](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2Fc5143ddb-81e1-4057-bbdf-ebade04cbb0a-assess-from-patient-summary.png?Expires=253370764800&Signature=oYaYE3hU~rRcrGMVowk8qp-ZjGSUrEqFEePlmPsYDcoxYewrmf6GYtdjZ~xmWabw0iU13iPodajq4Dracpnh0it-9KFtNWte~xHTtbambt31HS9nyq8hBD5ewrONTlmWsUBWCzcd~RqFmquJ7KOBSV3hw-SDOJddsPGfLzazXSlb512KvSOVtG17HLHJutSYbkuit6pFuYXu7fOmbIMoNukKC7mDfTiDHGySGhZ2TrRLWDQo7CnrPF38YT2pXcO2UYYl5NDbUbh~autvQgXu35XCBF3XEfU5Q9pT-i9XFiftJE5C5B3hkRxmsDBl3Uyv2aTVWIFxD4rd5LWIyzHjvw__&Key-Pair-Id=K3NV4LZ47N8M46)
 If the cursor is not positioned in a note before clicking **Assess** or **+** , a Chart Review note will be created to store the command.
 Complete the fields within the command
   - **Background** : Carries forward automatically from the condition's current background. Update if necessary.
@@ -11852,6 +12170,14 @@ Complete the fields within the command
   - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015"). Optional.
     - For a condition already on the chart, this fills in from the condition and can be updated.
   - **Today's Assessment** : Update observations made at the current visit based on condition status
+  - **Show in problem list** : On by default. Leave it on to keep the condition on the patient's problem list. Turn it off to record the condition as an encounter diagnosis for this visit only, such as a sore throat that doesn't need tracking.
+  - **Category Domain** : Optional. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
+    - For a condition already on the chart, this fills in from the condition and can be changed.
+    - A domain can be set only while **Show in problem list** is on. An encounter diagnosis has no domain, so turning **Show in problem list** off clears it, and picking a domain while it's off shows "A category domain needs Show in problem list switched on."
+**Show in problem list on, with Category Domain**
+![Assess Condition command with Show in problem list turned on and the Category Domain field](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F7f79f322-f5ba-4815-a1ce-382447c2907e-assess-condition-card.png?Expires=253370764800&Signature=Crk2lUCRo0Ldg3NQwSRNYQVHAyR3bs~NgAFmr2TtlOYMHEl35Uq7jIoAA9rJzuTertUXZj9ey1DWQTJTD10Jz7e2WQokag5ltSqmSK4olOv9-BA5Slb~o-46qO2GLfsxF8hAlpIn5ibt01mQGrcGOp56fau2Qxrn5jqCLUXwHvL5bmUr6nSUsaO2I7Iz-rUdBC9ODOyxO-zwPbVJF0LAaC8ZveHo7fnNNjYZ3kdEx4i0aTkEOYfqkbxiDZPyICye1q3H2VDUjh9rU9LHobzYYviilBNDqeFKrJQ9oZutSrtEb2KIdb6yiCpLFDPI9rUZe1mJy4MXaTwV5~9DOvchJQ__&Key-Pair-Id=K3NV4LZ47N8M46)![Category Domain list showing SDOH, Functional Status, Disability Status, and Cognitive Status](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F0353402f-9926-493e-af55-d982851bafd9-assess-category-domain-open.png?Expires=253370764800&Signature=A~mYtNCsaIxvfedHQHTiWbi82ii-ZYU4VZKLenma95PCkRwqZTKZMxnvtZZBORNRkWVLSndMgZNp8lmdyClolEsPOr99y~9wEu-bLygll6Wjk8udv1wM0OmhdYSTUkZVq0VbTNI5W4pjQXwuIEEUgse-I2T3dkYjgegLiCZr~LZei2CpIhfIlfbWBLoiHVIwqswspxK5USt-ajdV1nfw1jfZSm7Gfag2MkcxkXFvdCgM9eyjEbhsrzRe7lAHG9iOHyjimhWo7rHcbG3DTBDBuCoySDpOQwtsI0Hf2v5lqLXaoOirvleRNMyKOlEhHBdyKzCvLnmOr2-41Z9Vi4xHNw__&Key-Pair-Id=K3NV4LZ47N8M46)
+**Show in problem list off, records as an encounter diagnosis. But does not allow you to record a domain**
+![](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1795058660709-Screenshot2026-11-18at10.23.38PM.png?Expires=253370764800&Signature=TYghsB0XiIBmooatskrHQqGEJpnQJVDSls28DP253LVRGGfBoniB9hM4WSXRQqp-YTL5D9mK5ZZEhDFIP5nTffItoAMPpKrRFbnAYonaRcTqHSVuX-FdR7GLsXbvk9QiYa9Q0wEvfwQr3o6xHWle2LsNydhZ2j2N2E~sOsJBNPZPuCkJypVYYOeN3GeZNM~-DjIncgNPVpyatlD8pADBUhv1IVJWKLA1AbcCsxjtMtynyZxKERZ~tlGfGzsBGs6cVXImOPGRSGyeHqxKEhYlS9EfdSdDQkTQ5oIBuf8TYmdOiN-pzFYmIYQzLDYrlpyuoWV2puPOPY4~eyfn5-TTrg__&Key-Pair-Id=K3NV4LZ47N8M46)
 Click **Record** to update the patient's record.
 ### Selecting a Condition
 The condition search lists the patient's charted conditions first, active ones at the top, followed by resolved ones. Typing a name or ICD-10 code narrows the list and then shows matching codes from the full ICD-10 list beneath the patient's conditions. Each charted condition shows its ICD-10 code and its status.
@@ -11907,6 +12233,10 @@ A: Click on any condition in the Patient Summary to open a modal that displays t
 A: Background carries forward from the condition's current background, which follows the most recent assessment of it. If nothing appears, neither the command that recorded the condition nor any assessment since included background details.
 **Q: What happens to the background if I enter an assessment in error?**
 A: The condition's background steps back to the assessment before the one entered in error. If it was the only assessment, the background returns to what the condition was recorded with.
+**Q: Why do I see "A category domain needs Show in problem list switched on"?**
+A: A domain was picked while **Show in problem list** is off. Encounter diagnoses don't have a domain, so either turn **Show in problem list** on or clear the domain.
+**Q: What happens to Show in problem list and Category Domain if I enter an assessment in error?**
+A: The condition goes back to the problem list setting and domain it had before that assessment. If the condition was assessed again afterward, or its category was changed some other way since, it keeps its current setting.
 **Q: What happens when I change a diagnosis?**
 A: The Change Diagnosis command creates a new condition with the updated diagnosis while preserving historical data from the original condition. The original condition is resolved with a note indicating the change, and the new condition includes the full assessment history from both diagnoses.
 **Q: Should I use Assess Condition or Diagnose for a new condition?**
@@ -11920,7 +12250,7 @@ A: When the patient has an active condition with the same ICD-10 code, the searc
 ## Related Resources
   - [Diagnosing a New Condition](/articles/9221634314)
   - [Managing Historical Conditions](/articles/3935780129)
-**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background, conditions plus button
+**Keywords:** assess condition, new condition, new diagnosis, ICD-10, approximate date of onset, duplicate conditions, resolved condition, condition history, patient progress, condition status, clinical documentation, timeline, carry forward, assessment history, background, conditions plus button, show in problem list, problem list, encounter diagnosis, category domain, SDOH
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/7989321964-assessing-and-updating-conditions
 
@@ -13759,13 +14089,15 @@ The Add Condition command records a coded (ICD-10) condition on the patient's Co
   2. Add the **Add Condition** command to a new or existing note. It is in the note's History section.
   3. Complete the command fields. The only required field is the condition.
      - **Condition** : Search for the condition using free text or ICD-10 code. This is the same picker the Diagnose command uses.
+     - **Category Type** : **Problem List Item** (the default) or **Health Concern**.
+     - **Category Domain** : Optional. Choose **SDOH** , **Functional Status** , **Disability Status** , or **Cognitive Status**.
      - **Background** : Provide history of the condition
      - **Approximate Date of Onset** : Indicate when the condition began (e.g., "last week," "3 years ago," "2015")
      - **Comments** : Additional notes pertaining to the condition (up to 1000 characters)
   4. Click **Record** to add the condition. It appears in the patient summary as an active entry.
 **Key points:**
   - No assessment is opened for the condition, and the visit is not documented as having assessed it
-  - If the condition is already on the patient's Conditions list, Canvas displays: _"This condition is already on the patient's conditions list."_
+  - A condition already on the patient's chart, whether active or resolved, can't be added again. **Record** is disabled and the command displays: _"This condition is already on the patient's chart. Use Assess to update it, including reactivating a resolved condition."_
   - Once the condition has been assessed, the Add Condition command can no longer be entered in error, because doing so would remove the condition the assessment describes
 ## Configuration & Set Up
 No special configuration is required. The Assess and Add Condition commands are available by default in all patient charts.
@@ -13775,6 +14107,10 @@ A: It depends on whether the condition is active now, and whether you are assess
   - **Assess Condition** : you are assessing the condition at today's visit, whether it is new or already on the chart
   - **Add Condition** : the condition was diagnosed previously and is still active
   - **Past Medical History** : you are backfilling a condition the patient had in the past that is not active now
+**Q: Why is Record disabled on my Add Condition command?**
+A: The condition is already on the patient's chart, either active or resolved. Use **Assess Condition** to update it, which also makes a resolved condition active again.
+**Q: What's the difference between a Problem List Item and a Health Concern?**
+A: Both appear on the patient's Conditions list. Choose **Health Concern** for a concern the care team is tracking that isn't a diagnosed problem, and **Problem List Item** for everything else. Problem List Item is the default.
 **Q: How can I add a diagnosis/ICD-10 code that's not in the system?**
 A: Diagnosis codes cannot be added manually. Canvas updates ICD-10 codes in accordance with CMS on April 1 and October 1 every year.
 **Q: What if I enter the wrong diagnosis?**
@@ -13784,7 +14120,7 @@ A: Use the Change Diagnosis command to update the condition while preserving his
   - [Managing Historical Conditions](/articles/3935780129)
   - [Understanding Coding Gaps](/articles/5456716623)
 * * *
-**Keywords:** diagnose command, assess condition, add condition command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions
+**Keywords:** diagnose command, assess condition, add condition command, new diagnosis, ICD-10, clinical documentation, patient conditions, duplicate diagnosis, active conditions, category type, health concern, problem list item, category domain
 **Categories:** Clinical Documentation, Condition Management
 ----- END PAGE https://help.canvasmedical.com/articles/9221634314-new-diagnoses
 
@@ -14112,14 +14448,22 @@ Electronic refill requests allow pharmacies to request medication refills direct
 ### What you'll learn
   - What each refill request action does
   - When to approve, deny, or ignore a request
+  - How to see and change who a refill request is assigned to
   - How duplicate refill requests should be handled
   - What to do when a request remains in the queue
+  - How to send a refill response a plugin prepared
 ## Available Actions
 Electronic refill requests may include the following actions:
   - **Approve** — Approves the refill request and sends an approval response back to the pharmacy.
   - **Deny** — Denies the refill request and sends a denial response back to the pharmacy.
   - **Ignore** — Dismisses the refill request from the queue without sending a response back to the pharmacy.
 > **Duplicate refill request?** If the request is a duplicate and does not need a pharmacy response, use **Ignore** when that option is available.
+## Assigning a Refill Request
+Each refill request card in the refill worklist shows **Assigned to** with the prescriber the request is assigned to, or _Unassigned_.
+**To reassign a refill request:**
+  1. On the refill request card, click the name next to **Assigned to**.
+  2. Choose another prescriber from the list. The list shows prescribers set up for e-prescribing.
+The card updates right away. If the worklist is filtered to one assignee, the card leaves the list once it's assigned to someone else.
 ## Approve a Refill Request
 Use **Approve** when the refill request should be accepted and the pharmacy should receive an approval response.
 ### Step 1: Open the request
@@ -14158,6 +14502,14 @@ This is most useful for duplicate refill requests or requests that no longer req
   - No response is sent back to the pharmacy.
   - The request no longer requires action in Canvas.
 > **Don't see Ignore?** The **Ignore** option may not appear for every refill request. If **Ignore** is not available, review the request and choose the appropriate available action, such as approving or denying the request.
+## Refill Responses Prepared by a Plugin
+If your organization uses a plugin to help manage refill requests, the plugin can add an **Approve Refill** or **Deny Refill** command to a note in the patient's chart, ready for review. The command is marked **Plugin Generated**. A plugin can also assign a refill request to a prescriber or ignore it, the same as you can from the refill worklist.
+A plugin can only prepare an approval or denial. It can't send it to the pharmacy.
+### Send a prepared response
+  1. Open the note in the patient's chart that holds the **Approve Refill** or **Deny Refill** command.
+  2. Review the command, and update the note to the pharmacist or the denial reason if needed.
+  3. Send the response from the command.
+After you send it, Canvas sends the approval or denial back to the pharmacy. Each refill request can only be answered once.
 ## Duplicate Refill Requests
 Duplicate refill requests can occur when a pharmacy sends the same request more than once, or when a medication has already been refilled through another workflow while the original pharmacy-initiated request remains pending.
 If the request is a duplicate and does not require a response to the pharmacy, select **Ignore** when that option is available.
@@ -14182,8 +14534,14 @@ A: **Ignore** may only appear when Canvas determines the request can be dismisse
 ### Duplicate requests
 **Q: I received multiple requests for the same medication. Which one should I use?**
 A: Review the request details to confirm whether the requests are duplicates. If a duplicate request does not need a pharmacy response, select **Ignore** when available.
+### Assigning requests
+**Q: I reassigned a refill request and it disappeared from my list. Where did it go?**
+A: Your worklist is filtered to one assignee, so the request moved to the new assignee's list. Clear the assignee filter to see every request.
+### Responses prepared by a plugin
+**Q: A plugin added an Approve Refill command to a note. Has the pharmacy been notified?**
+A: No. A plugin can only prepare the response. The pharmacy gets it only after someone opens the command in the patient's chart and sends it.
 * * *
-**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill
+**Keywords:** electronic refill requests, refill request, approve refill, deny refill, ignore refill, duplicate refill request, pharmacy response, medication refill, plugin generated, refill dashboard, refill assignee, reassign refill
 **Categories:** Clinical Documentation & Commands, Medications, ePrescribing
 **Roles:** Providers, Clinical Staff
 ----- END PAGE https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore
@@ -14499,6 +14857,11 @@ Allows users to temporarily hide a claim from the primary outstanding claims que
     - Confirm the snooze action to hide the claim from the default queue view.
   - Once the snooze period ends, the claim automatically reappears in the queue for follow-up.
 ![2025-01-23_15-47-52.png](https://assets.usepylon.com/84c53ca2-da3b-430f-948b-e6d0548f2119%2F1737665283982-2025-01-23_15-47-52.png?Expires=253370764800&Signature=CTQ~A6hwLW1B9CnC0GdY4wSJGCr6vfEGsd2YotnqsPc77w~tKv7iecSyNbXENB0iKozPLhX5m9NvkIj5Bj18p8a6mQ1Tx-grBuXAodcRzxSlqASqOSQq1hBdIbkGZxvDga8NuS0PBAYhx3vA7ZEo3UVDr5Z6mVybKDqTbgWrFJkbhRQ2XenY1rw4-gtxFy8LoCqgbemiEOVsLK0j6cpE2lCyb2KZwq1Rg5AXZX9E3l~JJJIy7WqBw6tKlVJeE9StanuxZImIxW7Fq9YlWzKS9Y0IHMeO3FHrE9sp8Wevn4xf7diAfHKljlZ8LYshzXXA8O~FC1e6KdyKS6zWIc08aA__&Key-Pair-Id=K3NV4LZ47N8M46)
+### Assign a Claim
+Assign a claim to a staff member or a team so everyone knows who owns it.
+  - In the claim header, choose an owner in **Assignee**. Choose **Unassigned** to clear it.
+  - Every change of owner shows in the claim's **Activity Log** , including changes a plugin makes.
+  - To see owners in a revenue queue, go to **Settings > Quality & Revenue > Queues**, open the queue, add **Assignee** to its **Visible Columns** , and click **Save**. See [Revenue Queues](https://help.canvasmedical.com/articles/3240845520-queues).
 ## Claim Data
 Now that we know how a claim is structured, lets review where data on the claim originates. Each claim has an associated note which has a patient, staff and practice location. This information populates the associated claim.
 ### Patient Information

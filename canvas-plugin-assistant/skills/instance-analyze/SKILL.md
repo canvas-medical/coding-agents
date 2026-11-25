@@ -48,20 +48,13 @@ Store the user's response to use later when:
 
 ### Step 2: Discover Available Instances
 
-Read credentials from `~/.canvas/credentials.ini` to discover configured instances:
+List the instances the person's Canvas Platform sign-in can reach:
 
 ```bash
-cat ~/.canvas/credentials.ini
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py reachable
 ```
 
-Parse the file to extract all section names (instance names). Each section represents a configured Canvas instance:
-
-```ini
-[instance-name]
-client_id=xxx
-client_secret=yyy
-root_password=zzz
-```
+It prints one slug per line: every instance the person can view, including ones they cannot deploy to. If the command exits 1, show its `ERROR:` line (for example, not signed in: the person runs `uv run --with 'canvas>=1.2.0' canvas login` in their terminal) and stop.
 
 ### Step 3: Get Instance Information
 
@@ -74,9 +67,9 @@ Ask the user which instance to analyze using AskUserQuestion, dynamically popula
       "question": "What Canvas instance should I analyze?",
       "header": "Instance",
       "options": [
-        {"label": "<instance-1>", "description": "From credentials.ini"},
-        {"label": "<instance-2>", "description": "From credentials.ini"},
-        {"label": "...", "description": "Add all discovered instances"}
+        {"label": "<slug-1>", "description": "Reachable from your Canvas Platform sign-in"},
+        {"label": "<slug-2>", "description": "Reachable from your Canvas Platform sign-in"},
+        {"label": "...", "description": "One option per listed slug"}
       ],
       "multiSelect": false
     }
@@ -86,38 +79,32 @@ Ask the user which instance to analyze using AskUserQuestion, dynamically popula
 
 If the user provides an instance name with the command (e.g., `/analyze-instance plugin-testing`), use that directly without asking.
 
-After the user selects an instance, verify it has `root_password` configured. If missing, tell the user:
-
-> Please add `root_password` to your `~/.canvas/credentials.ini` under the `[{instance}]` section:
-> ```ini
-> [plugin-testing]
-> client_id=your_client_id
-> client_secret=your_client_secret
-> root_password=your_admin_password
-> ```
-
 ### Step 4: Fetch Configuration
 
-Use the scraper script to extract configuration from the admin portal:
+Read each model from Canvas Platform, which serves what its last sweep of the instance collected. Run one command per model, with the slug from Step 3:
 
 ```bash
-uv run python ${CLAUDE_PLUGIN_ROOT}/scripts/scrape_canvas_instance.py <instance_name> <root_password>
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py records <slug> CareTeamRole
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py records <slug> Team
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py records <slug> Questionnaire
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py records <slug> NoteType
+uv run --with 'canvas>=1.2.0' python ${CLAUDE_PLUGIN_ROOT}/scripts/platform_session.py plugins <slug>
 ```
 
-This script uses browser automation to:
+Each `records` command prints `{"instance", "model", "collected_at", "records": [{"key", "label", "fields", "collected_at"}]}`. A `plugins` command prints the instance's installed plugins. When a command exits 1, show its `ERROR:` line; an instance the person cannot reach answers "not found".
 
-1. **Login to Admin Portal**
-   - Navigate to `https://{hostname}.canvasmedical.com/admin/`
-   - Username: `root`
-   - Password: `root_password` from credentials.ini
+Map the output to the report sections:
 
-2. **Extract Configuration** from these pages:
-   - `/admin/api/careteamrole/` - Roles (where `is active` is true)
-   - `/admin/api/team/` - Teams
-   - `/admin/api/questionnaire/` - Questionnaires (where `is active` is true)
-   - `/admin/api/notetype/` - Note types (where `is active` is true)
-   - `/admin/api/notetype/` - Appointment types (where `is active` and `is schedulable` are true)
-   - `/admin/plugin_io/plugin/` - Installed plugins
+| Report section | Source |
+|---|---|
+| Roles | `CareTeamRole` rows where `fields.active` is true; `label` and `key` (the coding system and code) |
+| Teams | `Team` rows; `fields.members` (staff names) and `fields.responsibilities` |
+| Questionnaires | `Questionnaire` rows (inactive ones are not collected); `fields.code` and `fields.use_case_in_charting` |
+| Note Types | `NoteType` rows where `fields.is_active` is true; `fields.is_telehealth` and `fields.is_billable` |
+| Appointment Types | `NoteType` rows where `fields.is_active` and `fields.is_scheduleable` are true; `fields.possible_durations` and `fields.is_telehealth` |
+| Installed Plugins | `plugins` rows, with their `enabled` flag |
+
+Each section carries its `collected_at`. For Roles, Teams, Note Types and Appointment Types, a `null` `collected_at` means Canvas Platform has not read that model on this instance yet; the report says "not read yet by Canvas Platform", never "none". For Questionnaires, an empty `records` with a `null` `collected_at` means either that Canvas Platform has not read them or that the instance has no active questionnaire; the report says "No active questionnaires found, or not read yet by Canvas Platform".
 
 ### Step 5: Generate Report
 
@@ -126,8 +113,10 @@ Create a comprehensive markdown report with this structure:
 ```markdown
 # Canvas Instance Configuration Report
 
-**Instance**: {hostname}.canvasmedical.com
+**Instance**: {slug}
 **Generated**: {date}
+
+Each section below ends with a line `As of the last Canvas Platform sweep: {collected_at}`, or, when `collected_at` is null, `Not read yet by Canvas Platform` (Questionnaires: `No active questionnaires found, or not read yet by Canvas Platform`).
 
 ## Summary
 
@@ -142,32 +131,34 @@ Create a comprehensive markdown report with this structure:
 
 ## Roles
 
-| Name | Description |
-|------|-------------|
+| Name | Coding |
+|------|--------|
 | ... | ... |
 
 ## Teams
 
-| Name | Members | Description |
-|------|---------|-------------|
-| ... | ... | ... |
+| Name | Members | Responsibilities |
+|------|---------|------------------|
+| ... | count of staff | ... |
+
+Team members appear as counts. List staff names only when the user asks for them.
 
 ## Questionnaires
 
-| Name | Code | Status |
-|------|------|--------|
-| ... | ... | Active/Inactive |
+| Name | Code | Use in charting |
+|------|------|-----------------|
+| ... | ... | ... |
 
 ## Note Types
 
-| Name | Category |
-|------|----------|
-| ... | ... |
+| Name | Telehealth | Billable |
+|------|------------|----------|
+| ... | ... | ... |
 
 ## Appointment Types
 
-| Name | Duration | Category |
-|------|----------|----------|
+| Name | Durations | Telehealth |
+|------|-----------|------------|
 | ... | ... | ... |
 
 ## Installed Plugins
@@ -187,7 +178,7 @@ Based on this configuration:
 
 ### Step 6: Save Report
 
-Save the report to `instance-config-{hostname}.md` in the current working directory.
+Save the report to `{workspace_dir}/.cpa-workflow-artifacts/instance-config-{instance}.md` (the instance slug), creating the directory if needed.
 
 Tell the user the file path and offer to explain any section in detail.
 
@@ -201,13 +192,11 @@ If `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` exists (where worksp
 
 ## Important Notes
 
-1. **Credentials Security**: Never log or store credentials. Use them only for the session.
+1. **Read-Only**: This analysis only reads configuration. It does not modify anything.
 
-2. **Read-Only**: This analysis only reads configuration. It does not modify anything.
+2. **Relevance Filtering**: When presenting the report, highlight items most relevant to the plugin being developed (if known from a previous brainstorming session).
 
-3. **Relevance Filtering**: When presenting the report, highlight items most relevant to the plugin being developed (if known from a previous brainstorming session).
-
-4. **Plugin Conflicts**: Flag any installed plugins that might interact with what's being built.
+3. **Plugin Conflicts**: Flag any installed plugins that might interact with what's being built.
 
 ## Example Interaction
 
@@ -217,9 +206,9 @@ If `{workspace_dir}/.cpa-workflow-artifacts/plugin-spec.md` exists (where worksp
 
 **User**: Confirms plugin-testing
 
-**You**: *[Reads credentials and runs scraper script]*
+**You**: *[Reads the instance's records and plugins from Canvas Platform]*
 
-**You**: """I've analyzed the plugin-testing instance and saved the report to `instance-config-plugin-testing.md`.
+**You**: """I've analyzed the plugin-testing instance and saved the report to `.cpa-workflow-artifacts/instance-config-plugin-testing.md`.
 
 Key findings relevant to your vitals alert plugin:
 - **3 clinical teams** available for task assignment: Nursing, Care Coordination, Providers

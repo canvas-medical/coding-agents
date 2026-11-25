@@ -291,6 +291,16 @@
     - Passphrase and sign-in
     - Getting help
     - Related articles
+- [Verifying Your Identity with ID.me: Step-by-Step Guide for Prescribers](https://help.canvasmedical.com/articles/2418476962-verifying-your-identity-with-id-me)
+    - Before you begin
+    - Step 1: Open Identity verification
+    - Step 2: Start the verification
+    - Step 3: Sign in to ID.me or create an account
+    - Step 4: Photograph your ID on your phone
+    - Step 5: Finish the ID.me checks
+    - Step 6: Allow ID.me to share your details with Canvas
+    - Step 7: Confirm you're verified
+    - If verification did not finish
 
 ### Support & FAQs
 - [Canvas Support Resources](https://help.canvasmedical.com/articles/5542576212-canvas-support-resources)
@@ -648,6 +658,11 @@
     - Things to know
     - Troubleshooting
     - Related Resources
+- [Verifying Prescriber Identity with ID.me: Guide for Administrators](https://help.canvasmedical.com/articles/7242198818-verifying-prescriber-identity-with-id-me-administrators)
+    - Before you begin
+    - Update staff profiles with names and birth dates
+    - Give the staff member that is tracking Identity Verification the EPCS Administrator role
+    - Open the Identity Verification Dashboard
 
 ## Charting & Documentation
 
@@ -1198,6 +1213,7 @@
 - [Electronic Refill Requests: Approve, Deny, and Ignore](https://help.canvasmedical.com/articles/9793839746-electronic-refill-requests-approve-deny-ignore)
         - What you'll learn
     - Available Actions
+    - Assigning a Refill Request
     - Approve a Refill Request
         - Step 1: Open the request
         - Step 2: Approve and submit
@@ -1207,12 +1223,16 @@
     - Ignore a Refill Request
         - When to use Ignore
         - What happens when you ignore a request
+    - Refill Responses Prepared by a Plugin
+        - Send a prepared response
     - Duplicate Refill Requests
     - Choosing the Right Action
     - Frequently Asked Questions
         - Requests remaining in the queue
         - Ignore option
         - Duplicate requests
+        - Assigning requests
+        - Responses prepared by a plugin
 
 ## Revenue & Billing
 - [Posting Ruleset](https://help.canvasmedical.com/articles/5196278579-posting-ruleset)
@@ -1257,6 +1277,7 @@
         - Data Table
         - Activity Log
         - Snooze a Claim
+        - Assign a Claim
     - Claim Data
         - Patient Information
         - Staff Information
@@ -1580,6 +1601,31 @@
     - Troubleshooting
     - Install the Plugin
         - Plugin secrets
+- [Public Booking Plugin](https://help.canvasmedical.com/articles/7157688655-public-booking-plugin)
+    - Overview
+    - Who should use this plugin
+    - Problem it solves
+    - Before you begin
+    - Install the plugin
+    - Configure the booking page
+    - How patients book
+    - What happens after a booking
+    - Booking links for a specific service or location
+        - Build a link
+        - Add booking to your website
+    - Protections on the public page
+    - Plugin variables
+    - Troubleshooting
+    - Related articles
+- [Patient Numbering Plugin](https://help.canvasmedical.com/articles/6437293688-patient-numbering-plugin)
+    - Overview
+    - Before you begin
+    - Number existing patients
+    - Find a patient's Patient ID
+    - Search for a patient by Patient ID
+    - Troubleshooting
+    - Install the Plugin
+    - Plugin settings
 
 ### Patient Communications
 - [Patient Communications](https://help.canvasmedical.com/articles/1662279684-patient-communications)
@@ -1607,6 +1653,7 @@
     - Intake sections
     - Assign forms from the chart
     - Send forms before each visit
+    - Send forms to new patients
     - Text and email the patient
     - What the patient sees
     - Where answers go
@@ -1712,6 +1759,7 @@
 - [What is Canvas Platform](https://help.canvasmedical.com/articles/5796704994-what-is-canvas-platform)
     - The Sidebar
     - The Account Menu
+- [Canvas Platform FAQ: Getting and Deploying Your Plugin Code](https://help.canvasmedical.com/articles/4010184660-canvas-platform-faq-getting-and-deploying-your-plugin-code)
 
 ### Users and access
 - [Set up single sign-on for Canvas Platform](https://help.canvasmedical.com/articles/9800510716-set-up-single-sign-on-for-canvas-platform)

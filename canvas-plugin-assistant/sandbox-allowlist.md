@@ -60,14 +60,15 @@ Only the names listed under each module are importable.
 | `requests` | `delete`, `get`, `patch`, `post`, `put`, `request`, `RequestException`, `Response`, `Session` |
 
 **Not on the list — frequently attempted but blocked:**
-`yaml` (PyYAML), `httpx`, `aiohttp`, `urllib3`, `lxml`, `beautifulsoup4`, `numpy`, `pandas`, `boto3` (use `canvas_sdk.clients.aws`), `openai` / `anthropic` / `google-generativeai` (use `canvas_sdk.clients.llms`), `twilio` (use `canvas_sdk.clients`), `sendgrid` (use `canvas_sdk.clients`).
+`yaml` (PyYAML), `httpx`, `aiohttp`, `urllib3`, `lxml`, `beautifulsoup4`, `numpy`, `pandas`, `boto3` (use `canvas_sdk.clients.aws`), `openai` / `anthropic` / `google-generativeai` (use `canvas_sdk.clients.llms`, or in an agent `gateway.client()`), `twilio` (use `canvas_sdk.clients`), `sendgrid` (use `canvas_sdk.clients`).
 
 ## Canvas SDK modules
 
-The `canvas_sdk.*` top-level packages below are importable, and there is no per-name allowlist *within* a real module. But only submodules that actually exist resolve — a mistyped or not-yet-existing path fails at load exactly like a blocked import (`'<path>' is not an allowed import`). Confirm a submodule exists before importing it rather than assuming a plausible-looking path (e.g. a guessed `canvas_sdk.effects.<x>`) is real; `canvas validate` / `canvas install` runs the sandbox load and will report a bad path.
+The `canvas_sdk.*` top-level packages below are importable, and there is no per-name allowlist *within* a real module. But only submodules that actually exist resolve: a mistyped or not-yet-existing path fails at load exactly like a blocked import (`'<path>' is not an allowed import`). Confirm a submodule exists before importing it rather than assuming a plausible-looking path (e.g. a guessed `canvas_sdk.effects.<x>`) is real; `canvas validate` runs the sandbox load and will report a bad path.
 
 Django constructs are **not** re-exported from `canvas_sdk.v1.data.base` — `from canvas_sdk.v1.data.base import UniqueConstraint` (or `models`) fails at load. Import those from Django directly (`from django.db.models import UniqueConstraint`) and import the specific Canvas model classes you need from `canvas_sdk.v1.data`. (`from canvas_sdk.v1.data.base import CustomModel` is fine — that's the base class for your own models.)
 
+- `canvas_sdk.agents` (Agent Development Kit, in SDK versions that ship it; see the **agent-patterns** skill)
 - `canvas_sdk.caching`
 - `canvas_sdk.commands`
 - `canvas_sdk.effects`
@@ -157,8 +158,8 @@ Imports within your own plugin must always use the full plugin-namespace prefix:
 
 ```python
 # GOOD — full plugin-namespace path
-from my_plugin.utils.helpers import format_date
-from my_plugin.services.session import Session
+from acme__my_plugin.utils.helpers import format_date
+from acme__my_plugin.services.session import Session
 
 # BAD — bare module names, sandbox rejects with "'X' is not an allowed import"
 import thresholds
@@ -166,7 +167,7 @@ from models.cache import get
 from utils.helpers import format_date
 ```
 
-The plugin name must match the inner snake_case folder name (e.g. inner folder `vitals_alert/` ⇒ `from vitals_alert.protocols.handler import ...`).
+The plugin name must match the inner package folder name, which for Canvas Platform plugins carries the org prefix (e.g. inner folder `acme__vitals_alert/` ⇒ `from acme__vitals_alert.protocols.handler import ...`).
 
 ## Requesting additional imports
 

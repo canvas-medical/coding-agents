@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse gate: run `canvas validate` before a plugin is committed, installed or deployed.
+"""PreToolUse gate: run `canvas validate` before a plugin is committed or deployed.
 
 Off unless CPA_PLUGIN_GATE is `advise` (findings go back to Claude, nothing is
 stopped) or `block` (a failure stops the tool call, and Claude sees why).
@@ -22,8 +22,6 @@ from pathlib import Path
 MODE_VARIABLE = "CPA_PLUGIN_GATE"
 MODES = ("off", "advise", "block")
 MANIFEST = "CANVAS_MANIFEST.json"
-INSTALLER_TOOL_SUFFIX = "canvas_cmd_line__installer"
-PLUGIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
 # Shapes that were a live credential in every shipped file they appeared in across installed
 # plugins, so a commit adding one is stopped in `block` mode. In a Markdown or reST doc they advise.
 CERTAIN_SECRETS = {
@@ -49,7 +47,7 @@ GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--e
 SHELL_SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")"}
 # `uv run` options that take a separate value: `uv run --directory work canvas deploy p`.
 UV_RUN_VALUE_OPTIONS = {"--directory", "--project", "--with", "--python", "--package", "--env-file", "--extra", "--group"}
-# `canvas install`/`deploy` options that take a separate value, so their value is not the plugin path.
+# `canvas deploy` options that take a separate value, so their value is not the plugin path.
 CANVAS_VALUE_OPTIONS = {"--host", "--secret", "--variable", "--instance", "--ref", "--branch", "--plugin"}
 # Words that run the command after them: `env git commit`, `if git commit; then`.
 COMMAND_PREFIXES = {
@@ -100,7 +98,7 @@ class UnclearTarget(OutsideSession):
 class UnreadableCommand(UnclearTarget):
     """A command whose quoting shlex cannot close, such as a heredoc body holding an apostrophe."""
 
-    reason = "it could not read this command's quoting (a heredoc or `$'...'` holding a quote), so it stopped it. Write files with the Write tool, and run the commit, install or deploy as a command of its own."
+    reason = "it could not read this command's quoting (a heredoc or `$'...'` holding a quote), so it stopped it. Write files with the Write tool, and run the commit or deploy as a command of its own."
 
 
 def inside(path: Path, cwd: Path) -> Path:
@@ -181,14 +179,8 @@ def commit_plugins(repo: Path) -> list[Path]:
 def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
     """The plugins the gated call acts on (none when it acts on no plugin)."""
     cwd = Path(payload.get("cwd") or ".").resolve()
-    tool_input = payload.get("tool_input") or {}
     kind, detail = action
-    if payload.get("tool_name", "").endswith(INSTALLER_TOOL_SUFFIX):
-        plugin_name = str(tool_input.get("plugin_name", ""))
-        if not PLUGIN_NAME.fullmatch(plugin_name):
-            raise OutsideSession
-        start = inside(Path(tool_input.get("cwd") or cwd) / plugin_name, cwd)
-    elif kind == "commit":
+    if kind == "commit":
         repo = inside(cwd / detail, cwd) if detail else cwd
         return [inside(plugin, cwd) for plugin in commit_plugins(repo)]
     elif detail:
@@ -203,9 +195,7 @@ def target_dirs(payload: dict, action: tuple[str, str | None]) -> list[Path]:
             # uploads whatever is there when it runs, so the gate does not wave it through.
             raise UnclearTarget
         return children
-    else:
-        start = cwd
-    plugin = find_plugin_dir(start)
+    plugin = find_plugin_dir(cwd)
     return [plugin] if plugin else []
 
 
@@ -352,7 +342,7 @@ def joined_all(base: str | None, paths: list[str]) -> str | None:
 
 
 def upload_target(arguments: list[str]) -> str | None:
-    """The plugin path a `canvas install`/`deploy` names: its first positional argument."""
+    """The plugin path a `canvas deploy` names: its first positional argument."""
     words = iter(arguments)
     for word in words:
         if word in CANVAS_VALUE_OPTIONS:
@@ -413,7 +403,7 @@ def joined_lines(command: str) -> str:
 
 def bash_actions(command: str) -> list[tuple[str, str | None]]:
     """Every gated action in the command: (`commit`, the directory git runs in) for each
-    `git commit`, (`upload`, the named plugin path) for each `canvas install`/`deploy`.
+    `git commit`, (`upload`, the named plugin path) for each `canvas deploy`.
 
     Reads each simple command, skipping `NAME=value` prefixes, wrapper words and git's global
     options, and follows `cd`, `git -C` and `uv run --directory`. Raises UnclearTarget when one of
@@ -435,7 +425,7 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     except ValueError:
         # A quote shlex cannot close (a heredoc body or `$'...'` holding an apostrophe) hides which
         # commands run and where, so a command that may commit or upload is not guessed at.
-        if re.search(r"\bgit\b[\s\S]*(?:\bcommit|--continue)\b|\bcanvas\b[\s\S]*\b(?:install|deploy)\b", command):
+        if re.search(r"\bgit\b[\s\S]*(?:\bcommit|--continue)\b|\bcanvas\b[\s\S]*\bdeploy\b", command):
             raise UnreadableCommand from None
         return []
     actions: list[tuple[str, str | None]] = []
@@ -479,11 +469,11 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
             if (
                 words
                 and Path(words[0]).name != "canvas"
-                and any(words[index + 1 : index + 2] in (["install"], ["deploy"]) for index in later)
+                and any(words[index + 1 : index + 2] == ["deploy"] for index in later)
             ):
                 raise UnclearTarget
         program = Path(words[0]).name if words else ""
-        if program == "canvas" and words[1:2] in (["install"], ["deploy"]):
+        if program == "canvas" and words[1:2] == ["deploy"]:
             target = upload_target(words[2:])
             paths = run_dirs + ([target] if target else [])
             if base_unknown or not all(is_literal(path) for path in paths):
@@ -571,10 +561,7 @@ def main(stdin: str) -> int:
     plugin_dirs: list[Path] = []
     commit_repos: list[Path] = []
     try:
-        if payload.get("tool_name") == "Bash":
-            actions = bash_actions(str((payload.get("tool_input") or {}).get("command", "")))
-        else:
-            actions = [("upload", None)]
+        actions = bash_actions(str((payload.get("tool_input") or {}).get("command", "")))
         for action in actions:
             touched = target_dirs(payload, action)
             plugin_dirs += [plugin for plugin in touched if plugin not in plugin_dirs]
