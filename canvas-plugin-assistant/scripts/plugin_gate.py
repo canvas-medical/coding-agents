@@ -367,7 +367,7 @@ def joined_lines(command: str) -> str:
     comment is text, and a `#` starts a comment only at the start of an unquoted word. Comment text
     stays as words, which errs toward checking when a `#` is misread; its quotes and backslashes
     become spaces, so they cannot pair with a quote or escape a separator elsewhere. The command in
-    a `$(...)` or backtick substitution is read as a command of its own at the next separator, and
+    a `$(...)` or backtick substitution is read as a subshell of its own at the next separator, and
     a `$_` takes its place in the word it sat in; a heredoc body inside one is dropped as text.
     Raises ValueError for a substitution it cannot follow: one holding `case`, whose patterns end
     in an unmatched `)`, or one or its heredoc never closing.
@@ -434,7 +434,7 @@ def joined_lines(command: str) -> str:
             word_start = True
             continue
         elif lifted and not substitutions and not quote and char in ";&|\n":
-            out.append(" ; " + " ; ".join(lifted) + " ; ")
+            out.append(subshells(lifted) + " ; ")
             lifted = []
             continue
         elif quote == '"':
@@ -464,7 +464,13 @@ def joined_lines(command: str) -> str:
         index += 1
     if substitutions or heredocs:
         raise ValueError("a quoted substitution or its heredoc never closes")
-    return "".join(out + [" ; " + " ; ".join(lifted)] if lifted else out)
+    return "".join(out + [subshells(lifted)] if lifted else out)
+
+
+def subshells(commands: list[str]) -> str:
+    """``commands`` as subshells after a separator: a substitution runs in one, so a `cd` in it
+    does not move the commands after it."""
+    return "".join(f" ; ( {command} )" for command in commands)
 
 
 def heredoc_end(command: str, start: int, delimiter: str, strip_tabs: bool) -> int:
@@ -517,6 +523,8 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
     # An expanded `cd` makes it unknown, which matters only if a gated action follows.
     base: str | None = None
     base_unknown = False
+    # (base, base_unknown) at each open `(`: a subshell's `cd` ends with it.
+    outer: list[tuple[str | None, bool]] = []
     for token in tokens + [";"]:
         if token not in SHELL_SEPARATORS:
             words.append(token)
@@ -556,6 +564,9 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
             ):
                 raise UnclearTarget
         program = Path(words[0]).name if words else ""
+        if not is_literal(program) and words[1:2] in (["deploy"], ["commit"]):
+            # A program the shell expands, such as "$(command -v canvas)", may be canvas or git.
+            raise UnclearTarget
         if program == "canvas" and words[1:2] == ["deploy"]:
             target = upload_target(words[2:])
             paths = run_dirs + ([target] if target else [])
@@ -577,6 +588,10 @@ def bash_actions(command: str) -> list[tuple[str, str | None]]:
                         actions.append(("commit", joined_all(base, git_dirs)))
                     break
         words = []
+        if token == "(":
+            outer.append((base, base_unknown))
+        elif token == ")" and outer:
+            base, base_unknown = outer.pop()
     return actions
 
 

@@ -698,6 +698,22 @@ class TestNamedTargets:
                 ("upload", "work/acme_x"),
                 id="unquoted_substitution_in_a_deploy_option",
             ),
+            pytest.param(
+                'cd my-plugin && top="$(cd .. && pwd)" && git commit -am x',
+                ("commit", "my-plugin"),
+                id="cd_in_a_quoted_substitution_stays_in_it",
+            ),
+            pytest.param(
+                "cd my-plugin && top=$(cd .. && pwd) && git commit -am x",
+                ("commit", "my-plugin"),
+                id="cd_in_a_substitution_stays_in_it",
+            ),
+            pytest.param(
+                "cd my-plugin && (cd .. && ls) && git commit -am x",
+                ("commit", "my-plugin"),
+                id="cd_in_a_subshell_stays_in_it",
+            ),
+            pytest.param("(cd work && ls) && canvas deploy acme_x", ("upload", "acme_x"), id="deploy_after_a_subshell"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -833,6 +849,9 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param('git -C "$(git rev-parse --show-toplevel)" commit -am x', id="git_dir_quoted_substitution"),
             pytest.param("git -C $(pwd) commit -am x", id="git_dir_substitution"),
             pytest.param("git -C `pwd` commit -am x", id="git_dir_backticks"),
+            pytest.param('"$(command -v canvas)" deploy acme_x', id="program_quoted_substitution"),
+            pytest.param("`which canvas` deploy acme_x", id="program_backticks"),
+            pytest.param('"$(command -v git)" commit -am x', id="git_program_substitution"),
         ],
     )
     def test_a_target_the_shell_expands_is_unclear(self, command: str) -> None:
@@ -877,7 +896,6 @@ class TestCommandsTheGateMustNotMiss:
         "command",
         [
             pytest.param("cp -R acme_intake acme_copy && canvas deploy acme_copy", id="target_made_earlier"),
-            pytest.param("(cd acme_intake && ls) && canvas deploy acme_intake", id="cd_inside_a_subshell"),
             pytest.param("uv run -p 3.13 canvas deploy acme_intake", id="uv_option_value_unknown"),
         ],
     )
