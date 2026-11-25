@@ -687,7 +687,6 @@ class TestNamedTargets:
             pytest.param(
                 'x="$(cat <<EOF\nhi\nEOF)"\ncanvas deploy acme_x\nEOF', ("upload", "acme_x"), id="delimiter_then_paren"
             ),
-            pytest.param('x="$((1<<2))"\ncanvas deploy acme_x\n2', ("upload", "acme_x"), id="quoted_arithmetic_shift"),
         ],
     )
     def test_bash_action_carries_the_target(self, command: str, action: tuple) -> None:
@@ -891,6 +890,8 @@ class TestCommandsTheGateMustNotMiss:
             pytest.param('out="$(cat << )"; git commit -m x', id="heredoc_without_a_delimiter"),
             pytest.param('git commit -m "$(echo x', id="unclosed_substitution"),
             pytest.param('x="$(echo $((1<<2)))"\ngit commit -m x\n2', id="arithmetic_inside_a_substitution"),
+            pytest.param('x="$((1<<2))"\ncanvas deploy acme_x\n2', id="quoted_arithmetic_shift"),
+            pytest.param('x="$((cd work && canvas deploy acme_x))"', id="quoted_subshell_read_as_arithmetic"),
         ],
     )
     def test_a_command_shlex_cannot_read_is_unclear(self, command: str) -> None:

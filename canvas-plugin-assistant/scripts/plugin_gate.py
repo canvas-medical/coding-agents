@@ -408,8 +408,10 @@ def joined_lines(command: str) -> str:
             index += 2
             word_start = False
             continue
-        # `"$((...))"` is arithmetic, not a command, so it stays quoted text.
-        elif quote == '"' and ((pair == "$(" and command[index + 2 : index + 3] != "(") or char == "`"):
+        elif quote == '"' and command.startswith("$((", index):
+            # Arithmetic, where `<<` is a shift, unless it does not parse as one and bash runs it.
+            raise ValueError("a `$((` inside double quotes")
+        elif quote == '"' and (pair == "$(" or char == "`"):
             opener = "$(" if pair == "$(" else "`"
             out.append('"' + opener)
             quote = ""
